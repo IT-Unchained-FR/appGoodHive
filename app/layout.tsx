@@ -1,5 +1,7 @@
 import "./globals.css";
 
+import "@rainbow-me/rainbowkit/styles.css";
+
 import { NavBar } from "./components/nav-bar";
 
 export default function RootLayout({
@@ -10,7 +12,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <NavBar />
         {children}
         <footer className="mx-5 text-sm">
           <a
