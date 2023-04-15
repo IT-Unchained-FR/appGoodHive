@@ -3,9 +3,11 @@
 import { Route } from "next";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 import { useState } from "react";
-import { usePathname } from "next/navigation";
+
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 const commonLinks = [
   { href: "/talents", label: "Talent" },
@@ -67,12 +69,7 @@ export const NavBar = () => {
 
           <div className="flex items-center gap-4">
             <div className="sm:flex sm:gap-4">
-              <a
-                className="block rounded-md bg-black px-5 py-2.5 text-sm font-medium text-white transition hover:bg-teal-700"
-                href="/"
-              >
-                Metamask
-              </a>
+              <ConnectButton />
             </div>
 
             <button
