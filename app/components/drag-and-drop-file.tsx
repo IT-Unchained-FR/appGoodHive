@@ -4,12 +4,18 @@ import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
 // TODO: remove all the any types in this file
+interface FileData {
+  name: string;
+  type: string;
+  data: string | ArrayBuffer | null;
+}
+
 interface Props {
-  setFile: (file: any) => void;
-  file: any;
+  setFile: (file: FileData | false) => void;
+  file: FileData | false;
   isRenderedPage: boolean;
   setIsRenderedPage: (isRenderedPage: boolean) => void;
-  invoiceInputValue: any;
+  invoiceInputValue: React.Ref<HTMLInputElement>;
 }
 
 const DragAndDropFile = ({
@@ -48,7 +54,7 @@ const DragAndDropFile = ({
     };
   };
 
-  const onFileUpload = async (file) => {
+  const onFileUpload = async (file: File): Promise<void | false> => {
     if (!file) return;
 
     setIsRenderedPage(false);
@@ -77,15 +83,15 @@ const DragAndDropFile = ({
     }
 
     reader.readAsDataURL(file);
-    reader.onload = (loadEvt) => {
-      if (loadEvt.target) {
+    reader.onload = (loadEvt: ProgressEvent<FileReader>) => {
+      if (loadEvt.target && typeof loadEvt.target.result === "string") {
         setFile({ name, type, data: loadEvt.target.result });
         showAssetInCanvas(loadEvt.target.result);
       }
     };
   };
 
-  const onDrop = (e) => {
+  const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
 
     const {
@@ -98,15 +104,18 @@ const DragAndDropFile = ({
     onFileUpload(files[0]);
   };
 
-  const onDragStart = (e) => e.preventDefault();
-  const onDragOver = (e) => e.preventDefault();
+  const onDragStart = (e: React.DragEvent<HTMLDivElement>) =>
+    e.preventDefault();
+  const onDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
 
-  const changeHandler = (e) => {
-    onFileUpload(e.target.files[0]);
+  const changeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      onFileUpload(e.target.files[0]);
+    }
   };
 
   useEffect(() => {
-    if (file?.data) {
+    if (file && typeof file !== "boolean" && file.data) {
       setIsRenderedPage(false);
     }
   }, [file, setIsRenderedPage]);
@@ -129,11 +138,11 @@ const DragAndDropFile = ({
       />
       {file ? (
         <div
-          onDrop={(e) => onDrop(e)}
-          onDragOver={(e) => onDragOver(e)}
+          onDrop={(e: React.DragEvent<HTMLDivElement>) => onDrop(e)}
+          onDragOver={(e: React.DragEvent<HTMLDivElement>) => onDragOver(e)}
           className="flex"
         >
-          {isRenderedPage ? (
+          {isRenderedPage && typeof file.data === "string" ? (
             <img className="object-cover" src={file.data} />
           ) : (
             // TODO: fix this skeleton
@@ -142,8 +151,8 @@ const DragAndDropFile = ({
         </div>
       ) : (
         <div
-          onDrop={(e) => onDrop(e)}
-          onDragOver={(e) => onDragOver(e)}
+          onDrop={(e: React.DragEvent<HTMLDivElement>) => onDrop(e)}
+          onDragOver={(e: React.DragEvent<HTMLDivElement>) => onDragOver(e)}
           className="flex mt-[-20px]"
         >
           <div className="text-center">

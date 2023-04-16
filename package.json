@@ -27,5 +27,8 @@
     "tailwindcss": "3.3.1",
     "typescript": "5.0.4",
     "wagmi": "^0.12.10"
+  },
+  "devDependencies": {
+    "eslint-config-prettier": "^8.8.0"
   }
 }

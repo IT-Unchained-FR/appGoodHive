@@ -6,11 +6,17 @@ import DragAndDropFile from "../../components/drag-and-drop-file";
 import { NavBar } from "../../components/nav-bar";
 import { Rainbowkit } from "../../components/rainbowkit";
 
+interface FileData {
+  name: string;
+  type: string;
+  data: string | ArrayBuffer | null;
+}
+
 export default function MyProfile() {
   const invoiceInputValue = useRef(null);
 
-  const [file, setFile] = useState(null);
-  const [isRenderedPage, setIsRenderedPage] = useState(true);
+  const [file, setFile] = useState<false | FileData>(false);
+  const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
 
   return (
     <Rainbowkit>
