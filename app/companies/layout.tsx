@@ -3,15 +3,11 @@
 import "../globals.css";
 
 import "@rainbow-me/rainbowkit/styles.css";
-import { Rainbowkit } from "../components/rainbowkit";
 
+import { Rainbowkit } from "../components/rainbowkit";
 import { NavBar } from "../components/nav-bar";
 
-export default function CompaniesLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
@@ -19,15 +15,7 @@ export default function CompaniesLayout({
           <NavBar />
         </Rainbowkit>
         {children}
-        <footer className="mx-5 text-sm">
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Powered by GoodHive
-          </a>
-        </footer>
+        <footer className="mx-5 text-sm">Powered by GoodHive</footer>
       </body>
     </html>
   );
