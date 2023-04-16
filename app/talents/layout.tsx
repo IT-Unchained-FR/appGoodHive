@@ -15,7 +15,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <NavBar />
         </Rainbowkit>
         {children}
-        <footer className="mx-5 text-sm">Powered by GoodHive</footer>
+        <footer className="mx-5 my-10 text-sm ">Powered by GoodHive</footer>
       </body>
     </html>
   );
