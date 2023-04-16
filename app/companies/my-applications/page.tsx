@@ -1,4 +1,9 @@
-"use client";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "My Applications | Companies Pages | GoodHive",
+  description: "The Decentralized Freelancing Plateforme",
+};
 
 export default function MyApplications() {
   return (
