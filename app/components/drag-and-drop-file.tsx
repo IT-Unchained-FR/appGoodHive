@@ -131,6 +131,7 @@ const DragAndDropFile = ({
           {isRenderedPage ? (
             <img className="object-cover" src={file.data} />
           ) : (
+            // TODO: fix this skeleton
             <Skeleton height="100px" />
           )}
         </div>
