@@ -1,5 +1,3 @@
-"use client";
-
 export default function Talents() {
   return (
     <main className="mx-5">
