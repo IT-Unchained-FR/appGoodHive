@@ -1,4 +1,9 @@
-"use client";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Search Talents | Companies Pages | GoodHive",
+  description: "The Decentralized Freelancing Plateforme",
+};
 
 export default function SearchTalents() {
   return (
