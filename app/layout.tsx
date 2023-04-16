@@ -9,10 +9,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
-        {children}
-        <footer className="mx-5 text-sm">Powered by GoodHive</footer>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
