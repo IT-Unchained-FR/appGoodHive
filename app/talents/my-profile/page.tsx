@@ -19,11 +19,8 @@ export default function MyProfile() {
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
 
   return (
-    <Rainbowkit>
-      <NavBar />
-      <main className="mx-5">
-        <h1 className="my-5 text-2xl">My Profile</h1>
-      </main>
+    <main className="mx-5">
+      <h1 className="my-5 text-2xl">My Profile</h1>
       <section>
         <div className="flex flex-col items-center justify-center w-full">
           <DragAndDropFile
@@ -35,6 +32,6 @@ export default function MyProfile() {
           />
         </div>
       </section>
-    </Rainbowkit>
+    </main>
   );
 }
