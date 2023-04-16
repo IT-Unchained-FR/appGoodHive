@@ -3,6 +3,8 @@
 import { useRef, useState } from "react";
 
 import DragAndDropFile from "../../components/drag-and-drop-file";
+import { NavBar } from "../../components/nav-bar";
+import { Rainbowkit } from "../../components/rainbowkit";
 
 export default function MyProfile() {
   const invoiceInputValue = useRef(null);
@@ -11,10 +13,11 @@ export default function MyProfile() {
   const [isRenderedPage, setIsRenderedPage] = useState(true);
 
   return (
-    <main className="mx-5">
-      <h1 className="my-5 text-xl font-bold border-gray-300 border-b-[1px] sm:text-2xl pb-2">
-        My Profile
-      </h1>
+    <Rainbowkit>
+      <NavBar />
+      <main className="mx-5">
+        <h1 className="my-5 text-2xl">My Profile</h1>
+      </main>
       <section>
         <div className="flex flex-col items-center justify-center w-full">
           <DragAndDropFile
@@ -26,6 +29,6 @@ export default function MyProfile() {
           />
         </div>
       </section>
-    </main>
+    </Rainbowkit>
   );
 }
