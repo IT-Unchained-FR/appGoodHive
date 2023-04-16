@@ -5,9 +5,10 @@ interface Props {
   placeholder: string;
   type: string;
   required: boolean;
-  disabled: boolean;
-  value: string | number;
-  onChange: any;
+  name?: string;
+  disabled?: boolean;
+  value?: string | number;
+  onChange?: any;
 }
 
 export const Input: FC<Props> = ({
