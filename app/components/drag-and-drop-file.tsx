@@ -27,17 +27,22 @@ const DragAndDropFile = ({
 
   const validTypes = ["image/jpeg", "image/jpg", "image/png"];
 
-  const showAssetInCanvas = (assetData) => {
-    const img = new Image();
+  type AssetData = string;
+
+  const showAssetInCanvas = (assetData: AssetData): void => {
+    const img: HTMLImageElement = new Image();
     img.src = assetData;
 
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
+    img.onload = (): void => {
+      const canvas: HTMLCanvasElement = document.createElement("canvas");
+      const ctx: CanvasRenderingContext2D | null = canvas.getContext("2d");
 
       canvas.height = img.height;
       canvas.width = img.width;
-      ctx?.drawImage(img, 0, 0);
+
+      if (ctx) {
+        ctx.drawImage(img, 0, 0);
+      }
 
       setIsRenderedPage(true);
     };
