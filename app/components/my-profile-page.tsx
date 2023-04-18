@@ -11,7 +11,7 @@ interface FileData {
   data: string | ArrayBuffer | null;
 }
 
-export default function MyProfile() {
+export default function MyProfilePage() {
   const invoiceInputValue = useRef(null);
 
   const [file, setFile] = useState<false | FileData>(false);
