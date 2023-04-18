@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Search Talents | Companies Pages | GoodHive",
+  title: "Search Talents | Companies | GoodHive",
   description: "The Decentralized Freelancing Plateforme",
 };
 
