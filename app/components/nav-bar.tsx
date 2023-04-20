@@ -45,9 +45,17 @@ export const NavBar = () => {
         <a className="block" href="/">
           <span className="sr-only">Home</span>
           <Image
+            className="hidden md:block"
             src="/img/goodhive_light_logo.png"
             alt="GoodHive Logo"
             width={192}
+            height={47}
+          />
+          <Image
+            className="block md:hidden"
+            src="/img/goodhive_logo_icon.png"
+            alt="GoodHive Logo Icon"
+            width={47}
             height={47}
           />
         </a>
