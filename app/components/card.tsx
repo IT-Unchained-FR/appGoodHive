@@ -1,7 +1,8 @@
+import Image from "next/image";
+
 import { FC } from "react";
 
 import { Button } from "../components/button";
-import Image from "next/image";
 
 interface Props {
   type: string;
@@ -51,13 +52,7 @@ export const Card: FC<Props> = ({
         <div className="pl-4 pr-5">
           <div className="md:flex md:flex-row flex  ">
             <div className=" md:w-20 w-20 flex  items-center  mb-6 lg:mb-0 mx-auto md:mx-0   ">
-              <Image
-                className=" "
-                src={image}
-                alt="avatar"
-                width={157}
-                height={166}
-              />
+              <Image src={image} alt="avatar" width={157} height={166} />
             </div>
 
             <div className="md:ml-2  pl-8 pt-7  ">
@@ -83,9 +78,10 @@ export const Card: FC<Props> = ({
                 {" "}
                 Job headline:
               </p>
-              <span class="inline text-gray-500 font-light">{description}</span>
+              <span className="inline text-gray-500 font-light">
+                {description}
+              </span>
             </div>
-
             <div className=" flex pt-4 ">
               <div className=" grid  grid-cols-3 grid-flow-row sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-4 3xl:grid-cols-4 4xl:grid-cols-4  gap-1">
                 <p className="font-bold text-base whitespace-nowrap inline-block  ">
@@ -103,7 +99,6 @@ export const Card: FC<Props> = ({
               </div>
             </div>
           </div>
-
           <div className="flex items-center justify-between pt-12 ">
             <div className="inline-flex items-center space-x-2">
               <a className="target " href="">
@@ -118,14 +113,8 @@ export const Card: FC<Props> = ({
                     d="M14.4737 0.1875C6.48421 0.1875 0 6.67171 0 14.6612C0 22.6507 6.48421 29.1349 14.4737 29.1349C22.4632 29.1349 28.9474 22.6507 28.9474 14.6612C28.9474 6.67171 22.4632 0.1875 14.4737 0.1875ZM9.72632 9.79803V23.027H6.10789V9.79803H9.72632ZM10.0158 6.15066C10.0158 7.3375 9.06053 8.29276 7.90263 8.29276C6.74474 8.29276 5.81842 7.3375 5.81842 6.15066C5.81842 4.99276 6.74474 4.0375 7.90263 4.0375C9.06053 4.0375 10.0158 4.99276 10.0158 6.15066ZM24.1421 14.8928V23.027H20.5237V16.2822C20.5237 12.2296 15.7184 12.548 15.7184 16.2822V23.027H12.1289V9.79803H15.7184V11.9401C17.3974 8.81382 24.1421 8.58224 24.1421 14.8928Z"
                     fill="black"
                     fill-opacity="0.6"
-                    className="logo"
                   />
                 </svg>
-                <style jsx>{`
-                  .logo:hover {
-                    fill: #0a66c2;
-                  }
-                `}</style>
               </a>
 
               <a className="target " href="">
@@ -196,12 +185,8 @@ export const Card: FC<Props> = ({
             </div>
 
             <div className="space-x-3">
-              <Button
-                text="Know more..."
-                type="secondary"
-                size="medium"
-              ></Button>
-              <Button text="Apply Now" type="primary" size="medium"></Button>
+              <Button text="Know more..." type="secondary" size="medium" />
+              <Button text="Apply Now" type="primary" size="medium" />
             </div>
           </div>
         </div>
