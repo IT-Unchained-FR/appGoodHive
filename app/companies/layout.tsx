@@ -1,6 +1,7 @@
 "use client";
 
 import toast, { Toaster } from "react-hot-toast";
+
 import "../globals.css";
 import "@rainbow-me/rainbowkit/styles.css";
 import { Rainbowkit } from "../components/rainbowkit";
