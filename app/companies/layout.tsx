@@ -12,7 +12,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <body>
         <Rainbowkit>
           <NavBar />
-          <Toaster></Toaster>
+          <Toaster />
         </Rainbowkit>
         {children}
         <footer className="mx-5 my-10 text-sm ">Powered by GoodHive</footer>
