@@ -2,6 +2,8 @@
 
 import { useRef, useState, FormEvent } from "react";
 
+import toast from "react-hot-toast";
+
 import DragAndDropFile from "../../components/drag-and-drop-file";
 import { Button } from "../../components/button";
 
@@ -21,35 +23,37 @@ export default function MyProfile() {
     e.preventDefault();
     setIsLoading(true);
 
-    const formData = {
-      jobHeadline: e.currentTarget["job-headline"].value,
-      companiesName: e.currentTarget["companies-name"].value,
-      companiesAddress: e.currentTarget["companies-address"].value,
-      country: e.currentTarget.country.value,
-      city: e.currentTarget.city.value,
-      phoneCountryCode: e.currentTarget["phone-country-code"].value,
-      phoneNumber: e.currentTarget["phone-number"].value,
-      email: e.currentTarget.email.value,
-      telegram: e.currentTarget.telegram.value,
-      aboutWork: e.currentTarget["about-work"].value,
-    };
+    const formData = new FormData(e.currentTarget);
 
+    const dataForm = {
+      headline: formData.get("headline"),
+      designation: formData.get("designation"),
+      address: formData.get("address"),
+      country: formData.get("country"),
+      city: formData.get("city"),
+      phoneCountryCode: formData.get("phone-country-code"),
+      phoneNumber: formData.get("phone-number"),
+      email: formData.get("email"),
+      telegram: formData.get("telegram"),
+      details: formData.get("details"),
+    };
     // TODO: POST formData to the server with fetch
-    const res = await fetch("/api/companies/my-profile", {
+    const profileResponse = await fetch("/api/companies/my-profile", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(formData),
+      body: JSON.stringify(dataForm),
     });
 
-    const data = await res.json();
+    const data = await profileResponse.json();
 
     setIsLoading(false);
-    if (!res.ok) {
-      throw new Error(data.message || "Something went wrong!");
+
+    if (!profileResponse.ok) {
+      toast.error("Something went wrong!");
     } else {
-      alert("Profile Saved!");
+      toast.success("Profile Saved!");
     }
   };
 
@@ -72,7 +76,7 @@ export default function MyProfile() {
           <div className="flex flex-col w-full mt-20">
             <div>
               <label
-                htmlFor="job-headline"
+                htmlFor="headline"
                 className="inline-block ml-3 text-base text-black form-label"
               >
                 Describe your company in a few words?
@@ -80,10 +84,11 @@ export default function MyProfile() {
             </div>
             <div>
               <textarea
-                name="job-headline"
+                name="headline"
                 className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                 placeholder="Describe your company in a few words?"
                 required
+                maxLength={255}
                 rows={5}
               />
             </div>
@@ -91,32 +96,35 @@ export default function MyProfile() {
             <div className="flex flex-col gap-4 mt-10 sm:flex-row">
               <div className="flex-1">
                 <label
-                  htmlFor="companies-name"
+                  htmlFor="designation"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
                   Company Name
                 </label>
                 <input
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Companies Name"
-                  name="companies-name"
+                  placeholder="Company Name"
+                  name="designation"
                   type="text"
                   required
+                  maxLength={100}
                 />
               </div>
               <div className="flex-1">
                 <label
-                  htmlFor="companies-address"
+                  htmlFor="address"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
-                  Company Address
+                  Address
                 </label>
                 <input
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Companies Address"
-                  name="companies-address"
+                  placeholder="Address"
+                  name="address"
                   type="text"
                   required
+                  pattern="[a-zA-Z0-9 ]+"
+                  maxLength={100}
                 />
               </div>
             </div>
@@ -133,6 +141,9 @@ export default function MyProfile() {
                   placeholder="Country"
                   type="text"
                   name="country"
+                  required
+                  pattern="[a-zA-Z -]+"
+                  maxLength={100}
                 />
               </div>
               <div className="flex-1">
@@ -147,6 +158,9 @@ export default function MyProfile() {
                   placeholder="City"
                   type="text"
                   name="city"
+                  required
+                  pattern="[a-zA-Z -]+"
+                  maxLength={100}
                 />
               </div>
             </div>
@@ -158,12 +172,20 @@ export default function MyProfile() {
                 >
                   Phone Country Code
                 </label>
-                <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Phone Country Code"
-                  type="text"
-                  name="phone-country-code"
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 sm:text-sm">+</span>
+                  </div>
+                  <input
+                    className="form-control block w-full px-10 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none pl-10"
+                    placeholder="Phone Country Code"
+                    type="text"
+                    pattern="[0-9]+"
+                    name="phone-country-code"
+                    required
+                    maxLength={5}
+                  />
+                </div>
               </div>
               <div className="flex-1">
                 <label
@@ -175,8 +197,10 @@ export default function MyProfile() {
                 <input
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="Phone Number"
-                  type="number"
+                  type="text"
+                  pattern="[0-9]+"
                   required
+                  maxLength={20}
                   name="phone-number"
                 />
               </div>
@@ -194,6 +218,7 @@ export default function MyProfile() {
                   placeholder="Email"
                   type="email"
                   required
+                  maxLength={255}
                   name="email"
                 />
               </div>
@@ -208,33 +233,27 @@ export default function MyProfile() {
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="Telegram"
                   type="text"
+                  maxLength={255}
                   name="telegram"
                 />
               </div>
             </div>
             <div className="mt-4">
               <label
-                htmlFor="about-work"
+                htmlFor="details"
                 className="inline-block ml-3 text-base text-black form-label"
               >
-                What are you looking for?
+                Company profile and services...
               </label>
               <textarea
-                name="about-work"
+                name="details"
                 className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                placeholder="What you are looking for?"
+                placeholder="Company profile and services..."
                 required
+                maxLength={300}
                 rows={5}
               />
             </div>
-            {isLoading && (
-              <div>
-                <svg
-                  className="animate-spin h-5 w-5 mr-3 ..."
-                  viewBox="0 0 24 24"
-                ></svg>
-              </div>
-            )}
             <div className="mt-10 text-right">
               {isLoading ? (
                 <button
@@ -249,7 +268,7 @@ export default function MyProfile() {
                   className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
                   type="submit"
                 >
-                  Save and Continue
+                  Save
                 </button>
               )}
             </div>
