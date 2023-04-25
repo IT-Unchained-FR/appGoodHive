@@ -177,7 +177,7 @@ export default function MyProfile() {
                     <span className="text-gray-500 sm:text-sm">+</span>
                   </div>
                   <input
-                    className="form-control block w-full px-10 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none pl-10"
+                    className="form-control block w-full px-10 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none pl-6"
                     placeholder="Phone Country Code"
                     type="text"
                     pattern="[0-9]+"
