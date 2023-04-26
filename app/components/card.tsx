@@ -47,20 +47,18 @@ export const Card: FC<Props> = ({
   }
 
   return (
-    <div className="w-[654px] mt-11 ">
+    <div className="mt-11 ">
       <div className="block p-6 bg-blend-darken shadow-gray-300 rounded-3xl shadow-xl box-border border-r-2 border-l-2  border-radius  bg-white">
         <div className="pl-4 pr-5">
           <div className="md:flex md:flex-row flex  ">
             <div className=" md:w-20 w-20 flex  items-center  mb-6 lg:mb-0 mx-auto md:mx-0   ">
               <Image src={image} alt="avatar" width={157} height={166} />
             </div>
-
             <div className="md:ml-2  pl-8 pt-7  ">
               <p className="font-semibold text-xl  text-gray-800 ">{title}</p>
               <p className="text-base text-gray-600 ">{postedBy}</p>
               <p className="text-base text-gray-600 mb-5">{postedOn}</p>
             </div>
-
             <div className="hover: flex pt-7 flex grow justify-end md:ml-5 ">
               <Image
                 className="mt-1 h-5 w-8 mb-4 hover:"
@@ -71,7 +69,6 @@ export const Card: FC<Props> = ({
               />
             </div>
           </div>
-
           <div>
             <div className="pt-2">
               <p className="font-bold text-base pr-1 whitespace-nowrap inline">
@@ -83,11 +80,10 @@ export const Card: FC<Props> = ({
               </span>
             </div>
             <div className=" flex pt-4 ">
-              <div className=" grid  grid-cols-3 grid-flow-row sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-4 3xl:grid-cols-4 4xl:grid-cols-4  gap-1">
+              <div className=" grid  grid-cols-3 grid-flow-row sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-4 4xl:grid-cols-4  gap-1">
                 <p className="font-bold text-base whitespace-nowrap inline-block  ">
                   Mandatory Skill:
                 </p>
-
                 {skills.map((skill, i) => (
                   <span
                     key={i}
@@ -116,7 +112,6 @@ export const Card: FC<Props> = ({
                   />
                 </svg>
               </a>
-
               <a className="target " href="">
                 <svg
                   width="30"
@@ -138,7 +133,6 @@ export const Card: FC<Props> = ({
                   }
                 `}</style>
               </a>
-
               <a className="target" href="https://web.telegram.org/z/">
                 <svg
                   width="31"
@@ -160,7 +154,6 @@ export const Card: FC<Props> = ({
                   }
                 `}</style>
               </a>
-
               <a className="target" href="">
                 <svg
                   width="31"
@@ -183,7 +176,6 @@ export const Card: FC<Props> = ({
                 `}</style>
               </a>
             </div>
-
             <div className="space-x-3">
               <Button text="Know more..." type="secondary" size="medium" />
               <Button text="Apply Now" type="primary" size="medium" />
