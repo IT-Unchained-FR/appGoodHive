@@ -11,7 +11,7 @@ export default function Header() {
   const textHandleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTextValue(event.target.value);
   };
-  const path = usePathname();
+  const pathname = usePathname();
   return (
     <main className="mx-5">
       <h1 className="my-5 font-bold text-2xl">
@@ -67,7 +67,7 @@ export default function Header() {
           />
           <IconButton
             text={
-              name === "/companies/search-talents"
+              pathname === "/companies/search-talents"
                 ? "Create Job Work"
                 : pathname === "/talents/job-search"
                 ? "Search Jobs"
