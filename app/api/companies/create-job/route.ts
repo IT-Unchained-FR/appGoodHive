@@ -19,7 +19,7 @@ export async function POST(request: Request) {
 
   try {
     await sql`
-      INSERT INTO goodhive.jobOffers (
+      INSERT INTO goodhive.job_offers (
         title,
         type_engagement,
         description,
