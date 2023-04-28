@@ -34,7 +34,7 @@ export default function CreateJob() {
       skills: formData.get("skills"),
     };
     // TODO: POST formData to the server with fetch
-    const res = await fetch("/api/companies/create-job", {
+    const profileResponse = await fetch("/api/companies/create-job", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -42,10 +42,10 @@ export default function CreateJob() {
       body: JSON.stringify(dataForm),
     });
 
-    const data = await res.json();
+    const profileData = await profileResponse.json();
 
     setIsLoading(false);
-    if (!res.ok) {
+    if (!profileResponse.ok) {
       toast.error("Something went wrong!");
     } else {
       toast.success("Profile Saved!");
