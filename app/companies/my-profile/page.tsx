@@ -22,7 +22,7 @@ export default function MyProfile() {
 
   useEffect(() => {
     if (typeof file === "object" && file !== null) {
-      fetch("/api/add_picture", {
+      fetch("/api/picture", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
