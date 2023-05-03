@@ -1,11 +1,9 @@
 const fs = require("fs");
-
 const {
   S3,
   PutObjectCommand,
   GetObjectCommand,
 } = require("@aws-sdk/client-s3");
-
 const { v4: uuidv4 } = require("uuid");
 
 export async function POST(request: Request) {
@@ -25,8 +23,11 @@ export async function POST(request: Request) {
     // Use the existing bucket
     const bucketName = process.env.B2_BUCKET || "";
 
-    // Upload a new file to the bucket
-    const keyName = "image_" + uuidv4() + ".jpg";
+    // Extract file extension
+    const fileExtension = file.type.split("/")[1];
+
+    // Upload a new file to the bucket with the file extension
+    const keyName = "image_" + uuidv4() + "." + fileExtension;
 
     const putObjectParams = {
       Bucket: bucketName,
@@ -46,10 +47,12 @@ export async function POST(request: Request) {
       Bucket: bucketName,
       Key: keyName,
     };
+    
+    const hostB2 = process.env.B2_HOST || "";
 
     try {
       await s3.send(new GetObjectCommand(getObjectParams));
-      const url = `https://${bucketName}.s3.us-east-005.backblazeb2.com/${keyName}`;
+      const url = `https://${bucketName}.${hostB2}/${keyName}`;
       return new Response(JSON.stringify({ imageUrl: url }));
     } catch (error) {
       console.error(error);
