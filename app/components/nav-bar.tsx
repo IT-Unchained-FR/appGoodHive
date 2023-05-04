@@ -26,6 +26,7 @@ const companiesLinks = [
   { href: "/companies/search-talents", label: "Search Talents" },
   { href: "/companies/my-applications", label: "My Applications" },
   { href: "/companies/my-profile", label: "My Profile" },
+  { href: "/companies/create-job", label: "Manage Jobs" },
 ];
 
 export const NavBar = () => {
