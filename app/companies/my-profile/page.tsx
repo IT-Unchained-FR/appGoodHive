@@ -29,8 +29,8 @@ export default function MyProfile() {
         },
         body: JSON.stringify(file),
       })
-        .then((imageResponse) => imageResponse.json()) // extract JSON data from the response
-        .then((imageData) => setImageUrl(imageData.imageUrl)) // set the new value of imageUrl
+        .then((response) => response.json()) // extract JSON data from the response
+        .then((data) => setImageUrl(data.imageUrl)) // set the new value of imageUrl
         .catch((error) => console.error(error)); // handle errors
     }
   }, [file]);
