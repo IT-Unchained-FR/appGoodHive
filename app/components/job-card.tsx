@@ -81,7 +81,7 @@ export const JobCard: FC<Props> = ({
             </div>
             <div className=" flex pt-4 ">
               <div className=" grid  grid-cols-3 grid-flow-row sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-4 4xl:grid-cols-4  gap-1">
-                <p className="font-bold text-base whitespace-nowrap inline-block  ">
+                <p className="font-bold text-base whitespace-nowrap  ">
                   Mandatory Skill:
                 </p>
                 {skills.map((skill, i) => (

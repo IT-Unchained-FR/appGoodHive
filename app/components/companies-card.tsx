@@ -36,7 +36,7 @@ export const CompaniesCard: FC<Props> = ({
   return (
     <div className="mt-11 ">
       <div className="block bg-blend-darken shadow-gray-300 rounded-3xl shadow-xl box-border border-r-2 border-l-2  border-radius  bg-white">
-        <div className="pl-4 pr-5">
+        <div className="pl-4 pr-5 pt-5">
           <div className="md:flex md:flex-row flex  ">
             <div className=" md:w-20 w-20 flex  items-center mb-6 lg:mb-0 mx-auto md:mx-0   ">
               <Image src={image} alt="avatar" width={157} height={166} />
@@ -51,14 +51,16 @@ export const CompaniesCard: FC<Props> = ({
               />
             </div>
           </div>
-          <div className="md:ml-2  pl-8 pt-7  ">
-            <p className="font-semibold text-xl  text-gray-800 ">
-              {designation}
-            </p>
-            <p className="text-base text-gray-600 ">{website}</p>
-          </div>
-          <div className="space-x-3">
-            <Button text="Contact" type="secondary" size="small" />
+          <div className="items-center pl-8">
+            <div className=" pt-7  ">
+              <p className="font-semibold text-xl  text-gray-800 ">
+                {designation}
+              </p>
+              <p className="text-base text-gray-600 ">{website}</p>
+            </div>
+            <div className="space-x-3">
+              <Button text="Contact" type="secondary" size="small" />
+            </div>
           </div>
           <div>
             <div className="pt-2">
@@ -70,7 +72,7 @@ export const CompaniesCard: FC<Props> = ({
             </div>
           </div>
           <div className="flex items-center justify-between pt-12 ">
-            <div className="inline-flex items-center space-x-2">
+            <div className="inline-flex items-center space-x-2 pb-5">
               <a className="target " href="">
                 <svg
                   width="29"
@@ -153,18 +155,38 @@ export const CompaniesCard: FC<Props> = ({
           </div>
         </div>
       </div>
-      <div className="block bg-blend-darken shadow-gray-300 rounded-3xl shadow-xl box-border border-r-2 border-l-2  border-radius  bg-white">
-        <div className="pt-2">
+      <div className="block mt-5 bg-blend-darken shadow-gray-300 rounded-3xl shadow-xl box-border border-r-2 border-l-2  border-radius  bg-white">
+        <div className="pt-5 pb-5 pr-1 pl-4">
           <p className="font-bold text-base pr-1 whitespace-nowrap inline">
             {" "}
-            Contact
+            Contact Info
           </p>
-          <span className="inline text-gray-500 font-light">{mail}</span>
-          <span className="inline text-gray-500 font-light">{phoneNumber}</span>
-          <span className="inline text-gray-500 font-light">
-            {address}, {city}, {country}
-          </span>
-          <span className="inline text-gray-500 font-light">{telegram}</span>
+          <div className=" text-gray-500 font-light">
+            <p className="font-bold text-base pr-1 whitespace-nowrap inline">
+              {" "}
+              Email
+            </p>
+            <span className="inline text-gray-500 font-light">{mail}</span>
+          </div>
+          <div className=" text-gray-500 font-light">
+            <p className="font-bold text-base pr-1 whitespace-nowrap inline">
+              {" "}
+              Phone
+            </p>
+            <span className="inline text-gray-500 font-light">
+              {phoneNumber}
+            </span>
+          </div>
+          <div className="text-gray-500 font-light flex flex-wrap items-baseline">
+            <p className="font-bold text-base pr-1">Address</p>
+            <div className="text-gray-500 font-light">
+              <div>{address}</div>
+              <div>{city}</div>
+              <div>{country}</div>
+            </div>
+          </div>
+
+          <div className=" text-gray-500 font-light">{telegram}</div>
         </div>
       </div>
     </div>
