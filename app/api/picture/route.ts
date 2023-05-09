@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       Bucket: bucketName,
       Key: keyName,
     };
-    
+
     const hostB2 = process.env.B2_HOST || "";
 
     try {
