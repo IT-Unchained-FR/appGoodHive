@@ -125,8 +125,8 @@ export default function CreateJob() {
     return (
       <Autosuggest
         suggestions={getSuggestions(value)}
-        onSuggestionsFetchRequested={() => {}}
-        onSuggestionsClearRequested={() => {}}
+        onSuggestionsFetchRequested={onSuggestionsFetchRequested}
+        onSuggestionsClearRequested={onSuggestionsClearRequested}
         getSuggestionValue={(skill) => skill}
         onSuggestionSelected={onSuggestionSelected}
         renderSuggestion={renderSuggestion}
