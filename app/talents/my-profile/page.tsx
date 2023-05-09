@@ -1,7 +1,9 @@
 "use client";
 
-import { useRef, useState, FormEvent } from "react";
+import { useRef, useState, FormEvent, useEffect } from "react";
+
 import toast from "react-hot-toast";
+
 import DragAndDropFile from "../../components/drag-and-drop-file";
 import { Button } from "../../components/button";
 
@@ -14,8 +16,24 @@ interface FileData {
 export default function MyProfile() {
   const invoiceInputValue = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [imageUrl, setImageUrl] = useState(null);
   const [file, setFile] = useState<false | FileData>(false);
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (typeof file === "object" && file !== null) {
+      fetch("/api/picture", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(file),
+      })
+        .then((response) => response.json()) // extract JSON data from the response
+        .then((data) => setImageUrl(data.imageUrl)) // set the new value of imageUrl
+        .catch((error) => console.error(error)); // handle errors
+    }
+  }, [file]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -34,10 +52,11 @@ export default function MyProfile() {
       email: formData.get("email"),
       telegram: formData.get("telegram"),
       aboutWork: formData.get("about-work"),
+      imageUrl,
     };
 
     // TODO: POST formData to the server with fetch
-    const res = await fetch("/api/talents/my-profile", {
+    const profileResponse = await fetch("/api/talents/my-profile", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -45,10 +64,11 @@ export default function MyProfile() {
       body: JSON.stringify(dataForm),
     });
 
-    const data = await res.json();
+    const profileData = await profileResponse.json();
 
     setIsLoading(false);
-    if (!res.ok) {
+
+    if (!profileResponse.ok) {
       toast.error("Something went wrong!");
     } else {
       toast.success("Profile Saved!");
