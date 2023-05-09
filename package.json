@@ -37,6 +37,7 @@
     "wagmi": "^0.12.10"
   },
   "devDependencies": {
+    "@types/uuid": "^9.0.1",
     "eslint-config-prettier": "^8.8.0"
   }
 }
