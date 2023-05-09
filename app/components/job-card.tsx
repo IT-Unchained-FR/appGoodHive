@@ -38,6 +38,14 @@ export const JobCard: FC<Props> = ({
   return (
     <div className="mt-11 ">
       <div className="block p-6 bg-blend-darken shadow-gray-300 rounded-3xl shadow-xl box-border border-r-2 border-l-2  border-radius  bg-white">
+        <div className="flex items-center justify-end">
+          <a href="" className="inline-block mr-2">
+            <img src="/img/bin.png" alt="bin" width="25" height="25" />
+          </a>
+          <a href="" className="inline-block">
+            <img src="/img/edit.png" alt="edit" width="25" height="25" />
+          </a>
+        </div>
         <div className="pl-4 pr-5">
           <div className="md:flex md:flex-row flex  ">
             <div className=" md:w-20 w-20 flex  items-center  mb-6 lg:mb-0 mx-auto md:mx-0   ">
@@ -50,18 +58,20 @@ export const JobCard: FC<Props> = ({
               <p className="text-base text-gray-600 ">
                 {typeEngagement} - {duration}
               </p>
-              <p className="text-base text-gray-600 mb-5">
-                {city}, {country}
-              </p>
-            </div>
-            <div className="hover: flex pt-7 grow justify-end md:ml-5 ">
-              <Image
-                className="mt-1 h-5 w-8 mb-4 hover:"
-                src={countryFlag}
-                alt="country"
-                width={34}
-                height={23}
-              />
+              <div className="flex flex-row">
+                <p className="text-base text-gray-600 mb-5">
+                  {city}, {country}
+                </p>
+                <div className="pl-3 ">
+                  <Image
+                    className="mt-1 h-3 w-5 mb-4 hover:"
+                    src={countryFlag}
+                    alt="country"
+                    width={34}
+                    height={23}
+                  />
+                </div>
+              </div>
             </div>
           </div>
           <div>
@@ -83,11 +93,11 @@ export const JobCard: FC<Props> = ({
               <p className="font-bold text-base whitespace-nowrap">
                 Mandatory Skill:
               </p>
-              <div className="pt-2 grid grid-cols-3 grid-flow-row sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-4 4xl:grid-cols-4 gap-1">
+              <div className="pt-3 grid grid-cols-3 grid-flow-row sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-4 4xl:grid-cols-4 gap-1">
                 {skills.map((skill, i) => (
                   <span
                     key={i}
-                    className="inline-block border border-solid border-[#FFC905] bg-gray-100 rounded-full py-1 text-xs font-semibold text-center mr-1 mb-1"
+                    className="inline-block bg-gray-100 border border-solid border-[#FFC905] rounded-full py-1 text-xs font-semibold text-center mr-1 mb-1"
                   >
                     {skill}
                   </span>
