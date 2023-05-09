@@ -1,4 +1,6 @@
 import { Metadata } from "next";
+import Header from "@/app/components/header";
+import TalentResult from "./talent-result";
 
 export const metadata: Metadata = {
   title: "Search Talents | Companies | GoodHive",
@@ -8,7 +10,12 @@ export const metadata: Metadata = {
 export default function SearchTalents() {
   return (
     <main className="mx-5">
-      <h1 className="my-5 text-2xl">Looking For Talent Page</h1>
+      <Header />
+      <h1 className="text-xl pt-16 mx-5 font-bold">
+        Search Results
+        <span className="text-base font-normal">- Talent Search</span>
+      </h1>
+      <TalentResult />
     </main>
   );
 }
