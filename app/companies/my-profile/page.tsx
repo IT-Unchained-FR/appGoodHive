@@ -21,7 +21,7 @@ export default function MyProfile() {
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
 
   useEffect(() => {
-    if (file !== false) {
+    if (typeof file === "object" && file !== null) {
       const fetchImage = async () => {
         setIsLoading(true);
         const postImageResponse = await fetch("/api/picture", {
@@ -287,7 +287,7 @@ export default function MyProfile() {
                   type="submit"
                   disabled
                 >
-                  Saving...
+                  Loading...
                 </button>
               ) : (
                 <button
