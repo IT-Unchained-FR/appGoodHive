@@ -60,13 +60,13 @@ export default function CreateJob() {
 
   //TODO: Put the following code in a Autosuggest Input component
   const languages = [
-    "JS",
+    "JavaScript",
     "Solidity",
     "SQL",
     "C#",
     "Tailwind",
     "EtherJS",
-    "TS",
+    "TypeScript",
     "IPFS",
     "ReactJS",
     "NextJS",
@@ -119,7 +119,7 @@ export default function CreateJob() {
         setValue(newValue);
       },
       className:
-        "border-b border-gray-300 block w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:outline-none focus:ring-0",
+        " rounded-full block w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding transition ease-in-out focus:text-black bg-gray-100 focus:outline-none focus:ring-0",
     };
 
     return (
@@ -247,7 +247,7 @@ export default function CreateJob() {
                   Mandatory Skills
                 </label>
                 <div className="flex justify-end">
-                  <div className="form-control block w-full text-base font-normal text-gray-600 bg-white ">
+                  <div className="pt-1 form-control block w-full text-base font-normal text-gray-600 bg-white ">
                     <AutosuggestInput />
                   </div>
                 </div>
