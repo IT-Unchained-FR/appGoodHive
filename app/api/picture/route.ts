@@ -1,10 +1,6 @@
-const fs = require("fs");
-const {
-  S3,
-  PutObjectCommand,
-  GetObjectCommand,
-} = require("@aws-sdk/client-s3");
-const { v4: uuidv4 } = require("uuid");
+import fs from "fs";
+import { S3, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { v4 as uuidv4 } from "uuid";
 
 export async function POST(request: Request) {
   try {

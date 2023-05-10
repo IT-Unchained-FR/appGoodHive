@@ -1,6 +1,9 @@
 "use client";
 
-import { useRef, useState, FormEvent } from "react";
+import { useRef, useState, FormEvent, ChangeEvent } from "react";
+import React from "react";
+
+import Autosuggest from "react-autosuggest";
 
 import toast from "react-hot-toast";
 
@@ -17,6 +20,8 @@ export default function CreateJob() {
   const [isLoading, setIsLoading] = useState(false);
   const [file, setFile] = useState<false | FileData>(false);
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
+  const [value, setValue] = useState("");
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -31,10 +36,10 @@ export default function CreateJob() {
       duration: formData.get("duration"),
       ratePerHour: formData.get("rate-per-hour"),
       budget: formData.get("budget"),
-      skills: formData.get("skills"),
+      skills: selectedSkills,
     };
     // TODO: POST formData to the server with fetch
-    const profileResponse = await fetch("/api/companies/create-job", {
+    const jobResponse = await fetch("/api/companies/create-job", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -42,35 +47,113 @@ export default function CreateJob() {
       body: JSON.stringify(dataForm),
     });
 
-    const profileData = await profileResponse.json();
+    const jobData = await jobResponse.json();
 
     setIsLoading(false);
-    if (!profileResponse.ok) {
+
+    if (!jobResponse.ok) {
       toast.error("Something went wrong!");
     } else {
       toast.success("Profile Saved!");
     }
   };
 
+  //TODO: Put the following code in a Autosuggest Input component
+  const languages = [
+    "JS",
+    "Solidity",
+    "SQL",
+    "C#",
+    "Tailwind",
+    "EtherJS",
+    "TS",
+    "IPFS",
+    "ReactJS",
+    "NextJS",
+    // Add more skills here if needed...
+  ];
+
+  const AutosuggestInput = () => {
+    const [value, setValue] = useState("");
+    const [suggestions, setSuggestions] = useState<string[]>([]);
+
+    const getSuggestions = (value: string) => {
+      const inputValue = value.trim().toLowerCase();
+      const inputLength = inputValue.length;
+
+      return inputLength === 0
+        ? []
+        : languages.filter(
+            (skill) => skill.toLowerCase().slice(0, inputLength) === inputValue
+          );
+    };
+
+    const onSuggestionsFetchRequested = ({ value }: any) => {
+      setSuggestions(getSuggestions(value));
+    };
+
+    const onSuggestionsClearRequested = () => {
+      setSuggestions([]);
+    };
+
+    const onSuggestionSelected = (
+      event: React.FormEvent<HTMLInputElement>,
+      { suggestion }: Autosuggest.SuggestionSelectedEventData<any>
+    ) => {
+      setSelectedSkills([...selectedSkills, suggestion]);
+      setValue("");
+    };
+
+    const renderSuggestion = (suggestion: string) => <div>{suggestion}</div>;
+
+    const inputProps = {
+      placeholder: "Auto Suggest",
+      type: "text",
+      maxLength: 255,
+      name: "skills",
+      value,
+      onChange: (
+        event: React.FormEvent<HTMLElement>,
+        { newValue }: { newValue: string }
+      ) => {
+        setValue(newValue);
+      },
+      className:
+        "border-b border-gray-300 block w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:outline-none focus:ring-0",
+    };
+
+    return (
+      <Autosuggest
+        suggestions={getSuggestions(value)}
+        onSuggestionsFetchRequested={onSuggestionsFetchRequested}
+        onSuggestionsClearRequested={onSuggestionsClearRequested}
+        getSuggestionValue={(skill) => skill}
+        onSuggestionSelected={onSuggestionSelected}
+        renderSuggestion={renderSuggestion}
+        inputProps={inputProps}
+      />
+    );
+  };
+
   return (
     <main className="mx-5">
-      <h1 className="my-5 text-2xl border-b-[1px] border-slate-300 pb-2">
+      <h1 className="my-5 text-2xl border-b-[1px] border-slate-300 ">
         Create Job
       </h1>
       <section>
         <form onSubmit={handleSubmit}>
-          <div className="flex flex-col w-full mt-20">
+          <div className="flex flex-col w-full mt-4">
             <div className="flex flex-col gap-4 mt-10 sm:flex-row">
               <div className="flex-1">
                 <label
                   htmlFor="title"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
-                  Job Title
+                  Job Title*
                 </label>
                 <input
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Job Title"
+                  placeholder="Job Header..."
                   name="title"
                   type="text"
                   required
@@ -82,11 +165,11 @@ export default function CreateJob() {
                   htmlFor="type-engagement"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
-                  Type of engagement
+                  Type of engagement*
                 </label>
                 <input
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Type of engagement"
+                  placeholder="Weekly, Monthly..."
                   name="type-engagement"
                   type="text"
                   required
@@ -98,16 +181,14 @@ export default function CreateJob() {
             <div>
               <label
                 htmlFor="description"
-                className="inline-block ml-3 text-base text-black form-label"
-              >
-                Describe the project in a few words?
-              </label>
+                className="inline-block ml-3 text-base text-black form-label mt-4"
+              ></label>
             </div>
             <div>
               <textarea
                 name="description"
                 className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                placeholder="Describe your company in a few words?"
+                placeholder="Project Description"
                 maxLength={255}
                 rows={5}
               />
@@ -118,11 +199,10 @@ export default function CreateJob() {
                   htmlFor="duration"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
-                  Project Duration
+                  Project Duration*
                 </label>
                 <input
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Project Duration"
                   type="text"
                   name="duration"
                   required
@@ -138,7 +218,6 @@ export default function CreateJob() {
                 </label>
                 <input
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Expected rate per hour"
                   type="number"
                   name="rate-per-hour"
                   maxLength={100}
@@ -153,7 +232,6 @@ export default function CreateJob() {
                 </label>
                 <input
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Budget of the project"
                   type="number"
                   name="budget"
                   maxLength={100}
@@ -164,21 +242,40 @@ export default function CreateJob() {
               <div className="flex-1">
                 <label
                   htmlFor="skills"
-                  className="inline-block ml-3 text-base text-black form-label"
+                  className="inline-block font-bold ml-3 text-base text-black form-label"
                 >
-                  Mandatory Skills : skill 1, skill 2, ...
+                  Mandatory Skills
                 </label>
-                <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Mandatory Skills : skill 1, skill 2, ..."
-                  type="text"
-                  required
-                  maxLength={255}
-                  name="skills"
-                />
+                <div className="flex justify-end">
+                  <div className="form-control block w-full text-base font-normal text-gray-600 bg-white ">
+                    <AutosuggestInput />
+                  </div>
+                </div>
+
+                {selectedSkills.length > 0 && (
+                  <div className="flex flex-wrap mt-4 ">
+                    {selectedSkills.map((skill, index) => (
+                      <div
+                        key={index}
+                        className="border border-[#FFC905] flex items-center bg-gray-200 rounded-full py-1 px-3 m-1"
+                      >
+                        <span className="mr-2">{skill}</span>
+                        <button
+                          onClick={() =>
+                            setSelectedSkills(
+                              selectedSkills.filter((_, i) => i !== index)
+                            )
+                          }
+                          className="text-black bg-gray-400 rounded-full w-6 focus:outline-none"
+                        >
+                          &#10005;
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
-
             <div className="mt-10 text-right">
               {isLoading ? (
                 <button

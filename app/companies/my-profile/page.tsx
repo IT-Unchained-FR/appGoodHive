@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, FormEvent } from "react";
+import { useRef, useState, FormEvent, useEffect } from "react";
 
 import toast from "react-hot-toast";
 
@@ -16,8 +16,24 @@ interface FileData {
 export default function MyProfile() {
   const invoiceInputValue = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [imageUrl, setImageUrl] = useState(null);
   const [file, setFile] = useState<false | FileData>(false);
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (typeof file === "object" && file !== null) {
+      fetch("/api/picture", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(file),
+      })
+        .then((imageResponse) => imageResponse.json()) // extract JSON data from the response
+        .then((imageData) => setImageUrl(imageData.imageUrl)) // set the new value of imageUrl
+        .catch((error) => console.error(error)); // handle errors
+    }
+  }, [file]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -36,6 +52,7 @@ export default function MyProfile() {
       email: formData.get("email"),
       telegram: formData.get("telegram"),
       details: formData.get("details"),
+      imageUrl,
     };
     // TODO: POST formData to the server with fetch
     const profileResponse = await fetch("/api/companies/my-profile", {
@@ -46,7 +63,7 @@ export default function MyProfile() {
       body: JSON.stringify(dataForm),
     });
 
-    const data = await profileResponse.json();
+    const profileData = await profileResponse.json();
 
     setIsLoading(false);
 
@@ -56,7 +73,6 @@ export default function MyProfile() {
       toast.success("Profile Saved!");
     }
   };
-
   return (
     <main className="mx-5">
       <h1 className="my-5 text-2xl border-b-[1px] border-slate-300 pb-2">

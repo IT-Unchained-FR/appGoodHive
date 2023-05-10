@@ -27,6 +27,7 @@
     "postcss": "8.4.21",
     "postgres": "^3.3.4",
     "react": "18.2.0",
+    "react-autosuggest": "^10.1.0",
     "react-dom": "18.2.0",
     "react-hot-toast": "^2.4.0",
     "react-loading-skeleton": "^3.2.1",
@@ -36,6 +37,8 @@
     "wagmi": "^0.12.10"
   },
   "devDependencies": {
+    "@types/react-autosuggest": "^10.1.6",
+    "@types/uuid": "^9.0.1",
     "eslint-config-prettier": "^8.8.0"
   }
 }
