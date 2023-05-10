@@ -12,6 +12,7 @@ export async function POST(request: Request) {
     email,
     telegram,
     details,
+    imageUrl,
   } = await request.json();
 
   const sql = postgres(process.env.DATABASE_URL || "", {
@@ -32,7 +33,8 @@ export async function POST(request: Request) {
         phone_number,
         email,
         telegram,
-        details
+        details,
+        image_url
       ) VALUES (
         ${headline},
         ${designation},
@@ -43,7 +45,8 @@ export async function POST(request: Request) {
         ${phoneNumber},
         ${email},
         ${telegram},
-        ${details}
+        ${details},
+        ${imageUrl}
       );
     `;
 
