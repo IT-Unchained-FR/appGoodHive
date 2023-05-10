@@ -21,7 +21,7 @@ export default function Header() {
           ? "Looking for Job"
           : ""}
       </h1>
-      <div className=" space-y-6 w-6/12">
+      <div className=" space-y-6 sm:w-full md:w-full lg:w-6/12 xl:w-6/12 2xl:w-6/12">
         <Input
           labelText=""
           placeholder="Try Developer Solidity, Rust, C++..."
@@ -40,7 +40,7 @@ export default function Header() {
           value={textValue}
           onChange={textHandleChange}
         />
-        <div className="flex  space-x-11 ">
+        <div className="flex space-x-11 ">
           <IconButton
             text={
               pathname === "/companies/search-talents"
