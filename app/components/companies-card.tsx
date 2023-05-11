@@ -36,10 +36,10 @@ export const CompaniesCard: FC<Props> = ({
   return (
     <div className="mt-11 ">
       <div className="block bg-blend-darken shadow-gray-300 rounded-3xl shadow-xl box-border border-r-2 border-l-2  border-radius  bg-white">
-        <div className="pl-4 pr-5 pt-5 flex justify-end">
+        <div className="flex pl-4 pr-5 pt-5 justify-end">
           {" "}
           <Image
-            className="mt-1 h-5 w-8 mb-4 hover:"
+            className="mt-1 h-5 mb-4 flex w-8"
             src={countryFlag}
             alt="country"
             width={15}
@@ -50,27 +50,29 @@ export const CompaniesCard: FC<Props> = ({
           <Image src={image} alt="avatar" width={157} height={166} />
         </div>
         <div className=" pt-7 flex flex-col items-center ">
-          <p className="font-semibold text-xl  text-gray-800 ">{designation}</p>
-          <p className="text-base text-gray-600 ">{website}</p>
-          <div className="space-x-3">
+          <p className="flex text-center font-semibold text-xl text-gray-800 ">
+            {designation}
+          </p>
+          <p className="flex text-center text-base text-gray-600 ">{website}</p>
+          <div className="space-x-3 flex w-32 ">
             <Button text="Contact" type="secondary" size="small" />
           </div>
         </div>
         <div className="pl-8 pr-8 pt-5">
-          <p className="font-bold text-base whitespace-nowrap inline">
+          <p className="font-bold text-base whitespace-nowrap flex flex-auto">
             {" "}
             Profile
           </p>
-          <span className="pl-2 inline text-gray-500 font-light">
+          <span className=" text-justify flex text-gray-500 font-light">
             {details}
           </span>
         </div>
         <div className="flex pt-5 pl-8 pb-3">
-          <p className="font-bold text-base whitespace-nowrap inline pr-5">
+          <p className="font-bold text-base whitespace-nowrap flex pr-5">
             {" "}
             Social Media :
           </p>
-          <div className="inline-flex items-center space-x-2 pb-5">
+          <div className="flex items-center space-x-2 pb-5">
             <a className="target " href="">
               <svg
                 width="29"

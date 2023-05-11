@@ -47,8 +47,8 @@ export const JobCard: FC<Props> = ({
           </a>
         </div>
         <div className="pl-4 pr-5">
-          <div className="md:flex md:flex-row flex  ">
-            <div className=" md:w-20 w-20 flex  items-center  mb-6 lg:mb-0 mx-auto md:mx-0   ">
+          <div className="flex flex-row ">
+            <div className=" md:w-20 w-20 flex items-center mb-6 lg:mb-0 mx-auto md:mx-0   ">
               <Image src={image} alt="avatar" width={157} height={166} />
             </div>
             <div className="md:ml-2  pl-8 pt-7  ">
@@ -75,25 +75,29 @@ export const JobCard: FC<Props> = ({
             </div>
           </div>
           <div>
-            <div className="pt-2">
-              <p className="font-bold text-base pr-1 whitespace-nowrap inline">
+            <div className="pt-2 ">
+              <p className="font-bold text-base pr-1 whitespace-nowrap ">
                 {" "}
                 Job header
               </p>
-              <span className="inline text-gray-500 font-light">{title}</span>
+              <p className=" flex text-justify text-gray-500 font-light">
+                {title}
+              </p>
             </div>
-            <div className="pt-2">
-              <p className="font-bold text-base pr-1 whitespace-nowrap inline">
+            <div className="pt-2 ">
+              <p className="font-bold text-base pr-1 whitespace-nowrap">
                 {" "}
                 Job description
               </p>
-              <span className="inline text-gray-500 font-light">{details}</span>
+              <span className=" flex text-justify text-gray-500 font-light">
+                {details}
+              </span>
             </div>
             <div className="flex flex-col pt-4 ">
               <p className="font-bold text-base whitespace-nowrap">
                 Mandatory Skill:
               </p>
-              <div className="pt-3 grid grid-cols-3 grid-flow-row sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-4 4xl:grid-cols-4 gap-1">
+              <div className="pt-3 grid grid-cols-3 grid-flow-row md:grid-cols-5 lg:grid-cols-7 gap-1">
                 {skills.map((skill, i) => (
                   <span
                     key={i}
