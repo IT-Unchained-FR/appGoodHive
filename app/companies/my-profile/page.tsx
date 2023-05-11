@@ -22,16 +22,26 @@ export default function MyProfile() {
 
   useEffect(() => {
     if (typeof file === "object" && file !== null) {
-      fetch("/api/picture", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(file),
-      })
-        .then((imageResponse) => imageResponse.json()) // extract JSON data from the response
-        .then((imageData) => setImageUrl(imageData.imageUrl)) // set the new value of imageUrl
-        .catch((error) => console.error(error)); // handle errors
+      const fetchImage = async () => {
+        setIsLoading(true);
+        const postImageResponse = await fetch("/api/picture", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(file),
+        });
+
+        if (postImageResponse.ok) {
+          const { imageUrl } = await postImageResponse.json();
+          setImageUrl(imageUrl);
+        } else {
+          console.error(postImageResponse.statusText);
+        }
+        setIsLoading(false);
+      };
+
+      fetchImage();
     }
   }, [file]);
 
@@ -277,7 +287,7 @@ export default function MyProfile() {
                   type="submit"
                   disabled
                 >
-                  Saving...
+                  Loading...
                 </button>
               ) : (
                 <button
