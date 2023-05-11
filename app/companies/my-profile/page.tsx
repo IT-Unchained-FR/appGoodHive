@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, FormEvent } from "react";
+import { useRef, useState, FormEvent, useEffect } from "react";
 
 import toast from "react-hot-toast";
 
@@ -16,8 +16,34 @@ interface FileData {
 export default function MyProfile() {
   const invoiceInputValue = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [imageUrl, setImageUrl] = useState(null);
   const [file, setFile] = useState<false | FileData>(false);
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (typeof file === "object" && file !== null) {
+      const fetchImage = async () => {
+        setIsLoading(true);
+        const postImageResponse = await fetch("/api/picture", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(file),
+        });
+
+        if (postImageResponse.ok) {
+          const { imageUrl } = await postImageResponse.json();
+          setImageUrl(imageUrl);
+        } else {
+          console.error(postImageResponse.statusText);
+        }
+        setIsLoading(false);
+      };
+
+      fetchImage();
+    }
+  }, [file]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -36,6 +62,7 @@ export default function MyProfile() {
       email: formData.get("email"),
       telegram: formData.get("telegram"),
       details: formData.get("details"),
+      imageUrl,
     };
     // TODO: POST formData to the server with fetch
     const profileResponse = await fetch("/api/companies/my-profile", {
@@ -46,7 +73,7 @@ export default function MyProfile() {
       body: JSON.stringify(dataForm),
     });
 
-    const data = await profileResponse.json();
+    const profileData = await profileResponse.json();
 
     setIsLoading(false);
 
@@ -56,7 +83,6 @@ export default function MyProfile() {
       toast.success("Profile Saved!");
     }
   };
-
   return (
     <main className="mx-5">
       <h1 className="my-5 text-2xl border-b-[1px] border-slate-300 pb-2">
@@ -261,7 +287,7 @@ export default function MyProfile() {
                   type="submit"
                   disabled
                 >
-                  Saving...
+                  Loading...
                 </button>
               ) : (
                 <button
