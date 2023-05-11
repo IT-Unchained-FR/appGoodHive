@@ -1,4 +1,3 @@
-import fs from "fs";
 import { S3, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 
@@ -23,17 +22,26 @@ export async function POST(request: Request) {
     const fileExtension = file.type.split("/")[1];
 
     // Upload a new file to the bucket with the file extension
-    const keyName = "image_" + uuidv4() + "." + fileExtension;
+    const keyName = `image_${uuidv4()}.${fileExtension}`;
+
+    // Remove header
+    const base64Data = file.data.replace(/^data:image\/\w+;base64,/, "");
+
+    // Convert base64 to a buffer
+    const dataBuffer = Buffer.from(base64Data, "base64");
 
     const putObjectParams = {
       Bucket: bucketName,
       Key: keyName,
-      Body: Buffer.from(file.data), // or fs.readFileSync(file) if reading from file system
+      Body: dataBuffer,
+      ACL: "public-read",
+      ContentEncoding: "base64",
       ContentType: file.type,
     };
 
     try {
       await s3.send(new PutObjectCommand(putObjectParams));
+
       console.log("Successfully uploaded data to", bucketName + "/" + keyName);
     } catch (error) {
       console.error(error);
@@ -48,7 +56,9 @@ export async function POST(request: Request) {
 
     try {
       await s3.send(new GetObjectCommand(getObjectParams));
+
       const url = `https://${bucketName}.${hostB2}/${keyName}`;
+
       return new Response(JSON.stringify({ imageUrl: url }));
     } catch (error) {
       console.error(error);
