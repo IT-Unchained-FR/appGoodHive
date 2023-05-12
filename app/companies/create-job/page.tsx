@@ -100,14 +100,17 @@ export default function CreateJob() {
       event: React.FormEvent<HTMLInputElement>,
       { suggestion }: Autosuggest.SuggestionSelectedEventData<any>
     ) => {
-      setSelectedSkills([...selectedSkills, suggestion]);
+      if (!selectedSkills.includes(suggestion))
+        setSelectedSkills([...selectedSkills, suggestion]);
       setValue("");
     };
 
-    const renderSuggestion = (suggestion: string) => <div>{suggestion}</div>;
+    const renderSuggestion = (suggestion: string) => (
+      <div className="mx-4 hover:text-[#FFC905] ">{suggestion}</div>
+    );
 
     const inputProps = {
-      placeholder: "Auto Suggest",
+      placeholder: "JavaScript, NextJS,...",
       type: "text",
       maxLength: 255,
       name: "skills",
@@ -119,19 +122,21 @@ export default function CreateJob() {
         setValue(newValue);
       },
       className:
-        " rounded-full block w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding transition ease-in-out focus:text-black bg-gray-100 focus:outline-none focus:ring-0",
+        " rounded-full block me-5 w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding transition ease-in-out focus:text-black bg-gray-100 focus:outline-none focus:ring-0",
     };
 
     return (
-      <Autosuggest
-        suggestions={getSuggestions(value)}
-        onSuggestionsFetchRequested={onSuggestionsFetchRequested}
-        onSuggestionsClearRequested={onSuggestionsClearRequested}
-        getSuggestionValue={(skill) => skill}
-        onSuggestionSelected={onSuggestionSelected}
-        renderSuggestion={renderSuggestion}
-        inputProps={inputProps}
-      />
+      <div className="relative">
+        <Autosuggest
+          suggestions={getSuggestions(value)}
+          onSuggestionsFetchRequested={onSuggestionsFetchRequested}
+          onSuggestionsClearRequested={onSuggestionsClearRequested}
+          getSuggestionValue={(skill) => skill}
+          onSuggestionSelected={onSuggestionSelected}
+          renderSuggestion={renderSuggestion}
+          inputProps={inputProps}
+        />
+      </div>
     );
   };
 
@@ -217,7 +222,7 @@ export default function CreateJob() {
                   Expected rate per hour
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block me-5 w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   type="number"
                   name="rate-per-hour"
                   maxLength={100}
@@ -231,7 +236,7 @@ export default function CreateJob() {
                   Budget of the project
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block me-5 w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   type="number"
                   name="budget"
                   maxLength={100}
@@ -246,34 +251,33 @@ export default function CreateJob() {
                 >
                   Mandatory Skills
                 </label>
-                <div className="flex justify-end">
-                  <div className="pt-1 form-control block w-full text-base font-normal text-gray-600 bg-white ">
-                    <AutosuggestInput />
-                  </div>
+                <div className="absolute pr-10 pt-1 form-control w-full text-base font-normal text-gray-600 bg-white ">
+                  <AutosuggestInput />
                 </div>
-
-                {selectedSkills.length > 0 && (
-                  <div className="flex flex-wrap mt-4 ">
-                    {selectedSkills.map((skill, index) => (
-                      <div
-                        key={index}
-                        className="border border-[#FFC905] flex items-center bg-gray-200 rounded-full py-1 px-3 m-1"
-                      >
-                        <span className="mr-2">{skill}</span>
-                        <button
-                          onClick={() =>
-                            setSelectedSkills(
-                              selectedSkills.filter((_, i) => i !== index)
-                            )
-                          }
-                          className="text-black bg-gray-400 rounded-full w-6 focus:outline-none"
+                <div className="pt-10">
+                  {selectedSkills.length > 0 && (
+                    <div className="flex flex-wrap mt-4 ">
+                      {selectedSkills.map((skill, index) => (
+                        <div
+                          key={index}
+                          className="border border-[#FFC905] flex items-center bg-gray-200 rounded-full py-1 px-3 m-1"
                         >
-                          &#10005;
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                          <span className="mr-2">{skill}</span>
+                          <button
+                            onClick={() =>
+                              setSelectedSkills(
+                                selectedSkills.filter((_, i) => i !== index)
+                              )
+                            }
+                            className="text-black bg-gray-400 rounded-full w-6 focus:outline-none"
+                          >
+                            &#10005;
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             <div className="mt-10 text-right">
