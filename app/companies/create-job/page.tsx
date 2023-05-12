@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useRef, useState, FormEvent, ChangeEvent } from "react";
 import React from "react";
 
 import Autosuggest from "react-autosuggest";
 
 import toast from "react-hot-toast";
+
+import { Button } from "../../components/button";
 
 interface FileData {
   name: string;
@@ -15,6 +17,7 @@ interface FileData {
 
 export default function CreateJob() {
   const [isLoading, setIsLoading] = useState(false);
+  const [value, setValue] = useState("");
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -40,6 +43,8 @@ export default function CreateJob() {
       },
       body: JSON.stringify(dataForm),
     });
+
+    const jobData = await jobResponse.json();
 
     setIsLoading(false);
 
@@ -178,7 +183,7 @@ export default function CreateJob() {
             <div>
               <label
                 htmlFor="description"
-                className="inline-block mt-4 ml-3 text-base text-black form-label"
+                className="inline-block ml-3 text-base text-black form-label mt-4"
               ></label>
             </div>
             <div>
@@ -239,7 +244,7 @@ export default function CreateJob() {
               <div className="flex-1">
                 <label
                   htmlFor="skills"
-                  className="inline-block ml-3 text-base font-bold text-black form-label"
+                  className="inline-block font-bold ml-3 text-base text-black form-label"
                 >
                   Mandatory Skills
                 </label>
