@@ -47,19 +47,19 @@ export const Card: FC<Props> = ({
   }
 
   return (
-    <div className="mt-11 ">
-      <div className="block p-6 bg-blend-darken shadow-gray-300 rounded-3xl shadow-xl box-border border-r-2 border-l-2  border-radius  bg-white">
+    <div className="mt-11">
+      <div className="block p-6 bg-blend-darken shadow-gray-300 rounded-3xl shadow-xl box-border border-r-2 border-l-2 border-radius bg-white">
         <div className="pl-4 pr-5">
-          <div className="md:flex md:flex-row flex  ">
-            <div className=" md:w-20 w-20 flex  items-center  mb-6 lg:mb-0 mx-auto md:mx-0   ">
+          <div className="md:flex md:flex-row flex">
+            <div className=" md:w-20 w-20 flex  items-center  mb-6 lg:mb-0 mx-auto md:mx-0">
               <Image src={image} alt="avatar" width={157} height={166} />
             </div>
-            <div className="md:ml-2  pl-8 pt-7  ">
-              <p className="font-semibold text-xl  text-gray-800 ">{title}</p>
-              <p className="text-base text-gray-600 ">{postedBy}</p>
+            <div className="md:ml-2 pl-8 pt-7">
+              <p className="font-semibold text-xl text-gray-800">{title}</p>
+              <p className="text-base text-gray-600">{postedBy}</p>
               <p className="text-base text-gray-600 mb-5">{postedOn}</p>
             </div>
-            <div className="hover: flex pt-7 flex grow justify-end md:ml-5 ">
+            <div className="hover: flex pt-7 flex grow justify-end md:ml-5">
               <Image
                 className="mt-1 h-5 w-8 mb-4 hover:"
                 src={countryFlag}
@@ -79,31 +79,15 @@ export const Card: FC<Props> = ({
                 {description}
               </span>
             </div>{" "}
-            <div className="flex  pt-4 ">
-              <div className="  grid  w-full grid-cols-3 grid-flow-row sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-3  xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-4 4xl:grid-cols-4  gap-1">
-                <h1 className="font-bold lg:col-span-2 xl:col-span-2 2xl:col-span-2 text-base whitespace-nowrap  inline-block  ">
+            <div className="flex pt-4 ">
+              <div className="grid w-full grid-cols-3 grid-flow-row sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-4 4xl:grid-cols-4  gap-1">
+                <h1 className="font-bold lg:col-span-2 xl:col-span-2 2xl:col-span-2 text-base whitespace-nowrap inline-block">
                   Mandatory Skill:
                 </h1>
-                {skills.map((skill, i) => (
+                {skills.map((skill, index) => (
                   <span
-                    key={i}
-                    className="inline-block  bg-[#FFF2CE] rounded-full  py-1 text-xs font-semibold text-center mr-1 mb-1"
-                  >
-                    {skill}
-                  </span>
-                ))}
-                {skills.map((skill, i) => (
-                  <span
-                    key={i}
-                    className="inline-block bg-[#FFF2CE] rounded-full  py-1 text-xs font-semibold text-center mr-1 mb-1"
-                  >
-                    {skill}
-                  </span>
-                ))}
-                {skills.map((skill, i) => (
-                  <span
-                    key={i}
-                    className="inline-block bg-[#FFF2CE] rounded-full  py-1 text-xs font-semibold text-center mr-1 mb-1"
+                    key={index}
+                    className="inline-block bg-[#FFF2CE] rounded-full py-1 text-xs font-semibold text-center mr-1 mb-1"
                   >
                     {skill}
                   </span>
@@ -111,9 +95,9 @@ export const Card: FC<Props> = ({
               </div>
             </div>
           </div>
-          <div className="flex items-center justify-between pt-12 ">
+          <div className="flex items-center justify-between pt-12">
             <div className="inline-flex items-center space-x-2">
-              <a className=" " href="">
+              <a href="">
                 <svg
                   width="29"
                   height="30"
@@ -129,7 +113,7 @@ export const Card: FC<Props> = ({
                   />
                 </svg>
               </a>
-              <a className="target " href="">
+              <a href="">
                 <svg
                   width="30"
                   height="29"
@@ -151,7 +135,7 @@ export const Card: FC<Props> = ({
                   }
                 `}</style>
               </a>
-              <a className="target" href="https://web.telegram.org/z/">
+              <a href="https://web.telegram.org/z/">
                 <svg
                   width="31"
                   height="31"
@@ -173,7 +157,7 @@ export const Card: FC<Props> = ({
                   }
                 `}</style>
               </a>
-              <a className="target" href="">
+              <a href="">
                 <svg
                   width="31"
                   height="31"
