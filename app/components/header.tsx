@@ -40,7 +40,7 @@ export default function Header() {
           value={textValue}
           onChange={textHandleChange}
         />
-        <div className="flex space-x-11 ">
+        <div className="flex space-x-11">
           <IconButton
             text={
               pathname === "/companies/search-talents"
