@@ -56,19 +56,7 @@ export default function CreateJob() {
   };
 
   //TODO: Put the following code in a Autosuggest Input component
-  const languages = [
-    "JavaScript",
-    "Solidity",
-    "SQL",
-    "C#",
-    "Tailwind",
-    "EtherJS",
-    "TypeScript",
-    "IPFS",
-    "ReactJS",
-    "NextJS",
-    // Add more skills here if needed...
-  ];
+  const skills = process.env.NEXT_PUBLIC_SKILLS?.split(",") ?? [];
 
   const AutosuggestInput = () => {
     const [value, setValue] = useState("");
@@ -80,7 +68,7 @@ export default function CreateJob() {
 
       return inputLength === 0
         ? []
-        : languages.filter(
+        : skills.filter(
             (skill) => skill.toLowerCase().slice(0, inputLength) === inputValue
           );
     };
@@ -97,13 +85,16 @@ export default function CreateJob() {
       event: React.FormEvent<HTMLInputElement>,
       { suggestion }: Autosuggest.SuggestionSelectedEventData<any>
     ) => {
-      if (!selectedSkills.includes(suggestion))
+      if (selectedSkills.indexOf(suggestion) === -1) {
         setSelectedSkills([...selectedSkills, suggestion]);
+      }
       setValue("");
     };
 
     const renderSuggestion = (suggestion: string) => (
-      <div className="mx-4 hover:text-[#FFC905] ">{suggestion}</div>
+      <div className="mx-1 px-2 bg-gray-100 hover:text-[#FFC905] ">
+        {suggestion}
+      </div>
     );
 
     const inputProps = {
@@ -119,7 +110,7 @@ export default function CreateJob() {
         setValue(newValue);
       },
       className:
-        " rounded-full block me-5 w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding transition ease-in-out focus:text-black bg-gray-100 focus:outline-none focus:ring-0",
+        " rounded-lg block me-5 w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding transition ease-in-out focus:text-black bg-gray-100 focus:outline-none focus:ring-0",
     };
 
     return (
@@ -248,7 +239,7 @@ export default function CreateJob() {
                 >
                   Mandatory Skills
                 </label>
-                <div className="absolute pr-10 pt-1 form-control w-full text-base font-normal text-gray-600 bg-white ">
+                <div className=" absolute pr-10 pt-1 form-control w-full text-base font-normal text-gray-600 bg-white ">
                   <AutosuggestInput />
                 </div>
                 <div className="pt-10">
