@@ -52,13 +52,13 @@ export default function CreateJob() {
 
   //TODO: Put the following code in a Autosuggest Input component
   const languages = [
-    "JavaScript",
+    "JS",
     "Solidity",
     "SQL",
     "C#",
     "Tailwind",
     "EtherJS",
-    "TypeScript",
+    "TS",
     "IPFS",
     "ReactJS",
     "NextJS",
@@ -92,17 +92,14 @@ export default function CreateJob() {
       event: React.FormEvent<HTMLInputElement>,
       { suggestion }: Autosuggest.SuggestionSelectedEventData<any>
     ) => {
-      if (!selectedSkills.includes(suggestion))
-        setSelectedSkills([...selectedSkills, suggestion]);
+      setSelectedSkills([...selectedSkills, suggestion]);
       setValue("");
     };
 
-    const renderSuggestion = (suggestion: string) => (
-      <div className="mx-4 hover:text-[#FFC905] ">{suggestion}</div>
-    );
+    const renderSuggestion = (suggestion: string) => <div>{suggestion}</div>;
 
     const inputProps = {
-      placeholder: "JavaScript, NextJS,...",
+      placeholder: "Auto Suggest",
       type: "text",
       maxLength: 255,
       name: "skills",
@@ -114,21 +111,19 @@ export default function CreateJob() {
         setValue(newValue);
       },
       className:
-        " rounded-full block me-5 w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding transition ease-in-out focus:text-black bg-gray-100 focus:outline-none focus:ring-0",
+        "border-b border-gray-300 block w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:outline-none focus:ring-0",
     };
 
     return (
-      <div className="relative">
-        <Autosuggest
-          suggestions={getSuggestions(value)}
-          onSuggestionsFetchRequested={onSuggestionsFetchRequested}
-          onSuggestionsClearRequested={onSuggestionsClearRequested}
-          getSuggestionValue={(skill) => skill}
-          onSuggestionSelected={onSuggestionSelected}
-          renderSuggestion={renderSuggestion}
-          inputProps={inputProps}
-        />
-      </div>
+      <Autosuggest
+        suggestions={getSuggestions(value)}
+        onSuggestionsFetchRequested={onSuggestionsFetchRequested}
+        onSuggestionsClearRequested={onSuggestionsClearRequested}
+        getSuggestionValue={(skill) => skill}
+        onSuggestionSelected={onSuggestionSelected}
+        renderSuggestion={renderSuggestion}
+        inputProps={inputProps}
+      />
     );
   };
 
@@ -214,7 +209,7 @@ export default function CreateJob() {
                   Expected rate per hour
                 </label>
                 <input
-                  className="form-control block me-5 w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   type="number"
                   name="rate-per-hour"
                   maxLength={100}
@@ -228,7 +223,7 @@ export default function CreateJob() {
                   Budget of the project
                 </label>
                 <input
-                  className="form-control block me-5 w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   type="number"
                   name="budget"
                   maxLength={100}
@@ -263,7 +258,7 @@ export default function CreateJob() {
                               selectedSkills.filter((_, i) => i !== index)
                             )
                           }
-                          className="text-black bg-gray-400 rounded-full w-6 focus:outline-none"
+                          className="w-6 text-black bg-gray-400 rounded-full focus:outline-none"
                         >
                           &#10005;
                         </button>
@@ -273,24 +268,24 @@ export default function CreateJob() {
                 )}
               </div>
             </div>
-          </div>
-          <div className="mt-10 text-right">
-            {isLoading ? (
-              <button
-                className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full opacity-50 cursor-not-allowed transition duration-150 ease-in-out"
-                type="submit"
-                disabled
-              >
-                Saving...
-              </button>
-            ) : (
-              <button
-                className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
-                type="submit"
-              >
-                Save
-              </button>
-            )}
+            <div className="mt-10 text-right">
+              {isLoading ? (
+                <button
+                  className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full opacity-50 cursor-not-allowed transition duration-150 ease-in-out"
+                  type="submit"
+                  disabled
+                >
+                  Saving...
+                </button>
+              ) : (
+                <button
+                  className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
+                  type="submit"
+                >
+                  Save
+                </button>
+              )}
+            </div>
           </div>
         </form>
       </section>
