@@ -3,3 +3,43 @@
 @tailwind utilities;
 
 @import url("https://fonts.googleapis.com/css2?family=Montserrat");
+
+.logo-svg {
+  width: 31px;
+  height: 31px;
+}
+
+@media only screen and (min-width: 640px) {
+  .logo-svg {
+    width: 31px;
+    height: 31px;
+  }
+}
+
+@media only screen and (min-width: 768px) {
+  .logo-svg {
+    width: 31px;
+    height: 31px;
+  }
+}
+
+@media only screen and (min-width: 1024px) {
+  .logo-svg {
+    width: 19px;
+    height: 19px;
+  }
+}
+
+@media only screen and (min-width: 1280px) {
+  .logo-svg {
+    width: 24px;
+    height: 26px;
+  }
+}
+
+@media only screen and (min-width: 1536px) {
+  .logo-svg {
+    width: 31px;
+    height: 31px;
+  }
+}
