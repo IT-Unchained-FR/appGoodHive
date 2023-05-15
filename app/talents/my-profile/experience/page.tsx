@@ -3,6 +3,8 @@
 import { useRef, useState, FormEvent } from "react";
 import React from "react";
 
+import Select from "react-select";
+
 import Autosuggest from "react-autosuggest";
 
 import toast from "react-hot-toast";
@@ -66,6 +68,14 @@ export default function CreateJob() {
     "ReactJS",
     "NextJS",
     // Add more skills here if needed...
+  ];
+
+  const employment = [
+    { value: "fulltime", label: "Full-time" },
+    { value: "parttime", label: "Part-time" },
+    { value: "internship", label: "Internship" },
+    { value: "remote", label: "Remote" },
+    { value: "other", label: "Other" },
   ];
 
   const AutosuggestInput = () => {
@@ -165,15 +175,13 @@ export default function CreateJob() {
                 >
                   Employment Type*
                 </label>
-                <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-gray-100 rounded-full bg-clip-padding border border-solid border-[#FFC905] hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Please select"
-                  name="type-employment"
-                  type="text"
-                  required
-                  pattern="[a-zA-Z ]+"
-                  maxLength={100}
-                />
+                <div className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-gray-100 rounded-full bg-clip-padding border border-solid border-[#FFC905] hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none">
+                  <Select
+                    name="type-employment"
+                    options={employment}
+                    required
+                  ></Select>
+                </div>
               </div>
             </div>
             <div className="flex flex-col gap-4 mt-6 sm:flex-row">
@@ -220,8 +228,9 @@ export default function CreateJob() {
                 </label>
                 <input
                   className="form-control block me-5 w-full px-4 py-2 text-base font-normal text-gray-600 bg-gray-100 rounded-full bg-clip-padding border border-solid border-[#FFC905]  hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  type="number"
+                  type="text"
                   name="start"
+                  placeholder="month/year"
                   maxLength={100}
                 />
               </div>
@@ -234,8 +243,9 @@ export default function CreateJob() {
                 </label>
                 <input
                   className="form-control block me-5 w-full px-4 py-2 text-base font-normal text-gray-600 bg-gray-100 rounded-full bg-clip-padding border border-solid border-[#FFC905] hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  type="number"
+                  type="text"
                   name="end"
+                  placeholder=""
                   maxLength={100}
                 />
               </div>
@@ -255,7 +265,7 @@ export default function CreateJob() {
                 rows={3}
               />
             </div>
-            <div className="flex flex-col gap-4 mt-10 sm:flex-row">
+            <div className="flex flex-col gap-4 mt-20 sm:flex-row">
               <div className="flex-1">
                 <label
                   htmlFor="skills"
