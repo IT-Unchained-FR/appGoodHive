@@ -9,15 +9,8 @@ import toast from "react-hot-toast";
 // import { Button } from "../../components/button";
 import { skills } from "../../constants/skills";
 
-interface FileData {
-  name: string;
-  type: string;
-  data: string | ArrayBuffer | null;
-}
-
 export default function CreateJob() {
   const [isLoading, setIsLoading] = useState(false);
-  const [value, setInputValue] = useState(""); // FIXME: this var is not explicit
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
