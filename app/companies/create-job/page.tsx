@@ -1,17 +1,13 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import React from "react";
 
 import Autosuggest from "react-autosuggest";
-
 import toast from "react-hot-toast";
 
-interface FileData {
-  name: string;
-  type: string;
-  data: string | ArrayBuffer | null;
-}
+// TODO: use button but before add the type of the button component (i.e. type="button" or type="submit")
+// import { Button } from "../../components/button";
+import { skills } from "../../constants/skills";
 
 export default function CreateJob() {
   const [isLoading, setIsLoading] = useState(false);
@@ -51,23 +47,8 @@ export default function CreateJob() {
   };
 
   //TODO: Put the following code in a Autosuggest Input component
-  const languages = [
-    "JS",
-    "Solidity",
-    "SQL",
-    "C#",
-    "Tailwind",
-    "EtherJS",
-    "TS",
-    "IPFS",
-    "ReactJS",
-    "NextJS",
-    // Add more skills here if needed...
-  ];
-
-  const AutosuggestInput = () => {
-    const [value, setValue] = useState("");
-    const [suggestions, setSuggestions] = useState<string[]>([]);
+  const AutoSuggestInput = () => {
+    const [inputValue, setInputValue] = useState("");
 
     const getSuggestions = (value: string) => {
       const inputValue = value.trim().toLowerCase();
@@ -75,50 +56,47 @@ export default function CreateJob() {
 
       return inputLength === 0
         ? []
-        : languages.filter(
+        : skills.filter(
             (skill) => skill.toLowerCase().slice(0, inputLength) === inputValue
           );
     };
 
-    const onSuggestionsFetchRequested = ({ value }: any) => {
-      setSuggestions(getSuggestions(value));
-    };
-
-    const onSuggestionsClearRequested = () => {
-      setSuggestions([]);
-    };
-
     const onSuggestionSelected = (
       event: React.FormEvent<HTMLInputElement>,
-      { suggestion }: Autosuggest.SuggestionSelectedEventData<any>
+      { suggestion }: Autosuggest.SuggestionSelectedEventData<string>
     ) => {
-      setSelectedSkills([...selectedSkills, suggestion]);
-      setValue("");
+      if (!selectedSkills.includes(suggestion)) {
+        setSelectedSkills([...selectedSkills, suggestion]);
+      }
     };
 
-    const renderSuggestion = (suggestion: string) => <div>{suggestion}</div>;
+    const renderSuggestion = (suggestion: string) => (
+      <div className="mx-1 px-2 py-2 z-10 hover:text-[#FF8C05] bg-white shadow-md max-h-48 overflow-y-auto border-gray-400 border-b-[0.5px] border-solid">
+        {suggestion}
+      </div>
+    );
 
     const inputProps = {
-      placeholder: "Auto Suggest",
+      placeholder: "JavaScript, NextJS,...",
       type: "text",
       maxLength: 255,
       name: "skills",
-      value,
+      value: inputValue,
       onChange: (
         event: React.FormEvent<HTMLElement>,
         { newValue }: { newValue: string }
       ) => {
-        setValue(newValue);
+        setInputValue(newValue);
       },
       className:
-        "border-b border-gray-300 block w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:outline-none focus:ring-0",
+        "relative rounded-lg block w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding transition ease-in-out focus:text-black bg-gray-100 focus:outline-none focus:ring-0",
     };
 
     return (
       <Autosuggest
-        suggestions={getSuggestions(value)}
-        onSuggestionsFetchRequested={onSuggestionsFetchRequested}
-        onSuggestionsClearRequested={onSuggestionsClearRequested}
+        suggestions={getSuggestions(inputValue)}
+        onSuggestionsFetchRequested={() => "ewffew"}
+        onSuggestionsClearRequested={() => "wef"}
         getSuggestionValue={(skill) => skill}
         onSuggestionSelected={onSuggestionSelected}
         renderSuggestion={renderSuggestion}
@@ -238,34 +216,34 @@ export default function CreateJob() {
                 >
                   Mandatory Skills
                 </label>
-                <div className="flex justify-end">
-                  <div className="block w-full text-base font-normal text-gray-600 bg-white form-control ">
-                    <AutosuggestInput />
-                  </div>
+                <div className="absolute w-full pt-1 pr-10 text-base font-normal text-gray-600 bg-white form-control ">
+                  <AutoSuggestInput />
                 </div>
-
-                {selectedSkills.length > 0 && (
-                  <div className="flex flex-wrap mt-4 ">
-                    {selectedSkills.map((skill, index) => (
-                      <div
-                        key={index}
-                        className="border border-[#FFC905] flex items-center bg-gray-200 rounded-full py-1 px-3 m-1"
-                      >
-                        <span className="mr-2">{skill}</span>
-                        <button
-                          onClick={() =>
-                            setSelectedSkills(
-                              selectedSkills.filter((_, i) => i !== index)
-                            )
-                          }
-                          className="w-6 text-black bg-gray-400 rounded-full focus:outline-none"
+                <div className="pt-10">
+                  {selectedSkills.length > 0 && (
+                    <div className="flex flex-wrap mt-4 ">
+                      {selectedSkills.map((skill, index) => (
+                        <div
+                          key={index}
+                          className="border border-[#FFC905] flex items-center bg-gray-200 rounded-full py-1 px-3 m-1"
                         >
-                          &#10005;
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                          <span className="mr-2">{skill}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedSkills(
+                                selectedSkills.filter((_, i) => i !== index)
+                              );
+                            }}
+                            className="w-6 text-black bg-gray-400 rounded-full"
+                          >
+                            &#10005;
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             <div className="mt-10 text-right">
