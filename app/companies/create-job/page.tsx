@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import React from "react";
 
 import Autosuggest from "react-autosuggest";
-
 import toast from "react-hot-toast";
 
 import { Button } from "../../components/button";
+import { skills } from "../../constants/skills";
 
 interface FileData {
   name: string;
@@ -56,8 +55,6 @@ export default function CreateJob() {
   };
 
   //TODO: Put the following code in a Autosuggest Input component
-  const skills = process.env.NEXT_PUBLIC_SKILLS?.split(",") ?? [];
-
   const AutosuggestInput = () => {
     const [value, setValue] = useState("");
     const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -87,8 +84,8 @@ export default function CreateJob() {
     ) => {
       if (selectedSkills.indexOf(suggestion) === -1) {
         setSelectedSkills([...selectedSkills, suggestion]);
+        setValue("");
       }
-      setValue("");
     };
 
     const renderSuggestion = (suggestion: string) => (
