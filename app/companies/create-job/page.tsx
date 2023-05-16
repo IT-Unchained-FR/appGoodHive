@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, FormEvent, ChangeEvent } from "react";
+import { useState, FormEvent } from "react";
 import React from "react";
 
 import Autosuggest from "react-autosuggest";
@@ -92,7 +92,7 @@ export default function CreateJob() {
     };
 
     const renderSuggestion = (suggestion: string) => (
-      <div className="mx-1 px-2 bg-gray-100 hover:text-[#FFC905] ">
+      <div className="mx-1 px-2 z-10 hover:text-[#FFC905] bg-white shadow-md max-h-48 overflow-y-auto">
         {suggestion}
       </div>
     );
@@ -110,7 +110,7 @@ export default function CreateJob() {
         setValue(newValue);
       },
       className:
-        " rounded-lg block me-5 w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding transition ease-in-out focus:text-black bg-gray-100 focus:outline-none focus:ring-0",
+        "rounded-lg block w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding transition ease-in-out focus:text-black bg-gray-100 focus:outline-none focus:ring-0",
     };
 
     return (
@@ -210,7 +210,7 @@ export default function CreateJob() {
                   Expected rate per hour
                 </label>
                 <input
-                  className="form-control block me-5 w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   type="number"
                   name="rate-per-hour"
                   maxLength={100}
@@ -224,7 +224,7 @@ export default function CreateJob() {
                   Budget of the project
                 </label>
                 <input
-                  className="form-control block me-5 w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   type="number"
                   name="budget"
                   maxLength={100}
@@ -239,7 +239,7 @@ export default function CreateJob() {
                 >
                   Mandatory Skills
                 </label>
-                <div className=" absolute pr-10 pt-1 form-control w-full text-base font-normal text-gray-600 bg-white ">
+                <div className="absolute pr-10 pt-1 form-control w-full text-base font-normal text-gray-600 bg-white ">
                   <AutosuggestInput />
                 </div>
                 <div className="pt-10">
