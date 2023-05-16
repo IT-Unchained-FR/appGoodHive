@@ -6,6 +6,12 @@ import { Button } from "../components/button";
 import { IconButton } from "../components/icon-button";
 import { Card } from "../components/card";
 import { Input } from "../components/input";
+import { SelectInput } from "../components/select-input";
+
+interface Option {
+  value: string;
+  label: string;
+}
 
 export default function Design() {
   const [textValue, setTextValue] = useState("");
@@ -29,6 +35,11 @@ export default function Design() {
   const urlHandleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setURLValue(event.target.value);
   };
+
+  const options: Option[] = [
+    { value: "option 1", label: "option 1" },
+    { value: "option 2", label: "option 2" },
+  ];
 
   return (
     <main className="mx-5">
@@ -293,6 +304,12 @@ export default function Design() {
             value="Disabled value"
             onChange={textHandleChange}
           ></Input>
+          <SelectInput
+            labelText="Select Input"
+            placeholder="Select input"
+            required={true}
+            options={options}
+          />
         </div>
       </section>
 

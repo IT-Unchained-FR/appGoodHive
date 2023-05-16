@@ -3,14 +3,17 @@
 import { useRef, useState, FormEvent } from "react";
 import React from "react";
 
-import Select from "react-select";
-
 import Autosuggest from "react-autosuggest";
 
 import toast from "react-hot-toast";
 
 import { Button } from "../../../components/button";
+import { SelectInput } from "../../../components/select-input";
 
+interface Option {
+  value: string;
+  label: string;
+}
 export default function CreateJob() {
   const [isLoading, setIsLoading] = useState(false);
   const [value, setValue] = useState("");
@@ -22,13 +25,20 @@ export default function CreateJob() {
 
     const formData = new FormData(e.currentTarget);
 
+    const contractStart = `${formData.get("start-month")}/${formData.get(
+      "start-year"
+    )}`;
+    const contractEnd = `${formData.get("end-month")}/${formData.get(
+      "end-year"
+    )}`;
+
     const dataForm = {
       title: formData.get("title"),
       typeEmployment: formData.get("type-employment"),
       designation: formData.get("designation"),
-      location: formData.get("location"),
-      start: formData.get("start"),
-      end: formData.get("end"),
+      address: formData.get("address"),
+      contractStart,
+      contractEnd,
       description: formData.get("description"),
       skills: selectedSkills,
     };
@@ -56,26 +66,46 @@ export default function CreateJob() {
   };
 
   //TODO: Put the following code in a Autosuggest Input component
-  const languages = [
-    "JavaScript",
-    "Solidity",
-    "SQL",
-    "C#",
-    "Tailwind",
-    "EtherJS",
-    "TypeScript",
-    "IPFS",
-    "ReactJS",
-    "NextJS",
-    // Add more skills here if needed...
-  ];
+  const skills = process.env.NEXT_PUBLIC_SKILLS?.split(",") ?? [];
 
-  const employment = [
+  const employment: Option[] = [
     { value: "fulltime", label: "Full-time" },
     { value: "parttime", label: "Part-time" },
     { value: "internship", label: "Internship" },
     { value: "remote", label: "Remote" },
     { value: "other", label: "Other" },
+  ];
+
+  const month: Option[] = [
+    { value: "january", label: "january" },
+    { value: "february", label: "february" },
+    { value: "march", label: "march" },
+    { value: "april", label: "april" },
+    { value: "may", label: "may" },
+    { value: "june", label: "june" },
+    { value: "july", label: "july" },
+    { value: "august", label: "august" },
+    { value: "september", label: "september" },
+    { value: "october", label: "october" },
+    { value: "november", label: "november" },
+    { value: "december", label: "december" },
+  ];
+
+  const year: Option[] = [
+    { value: "2010", label: "2010" },
+    { value: "2011", label: "2011" },
+    { value: "2012", label: "2012" },
+    { value: "2013", label: "2013" },
+    { value: "2014", label: "2014" },
+    { value: "2015", label: "2015" },
+    { value: "2016", label: "2016" },
+    { value: "2017", label: "2017" },
+    { value: "2018", label: "2018" },
+    { value: "2019", label: "2019" },
+    { value: "2020", label: "2020" },
+    { value: "2021", label: "2021" },
+    { value: "2022", label: "2022" },
+    { value: "2023", label: "2023" },
   ];
 
   const AutosuggestInput = () => {
@@ -88,7 +118,7 @@ export default function CreateJob() {
 
       return inputLength === 0
         ? []
-        : languages.filter(
+        : skills.filter(
             (skill) => skill.toLowerCase().slice(0, inputLength) === inputValue
           );
     };
@@ -110,7 +140,9 @@ export default function CreateJob() {
       setValue("");
     };
     const renderSuggestion = (suggestion: string) => (
-      <div className="mx-4 hover:text-[#FFC905] ">{suggestion}</div>
+      <div className="mx-1 px-2 z-10 hover:text-[#FFC905] bg-white shadow-md max-h-48 overflow-y-auto">
+        {suggestion}
+      </div>
     );
 
     const inputProps = {
@@ -126,7 +158,7 @@ export default function CreateJob() {
         setValue(newValue);
       },
       className:
-        "ml-3 ml-1 pl-1 border-b border-gray-600 block me-5 w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding transition ease-in-out focus:text-black focus:outline-none focus:ring-0",
+        "rounded-lg block w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding transition ease-in-out focus:text-black bg-gray-100 focus:outline-none focus:ring-0",
     };
 
     return (
@@ -160,7 +192,7 @@ export default function CreateJob() {
                   Title*
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-gray-100 rounded-full bg-clip-padding border border-solid border-[#FFC905]  hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 rounded-full bg-clip-padding border border-solid border-[#FFC905]  hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="Try Developer Solidity, Rust, C++..."
                   name="title"
                   type="text"
@@ -169,19 +201,13 @@ export default function CreateJob() {
                 />
               </div>
               <div className="flex-1">
-                <label
-                  htmlFor="type-employment"
-                  className="inline-block ml-3 text-base text-black form-label"
-                >
-                  Employment Type*
-                </label>
-                <div className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-gray-100 rounded-full bg-clip-padding border border-solid border-[#FFC905] hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none">
-                  <Select
-                    name="type-employment"
-                    options={employment}
-                    required
-                  ></Select>
-                </div>
+                <SelectInput
+                  labelText="Select type of employment"
+                  placeholder="Full-time, Part-time..."
+                  name="type-employment"
+                  required
+                  options={employment}
+                />
               </div>
             </div>
             <div className="flex flex-col gap-4 mt-6 sm:flex-row">
@@ -193,9 +219,9 @@ export default function CreateJob() {
                   Company Name*
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-gray-100 rounded-full bg-clip-padding border border-solid border-[#FFC905] hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Try Developer Solidity, Rust, C++..."
-                  name="title"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600  rounded-full bg-clip-padding border border-solid border-[#FFC905] hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  placeholder="Name of the Company"
+                  name="designation"
                   type="text"
                   required
                   maxLength={100}
@@ -203,15 +229,15 @@ export default function CreateJob() {
               </div>
               <div className="flex-1">
                 <label
-                  htmlFor="location"
+                  htmlFor="address"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
                   Location*
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-gray-100 rounded-full bg-clip-padding border border-solid border-[#FFC905] hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 rounded-full bg-clip-padding border border-solid border-[#FFC905] hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   type="text"
-                  name="location"
+                  name="address"
                   placeholder="Paris, London, Remote..."
                   required
                   maxLength={100}
@@ -220,52 +246,56 @@ export default function CreateJob() {
             </div>
             <div className="flex flex-col gap-4 mt-6 sm:flex-row">
               <div className="flex-1">
-                <label
-                  htmlFor="start"
-                  className="inline-block ml-3 text-base text-black form-label"
-                >
-                  Start Date*
-                </label>
-                <input
-                  className="form-control block me-5 w-full px-4 py-2 text-base font-normal text-gray-600 bg-gray-100 rounded-full bg-clip-padding border border-solid border-[#FFC905]  hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  type="text"
-                  name="start"
-                  placeholder="month/year"
-                  maxLength={100}
-                />
+                <div className="flex gap-2">
+                  <SelectInput
+                    labelText="Start Date*"
+                    placeholder="month"
+                    name="start-month"
+                    required
+                    options={month}
+                  />
+                  <SelectInput
+                    placeholder="year"
+                    name="start-year"
+                    required
+                    options={year}
+                  />
+                </div>
               </div>
               <div className="flex-1">
-                <label
-                  htmlFor="end"
-                  className="inline-block ml-3 text-base text-black form-label"
-                >
-                  End Date*
-                </label>
-                <input
-                  className="form-control block me-5 w-full px-4 py-2 text-base font-normal text-gray-600 bg-gray-100 rounded-full bg-clip-padding border border-solid border-[#FFC905] hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  type="text"
-                  name="end"
-                  placeholder=""
-                  maxLength={100}
-                />
+                <div className="flex gap-2">
+                  <SelectInput
+                    labelText="End Date*"
+                    placeholder="month"
+                    name="end-month"
+                    required
+                    options={month}
+                  />
+                  <SelectInput
+                    placeholder="year"
+                    name="end-year"
+                    required
+                    options={year}
+                  />
+                </div>
               </div>
             </div>
-            <div>
+            <div className="mb-10">
               <label
                 htmlFor="description"
                 className="inline-block ml-3 text-base text-black form-label mt-6"
               ></label>
+              <div>
+                <textarea
+                  name="description"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600  bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  placeholder="Description of the past assignement / projects"
+                  maxLength={255}
+                  rows={3}
+                />
+              </div>
             </div>
-            <div>
-              <textarea
-                name="description"
-                className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-gray-100 bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                placeholder="Description of the past assignement / projects"
-                maxLength={255}
-                rows={3}
-              />
-            </div>
-            <div className="flex flex-col gap-4 mt-20 sm:flex-row">
+            <div className="flex flex-col gap-4 sm:flex-row">
               <div className="flex-1">
                 <label
                   htmlFor="skills"
