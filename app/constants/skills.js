@@ -1,5 +1,6 @@
 export const skills = [
   "JavaScript",
+  "Java",
   "Solidity",
   "SQL",
   "C#",
