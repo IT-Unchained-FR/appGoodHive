@@ -5,7 +5,8 @@ import { useState, FormEvent } from "react";
 import Autosuggest from "react-autosuggest";
 import toast from "react-hot-toast";
 
-import { Button } from "../../components/button";
+// TODO: use button but before add the type of the button component (i.e. type="button" or type="submit")
+// import { Button } from "../../components/button";
 import { skills } from "../../constants/skills";
 
 interface FileData {
@@ -16,7 +17,7 @@ interface FileData {
 
 export default function CreateJob() {
   const [isLoading, setIsLoading] = useState(false);
-  const [value, setValue] = useState("");
+  const [value, setInputValue] = useState(""); // FIXME: this var is not explicit
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -43,8 +44,6 @@ export default function CreateJob() {
       body: JSON.stringify(dataForm),
     });
 
-    const jobData = await jobResponse.json();
-
     setIsLoading(false);
 
     if (!jobResponse.ok) {
@@ -55,9 +54,8 @@ export default function CreateJob() {
   };
 
   //TODO: Put the following code in a Autosuggest Input component
-  const AutosuggestInput = () => {
-    const [value, setValue] = useState("");
-    const [suggestions, setSuggestions] = useState<string[]>([]);
+  const AutoSuggestInput = () => {
+    const [inputValue, setInputValue] = useState("");
 
     const getSuggestions = (value: string) => {
       const inputValue = value.trim().toLowerCase();
@@ -70,26 +68,17 @@ export default function CreateJob() {
           );
     };
 
-    const onSuggestionsFetchRequested = ({ value }: any) => {
-      setSuggestions(getSuggestions(value));
-    };
-
-    const onSuggestionsClearRequested = () => {
-      setSuggestions([]);
-    };
-
     const onSuggestionSelected = (
       event: React.FormEvent<HTMLInputElement>,
-      { suggestion }: Autosuggest.SuggestionSelectedEventData<any>
+      { suggestion }: Autosuggest.SuggestionSelectedEventData<string>
     ) => {
-      if (selectedSkills.indexOf(suggestion) === -1) {
+      if (!selectedSkills.includes(suggestion)) {
         setSelectedSkills([...selectedSkills, suggestion]);
-        setValue("");
       }
     };
 
     const renderSuggestion = (suggestion: string) => (
-      <div className="mx-1 px-2 z-10 hover:text-[#FFC905] bg-white shadow-md max-h-48 overflow-y-auto">
+      <div className="mx-1 px-2 py-2 z-10 hover:text-[#FF8C05] bg-white shadow-md max-h-48 overflow-y-auto border-gray-400 border-b-[0.5px] border-solid">
         {suggestion}
       </div>
     );
@@ -99,29 +88,27 @@ export default function CreateJob() {
       type: "text",
       maxLength: 255,
       name: "skills",
-      value,
+      value: inputValue,
       onChange: (
         event: React.FormEvent<HTMLElement>,
         { newValue }: { newValue: string }
       ) => {
-        setValue(newValue);
+        setInputValue(newValue);
       },
       className:
-        "rounded-lg block w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding transition ease-in-out focus:text-black bg-gray-100 focus:outline-none focus:ring-0",
+        "relative rounded-lg block w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding transition ease-in-out focus:text-black bg-gray-100 focus:outline-none focus:ring-0",
     };
 
     return (
-      <div className="relative">
-        <Autosuggest
-          suggestions={getSuggestions(value)}
-          onSuggestionsFetchRequested={onSuggestionsFetchRequested}
-          onSuggestionsClearRequested={onSuggestionsClearRequested}
-          getSuggestionValue={(skill) => skill}
-          onSuggestionSelected={onSuggestionSelected}
-          renderSuggestion={renderSuggestion}
-          inputProps={inputProps}
-        />
-      </div>
+      <Autosuggest
+        suggestions={getSuggestions(inputValue)}
+        onSuggestionsFetchRequested={() => "ewffew"}
+        onSuggestionsClearRequested={() => "wef"}
+        getSuggestionValue={(skill) => skill}
+        onSuggestionSelected={onSuggestionSelected}
+        renderSuggestion={renderSuggestion}
+        inputProps={inputProps}
+      />
     );
   };
 
@@ -171,7 +158,7 @@ export default function CreateJob() {
             <div>
               <label
                 htmlFor="description"
-                className="inline-block ml-3 text-base text-black form-label mt-4"
+                className="inline-block mt-4 ml-3 text-base text-black form-label"
               ></label>
             </div>
             <div>
@@ -232,12 +219,12 @@ export default function CreateJob() {
               <div className="flex-1">
                 <label
                   htmlFor="skills"
-                  className="inline-block font-bold ml-3 text-base text-black form-label"
+                  className="inline-block ml-3 text-base font-bold text-black form-label"
                 >
                   Mandatory Skills
                 </label>
-                <div className="absolute pr-10 pt-1 form-control w-full text-base font-normal text-gray-600 bg-white ">
-                  <AutosuggestInput />
+                <div className="absolute w-full pt-1 pr-10 text-base font-normal text-gray-600 bg-white form-control ">
+                  <AutoSuggestInput />
                 </div>
                 <div className="pt-10">
                   {selectedSkills.length > 0 && (
@@ -249,12 +236,13 @@ export default function CreateJob() {
                         >
                           <span className="mr-2">{skill}</span>
                           <button
-                            onClick={() =>
+                            type="button"
+                            onClick={() => {
                               setSelectedSkills(
                                 selectedSkills.filter((_, i) => i !== index)
-                              )
-                            }
-                            className="text-black bg-gray-400 rounded-full w-6 focus:outline-none"
+                              );
+                            }}
+                            className="w-6 text-black bg-gray-400 rounded-full"
                           >
                             &#10005;
                           </button>
