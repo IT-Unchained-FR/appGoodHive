@@ -1,5 +1,4 @@
-import React, { FC, useState, useRef } from "react";
-import { HiChevronDown } from "react-icons/hi";
+import React, { FC, useState } from "react";
 
 interface Option {
   value: string;
@@ -11,10 +10,11 @@ interface Props {
   placeholder: string;
   required: boolean;
   name?: string;
+  inputValue: string | null;
+  setInputValue: any;
+  onChange?: (value: string | null) => void;
   disabled?: boolean;
-  value?: Option | null;
-  onChange?: (value: Option | null) => void;
-  options: Option[]; // Dynamic options
+  options: Option[];
 }
 
 export const SelectInput: FC<Props> = ({
@@ -22,48 +22,46 @@ export const SelectInput: FC<Props> = ({
   placeholder,
   required,
   disabled,
-  value,
+  inputValue,
+  setInputValue,
   onChange,
   options,
 }) => {
-  const [inputValue, setInputValue] = useState("");
+  const [filteredOptions, setFilteredOptions] = useState<Option[]>(options);
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(event.target.value);
-    setIsOptionsOpen(true);
+  const handleSelectInputChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const selectedValue = event.target.value;
+    const option = options.find((option) => option.value === selectedValue);
+    setInputValue(option || null);
+
+    console.log(inputValue);
+    console.log(selectedValue);
   };
 
-  const handleSelect = (option: Option) => {
-    if (onChange) {
-      onChange(option);
-    }
+  const handleInputClick = (option: Option) => {
     setInputValue(option.label);
     setIsOptionsOpen(false);
   };
 
-  const handleFocus = () => {
-    setIsOptionsOpen(true);
-  };
+  const renderOptions = filteredOptions.map((option) => (
+    <div
+      key={option.value}
+      className="py-2 px-4 cursor-pointer hover:bg-gray-100"
+      onClick={() => handleInputClick(option)}
+    >
+      {option.label}
+    </div>
+  ));
 
-  const handleBlur = () => {
-    // Delay the closing of options to allow the click event on options to trigger
-    setTimeout(() => {
-      setIsOptionsOpen(false);
-    }, 200);
-  };
-
-  let inputStyle =
-    "form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none";
+  let selectStyle =
+    "block w-full mr-3 px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none";
   if (disabled) {
-    inputStyle =
+    selectStyle =
       "form-control block w-full px-4 py-2 text-base font-light text-gray-200 bg-white bg-clip-padding border border-solid border-[#FFF2CE] rounded-full";
   }
-
-  const filteredOptions = options.filter((option) =>
-    option.label.toLowerCase().includes(inputValue.toLowerCase())
-  );
 
   return (
     <div className="relative">
@@ -72,33 +70,31 @@ export const SelectInput: FC<Props> = ({
       </label>
       <div className="flex items-center">
         <input
-          className={inputStyle}
-          placeholder={placeholder}
-          type="text"
-          required={required}
-          disabled={disabled}
-          value={inputValue}
-          onChange={handleChange}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-          ref={inputRef}
+          className={selectStyle}
+          disabled={false}
+          value={inputValue || ""}
+          onChange={handleSelectInputChange}
+          onFocus={() => setIsOptionsOpen(true)}
         />
-        <div className="absolute right-3 pointer-events-none">
-          <HiChevronDown className="text-gray-400" />
+        <div className="absolute right-6 pointer-events-none">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className="h-5 w-5 text-gray-400"
+          >
+            <path
+              fillRule="evenodd"
+              d="M6.293 7.293a1 1 0 0 1 1.414 0L10 9.586l2.293-2.293a1 1 0 0 1 1.414 1.414l-3 3a1 1 0 0 1-1.414 0l-3-3a1 1 0 0 1 0-1.414z"
+              clipRule="evenodd"
+            />
+          </svg>
         </div>
       </div>
       {isOptionsOpen && (
-        <ul className="absolute w-full z-10 mt-2 bg-white rounded-md shadow-md max-h-48 overflow-y-auto">
-          {filteredOptions.map((option) => (
-            <li
-              key={option.value}
-              className="py-2 px-4  cursor-pointer hover:bg-gray-100"
-              onClick={() => handleSelect(option)}
-            >
-              {option.label}
-            </li>
-          ))}
-        </ul>
+        <div className="absolute w-full z-10 mt-2 bg-white rounded-md shadow-md max-h-48 overflow-y-auto">
+          {renderOptions}
+        </div>
       )}
     </div>
   );
