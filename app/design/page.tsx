@@ -19,6 +19,11 @@ export default function Design() {
   const [emailValue, setEmailValue] = useState("");
   const [passwordValue, setPasswordValue] = useState("");
   const [urlValue, setURLValue] = useState("");
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+
+  const handleSelectInputChange = (value: string | null) => {
+    setSelectedOption(value);
+  };
 
   const textHandleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTextValue(event.target.value);
@@ -305,9 +310,10 @@ export default function Design() {
             onChange={textHandleChange}
           />
           <SelectInput
-            labelText="Select Input"
-            placeholder="Select input"
+            placeholder="Select an option"
             required={true}
+            inputValue={selectedOption}
+            setInputValue={handleSelectInputChange}
             options={options}
           />
         </div>
