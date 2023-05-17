@@ -5,8 +5,10 @@ import { useRef, useState, FormEvent } from "react";
 import Autosuggest from "react-autosuggest";
 import toast from "react-hot-toast";
 
-import { Button } from "../../../components/button";
+// TODO: use button but before add the type of the button component (i.e. type="button" or type="submit")
+//import { Button } from "../../../components/button";
 import { SelectInput } from "../../../components/select-input";
+import { skills } from "../../../constants/skills";
 
 interface Option {
   value: string;
@@ -14,7 +16,6 @@ interface Option {
 }
 export default function CreateJob() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [value, setValue] = useState<string>("");
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -50,8 +51,6 @@ export default function CreateJob() {
       body: JSON.stringify(dataForm),
     });
 
-    const experienceData = await experienceResponse.json();
-
     setIsLoading(false);
 
     if (!experienceResponse.ok) {
@@ -62,7 +61,6 @@ export default function CreateJob() {
   };
 
   //TODO: Put the following code in a Autosuggest Input component
-  const skills = process.env.NEXT_PUBLIC_SKILLS?.split(",") ?? [];
 
   const employment: Option[] = [
     { value: "fulltime", label: "Full-time" },
@@ -92,9 +90,8 @@ export default function CreateJob() {
     })
   );
 
-  const autosuggestInput = () => {
-    const [value, setValue] = useState("");
-    const [suggestions, setSuggestions] = useState<string[]>([]);
+  const AutoSuggestInput = () => {
+    const [inputValue, setInputValue] = useState("");
 
     const getSuggestions = (value: string) => {
       const inputValue = value.trim().toLowerCase();
@@ -111,12 +108,12 @@ export default function CreateJob() {
       event: React.FormEvent<HTMLInputElement>,
       { suggestion }: Autosuggest.SuggestionSelectedEventData<any>
     ) => {
-      if (!selectedSkills.includes(suggestion))
+      if (!selectedSkills.includes(suggestion)) {
         setSelectedSkills([...selectedSkills, suggestion]);
-      setValue("");
+      }
     };
     const renderSuggestion = (suggestion: string) => (
-      <div className="mx-1 px-2 z-10 hover:text-[#FFC905] bg-white shadow-md max-h-48 overflow-y-auto">
+      <div className="mx-1 px-2 py-2 z-10 hover:text-[#FF8C05] bg-white shadow-md max-h-48 overflow-y-auto border-gray-400 border-b-[0.5px] border-solid">
         {suggestion}
       </div>
     );
@@ -126,33 +123,27 @@ export default function CreateJob() {
       type: "text",
       maxLength: 255,
       name: "skills",
-      value,
+      value: inputValue,
       onChange: (
         event: React.FormEvent<HTMLElement>,
         { newValue }: { newValue: string }
       ) => {
-        setValue(newValue);
+        setInputValue(newValue);
       },
       className:
-        "rounded-lg block w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding transition ease-in-out focus:text-black bg-gray-100 focus:outline-none focus:ring-0",
+        "relative rounded-lg block w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding transition ease-in-out focus:text-black bg-gray-100 focus:outline-none focus:ring-0",
     };
 
     return (
-      <div className="relative">
-        <Autosuggest
-          suggestions={getSuggestions(value)}
-          onSuggestionsFetchRequested={({ value }: any) => {
-            setSuggestions(getSuggestions(value));
-          }}
-          onSuggestionsClearRequested={() => {
-            setSuggestions([]);
-          }}
-          getSuggestionValue={(skill) => skill}
-          onSuggestionSelected={onSuggestionSelected}
-          renderSuggestion={renderSuggestion}
-          inputProps={inputProps}
-        />
-      </div>
+      <Autosuggest
+        suggestions={getSuggestions(inputValue)}
+        onSuggestionsFetchRequested={() => "ewffew"}
+        onSuggestionsClearRequested={() => "wef"}
+        getSuggestionValue={(skill) => skill}
+        onSuggestionSelected={onSuggestionSelected}
+        renderSuggestion={renderSuggestion}
+        inputProps={inputProps}
+      />
     );
   };
   return (
@@ -284,7 +275,7 @@ export default function CreateJob() {
                   Skills
                 </label>
                 <div className="absolute pr-10 pt-1 form-control w-full text-base font-normal text-gray-600 bg-white ">
-                  <autosuggestInput />
+                  <AutoSuggestInput />
                 </div>
                 <div className="pt-10">
                   {selectedSkills.length > 0 && (
@@ -296,12 +287,13 @@ export default function CreateJob() {
                         >
                           <span className="mr-2">{skill}</span>
                           <button
+                            type="button"
                             onClick={() =>
                               setSelectedSkills(
                                 selectedSkills.filter((_, i) => i !== index)
                               )
                             }
-                            className="text-black bg-gray-400 rounded-full w-6 focus:outline-none"
+                            className="w-6 text-black bg-gray-400 rounded-full"
                           >
                             &#10005;
                           </button>
