@@ -1,13 +1,13 @@
 "use client";
 
-import { useRef, useState, FormEvent } from "react";
+import { useState, FormEvent } from "react";
 
 import Autosuggest from "react-autosuggest";
 import toast from "react-hot-toast";
 
 // TODO: use button but before add the type of the button component (i.e. type="button" or type="submit")
 //import { Button } from "../../../components/button";
-import { SelectInput } from "../../../components/select-input";
+//import { SelectInput } from "../../../components/select-input";
 import { skills } from "../../../constants/skills";
 import { employmentType } from "../../../constants/employmentType";
 
@@ -18,7 +18,7 @@ interface Option {
 export default function CreateJob() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  //const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -63,7 +63,7 @@ export default function CreateJob() {
   };
 
   // Get the current date
-  const currentDate = new Date();
+  //const currentDate = new Date();
 
   // Create an array of month options with full names
   const month: Option[] = Array.from({ length: 12 }, (_, index) => {
@@ -136,10 +136,6 @@ export default function CreateJob() {
         inputProps={inputProps}
       />
     );
-
-    const handleSelectInputChange = (value: string | null) => {
-      setSelectedOption(value);
-    };
   };
   return (
     <main className="mx-5">
