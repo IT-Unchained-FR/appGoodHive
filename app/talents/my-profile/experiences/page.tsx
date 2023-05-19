@@ -63,7 +63,7 @@ export default function CreateJob() {
   };
 
   // Get the current date
-  //const currentDate = new Date();
+  const currentDate = new Date();
 
   // Create an array of month options with full names
   const month: Option[] = Array.from({ length: 12 }, (_, index) => {
