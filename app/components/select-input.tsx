@@ -36,15 +36,14 @@ export const SelectInput: FC<Props> = ({
     const selectedValue = event.target.value;
     const option = options.find((option) => option.value === selectedValue);
     setInputValue(option || null);
-
-    console.log(inputValue);
-    console.log(selectedValue);
   };
 
   const handleInputClick = (option: Option) => {
     setInputValue(option.label);
     setIsOptionsOpen(false);
   };
+
+  console.log(inputValue);
 
   const renderOptions = filteredOptions.map((option) => (
     <div
