@@ -6,7 +6,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "GoodHive",
-  description: "The Decentralized Freelancing Plateforme",
+  description: "The Decentralized Freelancing Plateform",
 };
 
 export default function RootLayout({
