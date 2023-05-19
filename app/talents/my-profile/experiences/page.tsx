@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 //import { Button } from "../../../components/button";
 import { SelectInput } from "../../../components/select-input";
 import { skills } from "../../../constants/skills";
+import { employmentType } from "../../../constants/employmentType";
 
 interface Option {
   value: string;
@@ -17,6 +18,7 @@ interface Option {
 export default function CreateJob() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -26,11 +28,11 @@ export default function CreateJob() {
 
     const startMonth = Number(formData.get("start-month"));
     const startYear = Number(formData.get("start-year"));
-    const contractStart = new Date(startYear, startMonth);
+    const contractStart = new Date(startYear, startMonth - 1);
 
     const endMonth = Number(formData.get("end-month"));
     const endYear = Number(formData.get("end-year"));
-    const contractEnd = new Date(endYear, endMonth);
+    const contractEnd = new Date(endYear, endMonth - 1);
 
     const dataForm = {
       title: formData.get("title"),
@@ -60,15 +62,6 @@ export default function CreateJob() {
     }
   };
 
-  //TODO: Put the following code in a Autosuggest Input component
-
-  const employment: Option[] = [
-    { value: "fulltime", label: "Full-time" },
-    { value: "parttime", label: "Part-time" },
-    { value: "internship", label: "Internship" },
-    { value: "remote", label: "Remote" },
-    { value: "other", label: "Other" },
-  ];
   // Get the current date
   const currentDate = new Date();
 
@@ -79,16 +72,13 @@ export default function CreateJob() {
     return { value: monthName.toLowerCase(), label: monthName };
   });
 
-  const startYear = 1995;
-  const endYear = 2023;
+  const startYear = parseInt(process.env.START_YEAR || "");
+  const endYear = parseInt(process.env.END_YEAR || "");
 
-  const year: Option[] = Array.from(
-    { length: endYear - startYear + 1 },
-    (_, index) => ({
-      value: (startYear + index).toString(),
-      label: (startYear + index).toString(),
-    })
-  );
+  const year = Array.from({ length: endYear - startYear + 1 }, (_, index) => {
+    const yearValue = startYear + index;
+    return { value: yearValue, label: yearValue };
+  });
 
   const AutoSuggestInput = () => {
     const [inputValue, setInputValue] = useState("");
@@ -112,6 +102,7 @@ export default function CreateJob() {
         setSelectedSkills([...selectedSkills, suggestion]);
       }
     };
+
     const renderSuggestion = (suggestion: string) => (
       <div className="mx-1 px-2 py-2 z-10 hover:text-[#FF8C05] bg-white shadow-md max-h-48 overflow-y-auto border-gray-400 border-b-[0.5px] border-solid">
         {suggestion}
@@ -145,6 +136,10 @@ export default function CreateJob() {
         inputProps={inputProps}
       />
     );
+
+    const handleSelectInputChange = (value: string | null) => {
+      setSelectedOption(value);
+    };
   };
   return (
     <main className="mx-5">
@@ -172,12 +167,19 @@ export default function CreateJob() {
                 />
               </div>
               <div className="flex-1">
-                <SelectInput
-                  labelText="Select type of employment"
+                <label
+                  htmlFor="type-employment"
+                  className="inline-block ml-3 text-base text-black form-label"
+                >
+                  Type of employment*
+                </label>
+                <input
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 rounded-full bg-clip-padding border border-solid border-[#FFC905]  hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="Full-time, Part-time..."
                   name="type-employment"
+                  type="text"
                   required
-                  options={employment}
+                  maxLength={100}
                 />
               </div>
             </div>
@@ -217,36 +219,58 @@ export default function CreateJob() {
             </div>
             <div className="flex flex-col gap-4 mt-6 sm:flex-row">
               <div className="flex-1">
+                <label
+                  htmlFor="contractStart"
+                  className="inline-block ml-3 text-base text-black form-label"
+                >
+                  Start date*
+                </label>
                 <div className="flex gap-2">
-                  <SelectInput
-                    labelText="Start Date*"
-                    placeholder="month"
+                  <input
+                    className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 rounded-full bg-clip-padding border border-solid border-[#FFC905] hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                    type="number"
                     name="start-month"
+                    placeholder="month"
                     required
-                    options={month}
+                    min="1"
+                    max="12"
+                    maxLength={100}
                   />
-                  <SelectInput
-                    placeholder="year"
+                  <input
+                    className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 rounded-full bg-clip-padding border border-solid border-[#FFC905] hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                    type="number"
                     name="start-year"
+                    placeholder="year"
                     required
-                    options={year}
+                    maxLength={100}
                   />
                 </div>
               </div>
               <div className="flex-1">
+                <label
+                  htmlFor="contractEnd"
+                  className="inline-block ml-3 text-base text-black form-label"
+                >
+                  End date*
+                </label>
                 <div className="flex gap-2">
-                  <SelectInput
-                    labelText="End Date*"
-                    placeholder="month"
+                  <input
+                    className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 rounded-full bg-clip-padding border border-solid border-[#FFC905] hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                    type="number"
                     name="end-month"
+                    placeholder="month"
                     required
-                    options={month}
+                    min="1"
+                    max="12"
+                    maxLength={100}
                   />
-                  <SelectInput
-                    placeholder="year"
+                  <input
+                    className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 rounded-full bg-clip-padding border border-solid border-[#FFC905] hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                    type="number"
                     name="end-year"
+                    placeholder="year"
                     required
-                    options={year}
+                    maxLength={100}
                   />
                 </div>
               </div>
