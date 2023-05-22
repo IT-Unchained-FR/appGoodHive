@@ -7,9 +7,10 @@ import toast from "react-hot-toast";
 
 // TODO: use button but before add the type of the button component (i.e. type="button" or type="submit")
 //import { Button } from "../../../components/button";
+//TODO: Fix me when select-input is working properly
 //import { SelectInput } from "../../../components/select-input";
-import { skills } from "../../../constants/skills";
 import { employmentType } from "../../../constants/employmentType";
+import { skills } from "../../../constants/skills";
 
 interface Option {
   value: string;
@@ -18,6 +19,7 @@ interface Option {
 export default function CreateJob() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  //TODO: Fix me when select-input is working properly
   //const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -58,7 +60,7 @@ export default function CreateJob() {
     if (!experienceResponse.ok) {
       toast.error("Something went wrong!");
     } else {
-      toast.success("Profile Saved!");
+      toast.success("Experience Saved!");
     }
   };
 
@@ -72,8 +74,8 @@ export default function CreateJob() {
     return { value: monthName.toLowerCase(), label: monthName };
   });
 
-  const startYear = parseInt(process.env.START_YEAR || "");
-  const endYear = parseInt(process.env.END_YEAR || "");
+  const startYear = parseInt(process.env.START_YEAR || "0");
+  const endYear = parseInt(process.env.END_YEAR || "0");
 
   const year = Array.from({ length: endYear - startYear + 1 }, (_, index) => {
     const yearValue = startYear + index;
