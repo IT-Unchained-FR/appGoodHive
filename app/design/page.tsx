@@ -307,8 +307,9 @@ export default function Design() {
             onChange={textHandleChange}
           />
           <SelectInput
-            placeholder="Select an option"
+            labelText="Select an option"
             required={true}
+            disabled={false}
             inputValue={selectedOption}
             setInputValue={setSelectedOption}
             options={options}
