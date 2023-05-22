@@ -3,9 +3,12 @@
 import { useRef, useState, FormEvent, useEffect } from "react";
 
 import toast from "react-hot-toast";
+import Autosuggest from "react-autosuggest";
 
 import DragAndDropFile from "../../components/drag-and-drop-file";
-import { Button } from "../../components/button";
+// TODO: use button but before add the type of the button component (i.e. type="button" or type="submit")
+// import { Button } from "../../components/button";
+import { skills } from "../../constants/skills";
 
 interface FileData {
   name: string;
@@ -19,6 +22,7 @@ export default function MyProfile() {
   const [imageUrl, setImageUrl] = useState(null);
   const [file, setFile] = useState<false | FileData>(false);
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
 
   useEffect(() => {
     if (typeof file === "object" && file !== null) {
@@ -52,6 +56,7 @@ export default function MyProfile() {
     const formData = new FormData(e.currentTarget);
 
     const dataForm = {
+      title: formData.get("title"),
       jobHeadline: formData.get("job-headline"),
       firstName: formData.get("first-name"),
       lastName: formData.get("last-name"),
@@ -62,6 +67,9 @@ export default function MyProfile() {
       email: formData.get("email"),
       telegram: formData.get("telegram"),
       aboutWork: formData.get("about-work"),
+      currency: formData.get("currency"),
+      rate: formData.get("rate"),
+      skills: selectedSkills,
       imageUrl,
     };
 
@@ -83,6 +91,65 @@ export default function MyProfile() {
     } else {
       toast.success("Profile Saved!");
     }
+  };
+
+  //TODO: Put the following code in a Autosuggest Input component
+  const AutoSuggestInput = () => {
+    const [inputValue, setInputValue] = useState("");
+
+    const getSuggestions = (value: string) => {
+      const inputValue = value.trim().toLowerCase();
+      const inputLength = inputValue.length;
+
+      return inputLength === 0
+        ? []
+        : skills.filter(
+            (skill) => skill.toLowerCase().slice(0, inputLength) === inputValue
+          );
+    };
+
+    const onSuggestionSelected = (
+      event: React.FormEvent<HTMLInputElement>,
+      { suggestion }: Autosuggest.SuggestionSelectedEventData<string>
+    ) => {
+      if (!selectedSkills.includes(suggestion)) {
+        setSelectedSkills([...selectedSkills, suggestion]);
+      }
+    };
+
+    const renderSuggestion = (suggestion: string) => (
+      <div className="mx-1 px-2 py-2 z-10 hover:text-[#FF8C05] bg-white shadow-md max-h-48 overflow-y-auto border-gray-400 border-b-[0.5px] border-solid">
+        {suggestion}
+      </div>
+    );
+
+    const inputProps = {
+      placeholder: "JavaScript, NextJS,...",
+      type: "text",
+      maxLength: 255,
+      name: "skills",
+      value: inputValue,
+      onChange: (
+        event: React.FormEvent<HTMLElement>,
+        { newValue }: { newValue: string }
+      ) => {
+        setInputValue(newValue);
+      },
+      className:
+        "relative rounded-lg block w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding transition ease-in-out focus:text-black bg-gray-100 focus:outline-none focus:ring-0",
+    };
+
+    return (
+      <Autosuggest
+        suggestions={getSuggestions(inputValue)}
+        onSuggestionsFetchRequested={() => "ewffew"}
+        onSuggestionsClearRequested={() => "wef"}
+        getSuggestionValue={(skill) => skill}
+        onSuggestionSelected={onSuggestionSelected}
+        renderSuggestion={renderSuggestion}
+        inputProps={inputProps}
+      />
+    );
   };
 
   return (
@@ -107,10 +174,18 @@ export default function MyProfile() {
                 htmlFor="job-headline"
                 className="inline-block ml-3 text-base text-black form-label"
               >
-                Job Headline
+                Job Headline*
               </label>
             </div>
-            <div>
+            <input
+              className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+              placeholder="Title"
+              name="title"
+              type="text"
+              required
+              maxLength={100}
+            />
+            <div className="mt-5">
               <textarea
                 name="job-headline"
                 className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
@@ -120,13 +195,13 @@ export default function MyProfile() {
                 rows={5}
               />
             </div>
-            <div className="flex flex-col gap-4 mt-10 sm:flex-row">
+            <div className="flex flex-col gap-4 mt-4 sm:flex-row">
               <div className="flex-1">
                 <label
                   htmlFor="first-name"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
-                  First Name
+                  First Name*
                 </label>
                 <input
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
@@ -143,7 +218,7 @@ export default function MyProfile() {
                   htmlFor="last-name"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
-                  Last Name
+                  Last Name*
                 </label>
                 <input
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
@@ -162,7 +237,7 @@ export default function MyProfile() {
                   htmlFor="country"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
-                  Country
+                  Country*
                 </label>
                 <input
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
@@ -178,7 +253,7 @@ export default function MyProfile() {
                   htmlFor="city"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
-                  City
+                  City*
                 </label>
                 <input
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
@@ -196,7 +271,7 @@ export default function MyProfile() {
                   htmlFor="phone-country-code"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
-                  Phone Country Code
+                  Phone Country Code*
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -217,7 +292,7 @@ export default function MyProfile() {
                   htmlFor="phone-number"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
-                  Phone Number
+                  Phone Number*
                 </label>
                 <input
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
@@ -235,7 +310,7 @@ export default function MyProfile() {
                   htmlFor="email"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
-                  Email
+                  Email*
                 </label>
                 <input
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
@@ -262,12 +337,45 @@ export default function MyProfile() {
                 />
               </div>
             </div>
+            <div className="flex flex-col gap-4 mt-4 sm:flex-row">
+              <div className="flex-1">
+                <label
+                  htmlFor="currency"
+                  className="inline-block ml-3 text-base text-black form-label"
+                >
+                  Currency
+                </label>
+                <input
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  placeholder="Currency"
+                  type="text"
+                  required
+                  name="currency"
+                  maxLength={255}
+                />
+              </div>
+              <div className="flex-1">
+                <label
+                  htmlFor="rate"
+                  className="inline-block ml-3 text-base text-black form-label"
+                >
+                  Rate
+                </label>
+                <input
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  placeholder="Rate per hour"
+                  type="number"
+                  name="rate"
+                  maxLength={255}
+                />
+              </div>
+            </div>
             <div className="mt-4">
               <label
                 htmlFor="about-work"
                 className="inline-block ml-3 text-base text-black form-label"
               >
-                About your Work
+                About your Work*
               </label>
               <textarea
                 name="about-work"
@@ -277,6 +385,44 @@ export default function MyProfile() {
                 rows={5}
                 maxLength={65000}
               />
+            </div>
+            <div className="flex flex-col gap-4 mt-4 sm:flex-row">
+              <div className="flex-1">
+                <label
+                  htmlFor="skills"
+                  className="inline-block ml-3 text-base font-bold text-black form-label"
+                >
+                  Skills*
+                </label>
+                <div className="absolute w-full pt-1 pr-10 text-base font-normal text-gray-600 bg-white form-control ">
+                  <AutoSuggestInput />
+                </div>
+                <div className="pt-10">
+                  {selectedSkills.length > 0 && (
+                    <div className="flex flex-wrap mt-4 ">
+                      {selectedSkills.map((skill, index) => (
+                        <div
+                          key={index}
+                          className="border border-[#FFC905] flex items-center bg-gray-200 rounded-full py-1 px-3 m-1"
+                        >
+                          <span className="mr-2">{skill}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedSkills(
+                                selectedSkills.filter((_, i) => i !== index)
+                              );
+                            }}
+                            className="w-6 text-black bg-gray-400 rounded-full"
+                          >
+                            &#10005;
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
             <div className="mt-10 text-right">
               {isLoading ? (
