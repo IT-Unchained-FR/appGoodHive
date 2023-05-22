@@ -1,5 +1,6 @@
 import React, { FC, useState } from "react";
 
+// TODO: move to a separate file
 interface Option {
   value: string;
   label: string;
@@ -7,48 +8,33 @@ interface Option {
 
 interface Props {
   labelText?: string;
-  placeholder: string;
   required: boolean;
-  name?: string;
-  inputValue: string | null;
-  setInputValue: any;
-  onChange?: (value: string | null) => void;
   disabled?: boolean;
+  inputValue: Option | null;
+  setInputValue: any; // TODO: fix type
   options: Option[];
 }
 
 export const SelectInput: FC<Props> = ({
   labelText,
-  placeholder,
-  required,
+  required, // TODO: add logic
   disabled,
   inputValue,
   setInputValue,
-  onChange,
   options,
 }) => {
-  const [filteredOptions, setFilteredOptions] = useState<Option[]>(options);
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
 
-  const handleSelectInputChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const selectedValue = event.target.value;
-    const option = options.find((option) => option.value === selectedValue);
-    setInputValue(option || null);
-  };
-
-  //TODO: use useEffect instead of handling isOptionOpen in this function
-  const handleInputClick = (option: Option) => {
-    setInputValue(option.label);
+  const handleInputClickAndCloseOptions = (option: Option) => {
+    setInputValue(option);
     setIsOptionsOpen(false);
   };
 
-  const renderOptions = filteredOptions.map((option) => (
+  const renderOptions = options.map((option) => (
     <div
       key={option.value}
-      className="py-2 px-4 cursor-pointer hover:bg-gray-100"
-      onClick={() => handleInputClick(option)}
+      className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+      onClick={() => handleInputClickAndCloseOptions(option)}
     >
       {option.label}
     </div>
@@ -67,19 +53,18 @@ export const SelectInput: FC<Props> = ({
         {labelText}
       </label>
       <div className="flex items-center">
-        <input
+        <p
           className={selectStyle}
-          disabled={false}
-          value={inputValue || ""}
-          onChange={handleSelectInputChange}
-          onFocus={() => setIsOptionsOpen(true)}
-        />
-        <div className="absolute right-6 pointer-events-none">
+          onClick={() => setIsOptionsOpen(() => !isOptionsOpen)}
+        >
+          {inputValue ? inputValue.value : "Select on Option"}
+        </p>
+        <div className="absolute pointer-events-none right-6">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 20 20"
             fill="currentColor"
-            className="h-5 w-5 text-gray-400"
+            className="w-5 h-5 text-gray-400"
           >
             <path
               fillRule="evenodd"
@@ -90,7 +75,7 @@ export const SelectInput: FC<Props> = ({
         </div>
       </div>
       {isOptionsOpen && (
-        <div className="absolute w-full z-10 mt-2 bg-white rounded-md shadow-md max-h-48 overflow-y-auto">
+        <div className="absolute z-10 w-full mt-2 overflow-y-auto bg-white rounded-md shadow-md max-h-48">
           {renderOptions}
         </div>
       )}
