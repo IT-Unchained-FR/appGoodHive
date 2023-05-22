@@ -38,12 +38,11 @@ export const SelectInput: FC<Props> = ({
     setInputValue(option || null);
   };
 
+  //TODO: use useEffect instead of handling isOptionOpen in this function
   const handleInputClick = (option: Option) => {
     setInputValue(option.label);
     setIsOptionsOpen(false);
   };
-
-  console.log(inputValue);
 
   const renderOptions = filteredOptions.map((option) => (
     <div
