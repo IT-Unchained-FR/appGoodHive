@@ -1,89 +1,63 @@
-"use client";
+import { useState } from "react";
 import { Card } from "../../components/card";
 
-//ADD REAL DATA TO MAP THE CARD COMPONENT
-export async function getServerSideProps() {
-  const response = await fetch("/api/talents/search-talents");
-  const talentsData = await response.json();
+type Talent = {
+  title: string;
+  firstName: string;
+  lastName: string;
+  imageUrl: string;
+  city: string;
+  rate: string;
+  currency: string;
+  aboutWork: string;
+  skills: string[];
+};
 
-  // Return the fetched data as props
-  return {
-    props: {
-      jobHeadline: talentsData.jobHeadline,
-      firstName: talentsData.firstName,
-      lastName: talentsData.lastName,
-      country: talentsData.country,
-      city: talentsData.city,
-      phoneCountryCode: talentsData.phoneCountryCode,
-      phoneNumber: talentsData.phoneNumber,
-      email: talentsData.email,
-      telegram: talentsData.telegram,
-      aboutWork: talentsData.aboutWork,
-      imageUrl: talentsData.imageUrl,
-    },
-  };
+type TalentResultProps = {
+  talentsData: Talent[];
+};
+
+export async function getServerSideProps() {
+  try {
+    const response = await fetch("/api/talents/search-talents");
+    const talentsData = await response.json();
+
+    return {
+      props: {
+        talentsData,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching talents data:", error);
+    return {
+      props: {
+        talentsData: [],
+      },
+    };
+  }
 }
 
-export default function TalentResult() {
+export default function TalentResult({ talentsData }: TalentResultProps) {
+  if (!talentsData || talentsData.length === 0) {
+    return <div>No talent data available.</div>;
+  }
+
+  const talent = talentsData[0]; // Only show the first talent
+
   return (
-    <div className="grid min-w-full grid-flow-row grid-cols-1 gap-3 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-3  xl:grid-cols-2 2xl:grid-cols-2 3xl:grid-cols-2 4xl:grid-cols-3">
+    <div>
       <Card
         type="talent"
-        title="Talent 3 Position"
-        postedBy="Talent Name"
+        title={talent.title}
+        postedBy={`${talent.firstName} ${talent.lastName}`}
         postedOn="Active 2 days ago"
-        image="/img/talent_avatar.png"
+        image={talent.imageUrl}
         countryFlag="/img/country_flag.png"
-        city="San Francisco"
-        rate="120"
-        currency="USD"
-        description="Talent profile description will come here when posted Amet, consecq consec consectetur adipiscing elit, sed do eiusmod."
-        skills={["Skill 1", "Skill 2", "Skill 3", "Skill 4"]}
-        buttonText="Connect"
-        escrowFee=""
-      />
-      <Card
-        type="talent"
-        title="Talent 3 Position"
-        postedBy="Talent Name"
-        postedOn="Active 2 days ago"
-        image="/img/talent_avatar.png"
-        countryFlag="/img/country_flag.png"
-        city="San Francisco"
-        rate="120"
-        currency="USD"
-        description="Talent profile description will come here when posted Amet, consecq consec consectetur adipiscing elit, sed do eiusmod."
-        skills={["Skill 1", "Skill 2", "Skill 3", "Skill 4"]}
-        buttonText="Connect"
-        escrowFee=""
-      />
-      <Card
-        type="talent"
-        title="Talent 3 Position"
-        postedBy="Talent Name"
-        postedOn="Active 2 days ago"
-        image="/img/talent_avatar.png"
-        countryFlag="/img/country_flag.png"
-        city="San Francisco"
-        rate="120"
-        currency="USD"
-        description="Talent profile description will come here when posted Amet, consecq consec consectetur adipiscing elit, sed do eiusmod."
-        skills={["Skill 1", "Skill 2", "Skill 3", "Skill 4"]}
-        buttonText="Connect"
-        escrowFee=""
-      />
-      <Card
-        type="talent"
-        title="Talent 3 Position"
-        postedBy="Talent Name"
-        postedOn="Active 2 days ago"
-        image="/img/talent_avatar.png"
-        countryFlag="/img/country_flag.png"
-        city="San Francisco"
-        rate="120"
-        currency="USD"
-        description="Talent profile description will come here when posted Amet, consecq consec consectetur adipiscing elit, sed do eiusmod."
-        skills={["Skill 1", "Skill 2", "Skill 3", "Skill 4"]}
+        city={talent.city}
+        rate={talent.rate}
+        currency={talent.currency}
+        description={talent.aboutWork}
+        skills={talent.skills}
         buttonText="Connect"
         escrowFee=""
       />
