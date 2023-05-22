@@ -2,6 +2,27 @@
 import { Card } from "../../components/card";
 
 //ADD REAL DATA TO MAP THE CARD COMPONENT
+export async function getServerSideProps() {
+  const response = await fetch("/api/talents/search-talents");
+  const talentsData = await response.json();
+
+  // Return the fetched data as props
+  return {
+    props: {
+      jobHeadline: talentsData.jobHeadline,
+      firstName: talentsData.firstName,
+      lastName: talentsData.lastName,
+      country: talentsData.country,
+      city: talentsData.city,
+      phoneCountryCode: talentsData.phoneCountryCode,
+      phoneNumber: talentsData.phoneNumber,
+      email: talentsData.email,
+      telegram: talentsData.telegram,
+      aboutWork: talentsData.aboutWork,
+      imageUrl: talentsData.imageUrl,
+    },
+  };
+}
 
 export default function TalentResult() {
   return (
