@@ -8,6 +8,7 @@ import { Card } from "../components/card";
 import { Input } from "../components/input";
 import { SelectInput } from "../components/select-input";
 
+// TODO: move to a separate file
 interface Option {
   value: string;
   label: string;
@@ -19,7 +20,7 @@ export default function Design() {
   const [emailValue, setEmailValue] = useState("");
   const [passwordValue, setPasswordValue] = useState("");
   const [urlValue, setURLValue] = useState("");
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [selectedOption, setSelectedOption] = useState<Option | null>(null);
 
   const textHandleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTextValue(event.target.value);
@@ -312,6 +313,8 @@ export default function Design() {
             setInputValue={setSelectedOption}
             options={options}
           />
+
+          <p>Select result: {selectedOption?.value}</p>
         </div>
       </section>
 
