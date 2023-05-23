@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 //import { Button } from "../../../components/button";
 //TODO: Fix me when select-input is working properly
 //import { SelectInput } from "../../../components/select-input";
-import { employmentType } from "../../../constants/employmentType";
+import { employmentType } from "../../../constants/employment-type";
 import { skills } from "../../../constants/skills";
 
 interface Option {
