@@ -64,14 +64,13 @@ export default function CreateJob() {
     }
   };
 
-  // Get the current date
-  const currentDate = new Date();
-
   // Create an array of month options with full names
-  const month: Option[] = Array.from({ length: 12 }, (_, index) => {
-    const date = new Date(currentDate.getFullYear(), index);
-    const monthName = date.toLocaleString("en-US", { month: "long" });
-    return { value: monthName.toLowerCase(), label: monthName };
+  // Get the months names as options
+  const month = Array.from({ length: 12 }, (_, index) => {
+    const monthName = new Date(0, index).toLocaleString("en-US", {
+      month: "long",
+    });
+    return { value: index + 1, label: monthName };
   });
 
   const startYear = parseInt(process.env.START_YEAR || "0");
