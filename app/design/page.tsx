@@ -314,8 +314,6 @@ export default function Design() {
             setInputValue={setSelectedOption}
             options={options}
           />
-
-          <p>Select result: {selectedOption?.value}</p>
         </div>
       </section>
 

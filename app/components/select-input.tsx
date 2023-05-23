@@ -8,10 +8,11 @@ interface Option {
 
 interface Props {
   labelText?: string;
+  name?: string;
   required: boolean;
   disabled?: boolean;
   inputValue: Option | null;
-  setInputValue: any; // TODO: fix type
+  setInputValue: (option: Option | null) => void;
   options: Option[];
 }
 
@@ -48,7 +49,7 @@ export const SelectInput: FC<Props> = ({
   }
 
   return (
-    <div className="relative">
+    <div className="w-full relative">
       <label className="inline-block ml-3 text-base text-black form-label">
         {labelText}
       </label>
@@ -57,7 +58,7 @@ export const SelectInput: FC<Props> = ({
           className={selectStyle}
           onClick={() => setIsOptionsOpen(() => !isOptionsOpen)}
         >
-          {inputValue ? inputValue.value : "Select on Option"}
+          {inputValue ? inputValue.label : "Select on options"}
         </p>
         <div className="absolute pointer-events-none right-6">
           <svg
