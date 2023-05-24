@@ -1,66 +1,44 @@
-import { useState } from "react";
 import { Card } from "../../components/card";
 
-type Talent = {
+interface Talent {
   title: string;
+  jobHeadline: string;
   firstName: string;
   lastName: string;
-  imageUrl: string;
+  country: string;
   city: string;
+  phoneCountryCode: string;
+  phoneNumber: string;
+  email: string;
+  aboutWork: string;
+  telegram: string;
   rate: string;
   currency: string;
-  aboutWork: string;
   skills: string[];
+  imageUrl: string;
 };
 
-type TalentResultProps = {
-  talentsData: Talent[];
-};
-
-export async function getServerSideProps() {
-  try {
-    const response = await fetch("/api/talents/search-talents");
-    const talentsData = await response.json();
-
-    return {
-      props: {
-        talentsData,
-      },
-    };
-  } catch (error) {
-    console.error("Error fetching talents data:", error);
-    return {
-      props: {
-        talentsData: [],
-      },
-    };
-  }
-}
-
-export default function TalentResult({ talentsData }: TalentResultProps) {
-  if (!talentsData || talentsData.length === 0) {
-    return <div>No talent data available.</div>;
-  }
-
-  const talent = talentsData[0]; // Only show the first talent
-
+export default function TalentResult({ talentsData }: { talentsData: Talent[] }) {
   return (
     <div>
-      <Card
-        type="talent"
-        title={talent.title}
-        postedBy={`${talent.firstName} ${talent.lastName}`}
-        postedOn="Active 2 days ago"
-        image={talent.imageUrl}
-        countryFlag="/img/country_flag.png"
-        city={talent.city}
-        rate={talent.rate}
-        currency={talent.currency}
-        description={talent.aboutWork}
-        skills={talent.skills}
-        buttonText="Connect"
-        escrowFee=""
-      />
+      {talentsData.map((talent, index) => (
+        <Card
+          key={index}
+          type="talent"
+          title={talent.title}
+          postedBy={`${talent.firstName} ${talent.lastName}`}
+          postedOn="Active 2 days ago" // TODO: use real data instead when available
+          image="/img/talent_avatar.png" //TODO: remplace with actual image from backblaze bucket
+          countryFlag="/img/country_flag.png" // TODO: create flag table
+          city={talent.city}
+          rate={talent.rate}
+          currency={talent.currency}
+          description={talent.jobHeadline}
+          skills={talent.skills}
+          buttonText="Connect"
+          escrowFee=""
+        />
+      ))}
     </div>
   );
 }

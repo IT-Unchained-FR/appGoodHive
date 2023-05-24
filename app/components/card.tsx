@@ -86,14 +86,8 @@ export const Card: FC<Props> = ({
                 <h1 className="font-bold lg:col-span-2 xl:col-span-2 2xl:col-span-2 text-base whitespace-nowrap inline-block">
                   Mandatory Skill:
                 </h1>
-                {skills.map((skill, index) => (
-                  <span
-                    key={index}
-                    className="inline-block bg-[#FFF2CE] rounded-full py-1 text-xs font-semibold text-center mr-1 mb-1"
-                  >
-                    {skill}
-                  </span>
-                ))}
+
+                {skills}
               </div>
             </div>
           </div>
