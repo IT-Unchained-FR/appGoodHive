@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
+import { BigNumberish } from "ethers";
+
 import Header from "@/app/components/header";
 import TalentResult from "./talent-result";
 
@@ -11,16 +14,16 @@ interface Talent {
   lastName: string;
   country: string;
   city: string;
-  phoneCountryCode: string;
-  phoneNumber: string;
+  phoneCountryCode: number;
+  phoneNumber: number;
   email: string;
   aboutWork: string;
   telegram: string;
-  rate: string;
+  rate: BigNumberish;
   currency: string;
   skills: string[];
   imageUrl: string;
-};
+}
 
 export default function SearchTalents() {
   const [talentsData, setTalentsData] = useState<Talent[]>([]);
@@ -28,18 +31,18 @@ export default function SearchTalents() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("/api/companies/search-talents");
-        if (!response.ok) {
+        const talentsResponse = await fetch("/api/companies/search-talents");
+        if (!talentsResponse.ok) {
           throw new Error("Failed to fetch data from the server");
         }
-        const talentsData = await response.json(); // Parse the response as JSON
-        setTalentsData(talentsData); // Update the state with the fetched data
+        const talents = await talentsResponse.json();
+        setTalentsData(talents);
       } catch (error) {
         console.error("Error:", error);
       }
     };
 
-    fetchData(); // Call the fetchData function when the component mounts
+    fetchData();
   }, []);
 
   return (
@@ -49,7 +52,7 @@ export default function SearchTalents() {
         Search Results
         <span className="text-base font-normal">- Talent Search</span>
       </h1>
-      <TalentResult talentsData={talentsData} />
+      <TalentResult talents={talentsData} />
     </main>
   );
 }
