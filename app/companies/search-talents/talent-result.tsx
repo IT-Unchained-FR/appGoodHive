@@ -1,3 +1,5 @@
+import { BigNumberish } from "ethers";
+
 import { Card } from "../../components/card";
 
 interface Talent {
@@ -7,21 +9,21 @@ interface Talent {
   lastName: string;
   country: string;
   city: string;
-  phoneCountryCode: string;
-  phoneNumber: string;
+  phoneCountryCode: number;
+  phoneNumber: number;
   email: string;
   aboutWork: string;
   telegram: string;
-  rate: string;
+  rate: BigNumberish;
   currency: string;
   skills: string[];
   imageUrl: string;
-};
+}
 
-export default function TalentResult({ talentsData }: { talentsData: Talent[] }) {
+export default function TalentResult({ talents }: { talents: Talent[] }) {
   return (
     <div>
-      {talentsData.map((talent, index) => (
+      {talents.map((talent, index) => (
         <Card
           key={index}
           type="talent"
