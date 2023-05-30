@@ -22,7 +22,7 @@ interface Talent {
 
 export default function TalentResult({ talents }: { talents: Talent[] }) {
   return (
-    <div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {talents.map((talent, index) => (
         <Card
           key={index}
@@ -30,7 +30,7 @@ export default function TalentResult({ talents }: { talents: Talent[] }) {
           title={talent.title}
           postedBy={`${talent.firstName} ${talent.lastName}`}
           postedOn="Active 2 days ago" // TODO: use real data instead when available
-          image="/img/talent_avatar.png" //TODO: remplace with actual image from backblaze bucket
+          image={talent.imageUrl}
           countryFlag="/img/country_flag.png" // TODO: create flag table
           city={talent.city}
           rate={talent.rate}
