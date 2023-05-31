@@ -21,17 +21,14 @@ interface Talent {
 }
 
 export default function TalentResult({ talents }: { talents: Talent[] }) {
-  const itemsPerPage = 9; // Number of talents to display per page
+  const itemsPerPage = 9;
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Calculate the index range for talents to display based on the current page
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
 
-  // Get the talents to display on the current page
   const talentsToDisplay = talents.slice(startIndex, endIndex);
 
-  // Function to handle page navigation
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
   };
