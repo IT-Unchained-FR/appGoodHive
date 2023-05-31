@@ -54,7 +54,7 @@ export const Card: FC<Props> = ({
     <div className="mt-11">
       <div className="block p-6 bg-blend-darken shadow-gray-300 rounded-3xl shadow-xl box-border border-r-2 border-l-2 border-radius bg-white">
         <div className="pl-4 pr-5">
-          <div className="flex">
+          <div className="md:flex-row flex">
             <div
               className="mt-7 w-20 h-20 flex items-center mb-6 lg:mb-0 mx-auto md:mx-0 relative"
               style={{
