@@ -34,3 +34,63 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+
+## Database
+
+TABLE goodhive.companies (
+id SERIAL PRIMARY KEY,
+headline VARCHAR(255) NOT NULL,
+designation VARCHAR(100) NOT NULL,
+address VARCHAR(100) NOT NULL,
+country VARCHAR(100) NOT NULL,
+city VARCHAR(100) NOT NULL,
+phone_country_code VARCHAR(10) NOT NULL,
+phone_number VARCHAR(20) NOT NULL,
+email VARCHAR(255) NOT NULL UNIQUE,
+telegram VARCHAR(255),
+details TEXT NOT NULL,
+image_url VARCHAR(255)
+);
+
+TABLE goodhive.users (
+id SERIAL PRIMARY KEY,
+title VARCHAR(100) NOT NULL,
+job_headline VARCHAR(255) NOT NULL,
+first_name VARCHAR(100) NOT NULL,
+last_name VARCHAR(100) NOT NULL,
+country VARCHAR(100) NOT NULL,
+city VARCHAR(100) NOT NULL,
+phone_country_code VARCHAR(10) NOT NULL,
+phone_number VARCHAR(20) NOT NULL,
+email VARCHAR(255) NOT NULL UNIQUE,
+telegram VARCHAR(255),
+currency VARCHAR(100),
+rate VARCHAR(20),
+about_work TEXT NOT NULL,
+skills VARCHAR(255) NOT NULL,
+image_url VARCHAR (255)
+);
+
+TABLE goodhive.users_experience (
+id SERIAL PRIMARY KEY,
+title VARCHAR(100) NOT NULL,
+type_employment VARCHAR(100),
+designation VARCHAR(100) NOT NULL,
+address VARCHAR(100) NOT NULL,
+contract_start VARCHAR(100) NOT NULL,
+contract_end VARCHAR(100) NOT NULL,
+description VARCHAR(255),
+skills VARCHAR(255)
+);
+
+TABLE goodhive.job_offers (
+id SERIAL PRIMARY KEY,
+title VARCHAR(100) NOT NULL,
+type_engagement VARCHAR(20) NOT NULL,
+description VARCHAR(255),
+duration VARCHAR(100) NOT NULL,
+rate_per_hour INT,
+budget VARCHAR(100),
+skills VARCHAR(255),
+currency VARCHAR(100)
+);
