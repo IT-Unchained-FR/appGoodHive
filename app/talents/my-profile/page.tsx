@@ -91,8 +91,6 @@ export default function MyProfile() {
       body: JSON.stringify(dataForm),
     });
 
-    const profileData = await profileResponse.json();
-
     setIsLoading(false);
 
     if (!profileResponse.ok) {
