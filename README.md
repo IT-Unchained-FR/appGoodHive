@@ -94,3 +94,15 @@ budget VARCHAR(100),
 skills VARCHAR(255),
 currency VARCHAR(100)
 );
+
+TABLE goodhive.users_education (
+id SERIAL PRIMARY KEY,
+school VARCHAR(100) NOT NULL,
+degree VARCHAR(100) NOT NULL,
+filed VARCHAR(100) NOT NULL,
+location VARCHAR(100) NOT NULL,
+start_date VARCHAR(100) NOT NULL,
+end_date VARCHAR(100) NOT NULL,
+description VARCHAR(255),
+distinction VARCHAR(100)
+);
