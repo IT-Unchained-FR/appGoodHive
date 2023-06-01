@@ -6,14 +6,21 @@ import toast from "react-hot-toast";
 import Autosuggest from "react-autosuggest";
 
 import DragAndDropFile from "../../components/drag-and-drop-file";
+import { SelectInput } from "../../components/select-input";
 // TODO: use button but before add the type of the button component (i.e. type="button" or type="submit")
 // import { Button } from "../../components/button";
 import { skills } from "../../constants/skills";
+import { countries } from "../../constants/countries";
 
 interface FileData {
   name: string;
   type: string;
   data: string | ArrayBuffer | null;
+}
+
+interface Option {
+  value: string;
+  label: string;
 }
 
 export default function MyProfile() {
@@ -22,7 +29,9 @@ export default function MyProfile() {
   const [imageUrl, setImageUrl] = useState(null);
   const [file, setFile] = useState<false | FileData>(false);
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
+
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState<Option | null>(null);
 
   useEffect(() => {
     if (typeof file === "object" && file !== null) {
@@ -60,7 +69,7 @@ export default function MyProfile() {
       jobHeadline: formData.get("job-headline"),
       firstName: formData.get("first-name"),
       lastName: formData.get("last-name"),
-      country: formData.get("country"),
+      country: selectedCountry?.value,
       city: formData.get("city"),
       phoneCountryCode: formData.get("phone-country-code"),
       phoneNumber: formData.get("phone-number"),
@@ -178,7 +187,7 @@ export default function MyProfile() {
               </label>
             </div>
             <input
-              className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+              className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
               placeholder="Title"
               name="title"
               type="text"
@@ -204,7 +213,7 @@ export default function MyProfile() {
                   First Name*
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="First Name"
                   name="first-name"
                   type="text"
@@ -221,7 +230,7 @@ export default function MyProfile() {
                   Last Name*
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="Last Name"
                   name="last-name"
                   type="text"
@@ -233,19 +242,14 @@ export default function MyProfile() {
             </div>
             <div className="flex flex-col gap-4 mt-4 sm:flex-row">
               <div className="flex-1">
-                <label
-                  htmlFor="country"
-                  className="inline-block ml-3 text-base text-black form-label"
-                >
-                  Country*
-                </label>
-                <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Country"
-                  type="text"
+                <SelectInput
+                  labelText="Country*"
                   name="country"
-                  pattern="[a-zA-Z -]+"
-                  maxLength={100}
+                  required={true}
+                  disabled={false}
+                  inputValue={selectedCountry}
+                  setInputValue={setSelectedCountry}
+                  options={countries}
                 />
               </div>
               <div className="flex-1">
@@ -256,7 +260,7 @@ export default function MyProfile() {
                   City*
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="City"
                   type="text"
                   name="city"
@@ -278,7 +282,7 @@ export default function MyProfile() {
                     <span className="text-gray-500 sm:text-sm">+</span>
                   </div>
                   <input
-                    className="form-control block w-full px-10 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none pl-10"
+                    className="form-control block w-full px-10 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none pl-10"
                     placeholder="Phone Country Code"
                     type="number"
                     name="phone-country-code"
@@ -295,7 +299,7 @@ export default function MyProfile() {
                   Phone Number*
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="Phone Number"
                   type="number"
                   required
@@ -313,7 +317,7 @@ export default function MyProfile() {
                   Email*
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="Email"
                   type="email"
                   required
@@ -329,7 +333,7 @@ export default function MyProfile() {
                   Telegram
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="Telegram"
                   type="text"
                   name="telegram"
@@ -346,7 +350,7 @@ export default function MyProfile() {
                   Currency
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="Currency"
                   type="text"
                   required
@@ -362,7 +366,7 @@ export default function MyProfile() {
                   Rate
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="Rate per hour"
                   type="number"
                   name="rate"
