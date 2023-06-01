@@ -1,48 +1,71 @@
 "use client";
-
-import { BigNumberish } from "ethers";
-
 import { Card } from "../../components/card";
 
-interface JobOffer {
-  type: string;
-  title: string;
-  postedBy: string;
-  postedOn: string;
-  description: string;
-  duration: string;
-  image: string;
-  country: string;
-  countryFlag: string;
-  city: string;
-  rate: BigNumberish;
-  typeEngagement: string;
-  currency: string;
-  skills: string[];
-  buttonText: string;
-}
+//ADD REAL DATA TO MAP THE CARD COMPONENT
 
-export default function JobResult({ jobOffers }: { jobOffers: JobOffer[] }) {
+export default function JobResult() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {jobOffers.map((jobOffer, index) => (
-        <Card
-          key={index}
-          type="company"
-          title={jobOffer.title}
-          postedBy="Company Name" //TODO: connect job_offers table to companies table
-          postedOn="posted 2 days ago"
-          image="/img/company_img.png" //TODO: connect job_offers table to companies table
-          countryFlag="/img/country_flag.png" // TODO: create flag table
-          city="City" //TODO: connect job_offers table to companies table
-          rate={jobOffer.rate}
-          currency={jobOffer.currency}
-          description={jobOffer.description}
-          skills={jobOffer.skills}
-          buttonText="Apply"
-          escrowFee="500"
-        />
-      ))}
+    <div className="grid min-w-full grid-flow-row grid-cols-1 gap-3 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-3  xl:grid-cols-3 2xl:grid-cols-3 3xl:grid-cols-44xl:grid-cols-3">
+      <Card
+        type="company"
+        title="Job Title 3"
+        postedBy="by Goodhive"
+        postedOn="posted 2 days ago"
+        image="/img/company_img.png"
+        countryFlag="/img/country_flag.png"
+        city=""
+        rate=""
+        currency=""
+        description="Job description will come here when posted Amet, consecq consectetur consectetur adipiscing elit, sed do eiusmod tempor."
+        skills={["Skill 1", "Skill 2", "Skill 3", "Skill 4"]}
+        buttonText="Apply"
+        escrowFee="500"
+      />{" "}
+      <Card
+        type="company"
+        title="Job Title 3"
+        postedBy="by Goodhive"
+        postedOn="posted 2 days ago"
+        image="/img/company_img.png"
+        countryFlag="/img/country_flag.png"
+        city=""
+        rate=""
+        currency=""
+        description="Job description will come here when posted Amet, consecq consectetur consectetur adipiscing elit, sed do eiusmod tempor."
+        skills={["Skill 1", "Skill 2", "Skill 3", "Skill 4"]}
+        buttonText="Apply"
+        escrowFee="500"
+      />{" "}
+      <Card
+        type="company"
+        title="Job Title 3"
+        postedBy="by Goodhive"
+        postedOn="posted 2 days ago"
+        image="/img/company_img.png"
+        countryFlag="/img/country_flag.png"
+        city=""
+        rate=""
+        currency=""
+        description="Job description will come here when posted Amet, consecq consectetur consectetur adipiscing elit, sed do eiusmod tempor."
+        skills={["Skill 1", "Skill 2", "Skill 3", "Skill 4"]}
+        buttonText="Apply"
+        escrowFee="500"
+      />{" "}
+      <Card
+        type="company"
+        title="Job Title 3"
+        postedBy="by Goodhive"
+        postedOn="posted 2 days ago"
+        image="/img/company_img.png"
+        countryFlag="/img/country_flag.png"
+        city=""
+        rate=""
+        currency=""
+        description="Job description will come here when posted Amet, consecq consectetur consectetur adipiscing elit, sed do eiusmod tempor."
+        skills={["Skill 1", "Skill 2", "Skill 3", "Skill 4"]}
+        buttonText="Apply"
+        escrowFee="500"
+      />
     </div>
   );
 }
