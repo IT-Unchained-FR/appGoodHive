@@ -5,6 +5,7 @@ import { useState, FormEvent } from "react";
 import toast from "react-hot-toast";
 
 import { SelectInput } from "../../../components/select-input";
+import { degrees } from "../../../constants/degrees";
 
 interface Option {
   value: string;
@@ -22,18 +23,6 @@ export default function CreateJob() {
   );
   const [selectedEndMonth, setSelectedEndMonth] = useState<Option | null>(null);
   const [selectedEndYear, setSelectedEndYear] = useState<Option | null>(null);
-
-  const degrees: Option[] = [
-    { value: "associate", label: "Associate" },
-    { value: "bachelor", label: "Bachelor" },
-    { value: "master", label: "Master" },
-    { value: "doctorate", label: "Doctorate" },
-    { value: "professional", label: "Professional" },
-    { value: "diploma", label: "Diploma" },
-    { value: "certificate", label: "Certificate" },
-    { value: "highschool", label: "High School Diploma" },
-    { value: "ged", label: "GED" },
-  ];
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
