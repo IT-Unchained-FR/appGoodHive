@@ -9,8 +9,8 @@ const sql = postgres(process.env.DATABASE_URL || "", {
 export async function GET(request: Request) {
   {
     try {
-      const jobOffers = await sql`SELECT * FROM goodhive.job_offers`;
-      const formattedJobOffers = jobOffers.map((item) => ({
+      const jobs = await sql`SELECT * FROM goodhive.job_offers`;
+      const formattedJobs = jobs.map((item) => ({
         title: item.title,
         typeEngagement: item.type_engagement,
         jobDescription: item.description,
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
         budget: item.budget,
         skills: item.skills.split(","),
       }));
-      return new Response(JSON.stringify(formattedJobOffers)); //
+      return new Response(JSON.stringify(formattedJobs)); //
     } catch (error) {
       console.error("Error fetching data:", error);
       return new Response(JSON.stringify({ message: "Error fetching data" }), {
