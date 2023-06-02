@@ -12,7 +12,7 @@ interface JobOffer {
   title: string;
   postedBy: string;
   postedOn: string;
-  description: string;
+  jobDescription: string;
   duration: string;
   image: string;
   country: string;
