@@ -9,7 +9,7 @@ interface JobOffer {
   title: string;
   postedBy: string;
   postedOn: string;
-  description: string;
+  jobDescription: string;
   duration: string;
   image: string;
   country: string;
@@ -37,7 +37,7 @@ export default function JobResult({ jobOffers }: { jobOffers: JobOffer[] }) {
           city="City" //TODO: connect job_offers table to companies table
           rate={jobOffer.rate}
           currency={jobOffer.currency}
-          description={jobOffer.description}
+          description={jobOffer.jobDescription}
           skills={jobOffer.skills}
           buttonText="Apply"
           escrowFee="500"
