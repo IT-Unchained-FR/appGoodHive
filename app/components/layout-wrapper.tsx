@@ -1,10 +1,12 @@
 "use client";
 
-import "./globals.css";
-
 import { WagmiConfig, createConfig, configureChains, mainnet } from "wagmi";
 import { publicProvider } from "wagmi/providers/public";
 import { getDefaultWallets, RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import { RainbowKitSiweNextAuthProvider } from "@rainbow-me/rainbowkit-siwe-next-auth";
+import { SessionProvider } from "next-auth/react";
+import type { Session } from "next-auth";
+import { AppProps } from "next/app";
 import { Toaster } from "react-hot-toast";
 
 import "@rainbow-me/rainbowkit/styles.css";
@@ -27,9 +29,9 @@ const config = createConfig({
   webSocketPublicClient,
 });
 
-import { NavBar } from "./components/nav-bar";
+import { NavBar } from "./nav-bar";
 
-export default function RootLayout({
+export default function LayoutWrapper({
   children,
 }: {
   children: React.ReactNode;
