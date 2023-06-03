@@ -19,12 +19,17 @@ export async function GET(request: Request) {
         budget: item.budget,
         skills: item.skills.split(","),
       }));
+
       return new Response(JSON.stringify(formattedJobs)); //
     } catch (error) {
-      console.error("Error fetching data:", error);
-      return new Response(JSON.stringify({ message: "Error fetching data" }), {
-        status: 500,
-      });
+      console.error("Error fetching job offers:", error);
+
+      return new Response(
+        JSON.stringify({ message: "Error fetching job offers" }),
+        {
+          status: 500,
+        }
+      );
     }
   }
 }

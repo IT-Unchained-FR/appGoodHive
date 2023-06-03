@@ -26,10 +26,13 @@ export default function JobSearch() {
     const fetchData = async () => {
       try {
         const jobOffersResponse = await fetch("/api/talents/job-search");
+
         if (!jobOffersResponse.ok) {
           throw new Error("Failed to fetch data from the server");
         }
+
         const jobOffers = await jobOffersResponse.json();
+
         setJobOffersData(jobOffers);
       } catch (error) {
         console.error("Error:", error);

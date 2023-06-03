@@ -10,25 +10,24 @@ import toast from "react-hot-toast";
 import { SelectInput } from "../../../components/select-input";
 import { employmentType } from "../../../constants/employment-type";
 import { skills } from "../../../constants/skills";
+import LabelOption from "@interfaces/label-option";
 
-interface Option {
-  value: string;
-  label: string;
-}
 export default function CreateJob() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
 
   const [selectedEmploymentType, setSelectedEmploymentType] =
-    useState<Option | null>(null);
-  const [selectedStartMonth, setSelectedStartMonth] = useState<Option | null>(
+    useState<LabelOption | null>(null);
+  const [selectedStartMonth, setSelectedStartMonth] =
+    useState<LabelOption | null>(null);
+  const [selectedStartYear, setSelectedStartYear] =
+    useState<LabelOption | null>(null);
+  const [selectedEndMonth, setSelectedEndMonth] = useState<LabelOption | null>(
     null
   );
-  const [selectedStartYear, setSelectedStartYear] = useState<Option | null>(
+  const [selectedEndYear, setSelectedEndYear] = useState<LabelOption | null>(
     null
   );
-  const [selectedEndMonth, setSelectedEndMonth] = useState<Option | null>(null);
-  const [selectedEndYear, setSelectedEndYear] = useState<Option | null>(null);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -72,8 +71,8 @@ export default function CreateJob() {
     }
   };
 
-  // Get the months names as options
-  const month: Option[] = Array.from({ length: 12 }, (_, index) => {
+  // Get the months names as LabelOptions
+  const month: LabelOption[] = Array.from({ length: 12 }, (_, index) => {
     const monthName = new Date(0, index).toLocaleString("en-US", {
       month: "long",
     });
@@ -83,7 +82,7 @@ export default function CreateJob() {
   const startYear = parseInt(process.env.NEXT_PUBLIC_START_YEAR || "0");
   const endYear = parseInt(process.env.NEXT_PUBLIC_END_YEAR || "0");
 
-  const year: Option[] = Array.from(
+  const year: LabelOption[] = Array.from(
     { length: endYear - startYear + 1 },
     (_, index) => {
       const yearValue = String(startYear + index);
@@ -139,8 +138,8 @@ export default function CreateJob() {
     return (
       <Autosuggest
         suggestions={getSuggestions(inputValue)}
-        onSuggestionsFetchRequested={() => "ewffew"}
-        onSuggestionsClearRequested={() => "wef"}
+        onSuggestionsFetchRequested={() => ""}
+        onSuggestionsClearRequested={() => ""}
         getSuggestionValue={(skill) => skill}
         onSuggestionSelected={onSuggestionSelected}
         renderSuggestion={renderSuggestion}
@@ -220,7 +219,7 @@ export default function CreateJob() {
               </div>
             </div>
             <div className="flex flex-col gap-4 mt-6 sm:flex-row">
-              <div className="flex-1 flex gap-2">
+              <div className="flex flex-1 gap-2">
                 <SelectInput
                   labelText="Start date*"
                   name="start-month"
@@ -239,7 +238,7 @@ export default function CreateJob() {
                   options={year}
                 />
               </div>
-              <div className="flex-1 flex gap-2">
+              <div className="flex flex-1 gap-2">
                 <SelectInput
                   labelText="End date*"
                   name="end-month"
@@ -262,7 +261,7 @@ export default function CreateJob() {
             <div className="mb-10">
               <label
                 htmlFor="description"
-                className="inline-block ml-3 text-base text-black form-label mt-6"
+                className="inline-block mt-6 ml-3 text-base text-black form-label"
               ></label>
               <div>
                 <textarea
@@ -278,11 +277,11 @@ export default function CreateJob() {
               <div className="flex-1">
                 <label
                   htmlFor="skills"
-                  className="inline-block font-bold ml-3 text-base text-black form-label"
+                  className="inline-block ml-3 text-base font-bold text-black form-label"
                 >
                   Skills
                 </label>
-                <div className="absolute pr-10 pt-1 form-control w-full text-base font-normal text-gray-600 bg-white ">
+                <div className="absolute w-full pt-1 pr-10 text-base font-normal text-gray-600 bg-white form-control ">
                   <AutoSuggestInput />
                 </div>
                 <div className="pt-10">
