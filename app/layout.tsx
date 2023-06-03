@@ -1,7 +1,5 @@
 import "./globals.css";
 
-import "@rainbow-me/rainbowkit/styles.css";
-
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
