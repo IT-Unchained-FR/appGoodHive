@@ -1,18 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import Image from "next/image";
 
+import { ChangeEvent, useState } from "react";
+
+import LabelOption from "@interfaces/label-option";
 import { Button } from "../components/button";
 import { IconButton } from "../components/icon-button";
 import { Card } from "../components/card";
 import { Input } from "../components/input";
 import { SelectInput } from "../components/select-input";
-
-// TODO: move to a separate file
-interface Option {
-  value: string;
-  label: string;
-}
 
 export default function Design() {
   const [textValue, setTextValue] = useState("");
@@ -20,25 +17,27 @@ export default function Design() {
   const [emailValue, setEmailValue] = useState("");
   const [passwordValue, setPasswordValue] = useState("");
   const [urlValue, setURLValue] = useState("");
-  const [selectedOption, setSelectedOption] = useState<Option | null>(null);
+  const [selectedOption, setSelectedOption] = useState<LabelOption | null>(
+    null
+  );
 
-  const textHandleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const textHandleChange = (event: ChangeEvent<HTMLInputElement>) => {
     setTextValue(event.target.value);
   };
-  const numberHandleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const numberHandleChange = (event: ChangeEvent<HTMLInputElement>) => {
     setNumberValue(event.target.value);
   };
-  const emailHandleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const emailHandleChange = (event: ChangeEvent<HTMLInputElement>) => {
     setEmailValue(event.target.value);
   };
-  const passwordHandleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const passwordHandleChange = (event: ChangeEvent<HTMLInputElement>) => {
     setPasswordValue(event.target.value);
   };
-  const urlHandleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const urlHandleChange = (event: ChangeEvent<HTMLInputElement>) => {
     setURLValue(event.target.value);
   };
 
-  const options: Option[] = [
+  const options: LabelOption[] = [
     { value: "option 1", label: "option 1" },
     { value: "option 2", label: "option 2" },
   ];
@@ -49,7 +48,13 @@ export default function Design() {
 
       <section className="mt-5 body-font font-montserrat">
         <h2 className="text-2xl font-bold">Logo</h2>
-        <img className="ml-10" src="/img/goodhive_logo.png" alt="Goodhive" />
+        <Image
+          className="ml-10"
+          width={600}
+          height={456}
+          src="/img/goodhive_logo.png"
+          alt="Goodhive"
+        />
       </section>
 
       <section className="mt-5 body-font font-montserrat">
