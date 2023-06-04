@@ -4,6 +4,9 @@ const nextConfig = {
     appDir: true,
     typedRoutes: true,
   },
+  images: {
+    domains: ["goodhive-image.s3.us-east-005.backblazeb2.com"],
+  },
 };
 
 module.exports = nextConfig;
