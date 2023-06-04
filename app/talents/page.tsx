@@ -1,3 +1,10 @@
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Talents Page | GoodHive",
+  description: "The Decentralized Freelancing Platform",
+};
+
 export default function Talents() {
   return (
     <main className="mx-5">
