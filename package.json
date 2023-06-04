@@ -11,7 +11,8 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.327.0",
     "@aws-sdk/signature-v4-crt": "^3.310.0",
-    "@rainbow-me/rainbowkit": "^0.12.8",
+    "@rainbow-me/rainbowkit": "^1.0.1",
+    "@rainbow-me/rainbowkit-siwe-next-auth": "^0.2.0",
     "@types/node": "18.15.11",
     "@types/react": "18.0.35",
     "@types/react-dom": "18.0.11",
@@ -21,9 +22,8 @@
     "encoding": "^0.1.13",
     "eslint": "8.38.0",
     "eslint-config-next": "13.3.0",
-    "ethers": "^5.7.2",
-    "fs": "^0.0.1-security",
-    "next": "13.3.0",
+    "iron-session": "^6.3.1",
+    "next": "latest",
     "postcss": "8.4.21",
     "postgres": "^3.3.4",
     "react": "^18.2.0",
@@ -31,14 +31,20 @@
     "react-dom": "18.2.0",
     "react-hot-toast": "^2.4.0",
     "react-loading-skeleton": "^3.2.1",
+    "siwe": "^2.1.4",
     "tailwindcss": "^3.3.1",
     "typescript": "5.0.4",
     "uuid": "^9.0.0",
-    "wagmi": "^0.12.10"
+    "wagmi": "^1.0.9"
   },
   "devDependencies": {
     "@types/react-autosuggest": "^10.1.6",
     "@types/uuid": "^9.0.1",
     "eslint-config-prettier": "^8.8.0"
+  },
+  "browser": {
+    "tls": false,
+    "net": false,
+    "fs": false
   }
 }
