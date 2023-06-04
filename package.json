@@ -22,7 +22,6 @@
     "encoding": "^0.1.13",
     "eslint": "8.38.0",
     "eslint-config-next": "13.3.0",
-    "fs": "^0.0.1-security",
     "iron-session": "^6.3.1",
     "next": "latest",
     "postcss": "8.4.21",
@@ -45,7 +44,6 @@
   },
   "browser": {
     "tls": false,
-    "net": false,
-    "fs": false
+    "net": false
   }
 }
