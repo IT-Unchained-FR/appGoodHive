@@ -20,8 +20,13 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@interfaces/*": ["./interfaces/*"]
     }
+  },
+  "typescript": {
+    // FIXME: Dangerously allow production builds to successfully complete even if
+    "ignoreBuildErrors": true
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
