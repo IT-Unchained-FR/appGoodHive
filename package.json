@@ -44,6 +44,7 @@
   },
   "browser": {
     "tls": false,
-    "net": false
+    "net": false,
+    "fs": false
   }
 }
