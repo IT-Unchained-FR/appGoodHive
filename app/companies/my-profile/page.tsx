@@ -8,17 +8,8 @@ import DragAndDropFile from "../../components/drag-and-drop-file";
 
 import { SelectInput } from "../../components/select-input";
 import { countries } from "../../constants/countries";
-
-interface FileData {
-  name: string;
-  type: string;
-  data: string | ArrayBuffer | null;
-}
-
-interface Option {
-  value: string;
-  label: string;
-}
+import Option from "../../../interfaces/option";
+import FileData from "../../../interfaces/file-data";
 
 export default function MyProfile() {
   const invoiceInputValue = useRef(null);
