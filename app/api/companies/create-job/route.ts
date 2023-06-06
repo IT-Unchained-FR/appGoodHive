@@ -9,6 +9,7 @@ export async function POST(request: Request) {
     ratePerHour,
     budget,
     skills,
+    currency,
   } = await request.json();
 
   const sql = postgres(process.env.DATABASE_URL || "", {
@@ -26,7 +27,8 @@ export async function POST(request: Request) {
         duration,
         rate_per_hour,
         budget,
-        skills
+        skills,
+        currency
       ) VALUES (
         ${title},
         ${typeEngagement},
@@ -34,7 +36,8 @@ export async function POST(request: Request) {
         ${duration},
         ${ratePerHour},
         ${budget},
-        ${skills}
+        ${skills},
+        ${currency}
       );
     `;
 
