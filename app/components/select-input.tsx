@@ -42,7 +42,7 @@ export const SelectInput: FC<Props> = ({
   ));
 
   let selectStyle =
-    "block w-full mr-3 px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none";
+    "block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none";
   if (disabled) {
     selectStyle =
       "form-control block w-full px-4 py-2 text-base font-light text-gray-200 bg-white bg-clip-padding border border-solid border-[#FFF2CE] rounded-full";
@@ -57,6 +57,9 @@ export const SelectInput: FC<Props> = ({
         <p
           className={selectStyle}
           onClick={() => setIsOptionsOpen(() => !isOptionsOpen)}
+          style={{
+            color: inputValue && inputValue.label !== "Select on options" ? "black" : "gray",
+          }}
         >
           {inputValue ? inputValue.label : "Select on options"}
         </p>
