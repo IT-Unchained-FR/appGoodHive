@@ -5,13 +5,21 @@ import { useState, FormEvent } from "react";
 import Autosuggest from "react-autosuggest";
 import toast from "react-hot-toast";
 
+import { SelectInput } from "../../components/select-input";
 // TODO: use button but before add the type of the button component (i.e. type="button" or type="submit")
 // import { Button } from "../../components/button";
 import { skills } from "../../constants/skills";
+import { currencies } from "@/app/constants/currencies";
+
+interface Option {
+  value: string;
+  label: string;
+}
 
 export default function CreateJob() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [selectedCurrency, setSelectedCurrency] = useState<Option | null>(null);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -29,6 +37,7 @@ export default function CreateJob() {
       duration: formData.get("duration"),
       ratePerHour: formData.get("rate-per-hour"),
       budget: formData.get("budget"),
+      currency: selectedCurrency?.value,
       skills: selectedSkills,
     };
     // TODO: POST formData to the server with fetch
@@ -126,7 +135,7 @@ export default function CreateJob() {
                   Job Title*
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="Job Header..."
                   name="title"
                   type="text"
@@ -142,7 +151,7 @@ export default function CreateJob() {
                   Type of engagement*
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="Weekly, Monthly..."
                   name="type-engagement"
                   type="text"
@@ -176,7 +185,7 @@ export default function CreateJob() {
                   Project Duration*
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   type="text"
                   name="duration"
                   required
@@ -191,7 +200,7 @@ export default function CreateJob() {
                   Expected rate per hour
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   type="number"
                   name="rate-per-hour"
                   maxLength={100}
@@ -205,10 +214,21 @@ export default function CreateJob() {
                   Budget of the project
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   type="number"
                   name="budget"
                   maxLength={100}
+                />
+              </div>
+              <div className="flex-1">
+                <SelectInput
+                  labelText="Currency"
+                  name="currency"
+                  required={false}
+                  disabled={false}
+                  inputValue={selectedCurrency}
+                  setInputValue={setSelectedCurrency}
+                  options={currencies}
                 />
               </div>
             </div>

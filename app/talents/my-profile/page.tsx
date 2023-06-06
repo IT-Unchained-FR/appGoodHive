@@ -11,6 +11,7 @@ import { SelectInput } from "../../components/select-input";
 // import { Button } from "../../components/button";
 import { skills } from "../../constants/skills";
 import { countries } from "../../constants/countries";
+import { currencies } from "../../constants/currencies";
 
 interface FileData {
   name: string;
@@ -32,6 +33,7 @@ export default function MyProfile() {
 
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<Option | null>(null);
+  const [selectedCurrency, setSelectedCurrency] = useState<Option | null>(null);
 
   useEffect(() => {
     if (typeof file === "object" && file !== null) {
@@ -76,7 +78,7 @@ export default function MyProfile() {
       email: formData.get("email"),
       telegram: formData.get("telegram"),
       aboutWork: formData.get("about-work"),
-      currency: formData.get("currency"),
+      currency: selectedCurrency?.value,
       rate: formData.get("rate"),
       skills: selectedSkills,
       imageUrl,
@@ -341,19 +343,14 @@ export default function MyProfile() {
             </div>
             <div className="flex flex-col gap-4 mt-4 sm:flex-row">
               <div className="flex-1">
-                <label
-                  htmlFor="currency"
-                  className="inline-block ml-3 text-base text-black form-label"
-                >
-                  Currency
-                </label>
-                <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Currency"
-                  type="text"
-                  required
+                <SelectInput
+                  labelText="Currency"
                   name="currency"
-                  maxLength={255}
+                  required={false}
+                  disabled={false}
+                  inputValue={selectedCurrency}
+                  setInputValue={setSelectedCurrency}
+                  options={currencies}
                 />
               </div>
               <div className="flex-1">
