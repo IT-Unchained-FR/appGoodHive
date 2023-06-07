@@ -2,6 +2,7 @@ import postgres from "postgres";
 
 export async function POST(request: Request) {
   const {
+    title,
     jobHeadline,
     firstName,
     lastName,
@@ -12,6 +13,9 @@ export async function POST(request: Request) {
     email,
     telegram,
     aboutWork,
+    currency,
+    rate,
+    skills,
     imageUrl,
   } = await request.json();
 
@@ -24,6 +28,7 @@ export async function POST(request: Request) {
   try {
     await sql`
       INSERT INTO goodhive.users (
+        title,
         job_headline,
         first_name,
         last_name,
@@ -34,8 +39,12 @@ export async function POST(request: Request) {
         email,
         telegram,
         about_work,
+        currency,
+        rate,
+        skills,
         image_url
       ) VALUES (
+        ${title},
         ${jobHeadline},
         ${firstName},
         ${lastName},
@@ -46,6 +55,9 @@ export async function POST(request: Request) {
         ${email},
         ${telegram},
         ${aboutWork},
+        ${currency},
+        ${rate},
+        ${skills},
         ${imageUrl}
       );
     `;

@@ -15,10 +15,13 @@ export default function CreateJob() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     setIsLoading(true);
 
+    // FIXME: formData is not a explicit name
     const formData = new FormData(e.currentTarget);
 
+    // FIXME: dataForm is not a explicit name
     const dataForm = {
       title: formData.get("title"),
       typeEngagement: formData.get("type-engagement"),
@@ -40,6 +43,7 @@ export default function CreateJob() {
     setIsLoading(false);
 
     if (!jobResponse.ok) {
+      // TODO: Handle error is not a explicit message
       toast.error("Something went wrong!");
     } else {
       toast.success("Profile Saved!");
