@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { FC } from "react";
+import { BigNumberish } from "ethers";
 
 import { Button } from "../components/button";
 
@@ -12,7 +13,7 @@ interface Props {
   image: string;
   countryFlag: string;
   city: string;
-  rate: string;
+  rate: BigNumberish;
   currency: string;
   description: string;
   skills: string[];
