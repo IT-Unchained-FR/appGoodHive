@@ -5,12 +5,19 @@ import { useRef, useState, FormEvent, useEffect } from "react";
 import toast from "react-hot-toast";
 
 import DragAndDropFile from "../../components/drag-and-drop-file";
-import { Button } from "../../components/button";
+
+import { SelectInput } from "../../components/select-input";
+import { countries } from "../../constants/countries";
 
 interface FileData {
   name: string;
   type: string;
   data: string | ArrayBuffer | null;
+}
+
+interface Option {
+  value: string;
+  label: string;
 }
 
 export default function MyProfile() {
@@ -19,6 +26,8 @@ export default function MyProfile() {
   const [imageUrl, setImageUrl] = useState(null);
   const [file, setFile] = useState<false | FileData>(false);
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
+
+  const [selectedCountry, setSelectedCountry] = useState<Option | null>(null);
 
   useEffect(() => {
     if (typeof file === "object" && file !== null) {
@@ -55,7 +64,7 @@ export default function MyProfile() {
       headline: formData.get("headline"),
       designation: formData.get("designation"),
       address: formData.get("address"),
-      country: formData.get("country"),
+      country: selectedCountry?.value,
       city: formData.get("city"),
       phoneCountryCode: formData.get("phone-country-code"),
       phoneNumber: formData.get("phone-number"),
@@ -64,6 +73,7 @@ export default function MyProfile() {
       details: formData.get("details"),
       imageUrl,
     };
+
     // TODO: POST formData to the server with fetch
     const profileResponse = await fetch("/api/companies/my-profile", {
       method: "POST",
@@ -72,8 +82,6 @@ export default function MyProfile() {
       },
       body: JSON.stringify(dataForm),
     });
-
-    const profileData = await profileResponse.json();
 
     setIsLoading(false);
 
@@ -105,7 +113,7 @@ export default function MyProfile() {
                 htmlFor="headline"
                 className="inline-block ml-3 text-base text-black form-label"
               >
-                Describe your company in a few words?
+                Describe your company in a few words?*
               </label>
             </div>
             <div>
@@ -125,10 +133,10 @@ export default function MyProfile() {
                   htmlFor="designation"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
-                  Company Name
+                  Company Name*
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="Company Name"
                   name="designation"
                   type="text"
@@ -141,10 +149,10 @@ export default function MyProfile() {
                   htmlFor="address"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
-                  Address
+                  Address*
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="Address"
                   name="address"
                   type="text"
@@ -156,20 +164,14 @@ export default function MyProfile() {
             </div>
             <div className="flex flex-col gap-4 mt-4 sm:flex-row">
               <div className="flex-1">
-                <label
-                  htmlFor="country"
-                  className="inline-block ml-3 text-base text-black form-label"
-                >
-                  Country
-                </label>
-                <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Country"
-                  type="text"
+                <SelectInput
+                  labelText="Country*"
                   name="country"
-                  required
-                  pattern="[a-zA-Z -]+"
-                  maxLength={100}
+                  required={true}
+                  disabled={false}
+                  inputValue={selectedCountry}
+                  setInputValue={setSelectedCountry}
+                  options={countries}
                 />
               </div>
               <div className="flex-1">
@@ -177,10 +179,10 @@ export default function MyProfile() {
                   htmlFor="city"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
-                  City
+                  City*
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="City"
                   type="text"
                   name="city"
@@ -196,14 +198,14 @@ export default function MyProfile() {
                   htmlFor="phone-country-code"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
-                  Phone Country Code
+                  Phone Country Code*
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                     <span className="text-gray-500 sm:text-sm">+</span>
                   </div>
                   <input
-                    className="form-control block w-full px-10 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none pl-6"
+                    className="form-control block w-full px-10 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none pl-6"
                     placeholder="Phone Country Code"
                     type="text"
                     pattern="[0-9]+"
@@ -218,10 +220,10 @@ export default function MyProfile() {
                   htmlFor="phone-number"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
-                  Phone Number
+                  Phone Number*
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="Phone Number"
                   type="text"
                   pattern="[0-9]+"
@@ -237,10 +239,10 @@ export default function MyProfile() {
                   htmlFor="email"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
-                  Email
+                  Email*
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="Email"
                   type="email"
                   required
@@ -256,7 +258,7 @@ export default function MyProfile() {
                   Telegram
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="Telegram"
                   type="text"
                   maxLength={255}
@@ -269,7 +271,7 @@ export default function MyProfile() {
                 htmlFor="details"
                 className="inline-block ml-3 text-base text-black form-label"
               >
-                Company profile and services...
+                Company profile and services...*
               </label>
               <textarea
                 name="details"
