@@ -2,32 +2,27 @@
 
 import { useState, FormEvent } from "react";
 
-import Autosuggest from "react-autosuggest";
 import toast from "react-hot-toast";
 
-// TODO: use button but before add the type of the button component (i.e. type="button" or type="submit")
-//import { Button } from "../../../components/button";
 import { SelectInput } from "../../../components/select-input";
-import { employmentType } from "../../../constants/employment-type";
-import { skills } from "../../../constants/skills";
-import LabelOption from "@interfaces/label-option";
+import { degrees } from "../../../constants/degrees";
 
+interface Option {
+  value: string;
+  label: string;
+}
 export default function CreateJob() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
 
-  const [selectedEmploymentType, setSelectedEmploymentType] =
-    useState<LabelOption | null>(null);
-  const [selectedStartMonth, setSelectedStartMonth] =
-    useState<LabelOption | null>(null);
-  const [selectedStartYear, setSelectedStartYear] =
-    useState<LabelOption | null>(null);
-  const [selectedEndMonth, setSelectedEndMonth] = useState<LabelOption | null>(
+  const [selectedDegree, setSelectedDegree] = useState<Option | null>(null);
+  const [selectedStartMonth, setSelectedStartMonth] = useState<Option | null>(
     null
   );
-  const [selectedEndYear, setSelectedEndYear] = useState<LabelOption | null>(
+  const [selectedStartYear, setSelectedStartYear] = useState<Option | null>(
     null
   );
+  const [selectedEndMonth, setSelectedEndMonth] = useState<Option | null>(null);
+  const [selectedEndYear, setSelectedEndYear] = useState<Option | null>(null);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -37,24 +32,24 @@ export default function CreateJob() {
 
     const startYear = Number(selectedStartYear?.value);
     const startMonth = Number(selectedStartMonth?.value);
-    const contractStart = new Date(startYear, startMonth);
+    const startDate = new Date(startYear, startMonth);
 
     const endYear = Number(selectedEndYear?.value);
     const endMonth = Number(selectedEndMonth?.value);
-    const contractEnd = new Date(endYear, endMonth);
+    const endDate = new Date(endYear, endMonth);
 
     const dataForm = {
-      title: formData.get("title"),
-      typeEmployment: selectedEmploymentType?.value,
-      designation: formData.get("designation"),
-      address: formData.get("address"),
-      contractStart,
-      contractEnd,
+      school: formData.get("school"),
+      degree: selectedDegree?.value,
+      filed: formData.get("filed"),
+      location: formData.get("location"),
+      startDate,
+      endDate,
       description: formData.get("description"),
-      skills: selectedSkills,
+      distinction: formData.get("distinction"),
     };
 
-    const experienceResponse = await fetch("/api/talents/experiences", {
+    const educationResponse = await fetch("/api/talents/education", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -64,15 +59,14 @@ export default function CreateJob() {
 
     setIsLoading(false);
 
-    if (!experienceResponse.ok) {
+    if (!educationResponse.ok) {
       toast.error("Something went wrong!");
     } else {
-      toast.success("Experience Saved!");
+      toast.success("Education saved!");
     }
   };
 
-  // Get the months names as LabelOptions
-  const month: LabelOption[] = Array.from({ length: 12 }, (_, index) => {
+  const month: Option[] = Array.from({ length: 12 }, (_, index) => {
     const monthName = new Date(0, index).toLocaleString("en-US", {
       month: "long",
     });
@@ -82,7 +76,7 @@ export default function CreateJob() {
   const startYear = parseInt(process.env.NEXT_PUBLIC_START_YEAR || "0");
   const endYear = parseInt(process.env.NEXT_PUBLIC_END_YEAR || "0");
 
-  const year: LabelOption[] = Array.from(
+  const year: Option[] = Array.from(
     { length: endYear - startYear + 1 },
     (_, index) => {
       const yearValue = String(startYear + index);
@@ -90,67 +84,10 @@ export default function CreateJob() {
     }
   );
 
-  const AutoSuggestInput = () => {
-    const [inputValue, setInputValue] = useState("");
-
-    const getSuggestions = (value: string) => {
-      const inputValue = value.trim().toLowerCase();
-      const inputLength = inputValue.length;
-
-      return inputLength === 0
-        ? []
-        : skills.filter(
-            (skill) => skill.toLowerCase().slice(0, inputLength) === inputValue
-          );
-    };
-
-    const onSuggestionSelected = (
-      event: React.FormEvent<HTMLInputElement>,
-      { suggestion }: Autosuggest.SuggestionSelectedEventData<any>
-    ) => {
-      if (!selectedSkills.includes(suggestion)) {
-        setSelectedSkills([...selectedSkills, suggestion]);
-      }
-    };
-
-    const renderSuggestion = (suggestion: string) => (
-      <div className="mx-1 px-2 py-2 z-10 hover:text-[#FF8C05] bg-white shadow-md max-h-48 overflow-y-auto border-gray-400 border-b-[0.5px] border-solid">
-        {suggestion}
-      </div>
-    );
-
-    const inputProps = {
-      placeholder: "JavaScript, NextJS,...",
-      type: "text",
-      maxLength: 255,
-      name: "skills",
-      value: inputValue,
-      onChange: (
-        event: React.FormEvent<HTMLElement>,
-        { newValue }: { newValue: string }
-      ) => {
-        setInputValue(newValue);
-      },
-      className:
-        "relative rounded-lg block w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding transition ease-in-out focus:text-black bg-gray-100 focus:outline-none focus:ring-0",
-    };
-
-    return (
-      <Autosuggest
-        suggestions={getSuggestions(inputValue)}
-        onSuggestionsFetchRequested={() => ""}
-        onSuggestionsClearRequested={() => ""}
-        getSuggestionValue={(skill) => skill}
-        onSuggestionSelected={onSuggestionSelected}
-        renderSuggestion={renderSuggestion}
-        inputProps={inputProps}
-      />
-    );
-  };
   return (
     <main className="mx-5">
       <h1 className="my-5 text-2xl border-b-[1px] border-slate-300">
-        Professional Experience
+        Add education
       </h1>
       <section>
         <form onSubmit={handleSubmit}>
@@ -158,15 +95,15 @@ export default function CreateJob() {
             <div className="flex flex-col gap-4 mt-10 sm:flex-row">
               <div className="flex-1">
                 <label
-                  htmlFor="title"
+                  htmlFor="school"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
-                  Title*
+                  School*
                 </label>
                 <input
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 rounded-full bg-clip-padding border border-solid border-[#FFC905]  hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Try Developer Solidity, Rust, C++..."
-                  name="title"
+                  placeholder="Ex: MIT"
+                  name="school"
                   type="text"
                   required
                   maxLength={100}
@@ -174,28 +111,28 @@ export default function CreateJob() {
               </div>
               <div className="flex-1">
                 <SelectInput
-                  labelText="Type of employment*"
-                  name="type-employment"
+                  labelText="Degree*"
+                  name="degree"
                   required={true}
                   disabled={false}
-                  inputValue={selectedEmploymentType}
-                  setInputValue={setSelectedEmploymentType}
-                  options={employmentType}
+                  inputValue={selectedDegree}
+                  setInputValue={setSelectedDegree}
+                  options={degrees}
                 />
               </div>
             </div>
             <div className="flex flex-col gap-4 mt-6 sm:flex-row">
               <div className="flex-1">
                 <label
-                  htmlFor="designation"
+                  htmlFor="filed"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
-                  Company Name*
+                  Filed of Study*
                 </label>
                 <input
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600  rounded-full bg-clip-padding border border-solid border-[#FFC905] hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Name of the Company"
-                  name="designation"
+                  placeholder="Ex: Business Studies"
+                  name="filed"
                   type="text"
                   required
                   maxLength={100}
@@ -203,7 +140,7 @@ export default function CreateJob() {
               </div>
               <div className="flex-1">
                 <label
-                  htmlFor="address"
+                  htmlFor="location"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
                   Location*
@@ -211,7 +148,7 @@ export default function CreateJob() {
                 <input
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 rounded-full bg-clip-padding border border-solid border-[#FFC905] hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   type="text"
-                  name="address"
+                  name="location"
                   placeholder="Paris, London, Remote..."
                   required
                   maxLength={100}
@@ -219,7 +156,7 @@ export default function CreateJob() {
               </div>
             </div>
             <div className="flex flex-col gap-4 mt-6 sm:flex-row">
-              <div className="flex flex-1 gap-2">
+              <div className="flex-1 flex gap-2">
                 <SelectInput
                   labelText="Start date*"
                   name="start-month"
@@ -238,7 +175,7 @@ export default function CreateJob() {
                   options={year}
                 />
               </div>
-              <div className="flex flex-1 gap-2">
+              <div className="flex-1 flex gap-2">
                 <SelectInput
                   labelText="End date*"
                   name="end-month"
@@ -261,7 +198,7 @@ export default function CreateJob() {
             <div className="mb-10">
               <label
                 htmlFor="description"
-                className="inline-block mt-6 ml-3 text-base text-black form-label"
+                className="inline-block ml-3 text-base text-black form-label mt-6"
               ></label>
               <div>
                 <textarea
@@ -276,39 +213,18 @@ export default function CreateJob() {
             <div className="flex flex-col gap-4 sm:flex-row">
               <div className="flex-1">
                 <label
-                  htmlFor="skills"
-                  className="inline-block ml-3 text-base font-bold text-black form-label"
+                  htmlFor="distinction"
+                  className="inline-block ml-3 text-base text-black form-label"
                 >
-                  Skills
+                  Distinction*
                 </label>
-                <div className="absolute w-full pt-1 pr-10 text-base font-normal text-gray-600 bg-white form-control ">
-                  <AutoSuggestInput />
-                </div>
-                <div className="pt-10">
-                  {selectedSkills.length > 0 && (
-                    <div className="flex flex-wrap mt-4 ">
-                      {selectedSkills.map((skill, index) => (
-                        <div
-                          key={index}
-                          className="border border-[#FFC905] flex items-center bg-gray-200 rounded-full py-1 px-3 m-1"
-                        >
-                          <span className="mr-2">{skill}</span>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSelectedSkills(
-                                selectedSkills.filter((_, i) => i !== index)
-                              )
-                            }
-                            className="w-6 text-black bg-gray-400 rounded-full"
-                          >
-                            &#10005;
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <input
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600  rounded-full bg-clip-padding border border-solid border-[#FFC905] hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  placeholder="Ex: Honors and Awards"
+                  name="distinction"
+                  type="text"
+                  maxLength={100}
+                />
               </div>
             </div>
             <div className="mt-10 text-right">
