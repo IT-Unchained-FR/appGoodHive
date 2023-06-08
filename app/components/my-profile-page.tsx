@@ -3,7 +3,6 @@
 import { useRef, useState, FormEvent } from "react";
 
 import DragAndDropFile from "./drag-and-drop-file";
-import { Button } from "./button";
 
 interface FileData {
   name: string;

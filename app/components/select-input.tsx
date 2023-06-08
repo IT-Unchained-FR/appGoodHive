@@ -52,6 +52,7 @@ export const SelectInput: FC<Props> = ({
     <div className="w-full relative">
       <label className="inline-block ml-3 text-base text-black form-label">
         {labelText}
+        {required && <span>*</span>}
       </label>
       <div className="flex items-center">
         <p
