@@ -8,7 +8,7 @@ import DragAndDropFile from "../../components/drag-and-drop-file";
 
 import { SelectInput } from "../../components/select-input";
 import { countries } from "../../constants/countries";
-import Option from "../../../interfaces/option";
+import LabelOption from "../../../interfaces/label-option";
 import FileData from "../../../interfaces/file-data";
 
 export default function MyProfile() {
@@ -18,7 +18,7 @@ export default function MyProfile() {
   const [file, setFile] = useState<false | FileData>(false);
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
 
-  const [selectedCountry, setSelectedCountry] = useState<Option | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<LabelOption | null>(null);
 
   useEffect(() => {
     if (typeof file === "object" && file !== null) {
