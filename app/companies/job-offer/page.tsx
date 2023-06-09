@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import JobOffer from "../../../interfaces/job-offer";
+import JobOffer from "@interfaces/job-offer";
 import OfferResult from "./job-offer-result";
 
 

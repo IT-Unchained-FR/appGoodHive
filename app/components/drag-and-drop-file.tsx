@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
-import FileData from "../../interfaces/file-data";
+import FileData from "@interfaces/file-data";
 
 interface Props {
   setFile: (file: FileData | false) => void;

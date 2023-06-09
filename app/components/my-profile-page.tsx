@@ -4,7 +4,7 @@ import { useRef, useState, FormEvent } from "react";
 
 import DragAndDropFile from "./drag-and-drop-file";
 
-import FileData from "../../interfaces/file-data";
+import FileData from "@interfaces/file-data";
 
 export default function MyProfilePage() {
   const invoiceInputValue = useRef(null);

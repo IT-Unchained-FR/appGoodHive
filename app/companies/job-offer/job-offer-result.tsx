@@ -1,7 +1,7 @@
 "use client";
 
 import { OfferCard } from "../../components/offer-card";
-import JobOffer from "../../../interfaces/job-offer";
+import JobOffer from "@interfaces/job-offer";
 
 export default function OfferResult({ jobOffers }: { jobOffers: JobOffer[] }) {
   return (

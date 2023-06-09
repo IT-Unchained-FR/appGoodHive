@@ -1,6 +1,6 @@
 import React, { FC, useState } from "react";
 
-import LabelOption from "../../interfaces/label-option";
+import LabelOption from "@interfaces/label-option";
 
 interface Props {
   labelText?: string;
