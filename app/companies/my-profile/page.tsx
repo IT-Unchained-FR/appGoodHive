@@ -8,8 +8,8 @@ import DragAndDropFile from "../../components/drag-and-drop-file";
 
 import { SelectInput } from "../../components/select-input";
 import { countries } from "../../constants/countries";
-import LabelOption from "../../../interfaces/label-option";
-import FileData from "../../../interfaces/file-data";
+import LabelOption from "@interfaces/label-option";
+import FileData from "@interfaces/file-data";
 
 export default function MyProfile() {
   const invoiceInputValue = useRef(null);

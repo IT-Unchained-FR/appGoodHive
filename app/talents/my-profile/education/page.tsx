@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 
 import { SelectInput } from "../../../components/select-input";
 import { degrees } from "../../../constants/degrees";
-import LabelOption from "../../../../interfaces/label-option";
+import LabelOption from "@interfaces/label-option";
 
 export default function CreateJob() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
