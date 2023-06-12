@@ -12,17 +12,8 @@ import { SelectInput } from "../../components/select-input";
 import { skills } from "../../constants/skills";
 import { countries } from "../../constants/countries";
 import { currencies } from "../../constants/currencies";
-
-interface FileData {
-  name: string;
-  type: string;
-  data: string | ArrayBuffer | null;
-}
-
-interface Option {
-  value: string;
-  label: string;
-}
+import LabelOption from "@interfaces/label-option";
+import FileData from "@interfaces/file-data";
 
 export default function MyProfile() {
   const invoiceInputValue = useRef(null);
