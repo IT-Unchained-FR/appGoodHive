@@ -23,8 +23,8 @@ export default function MyProfile() {
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
 
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [selectedCountry, setSelectedCountry] = useState<Option | null>(null);
-  const [selectedCurrency, setSelectedCurrency] = useState<Option | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<LabelOption | null>(null);
+  const [selectedCurrency, setSelectedCurrency] = useState<LabelOption | null>(null);
 
   useEffect(() => {
     if (typeof file === "object" && file !== null) {
