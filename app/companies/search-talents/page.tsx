@@ -2,28 +2,9 @@
 
 import { useEffect, useState } from "react";
 
-import { BigNumberish } from "ethers";
-
 import Header from "@/app/components/header";
 import TalentResult from "./talent-result";
-
-interface Talent {
-  title: string;
-  jobHeadline: string;
-  firstName: string;
-  lastName: string;
-  country: string;
-  city: string;
-  phoneCountryCode: number;
-  phoneNumber: number;
-  email: string;
-  aboutWork: string;
-  telegram: string;
-  rate: BigNumberish;
-  currency: string;
-  skills: string[];
-  imageUrl: string;
-}
+import Talent from "@interfaces/talent";
 
 export default function SearchTalents() {
   const [talentsData, setTalentsData] = useState<Talent[]>([]);

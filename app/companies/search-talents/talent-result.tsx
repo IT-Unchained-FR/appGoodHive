@@ -1,24 +1,7 @@
 import { useState } from "react";
-import { BigNumberish } from "ethers";
-import { Card } from "../../components/card";
 
-interface Talent {
-  title: string;
-  jobHeadline: string;
-  firstName: string;
-  lastName: string;
-  country: string;
-  city: string;
-  phoneCountryCode: number;
-  phoneNumber: number;
-  email: string;
-  aboutWork: string;
-  telegram: string;
-  rate: BigNumberish;
-  currency: string;
-  skills: string[];
-  imageUrl: string;
-}
+import { Card } from "../../components/card";
+import Talent from "@interfaces/talent";
 
 export default function TalentResult({ talents }: { talents: Talent[] }) {
   const itemsPerPage = 9;

@@ -15,13 +15,10 @@ export default function CreateJob() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     setIsLoading(true);
 
-    // FIXME: formData is not a explicit name
     const formData = new FormData(e.currentTarget);
 
-    // FIXME: dataForm is not a explicit name
     const dataForm = {
       title: formData.get("title"),
       typeEngagement: formData.get("type-engagement"),
@@ -29,6 +26,7 @@ export default function CreateJob() {
       duration: formData.get("duration"),
       ratePerHour: formData.get("rate-per-hour"),
       budget: formData.get("budget"),
+      currency: formData.get("currency"),
       skills: selectedSkills,
     };
     // TODO: POST formData to the server with fetch
@@ -43,7 +41,6 @@ export default function CreateJob() {
     setIsLoading(false);
 
     if (!jobResponse.ok) {
-      // TODO: Handle error is not a explicit message
       toast.error("Something went wrong!");
     } else {
       toast.success("Profile Saved!");
@@ -180,6 +177,20 @@ export default function CreateJob() {
                   type="text"
                   name="duration"
                   required
+                  maxLength={100}
+                />
+              </div>
+              <div className="flex-1">
+                <label
+                  htmlFor="currency"
+                  className="inline-block ml-3 text-base text-black form-label"
+                >
+                  Currency
+                </label>
+                <input
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  type="text"
+                  name="currency"
                   maxLength={100}
                 />
               </div>
