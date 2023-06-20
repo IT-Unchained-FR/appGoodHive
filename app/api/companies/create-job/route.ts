@@ -8,6 +8,7 @@ export async function POST(request: Request) {
     duration,
     ratePerHour,
     budget,
+    currency,
     skills,
     currency,
   } = await request.json();
@@ -27,8 +28,8 @@ export async function POST(request: Request) {
         duration,
         rate_per_hour,
         budget,
-        skills,
-        currency
+        currency,
+        skills
       ) VALUES (
         ${title},
         ${typeEngagement},
@@ -36,8 +37,8 @@ export async function POST(request: Request) {
         ${duration},
         ${ratePerHour},
         ${budget},
-        ${skills},
-        ${currency}
+        ${currency},
+        ${skills}
       );
     `;
 
