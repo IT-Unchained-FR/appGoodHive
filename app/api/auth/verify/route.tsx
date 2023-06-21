@@ -24,7 +24,9 @@ export async function POST(request: Request) {
 
     if (!success) throw error;
 
-    // @ts-ignore
+// Disable the linting rule for the following line
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
     const { value: cookieNonceValue } = cookies().get("nonce");
 
     if (data.nonce !== cookieNonceValue)
