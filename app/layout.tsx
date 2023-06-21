@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, createContext } from "react";
 
 import { WagmiConfig, createConfig, configureChains, mainnet } from "wagmi";
 import { publicProvider } from "wagmi/providers/public";
@@ -15,6 +15,7 @@ import { Toaster } from "react-hot-toast";
 import { SiweMessage } from "siwe";
 
 import { NavBar } from "./components/nav-bar";
+import { AddressContext } from "./components/context";
 
 import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
@@ -45,6 +46,7 @@ export default function RootLayout({
   const fetchingStatusRef = useRef(false);
   const verifyingRef = useRef(false);
   const [authStatus, setAuthStatus] = useState<AuthenticationStatus>("loading");
+  const [walletAddress, setWalletAddress] = useState("");
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -81,6 +83,7 @@ export default function RootLayout({
       },
 
       createMessage: ({ nonce, address, chainId }) => {
+        setWalletAddress(address);
         return new SiweMessage({
           domain: window.location.host,
           address,
@@ -131,7 +134,7 @@ export default function RootLayout({
   }, []);
 
   return (
-    <html lang="en">
+<html lang="en">
       <body>
         <WagmiConfig config={config}>
           <RainbowKitAuthenticationProvider
@@ -141,7 +144,9 @@ export default function RootLayout({
             <RainbowKitProvider chains={chains}>
               <NavBar />
               <Toaster />
-              {children}
+              <AddressContext.Provider value={walletAddress}>
+                {children}
+              </AddressContext.Provider>
             </RainbowKitProvider>
           </RainbowKitAuthenticationProvider>
         </WagmiConfig>
