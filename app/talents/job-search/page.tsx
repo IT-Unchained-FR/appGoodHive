@@ -2,28 +2,10 @@
 
 import { useEffect, useState } from "react";
 
-import { BigNumberish } from "ethers";
-
 import Header from "@/app/components/header";
 import JobResult from "./job-result";
 
-interface JobOffer {
-  type: string;
-  title: string;
-  postedBy: string;
-  postedOn: string;
-  jobDescription: string;
-  duration: string;
-  image: string;
-  country: string;
-  countryFlag: string;
-  city: string;
-  rate: BigNumberish;
-  typeEngagement: string;
-  currency: string;
-  skills: string[];
-  buttonText: string;
-}
+import { JobOffer } from "./job-result";
 
 export default function JobSearch() {
   const [jobOffersData, setJobOffersData] = useState<JobOffer[]>([]);
@@ -48,7 +30,7 @@ export default function JobSearch() {
   return (
     <main className="mx-5">
       <Header />
-      <h1 className="text-xl pt-16 mx-5 font-bold">
+      <h1 className="pt-16 mx-5 text-xl font-bold">
         Search Results
         <span className="text-base font-normal">- Job Listings</span>
       </h1>
