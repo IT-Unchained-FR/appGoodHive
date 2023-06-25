@@ -8,7 +8,6 @@ export async function POST(request: Request) {
     duration,
     ratePerHour,
     budget,
-    currency,
     skills,
     currency,
   } = await request.json();
