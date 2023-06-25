@@ -4,7 +4,7 @@ import { BigNumberish } from "ethers";
 
 import { Card } from "../../components/card";
 
-interface JobOffer {
+export interface JobOffer {
   type: string;
   title: string;
   postedBy: string;
