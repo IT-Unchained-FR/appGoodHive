@@ -96,9 +96,13 @@ export const Card: FC<Props> = ({
               </div>
             )}
           </div>
-          <div className="flex justify-end space-x-3">
-            <Button text="Know more..." type="secondary" size="medium" />
-            <Button text="Apply Now" type="primary" size="medium" />
+          <div className="w-full gap-3 sm:flex md:flex lg:justify-center md:justify-end sm:justify-end xl:flex lg:grid xl:pt-2 lg:pt-2 xl:justify-center ">
+            <div className="flex justify-center lg:items-center">
+              <Button text="Know more..." type="secondary" size="medium" />
+            </div>
+            <div className="flex justify-center lg:items-center">
+              <Button text="Apply Now" type="primary" size="medium" />
+            </div>
           </div>
         </div>
       </div>
