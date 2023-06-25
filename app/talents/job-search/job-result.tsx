@@ -15,16 +15,17 @@ interface JobOffer {
   country: string;
   countryFlag: string;
   city: string;
-  rate: BigNumberish;
+  rate: number;
   typeEngagement: string;
   currency: string;
   skills: string[];
   buttonText: string;
+  escrow: BigNumberish;
 }
 
 export default function JobResult({ jobOffers }: { jobOffers: JobOffer[] }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       {jobOffers.map((jobOffer, index) => (
         <Card
           key={index}
@@ -40,7 +41,8 @@ export default function JobResult({ jobOffers }: { jobOffers: JobOffer[] }) {
           description={jobOffer.jobDescription}
           skills={jobOffer.skills}
           buttonText="Apply"
-          escrowFee="500"
+          // escrowAmount={jobOffer.escrowAmount} Add escrowAmount to job_offers table
+          // escrowCurrency={jobOffer.escrowCurrency} Add escrowCurrency to job_offers table
         />
       ))}
     </div>
