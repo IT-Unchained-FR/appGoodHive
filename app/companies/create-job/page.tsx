@@ -6,6 +6,7 @@ import Autosuggest from "react-autosuggest";
 import toast from "react-hot-toast";
 
 import { SelectInput } from "../../components/select-input";
+import { SearchSelectInput } from "../../components/search-select-input";
 // TODO: use button but before add the type of the button component (i.e. type="button" or type="submit")
 // import { Button } from "../../components/button";
 import { skills } from "../../constants/skills";
@@ -217,7 +218,7 @@ export default function CreateJob() {
                 />
               </div>
               <div className="flex-1">
-                <SelectInput
+                <SearchSelectInput
                   labelText="Currency"
                   name="currency"
                   required={false}
