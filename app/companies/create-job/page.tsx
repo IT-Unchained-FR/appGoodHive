@@ -9,7 +9,7 @@ import { SelectInput } from "../../components/select-input";
 // TODO: use button but before add the type of the button component (i.e. type="button" or type="submit")
 // import { Button } from "../../components/button";
 import { skills } from "../../constants/skills";
-import { currencies } from "@/app/constants/currencies";
+import { ethereumTokens, polygonTokens, gnosisChainTokens } from "@/app/constants/token-list/index.js";
 
 interface Option {
   value: string;
@@ -190,20 +190,6 @@ export default function CreateJob() {
               </div>
               <div className="flex-1">
                 <label
-                  htmlFor="currency"
-                  className="inline-block ml-3 text-base text-black form-label"
-                >
-                  Currency
-                </label>
-                <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  type="text"
-                  name="currency"
-                  maxLength={100}
-                />
-              </div>
-              <div className="flex-1">
-                <label
                   htmlFor="rate-per-hour"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
@@ -238,7 +224,7 @@ export default function CreateJob() {
                   disabled={false}
                   inputValue={selectedCurrency}
                   setInputValue={setSelectedCurrency}
-                  options={currencies}
+                  options={[...ethereumTokens, ...polygonTokens, ...gnosisChainTokens]}
                 />
               </div>
             </div>
