@@ -7,11 +7,13 @@ import Autosuggest from "react-autosuggest";
 
 import DragAndDropFile from "../../components/drag-and-drop-file";
 import { SelectInput } from "../../components/select-input";
+import { SearchSelectInput } from "../../components/search-select-input";
 // TODO: use button but before add the type of the button component (i.e. type="button" or type="submit")
 // import { Button } from "../../components/button";
-import { skills } from "../../constants/skills";
-import { countries } from "../../constants/countries";
-import { currencies } from "../../constants/currencies";
+import { skills } from "@/app/constants/skills";
+import { countries } from "@/app/constants/countries";
+import { ethereumTokens, polygonTokens, gnosisChainTokens } from "@/app/constants/token-list/index.js";
+import { chains } from "@/app/constants/chains";
 import LabelOption from "@interfaces/label-option";
 import FileData from "@interfaces/file-data";
 
@@ -24,6 +26,7 @@ export default function MyProfile() {
 
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<LabelOption | null>(null);
+  const [selectedChain, setSelectedChain] = useState<LabelOption | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState<LabelOption | null>(null);
 
   useEffect(() => {
@@ -69,7 +72,7 @@ export default function MyProfile() {
       email: formData.get("email"),
       telegram: formData.get("telegram"),
       aboutWork: formData.get("about-work"),
-      currency: selectedCurrency?.value,
+      currency: selectedCurrency && selectedChain ? `${selectedChain.value} ${selectedCurrency.value}` : undefined,
       rate: formData.get("rate"),
       skills: selectedSkills,
       imageUrl,
@@ -189,7 +192,7 @@ export default function MyProfile() {
               <textarea
                 name="job-headline"
                 className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                placeholder="Describe your skills and experience in a few words"
+                placeholder="Describe your skills and experience in a few words*"
                 required
                 maxLength={255}
                 rows={5}
@@ -234,7 +237,7 @@ export default function MyProfile() {
             <div className="flex flex-col gap-4 mt-4 sm:flex-row">
               <div className="flex-1">
                 <SelectInput
-                  labelText="Country*"
+                  labelText="Country"
                   name="country"
                   required={true}
                   disabled={false}
@@ -333,16 +336,37 @@ export default function MyProfile() {
               </div>
             </div>
             <div className="flex flex-col gap-4 mt-4 sm:flex-row">
-              <div className="flex-1">
-                <SelectInput
+              <div className="flex gap-2 sm:w-1/2 flex-col sm:flex-row">
+              <div className="flex sm:w-1/3">
+              <SelectInput
+                  labelText="Chain"
+                  name="chain"
+                  required={false}
+                  disabled={false}
+                  inputValue={selectedChain}
+                  setInputValue={setSelectedChain}
+                  options={chains}
+                />
+              </div>
+              <div className="flex sm:w-2/3">
+                <SearchSelectInput
                   labelText="Currency"
                   name="currency"
                   required={false}
-                  disabled={false}
+                  disabled={!selectedChain}
                   inputValue={selectedCurrency}
                   setInputValue={setSelectedCurrency}
-                  options={currencies}
+                  options={
+                    selectedChain?.value === "ethereum"
+                      ? ethereumTokens
+                      : selectedChain?.value === "polygon"
+                      ? polygonTokens
+                      : selectedChain?.value === "gnosis"
+                      ? gnosisChainTokens
+                      : []
+                  }
                 />
+              </div>
               </div>
               <div className="flex-1">
                 <label
