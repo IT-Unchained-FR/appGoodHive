@@ -9,18 +9,16 @@ import { SelectInput } from "../../components/select-input";
 import { SearchSelectInput } from "../../components/search-select-input";
 // TODO: use button but before add the type of the button component (i.e. type="button" or type="submit")
 // import { Button } from "../../components/button";
-import { skills } from "../../constants/skills";
+import { skills } from "@/app/constants/skills";
 import { ethereumTokens, polygonTokens, gnosisChainTokens } from "@/app/constants/token-list/index.js";
-
-interface Option {
-  value: string;
-  label: string;
-}
+import { chains } from "@/app/constants/chains";
+import LabelOption from "@interfaces/label-option";
 
 export default function CreateJob() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [selectedCurrency, setSelectedCurrency] = useState<Option | null>(null);
+  const [selectedCurrency, setSelectedCurrency] = useState<LabelOption | null>(null);
+  const [selectedChain, setSelectedChain] = useState<LabelOption | null>(null);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -35,7 +33,7 @@ export default function CreateJob() {
       duration: formData.get("duration"),
       ratePerHour: formData.get("rate-per-hour"),
       budget: formData.get("budget"),
-      currency: selectedCurrency?.value,
+      currency: selectedCurrency && selectedChain ? `${selectedChain.value} ${selectedCurrency.value}` : undefined,
       skills: selectedSkills,
     };
     // TODO: POST formData to the server with fetch
@@ -52,7 +50,7 @@ export default function CreateJob() {
     if (!jobResponse.ok) {
       toast.error("Something went wrong!");
     } else {
-      toast.success("Profile Saved!");
+      toast.success("Job Offer Saved!");
     }
   };
 
@@ -217,18 +215,39 @@ export default function CreateJob() {
                   maxLength={100}
                 />
               </div>
-              <div className="flex-1">
+            </div>
+            <div className="flex flex-col gap-4 mt-4 sm:flex-row">
+            <div className="flex sm:w-1/4">
+                <SelectInput
+                  labelText="Chain"
+                  name="chain"
+                  required={false}
+                  disabled={false}
+                  inputValue={selectedChain}
+                  setInputValue={setSelectedChain}
+                  options={chains}
+                />
+              </div>
+              <div className="flex sm:w-3/4">
                 <SearchSelectInput
                   labelText="Currency"
                   name="currency"
                   required={false}
-                  disabled={false}
+                  disabled={!selectedChain}
                   inputValue={selectedCurrency}
                   setInputValue={setSelectedCurrency}
-                  options={[...ethereumTokens, ...polygonTokens, ...gnosisChainTokens]}
+                  options={
+                    selectedChain?.value === "ethereum"
+                      ? ethereumTokens
+                      : selectedChain?.value === "polygon"
+                      ? polygonTokens
+                      : selectedChain?.value === "gnosis"
+                      ? gnosisChainTokens
+                      : []
+                  }
                 />
               </div>
-            </div>
+              </div>
             <div className="flex flex-col gap-4 mt-4 sm:flex-row">
               <div className="flex-1">
                 <label
