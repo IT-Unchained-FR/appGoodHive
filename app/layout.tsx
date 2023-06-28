@@ -83,7 +83,6 @@ export default function RootLayout({
       },
 
       createMessage: ({ nonce, address, chainId }) => {
-        setWalletAddress(address);
         return new SiweMessage({
           domain: window.location.host,
           address,
@@ -115,6 +114,7 @@ export default function RootLayout({
 
           if (authenticated) {
             setAuthStatus(authenticated ? "authenticated" : "unauthenticated");
+            setWalletAddress(verifyResponse?.address);
           }
 
           return authenticated;
