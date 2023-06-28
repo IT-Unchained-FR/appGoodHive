@@ -217,7 +217,7 @@ export default function CreateJob() {
               </div>
             </div>
             <div className="flex flex-col gap-4 mt-4 sm:flex-row">
-            <div className="flex sm:w-1/4">
+              <div className="flex sm:w-1/4">
                 <SelectInput
                   labelText="Chain"
                   name="chain"
@@ -247,7 +247,7 @@ export default function CreateJob() {
                   }
                 />
               </div>
-              </div>
+            </div>
             <div className="flex flex-col gap-4 mt-4 sm:flex-row">
               <div className="flex-1">
                 <label
