@@ -236,7 +236,7 @@ export default function MyProfile() {
             <div className="flex flex-col gap-4 mt-4 sm:flex-row">
               <div className="flex-1">
                 <SelectInput
-                  labelText="Country*"
+                  labelText="Country"
                   name="country"
                   required={true}
                   disabled={false}

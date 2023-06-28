@@ -35,7 +35,7 @@ export async function POST(request: Request) {
         status: 422,
       });
 
-    return new Response(JSON.stringify({ ok: true }), {
+    return new Response(JSON.stringify({ ok: true, address: data.address  }), {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
