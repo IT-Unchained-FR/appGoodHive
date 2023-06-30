@@ -18,7 +18,7 @@ export default function TalentResult({ talents }: { talents: Talent[] }) {
 
   return (
     <div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {talentsToDisplay.map((talent, index) => (
           <Card
             key={index}
@@ -29,12 +29,11 @@ export default function TalentResult({ talents }: { talents: Talent[] }) {
             image={talent.imageUrl}
             countryFlag="/img/country_flag.png" // TODO: create flag table
             city={talent.city}
-            rate={talent.rate}
+            rate={Number(talent.rate)}
             currency={talent.currency}
             description={talent.jobHeadline}
             skills={talent.skills}
             buttonText="Connect"
-            escrowFee=""
           />
         ))}
       </div>
