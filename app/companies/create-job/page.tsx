@@ -241,12 +241,12 @@ export default function CreateJob() {
                       ? ethereumTokens
                       : selectedChain?.value === "polygon"
                       ? polygonTokens
-                      : selectedChain?.value === "gnosis"
+                      : selectedChain?.value === "gnosis-chain"
                       ? gnosisChainTokens
                       : []
                   }
                 />
-              </div>
+              </div> 
             </div>
             <div className="flex flex-col gap-4 mt-4 sm:flex-row">
               <div className="flex-1">

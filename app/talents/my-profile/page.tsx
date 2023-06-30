@@ -361,7 +361,7 @@ export default function MyProfile() {
                       ? ethereumTokens
                       : selectedChain?.value === "polygon"
                       ? polygonTokens
-                      : selectedChain?.value === "gnosis"
+                      : selectedChain?.value === "gnosis-chain"
                       ? gnosisChainTokens
                       : []
                   }
