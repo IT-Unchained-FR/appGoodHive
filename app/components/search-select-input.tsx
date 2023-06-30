@@ -37,7 +37,11 @@ export const SearchSelectInput: FC<Props> = ({
     option.label.toLowerCase().startsWith(searchText.toLowerCase())
   );
 
-  const renderOptions = filteredOptions.map((option) => (
+  const sortedOptions = [...filteredOptions].sort((a, b) =>
+  a.label.localeCompare(b.label)
+);
+
+  const renderOptions = sortedOptions.map((option) => (
     <div
       key={option.value}
       className="px-4 py-2 cursor-pointer hover:bg-gray-100"
