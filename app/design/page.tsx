@@ -166,12 +166,11 @@ export default function Design() {
             image="/img/company_img.png"
             countryFlag="/img/country_flag.png"
             city=""
-            rate=""
+            rate={100}
             currency=""
             description="Job description will come here when posted Amet, consecq consectetur consectetur adipiscing elit, sed do eiusmod tempor."
             skills={["Skill 1", "Skill 2", "Skill 3", "Skill 4"]}
             buttonText="Apply"
-            escrowFee="100"
           />
           <Card
             type="company"
@@ -181,12 +180,11 @@ export default function Design() {
             image="/img/company_img.png"
             countryFlag="/img/country_flag.png"
             city=""
-            rate=""
+            rate={100}
             currency=""
             description="Job description will come here when posted Amet, consecq consectetur consectetur adipiscing elit, sed do eiusmod tempor."
             skills={["Skill 1", "Skill 2", "Skill 3", "Skill 4"]}
             buttonText="Apply"
-            escrowFee="10"
           />
           <Card
             type="company"
@@ -196,12 +194,11 @@ export default function Design() {
             image="/img/company_img.png"
             countryFlag="/img/country_flag.png"
             city=""
-            rate=""
+            rate={100}
             currency=""
             description="Job description will come here when posted Amet, consecq consectetur consectetur adipiscing elit, sed do eiusmod tempor."
             skills={["Skill 1", "Skill 2", "Skill 3", "Skill 4"]}
             buttonText="Apply"
-            escrowFee="500"
           />
         </div>
         <h3 className="mt-5 text-xl">Talent Card</h3>
@@ -214,12 +211,11 @@ export default function Design() {
             image="/img/talent_avatar.png"
             countryFlag="/img/country_flag.png"
             city="Paris"
-            rate="75"
+            rate={75}
             currency="EUR"
             description="Talent profile description will come here when posted Amet, consecq consec consectetur adipiscing elit, sed do eiusmod."
             skills={["Skill 1", "Skill 2", "Skill 3", "Skill 4"]}
             buttonText="Connect"
-            escrowFee=""
           />
           <Card
             type="talent"
@@ -229,12 +225,11 @@ export default function Design() {
             image="/img/talent_avatar.png"
             countryFlag="/img/country_flag.png"
             city="Hyderabad"
-            rate="50"
+            rate={50}
             currency="BTC"
             description="Talent profile description will come here when posted Amet, consecq consec consectetur adipiscing elit, sed do eiusmod."
             skills={["Skill 1", "Skill 2", "Skill 3", "Skill 4"]}
             buttonText="Connect"
-            escrowFee=""
           />
           <Card
             type="talent"
@@ -244,12 +239,11 @@ export default function Design() {
             image="/img/talent_avatar.png"
             countryFlag="/img/country_flag.png"
             city="San Francisco"
-            rate="120"
+            rate={120}
             currency="USD"
             description="Talent profile description will come here when posted Amet, consecq consec consectetur adipiscing elit, sed do eiusmod."
             skills={["Skill 1", "Skill 2", "Skill 3", "Skill 4"]}
             buttonText="Connect"
-            escrowFee=""
           />
         </div>
       </section>
