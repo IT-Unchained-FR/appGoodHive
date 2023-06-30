@@ -743,7 +743,7 @@ export const polygonTokens = [
   },
   {
     value: "0x58001cc1a9e17a20935079ab40b1b8f4fc19efd1",
-    label: '"Ethereum Push Notification Service | PUSH (0x5800...efd1)',
+    label: "Ethereum Push Notification Service | PUSH (0x5800...efd1)",
   },
   {
     value: "0x19fcab6c824570c82a3508ee0b520686cde62fcc",
@@ -2325,7 +2325,7 @@ export const polygonTokens = [
   },
   {
     value: "0xF5499D8714e55DCf4E84C861cA1C8358e7E69cBA",
-    label: '"Silicon Valley Entrepreneurs Token | SVET (0xF549...9cBA)',
+    label: "Silicon Valley Entrepreneurs Token | SVET (0xF549...9cBA)",
   },
   {
     value: "0xd116d8EA4dE1225D3F903FdA43493E93eb4b1D54",
@@ -5171,7 +5171,7 @@ export const polygonTokens = [
   },
   {
     value: "0xe38eb5a707d9A09757246DC37dF11b35E47ba782",
-    label: " SPACE HOGE | SOGE (0xe38e...a782)",
+    label: "SPACE HOGE | SOGE (0xe38e...a782)",
   },
   {
     value: "0x0E622E0e97B88824C655A0443e69416c3233a522",
