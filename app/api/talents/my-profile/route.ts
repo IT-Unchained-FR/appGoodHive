@@ -13,6 +13,7 @@ export async function POST(request: Request) {
     email,
     telegram,
     aboutWork,
+    chain,
     currency,
     rate,
     skills,
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
         email,
         telegram,
         about_work,
+        chain,
         currency,
         rate,
         skills,
@@ -57,6 +59,7 @@ export async function POST(request: Request) {
         ${email},
         ${telegram},
         ${aboutWork},
+        ${chain},
         ${currency},
         ${rate},
         ${skills},
@@ -70,6 +73,7 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("Error inserting data:", error);
+
     return new Response(JSON.stringify({ message: "Error inserting data" }), {
       status: 500,
     });

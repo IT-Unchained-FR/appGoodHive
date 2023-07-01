@@ -12,7 +12,7 @@ interface Props {
   options: LabelOption[];
 }
 
-export const SelectInput: FC<Props> = ({
+export const SearchSelectInput: FC<Props> = ({
   labelText,
   required,
   disabled,
@@ -21,13 +21,27 @@ export const SelectInput: FC<Props> = ({
   options,
 }) => {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+  const [searchText, setSearchText] = useState("");
 
   const handleInputClickAndCloseOptions = (option: LabelOption) => {
     setInputValue(option);
     setIsOptionsOpen(false);
+    setSearchText(option.label);
   };
 
-  const renderOptions = options.map((option) => (
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchText(event.target.value);
+  };
+
+  const filteredOptions = options.filter((option) =>
+    option.label.toLowerCase().startsWith(searchText.toLowerCase())
+  );
+
+  const sortedOptions = [...filteredOptions].sort((a, b) =>
+  a.label.localeCompare(b.label)
+);
+
+  const renderOptions = sortedOptions.map((option) => (
     <div
       key={option.value}
       className="px-4 py-2 cursor-pointer hover:bg-gray-100"
@@ -51,15 +65,17 @@ export const SelectInput: FC<Props> = ({
         {required && <span>*</span>}
       </label>
       <div className="flex items-center">
-        <p
+        <input
+          type="text"
           className={selectStyle}
-          onClick={() => setIsOptionsOpen(() => !isOptionsOpen)}
+          onClick={() => setIsOptionsOpen(!isOptionsOpen)}
+          onChange={handleInputChange}
+          value={searchText}
+          placeholder="Select an option"
           style={{
-            color: inputValue && inputValue.label !== "Select on options" ? "black" : "gray",
+            color: inputValue && inputValue.label ? "black" : "gray",
           }}
-        >
-          {inputValue ? inputValue.label : "Select on options"}
-        </p>
+        />
         <div className="absolute pointer-events-none right-6">
           <svg
             xmlns="http://www.w3.org/2000/svg"

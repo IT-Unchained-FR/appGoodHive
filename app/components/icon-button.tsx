@@ -42,7 +42,7 @@ export const IconButton: FC<Props> = ({ text, type, size, image }) => {
     <button className={styleType}>
       <svg
         data-prefix="far"
-        className="w-4 h-4 mr-3"
+        className="w-6 h-4 mr-3"
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 525 525"
       >
