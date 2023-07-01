@@ -1,7 +1,15 @@
-// TODO: add logic to check if the user is authenticated
+import { cookies } from "next/headers";
+
 export async function GET(request: Request) {
+  if (!cookies().get("address")?.value) {
+    return new Response(null, {
+      status: 401,
+      statusText: "Unauthorized",
+    });
+  }
+
   return new Response(
-    JSON.stringify({ address: "0x06255FA39EBD18796eCCCc17DB8153Ef58DBA0a8" }),
+    JSON.stringify({ ok: true, address: cookies().get("address")?.value }),
     {
       headers: { "Content-Type": "application/json" },
     }

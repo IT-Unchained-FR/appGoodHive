@@ -15,6 +15,7 @@ import { Toaster } from "react-hot-toast";
 import { SiweMessage } from "siwe";
 
 import { NavBar } from "./components/nav-bar";
+import { AddressContext } from "./components/context";
 
 import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
@@ -45,6 +46,7 @@ export default function RootLayout({
   const fetchingStatusRef = useRef(false);
   const verifyingRef = useRef(false);
   const [authStatus, setAuthStatus] = useState<AuthenticationStatus>("loading");
+  const [walletAddress, setWalletAddress] = useState<string>("");
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -55,11 +57,15 @@ export default function RootLayout({
       fetchingStatusRef.current = true;
 
       try {
-        // TODO: check if the user is authenticated
-        const hasCookieNonce = Boolean(false); // Mocking this for now
+        const checkAuthResponse = await fetch("/api/auth/me");
 
-        if (hasCookieNonce) {
+        const authResponse = await checkAuthResponse.json();
+
+        const authenticated = Boolean(authResponse?.ok === true);
+
+        if (authenticated) {
           setAuthStatus("authenticated");
+          setWalletAddress(authResponse?.address);
         } else {
           setAuthStatus("unauthenticated");
         }
@@ -75,6 +81,7 @@ export default function RootLayout({
     fetchStatus();
 
     window.addEventListener("focus", fetchStatus);
+
     return () => window.removeEventListener("focus", fetchStatus);
   }, []);
 
@@ -117,12 +124,17 @@ export default function RootLayout({
           const authenticated = Boolean(verifyResponse?.ok === true);
 
           if (authenticated) {
-            setAuthStatus(authenticated ? "authenticated" : "unauthenticated");
+            setAuthStatus("authenticated");
+            setWalletAddress(verifyResponse?.address);
+          } else {
+            setAuthStatus("unauthenticated");
           }
 
           return authenticated;
         } catch (error) {
           console.error(error);
+
+          setAuthStatus("unauthenticated");
 
           return false;
         } finally {
@@ -147,7 +159,9 @@ export default function RootLayout({
             <RainbowKitProvider chains={chains}>
               <NavBar />
               <Toaster />
-              {children}
+              <AddressContext.Provider value={walletAddress}>
+                {children}
+              </AddressContext.Provider>
             </RainbowKitProvider>
           </RainbowKitAuthenticationProvider>
         </WagmiConfig>
