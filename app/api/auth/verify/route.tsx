@@ -24,9 +24,9 @@ export async function POST(request: Request) {
 
     if (!success) throw error;
 
-// Disable the linting rule for the following line
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
+    // Disable the linting rule for the following line
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     const { value: cookieNonceValue } = cookies().get("nonce");
 
     if (data.nonce !== cookieNonceValue)
@@ -35,7 +35,12 @@ export async function POST(request: Request) {
         status: 422,
       });
 
-    return new Response(JSON.stringify({ ok: true, address: data.address  }), {
+    cookies().set("address", data.address, {
+      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // 1 month
+      path: "/",
+    });
+
+    return new Response(JSON.stringify({ ok: true, address: data.address }), {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
