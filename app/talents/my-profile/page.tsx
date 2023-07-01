@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef, useState, FormEvent, useEffect } from "react";
+import { useRef, useState, FormEvent, useEffect, useContext } from "react";
 
 import toast from "react-hot-toast";
 import Autosuggest from "react-autosuggest";
 
 import DragAndDropFile from "../../components/drag-and-drop-file";
 import { SelectInput } from "../../components/select-input";
+import { AddressContext } from "../../components/context";
 import { SearchSelectInput } from "../../components/search-select-input";
 // TODO: use button but before add the type of the button component (i.e. type="button" or type="submit")
 // import { Button } from "../../components/button";
@@ -27,6 +28,8 @@ export default function MyProfile() {
   const [imageUrl, setImageUrl] = useState(null);
   const [file, setFile] = useState<false | FileData>(false);
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
+
+  const walletAddress = useContext(AddressContext);
 
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<LabelOption | null>(
@@ -86,6 +89,7 @@ export default function MyProfile() {
       rate: formData.get("rate"),
       skills: selectedSkills,
       imageUrl,
+      walletAddress,
     };
 
     const profileResponse = await fetch("/api/talents/my-profile", {
