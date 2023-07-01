@@ -8,8 +8,9 @@ export async function POST(request: Request) {
     duration,
     ratePerHour,
     budget,
-    currency,
     skills,
+    chain,
+    currency,
   } = await request.json();
 
   const sql = postgres(process.env.DATABASE_URL || "", {
@@ -27,6 +28,7 @@ export async function POST(request: Request) {
         duration,
         rate_per_hour,
         budget,
+        chain,
         currency,
         skills
       ) VALUES (
@@ -36,6 +38,7 @@ export async function POST(request: Request) {
         ${duration},
         ${ratePerHour},
         ${budget},
+        ${chain},
         ${currency},
         ${skills}
       );
@@ -46,6 +49,7 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("Error inserting data:", error);
+
     return new Response(JSON.stringify({ message: "Error inserting data" }), {
       status: 500,
     });

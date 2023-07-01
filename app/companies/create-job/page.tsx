@@ -5,13 +5,26 @@ import { useState, FormEvent } from "react";
 import Autosuggest from "react-autosuggest";
 import toast from "react-hot-toast";
 
+import { SelectInput } from "../../components/select-input";
+import { SearchSelectInput } from "../../components/search-select-input";
 // TODO: use button but before add the type of the button component (i.e. type="button" or type="submit")
 // import { Button } from "../../components/button";
-import { skills } from "../../constants/skills";
+import { skills } from "@/app/constants/skills";
+import {
+  ethereumTokens,
+  polygonTokens,
+  gnosisChainTokens,
+} from "@/app/constants/token-list/index.js";
+import { chains } from "@/app/constants/chains";
+import LabelOption from "@interfaces/label-option";
 
 export default function CreateJob() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [selectedCurrency, setSelectedCurrency] = useState<LabelOption | null>(
+    null
+  );
+  const [selectedChain, setSelectedChain] = useState<LabelOption | null>(null);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -26,10 +39,12 @@ export default function CreateJob() {
       duration: formData.get("duration"),
       ratePerHour: formData.get("rate-per-hour"),
       budget: formData.get("budget"),
-      currency: formData.get("currency"),
+      chain: selectedChain ? selectedChain.value : undefined,
+      currency:
+        selectedCurrency && selectedChain ? selectedCurrency.value : undefined,
       skills: selectedSkills,
     };
-    // TODO: POST formData to the server with fetch
+
     const jobResponse = await fetch("/api/companies/create-job", {
       method: "POST",
       headers: {
@@ -43,11 +58,10 @@ export default function CreateJob() {
     if (!jobResponse.ok) {
       toast.error("Something went wrong!");
     } else {
-      toast.success("Profile Saved!");
+      toast.success("Job Offer Saved!");
     }
   };
 
-  //TODO: Put the following code in a Autosuggest Input component
   const AutoSuggestInput = () => {
     const [inputValue, setInputValue] = useState("");
 
@@ -123,7 +137,7 @@ export default function CreateJob() {
                   Job Title*
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="Job Header..."
                   name="title"
                   type="text"
@@ -139,7 +153,7 @@ export default function CreateJob() {
                   Type of engagement*
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="Weekly, Monthly..."
                   name="type-engagement"
                   type="text"
@@ -173,24 +187,10 @@ export default function CreateJob() {
                   Project Duration*
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   type="text"
                   name="duration"
                   required
-                  maxLength={100}
-                />
-              </div>
-              <div className="flex-1">
-                <label
-                  htmlFor="currency"
-                  className="inline-block ml-3 text-base text-black form-label"
-                >
-                  Currency
-                </label>
-                <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  type="text"
-                  name="currency"
                   maxLength={100}
                 />
               </div>
@@ -202,7 +202,7 @@ export default function CreateJob() {
                   Expected rate per hour
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   type="number"
                   name="rate-per-hour"
                   maxLength={100}
@@ -216,10 +216,42 @@ export default function CreateJob() {
                   Budget of the project
                 </label>
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   type="number"
                   name="budget"
                   maxLength={100}
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-4 mt-4 sm:flex-row">
+              <div className="flex sm:w-1/4">
+                <SelectInput
+                  labelText="Chain"
+                  name="chain"
+                  required={false}
+                  disabled={false}
+                  inputValue={selectedChain}
+                  setInputValue={setSelectedChain}
+                  options={chains}
+                />
+              </div>
+              <div className="flex sm:w-3/4">
+                <SearchSelectInput
+                  labelText="Currency"
+                  name="currency"
+                  required={false}
+                  disabled={!selectedChain}
+                  inputValue={selectedCurrency}
+                  setInputValue={setSelectedCurrency}
+                  options={
+                    selectedChain?.value === "ethereum"
+                      ? ethereumTokens
+                      : selectedChain?.value === "polygon"
+                      ? polygonTokens
+                      : selectedChain?.value === "gnosis-chain"
+                      ? gnosisChainTokens
+                      : []
+                  }
                 />
               </div>
             </div>
