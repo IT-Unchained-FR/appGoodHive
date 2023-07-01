@@ -10,14 +10,20 @@ import { SearchSelectInput } from "../../components/search-select-input";
 // TODO: use button but before add the type of the button component (i.e. type="button" or type="submit")
 // import { Button } from "../../components/button";
 import { skills } from "@/app/constants/skills";
-import { ethereumTokens, polygonTokens, gnosisChainTokens } from "@/app/constants/token-list/index.js";
+import {
+  ethereumTokens,
+  polygonTokens,
+  gnosisChainTokens,
+} from "@/app/constants/token-list/index.js";
 import { chains } from "@/app/constants/chains";
 import LabelOption from "@interfaces/label-option";
 
 export default function CreateJob() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [selectedCurrency, setSelectedCurrency] = useState<LabelOption | null>(null);
+  const [selectedCurrency, setSelectedCurrency] = useState<LabelOption | null>(
+    null
+  );
   const [selectedChain, setSelectedChain] = useState<LabelOption | null>(null);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -33,10 +39,12 @@ export default function CreateJob() {
       duration: formData.get("duration"),
       ratePerHour: formData.get("rate-per-hour"),
       budget: formData.get("budget"),
-      currency: selectedCurrency && selectedChain ? `${selectedChain.value} ${selectedCurrency.value}` : undefined,
+      chain: selectedChain ? selectedChain.value : undefined,
+      currency:
+        selectedCurrency && selectedChain ? selectedCurrency.value : undefined,
       skills: selectedSkills,
     };
-    // TODO: POST formData to the server with fetch
+
     const jobResponse = await fetch("/api/companies/create-job", {
       method: "POST",
       headers: {
@@ -54,7 +62,6 @@ export default function CreateJob() {
     }
   };
 
-  //TODO: Put the following code in a Autosuggest Input component
   const AutoSuggestInput = () => {
     const [inputValue, setInputValue] = useState("");
 
@@ -246,7 +253,7 @@ export default function CreateJob() {
                       : []
                   }
                 />
-              </div> 
+              </div>
             </div>
             <div className="flex flex-col gap-4 mt-4 sm:flex-row">
               <div className="flex-1">

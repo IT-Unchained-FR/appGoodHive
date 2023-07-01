@@ -12,7 +12,11 @@ import { SearchSelectInput } from "../../components/search-select-input";
 // import { Button } from "../../components/button";
 import { skills } from "@/app/constants/skills";
 import { countries } from "@/app/constants/countries";
-import { ethereumTokens, polygonTokens, gnosisChainTokens } from "@/app/constants/token-list/index.js";
+import {
+  ethereumTokens,
+  polygonTokens,
+  gnosisChainTokens,
+} from "@/app/constants/token-list/index.js";
 import { chains } from "@/app/constants/chains";
 import LabelOption from "@interfaces/label-option";
 import FileData from "@interfaces/file-data";
@@ -25,9 +29,13 @@ export default function MyProfile() {
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
 
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [selectedCountry, setSelectedCountry] = useState<LabelOption | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<LabelOption | null>(
+    null
+  );
   const [selectedChain, setSelectedChain] = useState<LabelOption | null>(null);
-  const [selectedCurrency, setSelectedCurrency] = useState<LabelOption | null>(null);
+  const [selectedCurrency, setSelectedCurrency] = useState<LabelOption | null>(
+    null
+  );
 
   useEffect(() => {
     if (typeof file === "object" && file !== null) {
@@ -72,13 +80,14 @@ export default function MyProfile() {
       email: formData.get("email"),
       telegram: formData.get("telegram"),
       aboutWork: formData.get("about-work"),
-      currency: selectedCurrency && selectedChain ? `${selectedChain.value} ${selectedCurrency.value}` : undefined,
+      chain: selectedChain ? selectedChain?.value : undefined,
+      currency:
+        selectedCurrency && selectedChain ? selectedCurrency.value : undefined,
       rate: formData.get("rate"),
       skills: selectedSkills,
       imageUrl,
     };
 
-    // TODO: POST formData to the server with fetch
     const profileResponse = await fetch("/api/talents/my-profile", {
       method: "POST",
       headers: {
@@ -145,8 +154,8 @@ export default function MyProfile() {
     return (
       <Autosuggest
         suggestions={getSuggestions(inputValue)}
-        onSuggestionsFetchRequested={() => "ewffew"}
-        onSuggestionsClearRequested={() => "wef"}
+        onSuggestionsFetchRequested={() => ""}
+        onSuggestionsClearRequested={() => ""}
         getSuggestionValue={(skill) => skill}
         onSuggestionSelected={onSuggestionSelected}
         renderSuggestion={renderSuggestion}
@@ -336,37 +345,37 @@ export default function MyProfile() {
               </div>
             </div>
             <div className="flex flex-col gap-4 mt-4 sm:flex-row">
-              <div className="flex gap-2 sm:w-1/2 flex-col sm:flex-row">
-              <div className="flex sm:w-1/3">
-              <SelectInput
-                  labelText="Chain"
-                  name="chain"
-                  required={false}
-                  disabled={false}
-                  inputValue={selectedChain}
-                  setInputValue={setSelectedChain}
-                  options={chains}
-                />
-              </div>
-              <div className="flex sm:w-2/3">
-                <SearchSelectInput
-                  labelText="Currency"
-                  name="currency"
-                  required={false}
-                  disabled={!selectedChain}
-                  inputValue={selectedCurrency}
-                  setInputValue={setSelectedCurrency}
-                  options={
-                    selectedChain?.value === "ethereum"
-                      ? ethereumTokens
-                      : selectedChain?.value === "polygon"
-                      ? polygonTokens
-                      : selectedChain?.value === "gnosis-chain"
-                      ? gnosisChainTokens
-                      : []
-                  }
-                />
-              </div>
+              <div className="flex flex-col gap-2 sm:w-1/2 sm:flex-row">
+                <div className="flex sm:w-1/3">
+                  <SelectInput
+                    labelText="Chain"
+                    name="chain"
+                    required={false}
+                    disabled={false}
+                    inputValue={selectedChain}
+                    setInputValue={setSelectedChain}
+                    options={chains}
+                  />
+                </div>
+                <div className="flex sm:w-2/3">
+                  <SearchSelectInput
+                    labelText="Currency"
+                    name="currency"
+                    required={false}
+                    disabled={!selectedChain}
+                    inputValue={selectedCurrency}
+                    setInputValue={setSelectedCurrency}
+                    options={
+                      selectedChain?.value === "ethereum"
+                        ? ethereumTokens
+                        : selectedChain?.value === "polygon"
+                        ? polygonTokens
+                        : selectedChain?.value === "gnosis-chain"
+                        ? gnosisChainTokens
+                        : []
+                    }
+                  />
+                </div>
               </div>
               <div className="flex-1">
                 <label
