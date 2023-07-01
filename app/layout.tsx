@@ -57,8 +57,18 @@ export default function RootLayout({
       fetchingStatusRef.current = true;
 
       try {
-        // TODO: check if the user is authenticated
-        setAuthStatus("authenticated");
+        const checkAuthResponse = await fetch("/api/auth/me");
+
+        const authResponse = await checkAuthResponse.json();
+
+        const authenticated = Boolean(authResponse?.ok === true);
+
+        if (authenticated) {
+          setAuthStatus("authenticated");
+          setWalletAddress(authResponse?.address);
+        } else {
+          setAuthStatus("unauthenticated");
+        }
       } catch (error) {
         console.error(error);
 
@@ -71,6 +81,7 @@ export default function RootLayout({
     fetchStatus();
 
     window.addEventListener("focus", fetchStatus);
+
     return () => window.removeEventListener("focus", fetchStatus);
   }, []);
 
@@ -113,13 +124,17 @@ export default function RootLayout({
           const authenticated = Boolean(verifyResponse?.ok === true);
 
           if (authenticated) {
-            setAuthStatus(authenticated ? "authenticated" : "unauthenticated");
+            setAuthStatus("authenticated");
             setWalletAddress(verifyResponse?.address);
+          } else {
+            setAuthStatus("unauthenticated");
           }
 
           return authenticated;
         } catch (error) {
           console.error(error);
+
+          setAuthStatus("unauthenticated");
 
           return false;
         } finally {
@@ -134,7 +149,7 @@ export default function RootLayout({
   }, []);
 
   return (
-<html lang="en">
+    <html lang="en">
       <body>
         <WagmiConfig config={config}>
           <RainbowKitAuthenticationProvider

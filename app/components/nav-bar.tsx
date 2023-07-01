@@ -43,7 +43,7 @@ export const NavBar = () => {
   return (
     <header aria-label="Site Header" className="bg-black ">
       <div className="flex items-center h-16 gap-8 px-4 mx-auto sm:px-6 lg:px-8">
-        <a className="block" href="/">
+        <Link className="block" href="/">
           <span className="sr-only">Home</span>
           <Image
             className="hidden md:block"
@@ -59,7 +59,7 @@ export const NavBar = () => {
             width={47}
             height={47}
           />
-        </a>
+        </Link>
 
         <div className="flex items-center justify-end flex-1 md:justify-between">
           <nav aria-label="Site Nav" className="hidden md:block">

@@ -18,9 +18,17 @@ export async function GET(request: Request) {
 
   const nonce = await generateNonce();
 
-// Disable the linting rule for the following line
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
+  // Reset the address cookie
+  // Disable the linting rule for the following line
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  cookies().set("address", "", {
+    path: "/",
+  });
+
+  // Disable the linting rule for the following line
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   cookies().set("nonce", nonce, {
     httpOnly: true,
     secure: true,
