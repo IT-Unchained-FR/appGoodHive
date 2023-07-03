@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useContext  } from "react";
 
 import Autosuggest from "react-autosuggest";
 import toast from "react-hot-toast";
 
 import { SelectInput } from "../../components/select-input";
 import { SearchSelectInput } from "../../components/search-select-input";
+import { AddressContext } from "../../components/context";
 // TODO: use button but before add the type of the button component (i.e. type="button" or type="submit")
 // import { Button } from "../../components/button";
 import { skills } from "@/app/constants/skills";
@@ -26,6 +27,8 @@ export default function CreateJob() {
   );
   const [selectedChain, setSelectedChain] = useState<LabelOption | null>(null);
 
+  const walletAddress = useContext(AddressContext);
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
@@ -41,8 +44,9 @@ export default function CreateJob() {
       budget: formData.get("budget"),
       chain: selectedChain ? selectedChain.value : undefined,
       currency:
-        selectedCurrency && selectedChain ? selectedCurrency.value : undefined,
+        selectedCurrency ? selectedCurrency.value : undefined,
       skills: selectedSkills,
+      walletAddress,
     };
 
     const jobResponse = await fetch("/api/companies/create-job", {
