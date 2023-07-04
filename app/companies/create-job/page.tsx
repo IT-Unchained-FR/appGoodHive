@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent, useContext  } from "react";
+import { useState, FormEvent, useContext } from "react";
 
 import Autosuggest from "react-autosuggest";
 import toast from "react-hot-toast";
