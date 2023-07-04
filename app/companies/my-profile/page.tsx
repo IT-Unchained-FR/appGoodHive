@@ -1,11 +1,11 @@
 "use client";
 
-import { useRef, useState, FormEvent, useEffect } from "react";
+import { useRef, useState, FormEvent, useEffect, useContext } from "react";
 
 import toast from "react-hot-toast";
 
 import DragAndDropFile from "../../components/drag-and-drop-file";
-
+import { AddressContext } from "../../components/context";
 import { SelectInput } from "../../components/select-input";
 import { countries } from "../../constants/countries";
 import LabelOption from "@interfaces/label-option";
@@ -19,6 +19,8 @@ export default function MyProfile() {
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
 
   const [selectedCountry, setSelectedCountry] = useState<LabelOption | null>(null);
+
+  const walletAddress = useContext(AddressContext);
 
   useEffect(() => {
     if (typeof file === "object" && file !== null) {
@@ -63,6 +65,7 @@ export default function MyProfile() {
       telegram: formData.get("telegram"),
       details: formData.get("details"),
       imageUrl,
+      walletAddress,
     };
 
     // TODO: POST formData to the server with fetch
@@ -156,7 +159,7 @@ export default function MyProfile() {
             <div className="flex flex-col gap-4 mt-4 sm:flex-row">
               <div className="flex-1">
                 <SelectInput
-                  labelText="Country*"
+                  labelText="Country"
                   name="country"
                   required={true}
                   disabled={false}
