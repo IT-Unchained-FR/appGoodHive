@@ -11,6 +11,7 @@ export async function POST(request: Request) {
     skills,
     chain,
     currency,
+    walletAddress,
   } = await request.json();
 
   const sql = postgres(process.env.DATABASE_URL || "", {
@@ -30,7 +31,8 @@ export async function POST(request: Request) {
         budget,
         chain,
         currency,
-        skills
+        skills,
+        wallet_address
       ) VALUES (
         ${title},
         ${typeEngagement},
@@ -40,7 +42,8 @@ export async function POST(request: Request) {
         ${budget},
         ${chain},
         ${currency},
-        ${skills}
+        ${skills},
+        ${walletAddress}
       );
     `;
 

@@ -2,21 +2,18 @@ import postgres from "postgres";
 
 export async function POST(request: Request) {
   const {
-    title,
-    jobHeadline,
-    firstName,
-    lastName,
+    headline,
+    designation,
+    address,
     country,
     city,
     phoneCountryCode,
     phoneNumber,
     email,
     telegram,
-    aboutWork,
-    currency,
-    rate,
-    skills,
+    details,
     imageUrl,
+    walletAddress,
   } = await request.json();
 
   const sql = postgres(process.env.DATABASE_URL || "", {
@@ -27,38 +24,32 @@ export async function POST(request: Request) {
 
   try {
     await sql`
-      INSERT INTO goodhive.users (
-        title,
-        job_headline,
-        first_name,
-        last_name,
+      INSERT INTO goodhive.companies (
+        headline,
+        designation,
+        address,
         country,
         city,
         phone_country_code,
         phone_number,
         email,
         telegram,
-        about_work,
-        currency,
-        rate,
-        skills,
-        image_url
+        details,
+        image_url,
+        wallet_address
       ) VALUES (
-        ${title},
-        ${jobHeadline},
-        ${firstName},
-        ${lastName},
+        ${headline},
+        ${designation},
+        ${address},
         ${country},
         ${city},
         ${phoneCountryCode},
         ${phoneNumber},
         ${email},
         ${telegram},
-        ${aboutWork},
-        ${currency},
-        ${rate},
-        ${skills},
-        ${imageUrl}
+        ${details},
+        ${imageUrl},
+        ${walletAddress}
       );
     `;
 
