@@ -85,7 +85,7 @@ export default function MyProfile() {
       aboutWork: formData.get("about-work"),
       chain: selectedChain ? selectedChain?.value : undefined,
       currency:
-        selectedCurrency && selectedChain ? selectedCurrency.value : undefined,
+        selectedCurrency ? selectedCurrency.value : undefined,
       rate: formData.get("rate"),
       skills: selectedSkills,
       imageUrl,
