@@ -10,15 +10,13 @@ import { useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 const commonLinks = [
-  { href: "/talents", label: "Talent" },
-  { href: "/companies", label: "Companies" },
-  { href: "/about-us", label: "About Us" },
+  { href: "/talents/job-search", label: "Talent" },
+  { href: "/companies/search-talents", label: "Companies" },
 ];
 
 const talentsLinks = [
   { href: "/talents/job-search", label: "Job Search" },
   { href: "/talents/my-applications", label: "My Applications" },
-  { href: "/talents/manage-jobs", label: "Manage Jobs" },
   { href: "/talents/my-profile", label: "My Profile" },
 ];
 
