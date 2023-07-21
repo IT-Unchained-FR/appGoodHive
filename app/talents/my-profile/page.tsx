@@ -8,17 +8,10 @@ import Autosuggest from "react-autosuggest";
 import DragAndDropFile from "../../components/drag-and-drop-file";
 import { SelectInput } from "../../components/select-input";
 import { AddressContext } from "../../components/context";
-import { SearchSelectInput } from "../../components/search-select-input";
 // TODO: use button but before add the type of the button component (i.e. type="button" or type="submit")
 // import { Button } from "../../components/button";
 import { skills } from "@/app/constants/skills";
 import { countries } from "@/app/constants/countries";
-import {
-  ethereumTokens,
-  polygonTokens,
-  gnosisChainTokens,
-} from "@/app/constants/token-list/index.js";
-import { chains } from "@/app/constants/chains";
 import LabelOption from "@interfaces/label-option";
 import FileData from "@interfaces/file-data";
 
@@ -28,6 +21,22 @@ export default function MyProfile() {
   const [imageUrl, setImageUrl] = useState(null);
   const [file, setFile] = useState<false | FileData>(false);
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
+  const [profileData, setProfileData] = useState({
+    title: "",
+    job_headline: "",
+    first_name: "",
+    last_name: "",
+    country: "",
+    city: "",
+    phone_country_code: "",
+    phone_number: "",
+    email: "",
+    telegram: "",
+    about_work: "",
+    rate: "",
+    skills: [],
+    image_url: "",
+  });
 
   const walletAddress = useContext(AddressContext);
 
@@ -35,15 +44,37 @@ export default function MyProfile() {
   const [selectedCountry, setSelectedCountry] = useState<LabelOption | null>(
     null
   );
-  const [selectedChain, setSelectedChain] = useState<LabelOption | null>(null);
-  const [selectedCurrency, setSelectedCurrency] = useState<LabelOption | null>(
-    null
-  );
+
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        const response = await fetch(
+          `/api/talents/my-profile?walletAddress=${walletAddress}`
+        ); // replace with your actual API endpoint
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const profile = await response.json();
+
+        console.log("profile", profile);
+
+        setProfileData(profile);
+        // setImageUrl(profile.image_url);
+      } catch (error) {
+        console.error("There was an error!", error);
+      }
+    };
+
+    fetchProfileData();
+  }, [walletAddress]);
 
   useEffect(() => {
     if (typeof file === "object" && file !== null) {
       const fetchImage = async () => {
         setIsLoading(true);
+
         const postImageResponse = await fetch("/api/picture", {
           method: "POST",
           headers: {
@@ -54,10 +85,12 @@ export default function MyProfile() {
 
         if (postImageResponse.ok) {
           const { imageUrl } = await postImageResponse.json();
+
           setImageUrl(imageUrl);
         } else {
           console.error(postImageResponse.statusText);
         }
+
         setIsLoading(false);
       };
 
@@ -67,6 +100,7 @@ export default function MyProfile() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
@@ -83,9 +117,6 @@ export default function MyProfile() {
       email: formData.get("email"),
       telegram: formData.get("telegram"),
       aboutWork: formData.get("about-work"),
-      chain: selectedChain ? selectedChain?.value : undefined,
-      currency:
-        selectedCurrency ? selectedCurrency.value : undefined,
       rate: formData.get("rate"),
       skills: selectedSkills,
       imageUrl,
@@ -105,7 +136,9 @@ export default function MyProfile() {
     if (!profileResponse.ok) {
       toast.error("Something went wrong!");
     } else {
-      toast.success("Profile Saved!");
+      toast.success(
+        "🎉 Your profile has been successfully saved! It is now under review. We appreciate your patience and will get back to you as soon as possible."
+      );
     }
   };
 
@@ -173,21 +206,42 @@ export default function MyProfile() {
       <h1 className="my-5 text-2xl border-b-[1px] border-slate-300 pb-2">
         My Profile
       </h1>
+      {!walletAddress && (
+        <div>
+          <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+            🚀 To get started, please connect your wallet. This will enable you
+            to create or save your profile. Thanks!
+          </p>
+        </div>
+      )}
       <section>
         <form onSubmit={handleSubmit}>
           <div className="flex flex-col items-center justify-center w-full mt-10">
-            <DragAndDropFile
-              file={file}
-              setFile={setFile}
-              isRenderedPage={isRenderedPage}
-              setIsRenderedPage={setIsRenderedPage}
-              invoiceInputValue={invoiceInputValue}
-            />
+            {imageUrl ? (
+              <div
+                className="relative h-[230px] w-[230px] flex items-center mt-10 justify-center cursor-pointer bg-gray-100"
+                style={{
+                  clipPath:
+                    "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)",
+                }}
+              >
+                <img className="object-cover" src={imageUrl} />
+              </div>
+            ) : (
+              <DragAndDropFile
+                file={file}
+                setFile={setFile}
+                isRenderedPage={isRenderedPage}
+                setIsRenderedPage={setIsRenderedPage}
+                // FIXME: change name of invoiceInputValue to fileInputValue
+                invoiceInputValue={invoiceInputValue}
+              />
+            )}
           </div>
           <div className="flex flex-col w-full mt-20">
             <div>
               <label
-                htmlFor="job-headline"
+                htmlFor="title"
                 className="inline-block ml-3 text-base text-black form-label"
               >
                 Job Headline*
@@ -200,6 +254,7 @@ export default function MyProfile() {
               type="text"
               required
               maxLength={100}
+              defaultValue={profileData?.title}
             />
             <div className="mt-5">
               <textarea
@@ -209,6 +264,7 @@ export default function MyProfile() {
                 required
                 maxLength={255}
                 rows={5}
+                defaultValue={profileData?.job_headline}
               />
             </div>
             <div className="flex flex-col gap-4 mt-4 sm:flex-row">
@@ -227,6 +283,7 @@ export default function MyProfile() {
                   required
                   pattern="[a-zA-Z -]+"
                   maxLength={100}
+                  defaultValue={profileData?.first_name}
                 />
               </div>
               <div className="flex-1">
@@ -244,6 +301,7 @@ export default function MyProfile() {
                   required
                   pattern="[a-zA-Z -]+"
                   maxLength={100}
+                  defaultValue={profileData?.last_name}
                 />
               </div>
             </div>
@@ -273,6 +331,7 @@ export default function MyProfile() {
                   name="city"
                   pattern="[a-zA-Z -]+"
                   maxLength={100}
+                  defaultValue={profileData?.city}
                 />
               </div>
             </div>
@@ -285,16 +344,17 @@ export default function MyProfile() {
                   Phone Country Code*
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 top-[-4px] flex items-center pl-5 pointer-events-none">
                     <span className="text-gray-500 sm:text-sm">+</span>
                   </div>
                   <input
-                    className="form-control block w-full px-10 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none pl-10"
+                    className="pl-8 form-control block w-full py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                     placeholder="Phone Country Code"
                     type="number"
                     name="phone-country-code"
                     required
                     maxLength={5}
+                    defaultValue={profileData?.phone_country_code}
                   />
                 </div>
               </div>
@@ -312,6 +372,7 @@ export default function MyProfile() {
                   required
                   name="phone-number"
                   maxLength={20}
+                  defaultValue={profileData?.phone_number}
                 />
               </div>
             </div>
@@ -330,6 +391,7 @@ export default function MyProfile() {
                   required
                   name="email"
                   maxLength={255}
+                  defaultValue={profileData?.email}
                 />
               </div>
               <div className="flex-1">
@@ -345,55 +407,25 @@ export default function MyProfile() {
                   type="text"
                   name="telegram"
                   maxLength={255}
+                  defaultValue={profileData?.telegram}
                 />
               </div>
             </div>
             <div className="flex flex-col gap-4 mt-4 sm:flex-row">
-              <div className="flex flex-col gap-2 sm:w-1/2 sm:flex-row">
-                <div className="flex sm:w-1/3">
-                  <SelectInput
-                    labelText="Chain"
-                    name="chain"
-                    required={false}
-                    disabled={false}
-                    inputValue={selectedChain}
-                    setInputValue={setSelectedChain}
-                    options={chains}
-                  />
-                </div>
-                <div className="flex sm:w-2/3">
-                  <SearchSelectInput
-                    labelText="Currency"
-                    name="currency"
-                    required={false}
-                    disabled={!selectedChain}
-                    inputValue={selectedCurrency}
-                    setInputValue={setSelectedCurrency}
-                    options={
-                      selectedChain?.value === "ethereum"
-                        ? ethereumTokens
-                        : selectedChain?.value === "polygon"
-                        ? polygonTokens
-                        : selectedChain?.value === "gnosis-chain"
-                        ? gnosisChainTokens
-                        : []
-                    }
-                  />
-                </div>
-              </div>
               <div className="flex-1">
                 <label
                   htmlFor="rate"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
-                  Rate
+                  Rate ($/hour)
                 </label>
                 <input
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Rate per hour"
+                  placeholder="Your rate per hour"
                   type="number"
                   name="rate"
                   maxLength={255}
+                  defaultValue={profileData?.rate}
                 />
               </div>
             </div>
@@ -411,6 +443,7 @@ export default function MyProfile() {
                 required
                 rows={5}
                 maxLength={65000}
+                defaultValue={profileData?.about_work}
               />
             </div>
             <div className="flex flex-col gap-4 mt-4 sm:flex-row">
@@ -460,14 +493,14 @@ export default function MyProfile() {
                 >
                   Saving...
                 </button>
-              ) : (
+              ) : !!walletAddress ? (
                 <button
                   className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
                   type="submit"
                 >
                   Save
                 </button>
-              )}
+              ) : null}
             </div>
           </div>
         </form>
