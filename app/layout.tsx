@@ -150,18 +150,29 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <body>
+      <body className="min-h-screen">
         <WagmiConfig config={config}>
           <RainbowKitAuthenticationProvider
             adapter={authAdapter}
             status={authStatus}
           >
             <RainbowKitProvider chains={chains}>
-              <NavBar />
-              <Toaster />
-              <AddressContext.Provider value={walletAddress}>
-                {children}
-              </AddressContext.Provider>
+              <div className="flex flex-col min-h-screen">
+                <NavBar />
+                <Toaster />
+
+                <div className="flex-grow">
+                  <AddressContext.Provider value={walletAddress}>
+                    {children}
+                  </AddressContext.Provider>
+                </div>
+                <footer className="p-5 text-center text-white bg-yellow-500">
+                  <p>
+                    &copy; {new Date().getFullYear()} GoodHive. All rights
+                    reserved.
+                  </p>
+                </footer>
+              </div>
             </RainbowKitProvider>
           </RainbowKitAuthenticationProvider>
         </WagmiConfig>
