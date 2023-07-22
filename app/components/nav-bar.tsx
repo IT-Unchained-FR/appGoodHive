@@ -16,14 +16,14 @@ const commonLinks = [
 
 const talentsLinks = [
   { href: "/talents/job-search", label: "Job Search" },
-  { href: "/talents/my-applications", label: "My Applications" },
+  // { href: "/talents/my-applications", label: "My Applications" },
   { href: "/talents/my-profile", label: "My Profile" },
 ];
 
 const companiesLinks = [
   { href: "/companies/search-talents", label: "Search Talents" },
   { href: "/companies/job-listing", label: "Jobs Listing" },
-  { href: "/companies/create-job", label: "Create Job" },
+  // { href: "/companies/create-job", label: "Create Job" },
   { href: "/companies/my-profile", label: "My Profile" },
 ];
 
