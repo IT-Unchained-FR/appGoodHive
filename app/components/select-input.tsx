@@ -1,4 +1,4 @@
-import React, { FC, useState } from "react";
+import React, { FC, useEffect, useState } from "react";
 
 import LabelOption from "@interfaces/label-option";
 
@@ -10,6 +10,7 @@ interface Props {
   inputValue: LabelOption | null;
   setInputValue: (option: LabelOption | null) => void;
   options: LabelOption[];
+  defaultValue?: LabelOption;
 }
 
 export const SelectInput: FC<Props> = ({
@@ -17,10 +18,14 @@ export const SelectInput: FC<Props> = ({
   required,
   disabled,
   inputValue,
-  setInputValue,
   options,
+  defaultValue,
+  setInputValue,
 }) => {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+  const [selectedValue, setSelectedValue] = useState<LabelOption | null>(
+    defaultValue || null
+  );
 
   const handleInputClickAndCloseOptions = (option: LabelOption) => {
     setInputValue(option);
@@ -44,8 +49,14 @@ export const SelectInput: FC<Props> = ({
       "form-control block w-full px-4 py-2 text-base font-light text-gray-200 bg-white bg-clip-padding border border-solid border-[#FFF2CE] rounded-full";
   }
 
+  useEffect(() => {
+    if (defaultValue) {
+      setInputValue(defaultValue);
+    }
+  }, [defaultValue]);
+
   return (
-    <div className="w-full relative">
+    <div className="relative w-full">
       <label className="inline-block ml-3 text-base text-black form-label">
         {labelText}
         {required && <span>*</span>}
@@ -55,7 +66,10 @@ export const SelectInput: FC<Props> = ({
           className={selectStyle}
           onClick={() => setIsOptionsOpen(() => !isOptionsOpen)}
           style={{
-            color: inputValue && inputValue.label !== "Select on options" ? "black" : "gray",
+            color:
+              inputValue && inputValue.label !== "Select on options"
+                ? "black"
+                : "gray",
           }}
         >
           {inputValue ? inputValue.label : "Select on options"}
