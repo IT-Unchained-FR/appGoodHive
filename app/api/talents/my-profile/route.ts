@@ -1,6 +1,6 @@
 import postgres from "postgres";
 
-import type { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export async function POST(request: Request) {
   const {
@@ -15,8 +15,6 @@ export async function POST(request: Request) {
     email,
     telegram,
     aboutWork,
-    chain,
-    currency,
     rate,
     skills,
     imageUrl,
@@ -43,8 +41,6 @@ export async function POST(request: Request) {
         email,
         telegram,
         about_work,
-        chain,
-        currency,
         rate,
         skills,
         image_url,
@@ -61,24 +57,41 @@ export async function POST(request: Request) {
         ${email},
         ${telegram},
         ${aboutWork},
-        ${chain},
-        ${currency},
         ${rate},
         ${skills},
         ${imageUrl},
         ${walletAddress}
-      );
+      )
+      ON CONFLICT (wallet_address) DO UPDATE
+      SET
+        title = ${title},
+        job_headline = ${jobHeadline},
+        first_name = ${firstName},
+        last_name = ${lastName},
+        country = ${country},
+        city = ${city},
+        phone_country_code = ${phoneCountryCode},
+        phone_number = ${phoneNumber},
+        email = ${email},
+        telegram = ${telegram},
+        about_work = ${aboutWork},
+        rate = ${rate},
+        skills = ${skills},
+        image_url = ${imageUrl}
     `;
 
     return new Response(
-      JSON.stringify({ message: "Data inserted successfully" })
+      JSON.stringify({ message: "Data inserted or updated successfully" })
     );
   } catch (error) {
-    console.error("Error inserting data:", error);
+    console.error("Error inserting or updating data:", error);
 
-    return new Response(JSON.stringify({ message: "Error inserting data" }), {
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({ message: "Error inserting or updating data" }),
+      {
+        status: 500,
+      }
+    );
   }
 }
 
@@ -102,7 +115,6 @@ export async function GET(request: NextRequest) {
         status: 404,
       }
     );
-    return;
   }
 
   try {

@@ -58,10 +58,8 @@ export default function MyProfile() {
 
         const profile = await response.json();
 
-        console.log("profile", profile);
-
         setProfileData(profile);
-        // setImageUrl(profile.image_url);
+        setSelectedSkills(profile.skills.split(","));
       } catch (error) {
         console.error("There was an error!", error);
       }
@@ -137,7 +135,10 @@ export default function MyProfile() {
       toast.error("Something went wrong!");
     } else {
       toast.success(
-        "🎉 Your profile has been successfully saved! It is now under review. We appreciate your patience and will get back to you as soon as possible."
+        `🎉 Your profile has been successfully saved!
+
+        It is now under review.
+        `
       );
     }
   };
@@ -217,7 +218,7 @@ export default function MyProfile() {
       <section>
         <form onSubmit={handleSubmit}>
           <div className="flex flex-col items-center justify-center w-full mt-10">
-            {imageUrl ? (
+            {profileData.image_url ? (
               <div
                 className="relative h-[230px] w-[230px] flex items-center mt-10 justify-center cursor-pointer bg-gray-100"
                 style={{
@@ -225,7 +226,7 @@ export default function MyProfile() {
                     "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)",
                 }}
               >
-                <img className="object-cover" src={imageUrl} />
+                <img className="object-cover" src={profileData.image_url} />
               </div>
             ) : (
               <DragAndDropFile
@@ -315,6 +316,13 @@ export default function MyProfile() {
                   inputValue={selectedCountry}
                   setInputValue={setSelectedCountry}
                   options={countries}
+                  defaultValue={
+                    countries[
+                      countries.findIndex(
+                        (country) => country.value === profileData?.country
+                      )
+                    ]
+                  }
                 />
               </div>
               <div className="flex-1">
@@ -458,7 +466,7 @@ export default function MyProfile() {
                   <AutoSuggestInput />
                 </div>
                 <div className="pt-10">
-                  {selectedSkills.length > 0 && (
+                  {!!selectedSkills && selectedSkills.length > 0 && (
                     <div className="flex flex-wrap mt-4 ">
                       {selectedSkills.map((skill, index) => (
                         <div
