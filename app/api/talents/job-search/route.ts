@@ -9,7 +9,7 @@ const sql = postgres(process.env.DATABASE_URL || "", {
 // Force the browser to always fetch the latest data from the server
 export const revalidate = 0;
 export async function GET() {
-  {
+  
     try {
       const jobs = await sql`SELECT * FROM goodhive.job_offers`;
       const formattedJobs = jobs.map((item) => ({
@@ -34,4 +34,4 @@ export async function GET() {
       );
     }
   }
-}
+
