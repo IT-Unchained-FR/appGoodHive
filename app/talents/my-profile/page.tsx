@@ -245,7 +245,7 @@ export default function MyProfile() {
                 htmlFor="title"
                 className="inline-block ml-3 text-base text-black form-label"
               >
-                Job Headline*
+                Job Profile*
               </label>
             </div>
             <input
