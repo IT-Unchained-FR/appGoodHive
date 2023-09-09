@@ -12,7 +12,10 @@ export default function JobSearch() {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const jobOffersResponse = await fetch("/api/talents/job-search");
+        const jobOffersResponse = await fetch("/api/talents/job-search", {
+          next: { revalidate: 1 },
+          cache: "no-cache",
+        });
 
         if (!jobOffersResponse.ok) {
           throw new Error("Failed to fetch data from the server");

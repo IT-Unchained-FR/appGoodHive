@@ -28,6 +28,7 @@ export default function MyProfile() {
     if (typeof file === "object" && file !== null) {
       const fetchImage = async () => {
         setIsLoading(true);
+
         const postImageResponse = await fetch("/api/picture", {
           method: "POST",
           headers: {
