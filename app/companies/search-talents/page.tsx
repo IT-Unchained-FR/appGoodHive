@@ -13,9 +13,7 @@ export default function SearchTalents() {
   useEffect(() => {
     const fetchTalents = async () => {
       try {
-        const talentsResponse = await fetch("/api/companies/search-talents", {
-          cache: "no-cache",
-        });
+        const talentsResponse = await fetch("/api/companies/search-talents");
 
         if (!talentsResponse.ok) {
           throw new Error("Failed to fetch data from the server");
