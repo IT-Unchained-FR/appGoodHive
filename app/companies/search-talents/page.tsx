@@ -6,6 +6,7 @@ import Header from "@/app/components/header";
 import Talent from "@interfaces/talent";
 import TalentResult from "./talent-result";
 
+export const revalidate = 0;
 export default function SearchTalents() {
   const [talentsData, setTalentsData] = useState<Talent[]>([]);
 
@@ -13,7 +14,6 @@ export default function SearchTalents() {
     const fetchTalents = async () => {
       try {
         const talentsResponse = await fetch("/api/companies/search-talents", {
-          next: { revalidate: 1 },
           cache: "no-cache",
         });
 
