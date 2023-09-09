@@ -6,7 +6,9 @@ const sql = postgres(process.env.DATABASE_URL || "", {
   },
 });
 
+// Force the browser to always fetch the latest data from the server
 export const fetchCache = "force-no-store";
+
 export async function GET() {
   {
     try {
