@@ -23,7 +23,7 @@ export default function MyProfile() {
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
   const [profileData, setProfileData] = useState({
     title: "",
-    job_headline: "",
+    description: "",
     first_name: "",
     last_name: "",
     country: "",
@@ -105,7 +105,7 @@ export default function MyProfile() {
 
     const dataForm = {
       title: formData.get("title"),
-      jobHeadline: formData.get("job-headline"),
+      description: formData.get("description"),
       firstName: formData.get("first-name"),
       lastName: formData.get("last-name"),
       country: selectedCountry?.value,
@@ -259,13 +259,13 @@ export default function MyProfile() {
             />
             <div className="mt-5">
               <textarea
-                name="job-headline"
+                name="description"
                 className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                 placeholder="Describe your skills and experience in a few words*"
                 required
                 maxLength={255}
                 rows={5}
-                defaultValue={profileData?.job_headline}
+                defaultValue={profileData?.description}
               />
             </div>
             <div className="flex flex-col gap-4 mt-4 sm:flex-row">
