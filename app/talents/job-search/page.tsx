@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import Header from "@/app/components/header";
 import JobResult, { JobOffer } from "./job-result";
 
-export const revalidate = 10;
+export const revalidate = 0;
 export default function JobSearch() {
   const [jobOffersData, setJobOffersData] = useState<JobOffer[]>([]);
 
@@ -13,7 +13,6 @@ export default function JobSearch() {
     const fetchJobs = async () => {
       try {
         const jobOffersResponse = await fetch("/api/talents/job-search", {
-          next: { revalidate: 1 },
           cache: "no-cache",
         });
 
