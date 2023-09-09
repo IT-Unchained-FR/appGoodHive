@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import Header from "@/app/components/header";
 import JobResult, { JobOffer } from "./job-result";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 10;
 export default function JobSearch() {
   const [jobOffersData, setJobOffersData] = useState<JobOffer[]>([]);
 
