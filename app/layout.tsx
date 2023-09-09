@@ -38,6 +38,7 @@ const config = createConfig({
   webSocketPublicClient,
 });
 
+export const fetchCache = "force-no-store";
 export default function RootLayout({
   children,
 }: {
