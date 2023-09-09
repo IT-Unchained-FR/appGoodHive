@@ -2,6 +2,9 @@ import postgres from "postgres";
 
 import type { NextRequest } from "next/server";
 
+// Force the browser to always fetch the latest data from the server
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
 export async function POST(request: Request) {
   const {
     title,
@@ -20,24 +23,6 @@ export async function POST(request: Request) {
     imageUrl,
     walletAddress,
   } = await request.json();
-
-  console.log({
-    title,
-    description,
-    firstName,
-    lastName,
-    country,
-    city,
-    phoneCountryCode,
-    phoneNumber,
-    email,
-    telegram,
-    aboutWork,
-    rate,
-    skills,
-    imageUrl,
-    walletAddress,
-  });
 
   const sql = postgres(process.env.DATABASE_URL || "", {
     ssl: {

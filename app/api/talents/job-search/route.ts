@@ -6,6 +6,8 @@ const sql = postgres(process.env.DATABASE_URL || "", {
   },
 });
 
+// Force the browser to always fetch the latest data from the server
+export const revalidate = 0;
 export async function GET() {
   {
     try {
@@ -20,7 +22,7 @@ export async function GET() {
         skills: item.skills.split(","),
       }));
 
-      return new Response(JSON.stringify(formattedJobs)); //
+      return new Response(JSON.stringify(formattedJobs));
     } catch (error) {
       console.error("Error fetching job offers:", error);
 
