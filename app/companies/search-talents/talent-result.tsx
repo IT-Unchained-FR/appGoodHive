@@ -31,7 +31,7 @@ export default function TalentResult({ talents }: { talents: Talent[] }) {
             city={talent.city}
             rate={Number(talent.rate)}
             currency={talent.currency}
-            description={talent.jobHeadline}
+            description={talent.profileHeadline}
             skills={talent.skills}
             buttonText="Connect"
           />
