@@ -28,9 +28,10 @@ export async function GET() {
         currency: item.currency,
         skills: item.skills.split(","),
         imageUrl: item.image_url,
+        walletAddress: item.wallet_address,
       }));
 
-      return new Response(JSON.stringify(formattedTalents)); //
+      return new Response(JSON.stringify(formattedTalents));
     } catch (error) {
       console.error("Error fetching data:", error);
 
