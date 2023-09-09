@@ -6,7 +6,6 @@ import Header from "@/app/components/header";
 import Talent from "@interfaces/talent";
 import TalentResult from "./talent-result";
 
-export const revalidate = 10;
 export default function SearchTalents() {
   const [talentsData, setTalentsData] = useState<Talent[]>([]);
 
