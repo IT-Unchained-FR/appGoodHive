@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server";
 export async function POST(request: Request) {
   const {
     title,
-    jobHeadline,
+    profileHeadline,
     firstName,
     lastName,
     country,
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     await sql`
       INSERT INTO goodhive.users (
         title,
-        job_headline,
+        profile_headline,
         first_name,
         last_name,
         country,
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
         wallet_address
       ) VALUES (
         ${title},
-        ${jobHeadline},
+        ${profileHeadline},
         ${firstName},
         ${lastName},
         ${country},
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
       ON CONFLICT (wallet_address) DO UPDATE
       SET
         title = ${title},
-        job_headline = ${jobHeadline},
+        job_headline = ${profileHeadline},
         first_name = ${firstName},
         last_name = ${lastName},
         country = ${country},
