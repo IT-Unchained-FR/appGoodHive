@@ -14,6 +14,7 @@ export default function SearchTalents() {
       try {
         const talentsResponse = await fetch("/api/companies/search-talents", {
           next: { revalidate: 1 },
+          cache: "no-cache",
         });
 
         if (!talentsResponse.ok) {
