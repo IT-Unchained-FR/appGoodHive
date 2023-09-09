@@ -18,7 +18,9 @@ export default function MyProfile() {
   const [file, setFile] = useState<false | FileData>(false);
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
 
-  const [selectedCountry, setSelectedCountry] = useState<LabelOption | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<LabelOption | null>(
+    null
+  );
 
   const walletAddress = useContext(AddressContext);
 
@@ -181,7 +183,7 @@ export default function MyProfile() {
                   type="text"
                   name="city"
                   required
-                  pattern="[a-zA-Z -]+"
+                  pattern="[a-zA-Z \-]+"
                   maxLength={100}
                 />
               </div>
