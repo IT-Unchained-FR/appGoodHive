@@ -6,6 +6,7 @@ const sql = postgres(process.env.DATABASE_URL || "", {
   },
 });
 
+export const fetchCache = "force-no-store";
 export async function GET() {
   {
     try {
