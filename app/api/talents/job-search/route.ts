@@ -23,7 +23,7 @@ export async function GET() {
         skills: item.skills.split(","),
       }));
 
-      return new Response(JSON.stringify(formattedJobs)); //
+      return new Response(JSON.stringify(formattedJobs));
     } catch (error) {
       console.error("Error fetching job offers:", error);
 
