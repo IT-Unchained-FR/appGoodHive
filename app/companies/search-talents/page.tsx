@@ -6,15 +6,14 @@ import Header from "@/app/components/header";
 import Talent from "@interfaces/talent";
 import TalentResult from "./talent-result";
 
+export const dynamic = "force-dynamic";
 export default function SearchTalents() {
   const [talentsData, setTalentsData] = useState<Talent[]>([]);
 
   useEffect(() => {
     const fetchTalents = async () => {
       try {
-        const talentsResponse = await fetch("/api/companies/search-talents", {
-          cache: "no-store",
-        });
+        const talentsResponse = await fetch("/api/companies/search-talents");
 
         if (!talentsResponse.ok) {
           throw new Error("Failed to fetch data from the server");
