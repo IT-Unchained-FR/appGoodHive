@@ -65,15 +65,15 @@ export default function MyProfilePage() {
           <div className="flex flex-col w-full mt-20">
             <div>
               <label
-                htmlFor="job-headline"
+                htmlFor="profile-headline"
                 className="inline-block ml-3 text-base text-black form-label"
               >
-                Job Headline
+                Profile Headline
               </label>
             </div>
             <div>
               <textarea
-                name="job-headline"
+                name="profile-headline"
                 className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                 placeholder="Describe your skills and experience in a few words"
                 required
