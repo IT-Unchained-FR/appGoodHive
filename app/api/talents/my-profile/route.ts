@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server";
 export async function POST(request: Request) {
   const {
     title,
-    profileHeadline,
+    description,
     firstName,
     lastName,
     country,
@@ -21,6 +21,24 @@ export async function POST(request: Request) {
     walletAddress,
   } = await request.json();
 
+  console.log({
+    title,
+    description,
+    firstName,
+    lastName,
+    country,
+    city,
+    phoneCountryCode,
+    phoneNumber,
+    email,
+    telegram,
+    aboutWork,
+    rate,
+    skills,
+    imageUrl,
+    walletAddress,
+  });
+
   const sql = postgres(process.env.DATABASE_URL || "", {
     ssl: {
       rejectUnauthorized: false, // This allows connecting to a database with a self-signed certificate
@@ -31,7 +49,7 @@ export async function POST(request: Request) {
     await sql`
       INSERT INTO goodhive.users (
         title,
-        profile_headline,
+        description,
         first_name,
         last_name,
         country,
@@ -47,7 +65,7 @@ export async function POST(request: Request) {
         wallet_address
       ) VALUES (
         ${title},
-        ${profileHeadline},
+        ${description},
         ${firstName},
         ${lastName},
         ${country},
@@ -65,7 +83,7 @@ export async function POST(request: Request) {
       ON CONFLICT (wallet_address) DO UPDATE
       SET
         title = ${title},
-        job_headline = ${profileHeadline},
+        description = ${description},
         first_name = ${firstName},
         last_name = ${lastName},
         country = ${country},
