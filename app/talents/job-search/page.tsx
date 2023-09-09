@@ -3,28 +3,31 @@
 import { useEffect, useState } from "react";
 
 import Header from "@/app/components/header";
-import JobResult from "./job-result";
-
-import { JobOffer } from "./job-result";
+import JobResult, { JobOffer } from "./job-result";
 
 export default function JobSearch() {
   const [jobOffersData, setJobOffersData] = useState<JobOffer[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchJobs = async () => {
       try {
-        const jobOffersResponse = await fetch("/api/talents/job-search");
+        const jobOffersResponse = await fetch("/api/talents/job-search", {
+          cache: "no-store",
+        });
+
         if (!jobOffersResponse.ok) {
           throw new Error("Failed to fetch data from the server");
         }
+
         const jobOffers = await jobOffersResponse.json();
+
         setJobOffersData(jobOffers);
       } catch (error) {
         console.error("Error:", error);
       }
     };
 
-    fetchData();
+    fetchJobs();
   }, []);
 
   return (
