@@ -27,6 +27,7 @@ interface Props {
   buttonText: string;
   escrowAmount?: BigNumberish;
   escrowCurrency?: string;
+  walletAddress?: string;
 }
 
 export const Card: FC<Props> = ({
@@ -42,13 +43,9 @@ export const Card: FC<Props> = ({
   currency = "$", // TODO: Add mapping with currencies (USD, EUR, etc.)
   escrowAmount,
   escrowCurrency = "ETH",
+  walletAddress,
 }) => {
   const ratePerHour = rate && currency ? `${rate}${currency}/Hour` : null;
-
-  const router = useRouter();
-  const walletAddress = useContext(AddressContext);
-
-  return <button type="button">Dashboard</button>;
 
   return (
     <div className="mt-11">
@@ -107,7 +104,6 @@ export const Card: FC<Props> = ({
           </div>
           <div className="w-full gap-3 sm:flex md:flex lg:justify-center md:justify-end sm:justify-end xl:flex lg:grid xl:pt-2 lg:pt-2 xl:justify-center ">
             <Link href={`/talents/${walletAddress}`}>
-              {" "}
               <div className="flex justify-center lg:items-center">
                 <Button text="Know more..." type="secondary" size="medium" />
               </div>
