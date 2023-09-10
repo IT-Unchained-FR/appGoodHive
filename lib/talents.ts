@@ -32,7 +32,7 @@ export async function fetchTalents({
     const talents = talentsCursor.map((talent) => {
       return {
         title: talent.title,
-        profileHeadline: talent.profile_headline,
+        description: talent.description,
         firstName: talent.first_name,
         lastName: talent.last_name,
         country: talent.country,
