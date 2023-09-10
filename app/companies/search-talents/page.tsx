@@ -1,43 +1,57 @@
-"use client";
+import { fetchTalents } from "@/lib/talents";
+import { Card } from "@/app/components/card";
+import Pagination from "./pagination";
 
-import { useEffect, useState } from "react";
+const itemsPerPage = 9;
 
-import Header from "@/app/components/header";
-import Talent from "@interfaces/talent";
-import TalentResult from "./talent-result";
-
-export const revalidate = 0;
-export default function SearchTalents() {
-  const [talentsData, setTalentsData] = useState<Talent[]>([]);
-
-  useEffect(() => {
-    const fetchTalents = async () => {
-      try {
-        const talentsResponse = await fetch("/api/companies/search-talents");
-
-        if (!talentsResponse.ok) {
-          throw new Error("Failed to fetch data from the server");
-        }
-
-        const talents = await talentsResponse.json();
-
-        setTalentsData(talents);
-      } catch (error) {
-        console.error("Error:", error);
-      }
-    };
-
-    fetchTalents();
-  }, []);
+export default async function SearchTalentsPage({
+  searchParams,
+}: {
+  searchParams: {
+    items?: number;
+    page: number;
+    search?: string;
+    location?: string;
+  };
+}) {
+  const query = { items: itemsPerPage, ...searchParams };
+  const { talents, count } = (await fetchTalents(query)) || {
+    talents: [],
+    count: 0,
+  };
 
   return (
-    <main className="mx-5">
-      <Header />
+    <>
       <h1 className="pt-16 mx-5 text-xl font-bold">
         Search Results
         <span className="text-base font-normal">- Talent Search</span>
       </h1>
-      <TalentResult talents={talentsData} />
-    </main>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {talents.map((talent) => (
+          <Card
+            key={talent.phoneNumber}
+            type="talent"
+            title={talent.title}
+            postedBy={`${talent.firstName} ${talent.lastName}`}
+            postedOn="Active 2 days ago" // TODO: use real data instead when available
+            image={talent.imageUrl}
+            countryFlag="/img/country_flag.png" // TODO: create flag table
+            city={talent.city}
+            rate={Number(talent.rate)}
+            currency={talent.currency}
+            description={talent.description}
+            skills={talent.skills}
+            buttonText="Connect"
+          />
+        ))}
+      </div>
+
+      <Pagination
+        itemsPerPage={itemsPerPage}
+        totalItems={count}
+        query={query}
+      />
+    </>
   );
 }
