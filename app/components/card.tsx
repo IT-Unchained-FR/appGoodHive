@@ -2,11 +2,15 @@
 
 import Image from "next/image";
 
-import { FC } from "react";
+import { FC, useContext } from "react";
 
 import { BigNumberish } from "ethers";
 
 import { Button } from "../components/button";
+
+import { useRouter } from "next/navigation";
+import { AddressContext } from "./context";
+import Link from "next/link";
 
 interface Props {
   type: string;
@@ -23,6 +27,7 @@ interface Props {
   buttonText: string;
   escrowAmount?: BigNumberish;
   escrowCurrency?: string;
+  walletAddress?: string;
 }
 
 export const Card: FC<Props> = ({
@@ -38,6 +43,7 @@ export const Card: FC<Props> = ({
   currency = "$", // TODO: Add mapping with currencies (USD, EUR, etc.)
   escrowAmount,
   escrowCurrency = "ETH",
+  walletAddress,
 }) => {
   const ratePerHour = rate && currency ? `${rate}${currency}/Hour` : null;
 
@@ -92,14 +98,17 @@ export const Card: FC<Props> = ({
             <div>{ratePerHour}</div>
             {!!escrowAmount && (
               <div>
-                {escrowAmount.toString()} {escrowCurrency}
+                {escrowAmount?.toString()} {escrowCurrency}
               </div>
             )}
           </div>
           <div className="w-full gap-3 sm:flex md:flex lg:justify-center md:justify-end sm:justify-end xl:flex lg:grid xl:pt-2 lg:pt-2 xl:justify-center ">
-            <div className="flex justify-center lg:items-center">
-              <Button text="Know more..." type="secondary" size="medium" />
-            </div>
+            <Link href={`/talents/${walletAddress}`}>
+              <div className="flex justify-center lg:items-center">
+                <Button text="Know more..." type="secondary" size="medium" />
+              </div>
+            </Link>
+
             <div className="flex justify-center lg:items-center">
               <Button text="Apply Now" type="primary" size="medium" />
             </div>
