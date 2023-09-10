@@ -16,6 +16,7 @@ interface Talent {
   currency: string;
   skills: string[];
   imageUrl: string;
+  walletAddress: string;
 }
 
 export default Talent;
