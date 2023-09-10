@@ -10,9 +10,9 @@ import addIcon from "@/public/icons/add.svg";
 
 export default function SearchFilters() {
   const [query, setQuery] = React.useState<{
-    search?: string;
-    location?: string;
-  }>({});
+    search: string;
+    location: string;
+  }>({ search: "", location: "" });
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setQuery((q) => ({ ...q, search: event.target.value }));
@@ -52,7 +52,7 @@ export default function SearchFilters() {
             Search Talent
           </LinkButton>
           <LinkButton
-            href={"/companies/create-job"}
+            href="/companies/create-job"
             icon={addIcon}
             iconSize="large"
             variant="secondary"
