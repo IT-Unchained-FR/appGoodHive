@@ -1,45 +1,46 @@
-import { FC, ChangeEventHandler  } from "react";
+import clsx from "clsx";
 
-interface Props {
-  labelText: string;
-  placeholder: string;
-  type: string;
-  required: boolean;
-  name?: string;
-  disabled?: boolean;
-  value?: string | number;
-  onChange?: ChangeEventHandler<HTMLInputElement>;
-}
+type Props = React.InputHTMLAttributes<HTMLInputElement> & {
+  labelText?: string;
+};
 
-export const Input: FC<Props> = ({
-  labelText,
-  placeholder,
-  type,
-  required,
-  disabled,
-  value,
-  onChange,
-}) => {
-  let inputStyle =
-    "form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none";
-  if (disabled) {
-    inputStyle =
-      "form-control block w-full px-4 py-2 text-base font-light text-gray-200 bg-white bg-clip-padding border border-solid border-[#FFF2CE] rounded-full";
-  }
+export function Input({ labelText, ...props }: Props) {
+  const baseClasses = [
+    "form-control",
+    "block",
+    "w-full",
+    "px-4",
+    "py-2",
+    "text-base",
+    "bg-white",
+    "bg-clip-padding",
+    "border",
+    "border-solid",
+    "rounded-full",
+  ];
+
+  const comlementaryClasses = props.disabled
+    ? ["font-light", "text-gray-200", "border-[#FFF2CE] "]
+    : [
+        "font-normal",
+        "text-gray-600",
+        "border-[#FFC905]",
+        "hover:shadow-lg",
+        "transition",
+        "ease-in-out",
+        "m-0",
+        "focus:text-black",
+        "focus:bg-white",
+        "focus:border-[#FF8C05]",
+        "focus:outline-none",
+      ];
+
   return (
     <div>
       <label className="inline-block ml-3 text-base text-black form-label">
         {labelText}
       </label>
-      <input
-        className={inputStyle}
-        placeholder={placeholder}
-        type={type}
-        required={required}
-        disabled={disabled}
-        value={value}
-        onChange={onChange}
-      />
+      <input className={clsx(baseClasses, comlementaryClasses)} {...props} />
     </div>
   );
-};
+}
