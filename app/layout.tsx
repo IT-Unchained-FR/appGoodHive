@@ -10,7 +10,12 @@ import {
   RainbowKitAuthenticationProvider,
   createAuthenticationAdapter,
   AuthenticationStatus,
+  connectorsForWallets,
 } from "@rainbow-me/rainbowkit";
+import {
+  metaMaskWallet,
+  walletConnectWallet,
+} from "@rainbow-me/rainbowkit/wallets";
 import { Toaster } from "react-hot-toast";
 import { SiweMessage } from "siwe";
 
@@ -25,11 +30,17 @@ const { chains, publicClient, webSocketPublicClient } = configureChains(
   [publicProvider()]
 );
 
-const { connectors } = getDefaultWallets({
-  appName: "My Goodhive App",
-  projectId: "GOODHIVE",
-  chains,
-});
+const projectId = "c1de7de6d9dac11ced03c7516792c20c";
+
+const connectors = connectorsForWallets([
+  {
+    groupName: "My Goodhive App",
+    wallets: [
+      metaMaskWallet({ projectId, chains }),
+      walletConnectWallet({ projectId, chains }), // FIXME: WalletConnect is not working as expected
+    ],
+  },
+]);
 
 const config = createConfig({
   autoConnect: true,

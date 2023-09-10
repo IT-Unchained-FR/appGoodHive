@@ -24,8 +24,8 @@ export default function SearchFilters() {
 
   return (
     <div className="mx-5">
-      <h1 className="my-5 font-bold text-2xl">Looking for Talent</h1>
-      <div className=" space-y-6 sm:w-full md:w-full lg:w-6/12 xl:w-6/12 2xl:w-6/12">
+      <h1 className="my-5 text-2xl font-bold">Looking for Talent</h1>
+      <div className="space-y-6 sm:w-full md:w-full lg:w-6/12 xl:w-6/12 2xl:w-6/12">
         <Input
           type="text"
           placeholder="Try Developer Solidity, Rust, C++..."
@@ -34,7 +34,7 @@ export default function SearchFilters() {
         />
         <Input
           type="text"
-          placeholder="Location Paris, Lodon, Remote..."
+          placeholder="Location Paris, London, Remote..."
           value={query.location}
           onChange={handleLocationChange}
         />
