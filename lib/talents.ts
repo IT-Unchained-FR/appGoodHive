@@ -11,8 +11,6 @@ function contains(str: string) {
   return "%" + str.toLowerCase() + "%";
 }
 
-export const revalidate = 0;
-
 export async function fetchTalents({
   search = "",
   location = "",
