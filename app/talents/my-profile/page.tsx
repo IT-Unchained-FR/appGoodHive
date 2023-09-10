@@ -311,7 +311,7 @@ export default function MyProfile() {
                 <SelectInput
                   labelText="Country"
                   name="country"
-                  required={true}
+                  required
                   disabled={false}
                   inputValue={selectedCountry}
                   setInputValue={setSelectedCountry}
@@ -337,6 +337,7 @@ export default function MyProfile() {
                   placeholder="City"
                   type="text"
                   name="city"
+                  required
                   pattern="[a-zA-Z -]+"
                   maxLength={100}
                   defaultValue={profileData?.city}
