@@ -2,7 +2,7 @@ import { BigNumberish } from "ethers";
 
 interface Talent {
   title: string;
-  profileHeadline: string;
+  description: string;
   firstName: string;
   lastName: string;
   country: string;
