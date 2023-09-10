@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 
 import { Input } from "@/app/components/input";
 import { LinkButton } from "@/app/components/link-button";
@@ -9,15 +9,17 @@ import searchIcon from "@/public/icons/search.svg";
 import addIcon from "@/public/icons/add.svg";
 
 export default function SearchFilters() {
-  const [search, setSearch] = useState("");
-  const [location, setLocation] = useState("");
+  const [query, setQuery] = React.useState<{
+    search?: string;
+    location?: string;
+  }>({});
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(event.target.value);
+    setQuery((q) => ({ ...q, search: event.target.value }));
   };
 
   const handleLocationChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setLocation(event.target.value);
+    setQuery((q) => ({ ...q, location: event.target.value }));
   };
 
   return (
@@ -27,13 +29,13 @@ export default function SearchFilters() {
         <Input
           type="text"
           placeholder="Try Developer Solidity, Rust, C++..."
-          value={search}
+          value={query.search}
           onChange={handleSearchChange}
         />
         <Input
           type="text"
           placeholder="Location Paris, Lodon, Remote..."
-          value={location}
+          value={query.location}
           onChange={handleLocationChange}
         />
 
@@ -41,7 +43,7 @@ export default function SearchFilters() {
           <LinkButton
             href={{
               href: "/companies/search-talents",
-              query: { search, location },
+              query,
             }}
             icon={searchIcon}
             iconSize="large"
