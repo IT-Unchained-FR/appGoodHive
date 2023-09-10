@@ -4,6 +4,8 @@ import Pagination from "./pagination";
 
 const itemsPerPage = 9;
 
+export const revalidate = 0;
+
 export default async function SearchTalentsPage({
   searchParams,
 }: {
