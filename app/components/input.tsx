@@ -19,8 +19,9 @@ export function Input({ labelText, ...props }: Props) {
     "rounded-full",
   ];
 
-  const comlementaryClasses = !props.disabled
-    ? [
+  const comlementaryClasses = props.disabled
+    ? ["font-light", "text-gray-200", "border-[#FFF2CE] "]
+    : [
         "font-normal",
         "text-gray-600",
         "border-[#FFC905]",
@@ -32,8 +33,7 @@ export function Input({ labelText, ...props }: Props) {
         "focus:bg-white",
         "focus:border-[#FF8C05]",
         "focus:outline-none",
-      ]
-    : ["font-light", "text-gray-200", "border-[#FFF2CE] "];
+      ];
 
   return (
     <div>

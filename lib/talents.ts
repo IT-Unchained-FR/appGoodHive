@@ -75,7 +75,7 @@ export async function fetchTalents({
         currency: talent.currency,
         skills: talent.skills.split(","),
         imageUrl: talent.image_url,
-        walletAddress: talent.walletAddress,
+        walletAddress: talent.wallet_address,
       };
     });
 
