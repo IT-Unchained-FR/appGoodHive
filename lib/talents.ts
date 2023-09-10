@@ -1,5 +1,4 @@
 import postgres from "postgres";
-
 import Talent from "@/interfaces/talent";
 
 const sql = postgres(process.env.DATABASE_URL || "", {
@@ -8,9 +7,15 @@ const sql = postgres(process.env.DATABASE_URL || "", {
   },
 });
 
+function contains(str: string) {
+  return "%" + str.toLowerCase() + "%";
+}
+
+export const revalidate = 0;
+
 export async function fetchTalents({
-  search,
-  location,
+  search = "",
+  location = "",
   items = 9,
   page = 1,
 }: {
@@ -20,16 +25,40 @@ export async function fetchTalents({
   page: number;
 }) {
   try {
-    const countCursor = await sql`SELECT COUNT(*) FROM goodhive.users`;
+    const countCursor = await sql`
+    SELECT COUNT(*)
+    FROM goodhive.users
+    WHERE
+      (LOWER(title) LIKE ${contains(search)} OR LOWER(skills) LIKE ${contains(
+      search
+    )})
+      AND
+      (LOWER(city) LIKE ${contains(location)} OR LOWER(country) LIKE ${contains(
+      location
+    )})
+    `;
+
     const count = countCursor[0].count as number;
+
     const limit = Number(items);
+    const offset = limit * (Number(page) - 1);
 
-    const offset = limit * Number(page);
+    const talentsCursor = await sql`
+      SELECT *
+      FROM goodhive.users
+      WHERE
+      (LOWER(title) LIKE ${contains(search)} OR LOWER(skills) LIKE ${contains(
+      search
+    )})
+      AND
+      (LOWER(city) LIKE ${contains(location)} OR LOWER(country) LIKE ${contains(
+      location
+    )})
+      LIMIT ${limit}
+      OFFSET ${offset}
+      `;
 
-    const talentsCursor =
-      await sql`SELECT * FROM goodhive.users LIMIT ${limit} OFFSET ${offset}`;
-
-    const talents = talentsCursor.map((talent) => {
+    const talents: Talent[] = talentsCursor.map((talent) => {
       return {
         title: talent.title,
         description: talent.description,
@@ -47,11 +76,12 @@ export async function fetchTalents({
         skills: talent.skills.split(","),
         imageUrl: talent.image_url,
         walletAddress: talent.walletAddress,
-      } as Talent;
+      };
     });
 
     return { talents, count };
   } catch (error) {
+    console.log("💥", error);
     throw new Error("Failed to fetch data from the server");
   }
 }
