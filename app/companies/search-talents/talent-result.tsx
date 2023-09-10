@@ -33,6 +33,7 @@ export default function TalentResult({ talents }: { talents: Talent[] }) {
             currency={talent.currency}
             description={talent.profileHeadline}
             skills={talent.skills}
+            walletAddress={talent.walletAddress}
             buttonText="Connect"
           />
         ))}
