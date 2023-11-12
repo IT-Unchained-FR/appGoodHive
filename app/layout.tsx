@@ -19,8 +19,9 @@ import {
 import { Toaster } from "react-hot-toast";
 import { SiweMessage } from "siwe";
 
-import { NavBar } from "./components/nav-bar";
-import { AddressContext } from "./components/context";
+import { NavBar } from "@components/nav-bar";
+import { AddressContext } from "@components/context";
+import { Footer } from "@components/footer/footer";
 
 import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
@@ -178,12 +179,7 @@ export default function RootLayout({
                     {children}
                   </AddressContext.Provider>
                 </div>
-                <footer className="p-5 text-center text-white bg-yellow-500">
-                  <p>
-                    &copy; {new Date().getFullYear()} GoodHive. All rights
-                    reserved.
-                  </p>
-                </footer>
+                <Footer />
               </div>
             </RainbowKitProvider>
           </RainbowKitAuthenticationProvider>
