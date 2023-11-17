@@ -1,5 +1,3 @@
-import { UrlObject } from "url";
-
 export const pageLinks = [
   {
     name: "Home",

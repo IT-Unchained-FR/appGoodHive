@@ -4,7 +4,7 @@ interface Props {
   text: string;
   type: string;
   size: string;
-  onClickHandler?: () => void;
+  onClickHandler?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
 export const Button: FC<Props> = ({ text, type, size, onClickHandler }) => {
@@ -38,5 +38,9 @@ export const Button: FC<Props> = ({ text, type, size, onClickHandler }) => {
     }
   }
 
-  return <button className={styleType} onClick={onClickHandler}>{text}</button>;
+  return (
+    <button className={styleType} onClick={onClickHandler}>
+      {text}
+    </button>
+  );
 };
