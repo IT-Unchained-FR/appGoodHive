@@ -2,8 +2,8 @@ import { Metadata } from "next";
 
 import { Hero } from "@components/home/hero";
 import { Services } from "@components/home/services";
-import { HowItWorks } from "@components/home/howitworks";
-import { ReachUs } from "@components/home/reachus";
+import { HowItWorks } from "@/app/components/home/how-it-works";
+import { ReachUs } from "@/app/components/home/reach-us";
 
 export const metadata: Metadata = {
   title: "Home Page | GoodHive",
