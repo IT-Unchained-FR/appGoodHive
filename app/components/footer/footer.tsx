@@ -6,14 +6,14 @@ import { contactDetails, pageLinks, socialLinks } from "./footer.constants";
 export const Footer = () => {
   return (
     <div className="bg-black min-h-[380px] w-full relative flex flex-col justify-center items-center">
-      <div className="absolute bottom-0 left-0 w-[300px] h-[370px] z-10">
+      <div className="absolute bottom-0 left-0 w-[300px] h-[370px] z-10 sm:w-[150px] sm:h-[180px] sm:left-[-47px] md:w-[206px] md:h-[256px] lg:w-[206px] lg:h-[256px]">
         <Image
           src="/img/left-side-polygon.png"
           alt="polygons"
           fill={true}
         />
       </div>
-      <div className="container w-full relative flex justify-around pt-5 pl-24 mb-12 flex-wrap">
+      <div className="container w-full relative flex justify-around pt-5 pl-24 mb-12 flex-wrap sm:pl-5 sm:gap-5 md:pl-5 md:gap-5 lg:pl-5 lg:gap-5">
         <div className="flex flex-col gap-5 mb-5">
           {pageLinks.map((page, key) => (
             <Link className="text-white text-lg font-normal" href={{ pathname: page.url }} key={key}>
