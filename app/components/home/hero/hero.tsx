@@ -9,11 +9,13 @@ import { TRANSLATION } from "./hero.constants";
 export const Hero = () => {
   const router = useRouter();
 
-  const onFindJobBtnClick = () => {
+  const onFindJobBtnClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
     router.push("/companies/search-talents");
   };
 
-  const onFindTalentBtnClick = () => {
+  const onFindTalentBtnClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
     router.push("/talents/job-search");
   };
 
