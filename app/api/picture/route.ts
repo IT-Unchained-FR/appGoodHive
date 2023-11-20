@@ -1,4 +1,9 @@
-import { S3, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3,
+  PutObjectCommand,
+  GetObjectCommand,
+  ObjectCannedACL,
+} from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 
 export async function POST(request: Request) {
@@ -34,7 +39,7 @@ export async function POST(request: Request) {
       Bucket: bucketName,
       Key: keyName,
       Body: dataBuffer,
-      ACL: "public-read",
+      ACL: ObjectCannedACL.public_read,
       ContentEncoding: "base64",
       ContentType: file.type,
     };
