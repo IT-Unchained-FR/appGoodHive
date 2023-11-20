@@ -1,12 +1,13 @@
-import { FC } from "react";
+import type { FC } from "react";
 
 interface Props {
   text: string;
   type: string;
   size: string;
+  onClickHandler?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
-export const Button: FC<Props> = ({ text, type, size }) => {
+export const Button: FC<Props> = ({ text, type, size, onClickHandler }) => {
   let styleType = `${type}${size}`;
 
   switch (styleType) {
@@ -37,5 +38,9 @@ export const Button: FC<Props> = ({ text, type, size }) => {
     }
   }
 
-  return <button className={styleType}>{text}</button>;
+  return (
+    <button className={styleType} onClick={onClickHandler}>
+      {text}
+    </button>
+  );
 };
