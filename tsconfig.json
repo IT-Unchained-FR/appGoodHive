@@ -21,7 +21,9 @@
     ],
     "paths": {
       "@/*": ["./*"],
-      "@interfaces/*": ["./interfaces/*"]
+      "@interfaces/*": ["./interfaces/*"],
+      "@components/*": ["./app/components/*"],
+      "@hooks/*": ["./app/hooks/*"],
     }
   },
   "typescript": {
