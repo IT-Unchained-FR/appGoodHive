@@ -1,16 +1,10 @@
-import {
-  S3,
-  PutObjectCommand,
-  GetObjectCommand,
-  ObjectCannedACL,
-} from "@aws-sdk/client-s3";
-import { v4 as uuidv4 } from "uuid";
+import { S3, PutObjectCommand, GetObjectCommand, ObjectCannedACL } from "@aws-sdk/client-s3";
+import { generateFileKeyName } from "@/app/utils/generate-file-key-name";
 
 export async function POST(request: Request) {
   try {
     const file = await request.json();
 
-    // Set credentials
     const s3 = new S3({
       credentials: {
         accessKeyId: process.env.B2_KEY_ID || "",
@@ -20,27 +14,15 @@ export async function POST(request: Request) {
       region: process.env.B2_REGION || "",
     });
 
-    // Use the existing bucket
     const bucketName = process.env.B2_BUCKET || "";
-
-    // Extract file extension
-    const fileExtension = file.type.split("/")[1];
-
-    // Upload a new file to the bucket with the file extension
-    const keyName = `image_${uuidv4()}.${fileExtension}`;
-
-    // Remove header
-    const base64Data = file.data.replace(/^data:image\/\w+;base64,/, "");
-
-    // Convert base64 to a buffer
-    const dataBuffer = Buffer.from(base64Data, "base64");
+    const keyName = generateFileKeyName(file.type);
+    const dataBuffer = Buffer.from(file.data);
 
     const putObjectParams = {
       Bucket: bucketName,
       Key: keyName,
       Body: dataBuffer,
       ACL: ObjectCannedACL.public_read,
-      ContentEncoding: "base64",
       ContentType: file.type,
     };
 
@@ -64,7 +46,7 @@ export async function POST(request: Request) {
 
       const url = `https://${bucketName}.${hostB2}/${keyName}`;
 
-      return new Response(JSON.stringify({ imageUrl: url }));
+      return new Response(JSON.stringify({ fileUrl: url }));
     } catch (error) {
       console.error(error);
     }

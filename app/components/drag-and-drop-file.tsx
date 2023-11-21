@@ -6,8 +6,8 @@ import "react-loading-skeleton/dist/skeleton.css";
 import FileData from "@interfaces/file-data";
 
 interface Props {
-  setFile: (file: FileData | false) => void;
-  file: FileData | false;
+  setFile: (file: null | FileData) => void;
+  file: null | FileData;
   isRenderedPage: boolean;
   setIsRenderedPage: (isRenderedPage: boolean) => void;
   invoiceInputValue: React.Ref<HTMLInputElement>;
@@ -57,7 +57,7 @@ const DragAndDropFile = ({
 
     const { size, type, name } = file;
 
-    setFile(false);
+    setFile(null);
 
     // TODO: move errors files to the modal errors
     if (validTypes.indexOf(type) === -1) {
