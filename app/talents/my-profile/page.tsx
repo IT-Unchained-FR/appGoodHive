@@ -1,6 +1,14 @@
 "use client";
 
-import { useRef, useState, FormEvent, useEffect, useContext } from "react";
+import {
+  useRef,
+  useState,
+  FormEvent,
+  useEffect,
+  useContext,
+  ChangeEvent,
+} from "react";
+import Link from "next/link";
 
 import toast from "react-hot-toast";
 import Autosuggest from "react-autosuggest";
@@ -14,12 +22,14 @@ import { skills } from "@/app/constants/skills";
 import { countries } from "@/app/constants/countries";
 import LabelOption from "@interfaces/label-option";
 import FileData from "@interfaces/file-data";
+import { resumeUploadSizeLimit } from "./constants";
 
 export default function MyProfile() {
   const invoiceInputValue = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [imageUrl, setImageUrl] = useState(null);
-  const [file, setFile] = useState<false | FileData>(false);
+  const [imageFile, setImageFile] = useState<null | FileData>(null);
+  const [cvFile, setCvFile] = useState<null | FileData>(null);
+  const [isUploadedCvLink, setIsUploadedCvLink] = useState(false);
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
   const [profileData, setProfileData] = useState({
     title: "",
@@ -36,6 +46,7 @@ export default function MyProfile() {
     rate: "",
     skills: [],
     image_url: "",
+    cv_url: "",
   });
 
   const walletAddress = useContext(AddressContext);
@@ -57,6 +68,7 @@ export default function MyProfile() {
         }
 
         const profile = await response.json();
+        if (profile.cv_url) setIsUploadedCvLink(true);
 
         setProfileData(profile);
         setSelectedSkills(profile.skills.split(","));
@@ -64,44 +76,75 @@ export default function MyProfile() {
         console.error("There was an error!", error);
       }
     };
-
-    fetchProfileData();
+    if (walletAddress) {
+      fetchProfileData();
+    }
   }, [walletAddress]);
 
-  useEffect(() => {
-    if (typeof file === "object" && file !== null) {
-      const fetchImage = async () => {
-        setIsLoading(true);
+  const onCvInputChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files) return;
 
-        const postImageResponse = await fetch("/api/picture", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(file),
-        });
+    const cvFile = event.target.files[0];
+    const { type, name } = cvFile;
 
-        if (postImageResponse.ok) {
-          const { imageUrl } = await postImageResponse.json();
-
-          setImageUrl(imageUrl);
-        } else {
-          console.error(postImageResponse.statusText);
-        }
-
-        setIsLoading(false);
-      };
-
-      fetchImage();
+    if (cvFile.size > 1024 * 1024 * Number(resumeUploadSizeLimit)) {
+      toast.error(`File size should be less than ${resumeUploadSizeLimit} MB`);
+      return;
     }
-  }, [file]);
+    const reader = new FileReader();
+    reader.readAsDataURL(cvFile);
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+    reader.onload = function (event: ProgressEvent<FileReader>) {
+      if (!event.target) return;
+      const arrayBuffer = event.target.result;
+
+      setCvFile({
+        name,
+        type,
+        data: arrayBuffer,
+      });
+    };
+  };
+
+  const uploadeFileToBucket = async (file: FileData | null) => {
+    if (!file) return null;
+    try {
+      const postImageResponse = await fetch("/api/upload-file", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(file),
+      });
+
+      if (postImageResponse.ok) {
+        const { fileUrl } = await postImageResponse.json();
+        return fileUrl;
+      } else {
+        console.error(postImageResponse.statusText);
+        return null;
+      }
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
     setIsLoading(true);
 
-    const formData = new FormData(e.currentTarget);
+    const formData = new FormData(event.currentTarget);
+
+    const imageUrl = await uploadeFileToBucket(imageFile);
+    const cvUrl = await uploadeFileToBucket(cvFile);
+
+    if (!cvUrl) {
+      setIsLoading(false);
+      toast.error("CV upload failed!");
+      return;
+    }
 
     const dataForm = {
       title: formData.get("title"),
@@ -118,6 +161,7 @@ export default function MyProfile() {
       rate: formData.get("rate"),
       skills: selectedSkills,
       imageUrl,
+      cvUrl,
       walletAddress,
     };
 
@@ -230,8 +274,8 @@ export default function MyProfile() {
               </div>
             ) : (
               <DragAndDropFile
-                file={file}
-                setFile={setFile}
+                file={imageFile}
+                setFile={setImageFile}
                 isRenderedPage={isRenderedPage}
                 setIsRenderedPage={setIsRenderedPage}
                 // FIXME: change name of invoiceInputValue to fileInputValue
@@ -454,6 +498,42 @@ export default function MyProfile() {
                 maxLength={65000}
                 defaultValue={profileData?.about_work}
               />
+            </div>
+            <div className="mt-4">
+              <label
+                htmlFor="cv"
+                className="inline-block ml-3 text-base text-black form-label"
+              >
+                CV*
+              </label>
+              {isUploadedCvLink ? (
+                <div className="flex items-center gap-3 p-3">
+                  <Link
+                    href={{ pathname: profileData.cv_url }}
+                    target="_blank"
+                    className="text-base font-normal text-blue-300 underline"
+                  >
+                    Your uploaded cv
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setIsUploadedCvLink(false)}
+                    className="w-6 text-black bg-gray-400 rounded-full"
+                  >
+                    &#10005;
+                  </button>
+                </div>
+              ) : (
+                <input
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  placeholder="CV"
+                  type="file"
+                  required
+                  name="cv"
+                  accept=".pdf"
+                  onChange={onCvInputChange}
+                />
+              )}
             </div>
             <div className="flex flex-col gap-4 mt-4 sm:flex-row">
               <div className="flex-1">
