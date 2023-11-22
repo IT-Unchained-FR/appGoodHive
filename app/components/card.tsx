@@ -52,39 +52,48 @@ export const Card: FC<Props> = ({
       <div className="box-border block p-6 bg-white border-l-2 border-r-2 shadow-xl bg-blend-darken shadow-gray-300 rounded-3xl border-radius">
         <div className="pl-4 pr-5">
           <div className="flex md:flex-row">
-            <div
-              className="relative flex items-center w-20 h-20 mx-auto mb-6 mt-7 lg:mb-0 md:mx-0"
-              style={{
-                clipPath:
-                  "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)",
-              }}
-            >
+            <div className="relative w-28 h-28 overflow-hidden">
+              <div className="absolute inset-0 w-full h-full bg-yellow-500 transform rotate-45"></div>
               {image && (
-                <Image src={image} alt="avatar" width={157} height={166} />
+                <Image
+                  className="object-cover absolute inset-0 transform rotate-45"
+                  src={image}
+                  alt="avatar"
+                  fill
+                />
               )}
             </div>
-            <div className="pl-8 md:ml-2 pt-7">
+            <div className="pl-8 md:ml-2 pt-2">
               <p className="text-xl font-semibold text-gray-800">{title}</p>
               <p className="text-base text-gray-600">{postedBy}</p>
-              <p className="mb-5 text-base text-gray-600">{postedOn}</p>
+              <p className="mb-5 text-base font-bold text-gray-600">
+                {postedOn}
+              </p>
             </div>
-            <div className="flex flex-row justify-end pt-7 grow md:ml-5">
-              <div className="flex flex-col items-end">
-                <Image
-                  className="w-8 h-5 mt-1 mb-1"
-                  src={countryFlag}
-                  alt="country"
-                  width={34}
-                  height={23}
-                />
-                <div className="font-light text-gray-500">{city}</div>
+            <div className="flex flex-col items-end pt-2 grow">
+              <div className="flex mb-1">
+                <div className="w-10 h-7 mr-3 relative">
+                  <Image alt="balance" src="/icons/money.svg" fill />
+                </div>
+                <div className="w-9 h-6 relative">
+                  <Image src={countryFlag} alt="country" fill />
+                </div>
+              </div>
+              <p className="font-light mb-1 text-gray-500">{city}</p>
+              <div className="flex space-between">
+                <div className="text-base font-bold">{ratePerHour}</div>
+                {!!escrowAmount && (
+                  <div>
+                    {escrowAmount?.toString()} {escrowCurrency}
+                  </div>
+                )}
               </div>
             </div>
           </div>
-          <div className="flex pt-2 font-light text-gray-500">
+          <div className="flex pt-5 mb-5 text-base font-light text-[#151414]">
             {description}
           </div>
-          <div className="flex flex-wrap mt-4">
+          <div className="flex flex-wrap mb-5">
             {skills.map((skill, index) => (
               <div
                 key={index}
@@ -94,15 +103,8 @@ export const Card: FC<Props> = ({
               </div>
             ))}
           </div>
-          <div className="flex space-between">
-            <div>{ratePerHour}</div>
-            {!!escrowAmount && (
-              <div>
-                {escrowAmount?.toString()} {escrowCurrency}
-              </div>
-            )}
-          </div>
-          <div className="w-full gap-3 sm:flex md:flex lg:justify-center md:justify-end sm:justify-end xl:flex lg:grid xl:pt-2 lg:pt-2 xl:justify-center ">
+
+          <div className="w-full gap-3 flex justify-end">
             <Link href={`/talents/${walletAddress}`}>
               <div className="flex justify-center lg:items-center">
                 <Button text="Know more..." type="secondary" size="medium" />
