@@ -135,8 +135,6 @@ export default function MyProfile() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    console.log("handlesubmit >>");
-
     setIsLoading(true);
 
     const formData = new FormData(event.currentTarget);
@@ -149,8 +147,6 @@ export default function MyProfile() {
       toast.error("CV upload failed!");
       return;
     }
-
-    console.log("cvUrl", cvUrl);
 
     const dataForm = {
       title: formData.get("title"),
