@@ -150,6 +150,8 @@ export default function MyProfile() {
       return;
     }
 
+    console.log("cvUrl", cvUrl);
+
     const dataForm = {
       title: formData.get("title"),
       description: formData.get("description"),
