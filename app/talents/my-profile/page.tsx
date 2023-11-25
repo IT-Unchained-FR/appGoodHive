@@ -1,21 +1,14 @@
 "use client";
 
-import {
-  useRef,
-  useState,
-  FormEvent,
-  useEffect,
-  useContext,
-  ChangeEvent,
-} from "react";
+import { useRef, useState, FormEvent, useEffect, useContext, ChangeEvent } from "react";
+import Image from "next/image";
 import Link from "next/link";
 
 import toast from "react-hot-toast";
-import Autosuggest from "react-autosuggest";
 
-import DragAndDropFile from "../../components/drag-and-drop-file";
-import { SelectInput } from "../../components/select-input";
-import { AddressContext } from "../../components/context";
+import DragAndDropFile from "@components/drag-and-drop-file";
+import { SelectInput } from "@components/select-input";
+import { AddressContext } from "@components/context";
 // TODO: use button but before add the type of the button component (i.e. type="button" or type="submit")
 // import { Button } from "../../components/button";
 import { skills } from "@/app/constants/skills";
@@ -23,6 +16,10 @@ import { countries } from "@/app/constants/countries";
 import LabelOption from "@interfaces/label-option";
 import FileData from "@interfaces/file-data";
 import { resumeUploadSizeLimit } from "./constants";
+import { ToogleButton } from "@components/toogle-button";
+import { SocialLink } from "./social-link";
+import { AutoSuggestInput } from "@components/autosuggest-input/autosuggest-input";
+import { socialLinks } from "./constant";
 
 export default function MyProfile() {
   const invoiceInputValue = useRef(null);
@@ -41,12 +38,18 @@ export default function MyProfile() {
     phone_country_code: "",
     phone_number: "",
     email: "",
-    telegram: "",
     about_work: "",
     rate: "",
     skills: [],
     image_url: "",
     cv_url: "",
+    freelance_only: false,
+    remote_only: false,
+    telegram: "",
+    linkedin: "",
+    github: "",
+    stackoverflow: "",
+    portfolio: "",
   });
 
   const walletAddress = useContext(AddressContext);
@@ -132,7 +135,6 @@ export default function MyProfile() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     setIsLoading(true);
 
     const formData = new FormData(event.currentTarget);
@@ -140,7 +142,7 @@ export default function MyProfile() {
     const imageUrl = await uploadeFileToBucket(imageFile);
     const cvUrl = await uploadeFileToBucket(cvFile);
 
-    if (!cvUrl) {
+    if (!cvUrl && !isUploadedCvLink ) {
       setIsLoading(false);
       toast.error("CV upload failed!");
       return;
@@ -156,13 +158,19 @@ export default function MyProfile() {
       phoneCountryCode: formData.get("phone-country-code"),
       phoneNumber: formData.get("phone-number"),
       email: formData.get("email"),
-      telegram: formData.get("telegram"),
       aboutWork: formData.get("about-work"),
       rate: formData.get("rate"),
+      freelanceOnly: formData.get("freelance-only"),
+      remoteOnly: formData.get("remote-only"),
       skills: selectedSkills,
       imageUrl,
       cvUrl,
       walletAddress,
+      linkedin: formData.get("linkedin"),
+      github: formData.get("github"),
+      stackoverflow: formData.get("stackoverflow"),
+      portfolio: formData.get("portfolio"),
+      telegram: formData.get("telegram"),
     };
 
     const profileResponse = await fetch("/api/talents/my-profile", {
@@ -187,67 +195,8 @@ export default function MyProfile() {
     }
   };
 
-  //TODO: Put the following code in a Autosuggest Input component
-  const AutoSuggestInput = () => {
-    const [inputValue, setInputValue] = useState("");
-
-    const getSuggestions = (value: string) => {
-      const inputValue = value.trim().toLowerCase();
-      const inputLength = inputValue.length;
-
-      return inputLength === 0
-        ? []
-        : skills.filter(
-            (skill) => skill.toLowerCase().slice(0, inputLength) === inputValue
-          );
-    };
-
-    const onSuggestionSelected = (
-      event: React.FormEvent<HTMLInputElement>,
-      { suggestion }: Autosuggest.SuggestionSelectedEventData<string>
-    ) => {
-      if (!selectedSkills.includes(suggestion)) {
-        setSelectedSkills([...selectedSkills, suggestion]);
-      }
-    };
-
-    const renderSuggestion = (suggestion: string) => (
-      <div className="mx-1 px-2 py-2 z-10 hover:text-[#FF8C05] bg-white shadow-md max-h-48 overflow-y-auto border-gray-400 border-b-[0.5px] border-solid">
-        {suggestion}
-      </div>
-    );
-
-    const inputProps = {
-      placeholder: "JavaScript, NextJS,...",
-      type: "text",
-      maxLength: 255,
-      name: "skills",
-      value: inputValue,
-      onChange: (
-        event: React.FormEvent<HTMLElement>,
-        { newValue }: { newValue: string }
-      ) => {
-        setInputValue(newValue);
-      },
-      className:
-        "relative rounded-lg block w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding transition ease-in-out focus:text-black bg-gray-100 focus:outline-none focus:ring-0",
-    };
-
-    return (
-      <Autosuggest
-        suggestions={getSuggestions(inputValue)}
-        onSuggestionsFetchRequested={() => ""}
-        onSuggestionsClearRequested={() => ""}
-        getSuggestionValue={(skill) => skill}
-        onSuggestionSelected={onSuggestionSelected}
-        renderSuggestion={renderSuggestion}
-        inputProps={inputProps}
-      />
-    );
-  };
-
   return (
-    <main className="mx-5">
+    <main className="container mx-auto">
       <h1 className="my-5 text-2xl border-b-[1px] border-slate-300 pb-2">
         My Profile
       </h1>
@@ -270,7 +219,12 @@ export default function MyProfile() {
                     "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)",
                 }}
               >
-                <img className="object-cover" src={profileData.image_url} />
+                <Image
+                  className="object-cover"
+                  src={profileData.image_url}
+                  alt="profile-picture"
+                  fill
+                />
               </div>
             ) : (
               <DragAndDropFile
@@ -312,7 +266,7 @@ export default function MyProfile() {
                 defaultValue={profileData?.description}
               />
             </div>
-            <div className="flex flex-col gap-4 mt-4 sm:flex-row">
+            <div className="flex gap-4 mt-4 sm:flex-col">
               <div className="flex-1">
                 <label
                   htmlFor="first-name"
@@ -350,7 +304,7 @@ export default function MyProfile() {
                 />
               </div>
             </div>
-            <div className="flex flex-col gap-4 mt-4 sm:flex-row">
+            <div className="flex sm:flex-col gap-4 mt-4">
               <div className="flex-1">
                 <SelectInput
                   labelText="Country"
@@ -388,7 +342,7 @@ export default function MyProfile() {
                 />
               </div>
             </div>
-            <div className="flex flex-col gap-4 mt-4 sm:flex-row">
+            <div className="flex sm:flex-col gap-4 mt-4">
               <div className="flex-1">
                 <label
                   htmlFor="phone-country-code"
@@ -429,7 +383,7 @@ export default function MyProfile() {
                 />
               </div>
             </div>
-            <div className="flex flex-col gap-4 mt-4 sm:flex-row">
+            <div className="flex sm:flex-col gap-4 mt-4">
               <div className="flex-1">
                 <label
                   htmlFor="email"
@@ -449,28 +403,10 @@ export default function MyProfile() {
               </div>
               <div className="flex-1">
                 <label
-                  htmlFor="telegram"
-                  className="inline-block ml-3 text-base text-black form-label"
-                >
-                  Telegram
-                </label>
-                <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Telegram"
-                  type="text"
-                  name="telegram"
-                  maxLength={255}
-                  defaultValue={profileData?.telegram}
-                />
-              </div>
-            </div>
-            <div className="flex flex-col gap-4 mt-4 sm:flex-row">
-              <div className="flex-1">
-                <label
                   htmlFor="rate"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
-                  Rate ($/hour)
+                  Rate (USD/Hour)
                 </label>
                 <input
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
@@ -535,7 +471,13 @@ export default function MyProfile() {
                 />
               )}
             </div>
-            <div className="flex flex-col gap-4 mt-4 sm:flex-row">
+
+            <div className="flex w-full justify-between mt-9">
+              <ToogleButton label="Freelance Only" name="freelance-only" />
+              <ToogleButton label="Remote Only" name="remote-only" />
+            </div>
+
+            <div className="relative flex flex-col gap-4 mt-12 mb-2 z-30 sm:flex-row">
               <div className="flex-1">
                 <label
                   htmlFor="skills"
@@ -544,7 +486,11 @@ export default function MyProfile() {
                   Skills*
                 </label>
                 <div className="absolute w-full pt-1 pr-10 text-base font-normal text-gray-600 bg-white form-control ">
-                  <AutoSuggestInput />
+                  <AutoSuggestInput
+                    inputs={skills}
+                    selectedInputs={selectedSkills}
+                    setSelectedInputs={setSelectedSkills}
+                  />
                 </div>
                 <div className="pt-10">
                   {!!selectedSkills && selectedSkills.length > 0 && (
@@ -573,23 +519,38 @@ export default function MyProfile() {
                 </div>
               </div>
             </div>
-            <div className="mt-10 text-right">
-              {isLoading ? (
-                <button
-                  className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full opacity-50 cursor-not-allowed transition duration-150 ease-in-out"
-                  type="submit"
-                  disabled
-                >
-                  Saving...
-                </button>
-              ) : !!walletAddress ? (
+
+            {/* Social media links: Linkedin, github, stackoverflow, telegram, portfolio */}
+            <div className="flex w-full flex-col mt-7">
+              <h3 className="inline-block mt-7 mb-2 ml-1 text-base font-medium text-black form-label">
+                Social Media Links:
+              </h3>
+              {socialLinks.map((socialLink) => (
+                <SocialLink
+                  key={socialLink.name}
+                  name={socialLink.name}
+                  icon={socialLink.icon}
+                  placeholder={socialLink.placeholder}
+                  value={
+                    profileData[
+                      socialLink.name as keyof typeof profileData
+                    ] as string
+                  }
+                  isRequired={socialLink.isRequired}
+                />
+              ))}
+            </div>
+
+            <div className="mt-10 mb-16 text-center">
+              {!!walletAddress && (
                 <button
                   className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
                   type="submit"
+                  disabled={isLoading}
                 >
-                  Save
+                  {isLoading ? "Saving..." : "Save"}
                 </button>
-              ) : null}
+              )}
             </div>
           </div>
         </form>
