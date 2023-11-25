@@ -25,7 +25,7 @@ export interface JobOffer {
 
 export default function JobResult({ jobOffers }: { jobOffers: any[] }) {
   return (
-    <div className="grid grid-cols-3 gap-5 sm:grid-cols-1 md:grid-cols-2">
+    <div className="grid grid-cols-3 gap-5 md:gap-4 sm:gap-4 md:grid-cols-2 sm:grid-cols-1">
       {jobOffers.map((jobOffer, index) => (
         <Card
           key={index}
