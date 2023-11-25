@@ -15,7 +15,7 @@ export default function MyProfile() {
   const invoiceInputValue = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
   const [imageUrl, setImageUrl] = useState(null);
-  const [file, setFile] = useState<false | FileData>(false);
+  const [file, setFile] = useState<null | FileData>(null);
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
 
   const [selectedCountry, setSelectedCountry] = useState<LabelOption | null>(

@@ -21,6 +21,7 @@ export async function POST(request: Request) {
     rate,
     skills,
     imageUrl,
+    cvUrl,
     walletAddress,
   } = await request.json();
 
@@ -47,6 +48,7 @@ export async function POST(request: Request) {
         rate,
         skills,
         image_url,
+        cv_url,
         wallet_address
       ) VALUES (
         ${title},
@@ -63,6 +65,7 @@ export async function POST(request: Request) {
         ${rate},
         ${skills},
         ${imageUrl},
+        ${cvUrl},
         ${walletAddress}
       )
       ON CONFLICT (wallet_address) DO UPDATE
@@ -80,7 +83,9 @@ export async function POST(request: Request) {
         about_work = ${aboutWork},
         rate = ${rate},
         skills = ${skills},
-        image_url = ${imageUrl}
+        image_url = ${imageUrl},
+        cv_url = ${cvUrl},
+        wallet_address = ${walletAddress};
     `;
 
     return new Response(

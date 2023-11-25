@@ -78,15 +78,17 @@ export const Card: FC<Props> = ({
               <div className="w-9 h-6 relative">
                 <Image src={countryFlag} alt="country" fill />
               </div>
-            </div>
-            <p className="font-light mb-1 text-gray-500">{city}</p>
-            <div className="flex space-between">
-              <div className="text-base font-bold">{ratePerHour}</div>
-              {!!escrowAmount && (
-                <div>
-                  {escrowAmount?.toString()} {escrowCurrency}
-                </div>
-              )}
+            )}
+          </div>
+          <div className="w-full flex gap-3 justify-center md:justify-end sm:justify-end ">
+            <Link href={`/talents/${walletAddress}`}>
+              <div className="flex justify-center lg:items-center">
+                <Button text="Know more..." type="secondary" size="medium" />
+              </div>
+            </Link>
+
+            <div className="flex justify-center lg:items-center">
+              <Button text="Apply Now" type="primary" size="medium" />
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { fetchTalents } from "@/lib/talents";
 import { Card } from "@/app/components/card";
-import Pagination from "./pagination";
+import { Pagination } from "@/app/components/pagination";
 
 const itemsPerPage = 9;
 
