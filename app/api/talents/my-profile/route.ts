@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     stackoverflow,
     portfolio,
     freelanceOnly,
-    remoteOnly
+    remoteOnly,
   } = await request.json();
 
   const sql = postgres(process.env.DATABASE_URL || "", {
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
         portfolio,
         freelance_only,
         remote_only,
-        wallet_address,
+        wallet_address
       ) VALUES (
         ${title},
         ${description},
