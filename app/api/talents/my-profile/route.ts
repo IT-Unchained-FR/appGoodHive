@@ -23,6 +23,12 @@ export async function POST(request: Request) {
     imageUrl,
     cvUrl,
     walletAddress,
+    linkedin,
+    github,
+    stackoverflow,
+    portfolio,
+    freelanceOnly,
+    remoteOnly
   } = await request.json();
 
   const sql = postgres(process.env.DATABASE_URL || "", {
@@ -43,13 +49,19 @@ export async function POST(request: Request) {
         phone_country_code,
         phone_number,
         email,
-        telegram,
         about_work,
         rate,
         skills,
         image_url,
         cv_url,
-        wallet_address
+        telegram,
+        linkedin,
+        github,
+        stackoverflow,
+        portfolio,
+        freelance_only,
+        remote_only,
+        wallet_address,
       ) VALUES (
         ${title},
         ${description},
@@ -60,12 +72,18 @@ export async function POST(request: Request) {
         ${phoneCountryCode},
         ${phoneNumber},
         ${email},
-        ${telegram},
         ${aboutWork},
         ${rate},
         ${skills},
         ${imageUrl},
         ${cvUrl},
+        ${telegram},
+        ${linkedin},
+        ${github},
+        ${stackoverflow},
+        ${portfolio},
+        ${freelanceOnly},
+        ${remoteOnly},
         ${walletAddress}
       )
       ON CONFLICT (wallet_address) DO UPDATE
@@ -79,12 +97,18 @@ export async function POST(request: Request) {
         phone_country_code = ${phoneCountryCode},
         phone_number = ${phoneNumber},
         email = ${email},
-        telegram = ${telegram},
         about_work = ${aboutWork},
         rate = ${rate},
         skills = ${skills},
         image_url = ${imageUrl},
         cv_url = ${cvUrl},
+        telegram = ${telegram},
+        linkedin = ${linkedin},
+        github = ${github},
+        stackoverflow = ${stackoverflow},
+        portfolio = ${portfolio},
+        freelance_only = ${freelanceOnly},
+        remote_only = ${remoteOnly},
         wallet_address = ${walletAddress};
     `;
 
