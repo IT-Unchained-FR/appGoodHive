@@ -5,7 +5,7 @@ export default function JobSearchLayout({
   children,
 }: React.PropsWithChildren) {
   return (
-    <main className="mx-5">
+    <main className="container mx-auto">
       <SearchFilters />
 
       {children}
