@@ -1,6 +1,13 @@
 "use client";
 
-import { useRef, useState, FormEvent, useEffect, useContext, ChangeEvent } from "react";
+import {
+  useRef,
+  useState,
+  FormEvent,
+  useEffect,
+  useContext,
+  ChangeEvent,
+} from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -141,8 +148,10 @@ export default function MyProfile() {
 
     const imageUrl = await uploadeFileToBucket(imageFile);
     const cvUrl = await uploadeFileToBucket(cvFile);
+    const freelanceOnly = formData.get("freelance-only") === "on" ? true : false;
+    const remoteOnly = formData.get("remote-only") === "on" ? true : false;
 
-    if (!cvUrl && !isUploadedCvLink ) {
+    if (!cvUrl && !isUploadedCvLink) {
       setIsLoading(false);
       toast.error("CV upload failed!");
       return;
@@ -160,8 +169,8 @@ export default function MyProfile() {
       email: formData.get("email"),
       aboutWork: formData.get("about-work"),
       rate: formData.get("rate"),
-      freelanceOnly: formData.get("freelance-only"),
-      remoteOnly: formData.get("remote-only"),
+      freelanceOnly,
+      remoteOnly,
       skills: selectedSkills,
       imageUrl,
       cvUrl,
@@ -473,8 +482,16 @@ export default function MyProfile() {
             </div>
 
             <div className="flex w-full justify-between mt-9">
-              <ToogleButton label="Freelance Only" name="freelance-only" />
-              <ToogleButton label="Remote Only" name="remote-only" />
+              <ToogleButton
+                label="Freelance Only"
+                name="freelance-only"
+                checked={profileData.freelance_only}
+              />
+              <ToogleButton
+                label="Remote Only"
+                name="remote-only"
+                checked={profileData.remote_only}
+              />
             </div>
 
             <div className="relative flex flex-col gap-4 mt-12 mb-2 z-30 sm:flex-row">

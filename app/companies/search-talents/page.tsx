@@ -23,8 +23,8 @@ export default async function SearchTalentsPage({
   };
 
   return (
-    <>
-      <h1 className="pt-16 mx-5 text-xl font-bold">
+    <div className="mb-12">
+      <h1 className="pt-16 text-xl font-bold">
         Search Results
         <span className="text-base font-normal">- Talent Search</span>
       </h1>
@@ -55,6 +55,6 @@ export default async function SearchTalentsPage({
         totalItems={count}
         query={query}
       />
-    </>
+    </div>
   );
 }
