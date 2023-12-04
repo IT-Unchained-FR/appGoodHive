@@ -50,11 +50,11 @@ export const Card: FC<Props> = ({
   const profileImage = image ? image : "/img/placeholder-image.png";
 
   return (
-    <div className="box-border block p-6 mt-11 bg-white bg-blend-darken rounded-3xl shadow-[2px_7px_20px_4px_#e2e8f0]">
-      <div className="pl-4 pr-5">
+    <div className="box-border block p-3 mt-11 bg-white bg-blend-darken rounded-3xl shadow-[2px_7px_20px_4px_#e2e8f0]">
+      <div className="pl-4 pr-4">
         <div className="flex md:flex-row">
           <div
-            className="relative flex items-center justify-center bg-yellow-300 cursor-pointer h-28 w-28"
+            className="relative flex items-center justify-center bg-yellow-300 cursor-pointer h-20 w-20"
             style={{
               clipPath:
                 "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)",
@@ -67,25 +67,25 @@ export const Card: FC<Props> = ({
               fill
             />
           </div>
-          <div className="pt-2 pl-8 md:ml-2">
-            <p className="text-xl font-semibold text-gray-800">
+          <div className="pt-2 pl-4 md:ml-2">
+            <p className="text-lg font-semibold text-gray-800">
               {croppedTitle}
             </p>
             <p className="text-base text-gray-600">{postedBy}</p>
-            <p className="mb-5 text-base font-bold text-gray-600">{postedOn}</p>
+            <p className="mb-3 text-sm font-bold text-gray-600">{postedOn}</p>
           </div>
           <div className="flex flex-col items-end pt-2 grow">
             <div className="flex mb-1">
-              <div className="relative w-10 mr-3 h-7">
+              <div className="relative w-6 mr-2 h-6">
                 <Image alt="balance" src="/icons/money.svg" fill />
               </div>
-              <div className="relative h-6 w-9">
+              <div className="relative h-4 w-6">
                 <Image src={countryFlag} alt="country" fill />
               </div>
             </div>
-            <p className="mb-1 font-light text-gray-500">{city}</p>
+            <p className="font-light mb-1 text-sm text-gray-500">{city}</p>
             <div className="flex space-between">
-              <div className="text-base font-bold">{ratePerHour}</div>
+              <div className="text-sm font-bold">{ratePerHour}</div>
               {!!escrowAmount && (
                 <div>
                   {escrowAmount?.toString()} {escrowCurrency}
@@ -94,26 +94,26 @@ export const Card: FC<Props> = ({
             </div>
           </div>
         </div>
-        <p className="flex pt-5 mb-5 h-20 text-base overflow-hidden text-ellipsis font-light text-[#151414]">
+        <p className="flex pt-3 mb-3 h-16 text-sm overflow-hidden text-ellipsis font-light text-[#151414]">
           {croppedDescription}
         </p>
-        <div className="flex flex-wrap mb-5">
+        <div className="flex flex-wrap mb-3">
           {skills.map((skill, index) => (
             <div
               key={index}
-              className="px-3 py-1 mb-2 mr-2 rounded-full bg-amber-100"
+              className="px-2 py-1 mb-2 mr-2 rounded-full bg-amber-100"
             >
-              <span className="flex items-center">{skill}</span>
+              <span className="flex text-sm items-center">{skill}</span>
             </div>
           ))}
         </div>
 
-        <div className="flex justify-end w-full gap-3 sm:flex-col md:flex-col">
+        <div className="flex justify-end w-full md-2 gap-3 sm:flex-col md:flex-col">
           <Link href={`/talents/${walletAddress}`}>
-            <Button text="Know more..." type="secondary" size="medium" />
+            <Button text="Know more..." type="secondary" size="small" />
           </Link>
 
-          <Button text="Apply Now" type="primary" size="medium" />
+          <Button text="Apply Now" type="primary" size="small" />
         </div>
       </div>
     </div>

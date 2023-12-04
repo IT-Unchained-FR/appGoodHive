@@ -24,7 +24,7 @@ export default async function JobSearchPage({
   };
 
   return (
-    <div>
+    <div className="mb-12">
       <h1 className="pt-16 mx-5 text-xl font-bold">
         Search Results
         <span className="text-base font-normal">- Job Listings</span>
