@@ -12,6 +12,11 @@ export async function POST(request: Request) {
     chain,
     currency,
     walletAddress,
+    city,
+    country,
+    imageUrl,
+    jobType,
+    companyName,
   } = await request.json();
 
   const sql = postgres(process.env.DATABASE_URL || "", {
@@ -32,6 +37,11 @@ export async function POST(request: Request) {
         chain,
         currency,
         skills,
+        city,
+        country,
+        company_name,
+        image_url,
+        job_type,
         wallet_address
       ) VALUES (
         ${title},
@@ -43,6 +53,11 @@ export async function POST(request: Request) {
         ${chain},
         ${currency},
         ${skills},
+        ${city},
+        ${country},
+        ${companyName},
+        ${imageUrl},
+        ${jobType},
         ${walletAddress}
       );
     `;

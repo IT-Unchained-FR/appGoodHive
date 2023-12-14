@@ -1,14 +1,12 @@
 import { FC } from "react";
 
-interface ToogleButtonProps {
+interface ToggleButtonProps {
   label: string;
   name: string;
   checked: boolean;
-  /* isChecked: boolean;
-  onToggleChange: (event: React.ChangeEvent<HTMLInputElement>) => void; */
 }
 
-export const ToogleButton: FC<ToogleButtonProps> = (props) => {
+export const ToggleButton: FC<ToggleButtonProps> = (props) => {
   const { label, name, checked } = props;
 
   return (

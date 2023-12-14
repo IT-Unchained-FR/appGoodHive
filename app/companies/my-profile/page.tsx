@@ -9,11 +9,32 @@ import { AddressContext } from "../../components/context";
 import { SelectInput } from "../../components/select-input";
 import { countries } from "../../constants/countries";
 import LabelOption from "@interfaces/label-option";
+import { Button } from "@/app/components/button";
+import Link from "next/link";
+import Image from "next/image";
+import { SocialLink } from "@/app/talents/my-profile/social-link";
+import { socialLinks } from "@/app/talents/my-profile/constant";
+import { uploadFileToBucket } from "@utils/upload-file-bucket";
 
 export default function MyProfile() {
   const imageInputValue = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [imageUrl, setImageUrl] = useState(null);
+  const [profileData, setProfileData] = useState({
+    headline: "",
+    designation: "",
+    address: "",
+    country: "",
+    city: "",
+    phone_country_code: "",
+    phone_number: "",
+    email: "",
+    telegram: "",
+    image_url: "",
+    linkedin: "",
+    github: "",
+    stackoverflow: "",
+    portfolio: "",
+  });
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
 
@@ -23,37 +44,37 @@ export default function MyProfile() {
 
   const walletAddress = useContext(AddressContext);
 
+  const handleImageClick = () => {
+    setProfileData({ ...profileData, image_url: "" });
+  };
+
   useEffect(() => {
-    if (profileImage) {
-      const fetchImage = async () => {
-        setIsLoading(true);
+    const fetchProfile = async () => {
+      setIsLoading(true);
 
-        const postImageResponse = await fetch("/api/picture", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(profileImage),
-        });
+      const profileResponse = await fetch(
+        `/api/companies/my-profile?walletAddress=${walletAddress}`
+      );
 
-        if (postImageResponse.ok) {
-          const { imageUrl } = await postImageResponse.json();
-          setImageUrl(imageUrl);
-        } else {
-          console.error(postImageResponse.statusText);
-        }
-        setIsLoading(false);
-      };
+      if (profileResponse.ok) {
+        const profileData = await profileResponse.json();
+        console.log("profile >>", profileData);
+        setProfileData(profileData);
+      } else {
+        console.error(profileResponse.statusText);
+      }
+      setIsLoading(false);
+    };
 
-      fetchImage();
-    }
-  }, [profileImage]);
+    if (walletAddress) fetchProfile();
+  }, [walletAddress]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
+    const imageUrl = await uploadFileToBucket(profileImage);
 
     const dataForm = {
       headline: formData.get("headline"),
@@ -65,9 +86,12 @@ export default function MyProfile() {
       phoneNumber: formData.get("phone-number"),
       email: formData.get("email"),
       telegram: formData.get("telegram"),
-      details: formData.get("details"),
       imageUrl,
       walletAddress,
+      linkedin: formData.get("linkedin"),
+      github: formData.get("github"),
+      stackoverflow: formData.get("stackoverflow"),
+      portfolio: formData.get("portfolio"),
     };
 
     // TODO: POST formData to the server with fetch
@@ -87,23 +111,78 @@ export default function MyProfile() {
       toast.success("Profile Saved!");
     }
   };
+
+  if (!walletAddress) {
+    return (
+      <h2 className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+        🚀 To get started, please connect your wallet. This will enable you to
+        create or save your profile. Thanks!
+      </h2>
+    );
+  }
   return (
-    <main className="mx-5">
+    <main className="container mx-auto">
       <h1 className="my-5 text-2xl border-b-[1px] border-slate-300 pb-2">
         My Profile
       </h1>
       <section>
         <form onSubmit={handleSubmit}>
           <div className="flex flex-col items-center justify-center w-full mt-10">
-            <DragAndDropFile
-              file={profileImage}
-              setFile={setProfileImage}
-              isRenderedPage={isRenderedPage}
-              setIsRenderedPage={setIsRenderedPage}
-              imageInputValue={imageInputValue}
-            />
+            {profileData.image_url ? (
+              <div
+                className="relative h-[230px] w-[230px] flex items-center mt-10 justify-center cursor-pointer bg-gray-100"
+                style={{
+                  clipPath:
+                    "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)",
+                }}
+                onClick={handleImageClick}
+              >
+                <Image
+                  className="object-cover"
+                  src={profileData.image_url}
+                  alt="profile-picture"
+                  fill
+                />
+              </div>
+            ) : (
+              <DragAndDropFile
+                file={profileImage}
+                setFile={setProfileImage}
+                isRenderedPage={isRenderedPage}
+                setIsRenderedPage={setIsRenderedPage}
+                imageInputValue={imageInputValue}
+              />
+            )}
+          </div>
+          <div className="w-full flex justify-center mt-2">
+            <Link href={`/companies/${walletAddress}`}>
+              <Button text="Public View" type="secondary" size="medium" />
+            </Link>
+          </div>
+          <div className="w-full flex justify-center mt-7">
+            <Link href={`/companies/create-job`}>
+              <Button text="Create Job" type="secondary" size="medium" />
+            </Link>
           </div>
           <div className="flex flex-col w-full mt-20">
+            <div className="flex-1 mb-5">
+              <label
+                htmlFor="designation"
+                className="inline-block ml-3 text-base text-black form-label"
+              >
+                Company Name*
+              </label>
+              <input
+                className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                placeholder="Company Name"
+                name="designation"
+                type="text"
+                required
+                maxLength={100}
+                defaultValue={profileData.designation}
+              />
+            </div>
+
             <div>
               <label
                 htmlFor="headline"
@@ -120,26 +199,30 @@ export default function MyProfile() {
                 required
                 maxLength={255}
                 rows={5}
+                defaultValue={profileData.headline}
               />
             </div>
 
-            <div className="flex flex-col gap-4 mt-10 sm:flex-row">
+            <div className="flex flex-col gap-4 mt-10">
               <div className="flex-1">
                 <label
-                  htmlFor="designation"
+                  htmlFor="email"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
-                  Company Name*
+                  Email*
                 </label>
                 <input
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Company Name"
-                  name="designation"
-                  type="text"
+                  placeholder="Email"
+                  type="email"
                   required
-                  maxLength={100}
+                  maxLength={255}
+                  name="email"
+                  defaultValue={profileData.email}
                 />
               </div>
+            </div>
+            <div className="flex gap-4 mt-4 sm:flex-col">
               <div className="flex-1">
                 <label
                   htmlFor="address"
@@ -155,19 +238,7 @@ export default function MyProfile() {
                   required
                   pattern="[a-zA-Z0-9 ]+"
                   maxLength={100}
-                />
-              </div>
-            </div>
-            <div className="flex flex-col gap-4 mt-4 sm:flex-row">
-              <div className="flex-1">
-                <SelectInput
-                  labelText="Country"
-                  name="country"
-                  required={true}
-                  disabled={false}
-                  inputValue={selectedCountry}
-                  setInputValue={setSelectedCountry}
-                  options={countries}
+                  defaultValue={profileData.address}
                 />
               </div>
               <div className="flex-1">
@@ -185,10 +256,29 @@ export default function MyProfile() {
                   required
                   pattern="[a-zA-Z \-]+"
                   maxLength={100}
+                  defaultValue={profileData.city}
+                />
+              </div>
+              <div className="flex-1">
+                <SelectInput
+                  labelText="Country"
+                  name="country"
+                  required={true}
+                  disabled={false}
+                  inputValue={selectedCountry}
+                  setInputValue={setSelectedCountry}
+                  options={countries}
+                  defaultValue={
+                    countries[
+                      countries.findIndex(
+                        (country) => country.value === profileData?.country
+                      )
+                    ]
+                  }
                 />
               </div>
             </div>
-            <div className="flex flex-col gap-4 mt-4 sm:flex-row">
+            <div className="flex gap-4 mt-4 sm:flex-col">
               <div className="flex-1">
                 <label
                   htmlFor="phone-country-code"
@@ -208,6 +298,7 @@ export default function MyProfile() {
                     name="phone-country-code"
                     required
                     maxLength={5}
+                    defaultValue={profileData.phone_country_code}
                   />
                 </div>
               </div>
@@ -226,58 +317,32 @@ export default function MyProfile() {
                   required
                   maxLength={20}
                   name="phone-number"
+                  defaultValue={profileData.phone_number}
                 />
               </div>
             </div>
-            <div className="flex flex-col gap-4 mt-4 sm:flex-row">
-              <div className="flex-1">
-                <label
-                  htmlFor="email"
-                  className="inline-block ml-3 text-base text-black form-label"
-                >
-                  Email*
-                </label>
-                <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Email"
-                  type="email"
-                  required
-                  maxLength={255}
-                  name="email"
+
+            {/* Social media links: Linkedin, github, stackoverflow, telegram, portfolio */}
+            <div className="flex w-full flex-col mt-7">
+              <h3 className="inline-block mt-7 mb-2 ml-1 text-base font-medium text-black form-label">
+                Social Media Links:
+              </h3>
+              {socialLinks.map((socialLink) => (
+                <SocialLink
+                  key={socialLink.name}
+                  name={socialLink.name}
+                  icon={socialLink.icon}
+                  placeholder={socialLink.placeholder}
+                  value={
+                    profileData[
+                      socialLink.name as keyof typeof profileData
+                    ] as string
+                  }
+                  isRequired={socialLink.isRequired}
                 />
-              </div>
-              <div className="flex-1">
-                <label
-                  htmlFor="telegram"
-                  className="inline-block ml-3 text-base text-black form-label"
-                >
-                  Telegram
-                </label>
-                <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Telegram"
-                  type="text"
-                  maxLength={255}
-                  name="telegram"
-                />
-              </div>
+              ))}
             </div>
-            <div className="mt-4">
-              <label
-                htmlFor="details"
-                className="inline-block ml-3 text-base text-black form-label"
-              >
-                Company profile and services...*
-              </label>
-              <textarea
-                name="details"
-                className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                placeholder="Company profile and services..."
-                required
-                maxLength={300}
-                rows={5}
-              />
-            </div>
+
             <div className="mt-10 text-right">
               {isLoading ? (
                 <button
