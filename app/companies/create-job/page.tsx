@@ -1,15 +1,11 @@
 "use client";
 
-import { useState, FormEvent, useContext } from "react";
-
-import Autosuggest from "react-autosuggest";
+import { useState, FormEvent, useContext, useEffect } from "react";
 import toast from "react-hot-toast";
 
-import { SelectInput } from "../../components/select-input";
-import { SearchSelectInput } from "../../components/search-select-input";
-import { AddressContext } from "../../components/context";
-// TODO: use button but before add the type of the button component (i.e. type="button" or type="submit")
-// import { Button } from "../../components/button";
+import { SelectInput } from "@components/select-input";
+import { SearchSelectInput } from "@components/search-select-input";
+import { AddressContext } from "@components/context";
 import { skills } from "@/app/constants/skills";
 import {
   ethereumTokens,
@@ -18,6 +14,9 @@ import {
 } from "@/app/constants/token-list/index.js";
 import { chains } from "@/app/constants/chains";
 import LabelOption from "@interfaces/label-option";
+import { Loader } from "@components/loader";
+import { jobTypes, typeEngagements } from "@constants/common";
+import { AutoSuggestInput } from "@components/autosuggest-input";
 
 export default function CreateJob() {
   const [isLoading, setIsLoading] = useState(false);
@@ -26,6 +25,11 @@ export default function CreateJob() {
     null
   );
   const [selectedChain, setSelectedChain] = useState<LabelOption | null>(null);
+  const [typeEngagement, setTypeEngagement] = useState<LabelOption | null>(
+    null
+  );
+  const [jobType, setJobType] = useState<LabelOption | null>(null);
+  const [companyData, setCompanyData] = useState<any | null>(null);
 
   const walletAddress = useContext(AddressContext);
 
@@ -37,16 +41,20 @@ export default function CreateJob() {
 
     const dataForm = {
       title: formData.get("title"),
-      typeEngagement: formData.get("type-engagement"),
+      typeEngagement: typeEngagement ? typeEngagement.value : "",
       description: formData.get("description"),
       duration: formData.get("duration"),
       ratePerHour: formData.get("rate-per-hour"),
       budget: formData.get("budget"),
-      chain: selectedChain ? selectedChain.value : undefined,
-      currency:
-        selectedCurrency ? selectedCurrency.value : undefined,
+      chain: selectedChain ? selectedChain.value : "",
+      currency: selectedCurrency ? selectedCurrency.value : "",
       skills: selectedSkills,
       walletAddress,
+      city: companyData?.city,
+      country: companyData?.country,
+      companyName: companyData?.designation,
+      imageUrl: companyData?.image_url,
+      jobType: jobType ? jobType.value : "",
     };
 
     const jobResponse = await fetch("/api/companies/create-job", {
@@ -66,66 +74,54 @@ export default function CreateJob() {
     }
   };
 
-  const AutoSuggestInput = () => {
-    const [inputValue, setInputValue] = useState("");
-
-    const getSuggestions = (value: string) => {
-      const inputValue = value.trim().toLowerCase();
-      const inputLength = inputValue.length;
-
-      return inputLength === 0
-        ? []
-        : skills.filter(
-            (skill) => skill.toLowerCase().slice(0, inputLength) === inputValue
-          );
-    };
-
-    const onSuggestionSelected = (
-      event: React.FormEvent<HTMLInputElement>,
-      { suggestion }: Autosuggest.SuggestionSelectedEventData<string>
-    ) => {
-      if (!selectedSkills.includes(suggestion)) {
-        setSelectedSkills([...selectedSkills, suggestion]);
-      }
-    };
-
-    const renderSuggestion = (suggestion: string) => (
-      <div className="mx-1 px-2 py-2 z-10 hover:text-[#FF8C05] bg-white shadow-md max-h-48 overflow-y-auto border-gray-400 border-b-[0.5px] border-solid">
-        {suggestion}
-      </div>
-    );
-
-    const inputProps = {
-      placeholder: "JavaScript, NextJS,...",
-      type: "text",
-      maxLength: 255,
-      name: "skills",
-      value: inputValue,
-      onChange: (
-        event: React.FormEvent<HTMLElement>,
-        { newValue }: { newValue: string }
-      ) => {
-        setInputValue(newValue);
-      },
-      className:
-        "relative rounded-lg block w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding transition ease-in-out focus:text-black bg-gray-100 focus:outline-none focus:ring-0",
-    };
-
-    return (
-      <Autosuggest
-        suggestions={getSuggestions(inputValue)}
-        onSuggestionsFetchRequested={() => "ewffew"}
-        onSuggestionsClearRequested={() => "wef"}
-        getSuggestionValue={(skill) => skill}
-        onSuggestionSelected={onSuggestionSelected}
-        renderSuggestion={renderSuggestion}
-        inputProps={inputProps}
-      />
-    );
+  const fetchCompanyData = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(
+        `/api/companies/my-profile?walletAddress=${walletAddress}`
+      );
+      const data = await response.json();
+      setCompanyData(data);
+      setIsLoading(false);
+    } catch (error) {
+      setIsLoading(false);
+      console.log(error);
+    }
   };
 
+  useEffect(() => {
+    if (walletAddress) {
+      fetchCompanyData();
+    }
+  }, [walletAddress]);
+
+  if (!walletAddress) {
+    return (
+      <h3 className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+        🚀 To get started, please connect your wallet. This will enable you to
+        create your company profile and create jobs.
+      </h3>
+    );
+  }
+
+  if (walletAddress && companyData && !companyData?.designation) {
+    return (
+      <h3 className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+        🚀 Complete your company profile first before creating a job.
+      </h3>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex w-full items-center justify-center h-screen">
+        <Loader />
+      </div>
+    );
+  }
+
   return (
-    <main className="mx-5">
+    <main className="container mx-auto">
       <h1 className="my-5 text-2xl border-b-[1px] border-slate-300 ">
         Create Job
       </h1>
@@ -138,7 +134,7 @@ export default function CreateJob() {
                   htmlFor="title"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
-                  Job Title*
+                  Job Header*
                 </label>
                 <input
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
@@ -149,21 +145,25 @@ export default function CreateJob() {
                   maxLength={100}
                 />
               </div>
-              <div className="flex-1">
-                <label
-                  htmlFor="type-engagement"
-                  className="inline-block ml-3 text-base text-black form-label"
-                >
-                  Type of engagement*
-                </label>
-                <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Weekly, Monthly..."
+              <div className="w-full flex gap-5 justify-between">
+                <SelectInput
+                  labelText="Type of engagement"
                   name="type-engagement"
-                  type="text"
-                  required
-                  pattern="[a-zA-Z ]+"
-                  maxLength={100}
+                  required={true}
+                  disabled={false}
+                  inputValue={typeEngagement}
+                  setInputValue={setTypeEngagement}
+                  options={typeEngagements}
+                />
+
+                <SelectInput
+                  labelText="Job Type"
+                  name="job-type"
+                  required={true}
+                  disabled={false}
+                  inputValue={jobType}
+                  setInputValue={setJobType}
+                  options={jobTypes}
                 />
               </div>
             </div>
@@ -182,7 +182,49 @@ export default function CreateJob() {
                 rows={5}
               />
             </div>
-            <div className="flex flex-col gap-4 mt-4 sm:flex-row">
+            <div className="relative flex flex-col gap-4 mt-12 mb-10 sm:flex-row">
+              <div className="flex-1">
+                <label
+                  htmlFor="skills"
+                  className="inline-block ml-3 text-base font-bold text-black form-label"
+                >
+                  Mandatory Skills*
+                </label>
+                <div className="absolute w-full pt-1 pr-10 text-base font-normal text-gray-600 bg-white form-control ">
+                  <AutoSuggestInput
+                    inputs={skills}
+                    selectedInputs={selectedSkills}
+                    setSelectedInputs={setSelectedSkills}
+                  />
+                </div>
+                <div className="pt-10">
+                  {!!selectedSkills && selectedSkills.length > 0 && (
+                    <div className="flex flex-wrap mt-4 ">
+                      {selectedSkills.map((skill, index) => (
+                        <div
+                          key={index}
+                          className="border border-[#FFC905] flex items-center bg-gray-200 rounded-full py-1 px-3 m-1"
+                        >
+                          <span className="mr-2">{skill}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedSkills(
+                                selectedSkills.filter((_, i) => i !== index)
+                              );
+                            }}
+                            className="w-6 text-black bg-gray-400 rounded-full"
+                          >
+                            &#10005;
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-4 mt-4">
               <div className="flex-1">
                 <label
                   htmlFor="duration"
@@ -259,44 +301,7 @@ export default function CreateJob() {
                 />
               </div>
             </div>
-            <div className="flex flex-col gap-4 mt-4 sm:flex-row">
-              <div className="flex-1">
-                <label
-                  htmlFor="skills"
-                  className="inline-block ml-3 text-base font-bold text-black form-label"
-                >
-                  Mandatory Skills
-                </label>
-                <div className="absolute w-full pt-1 pr-10 text-base font-normal text-gray-600 bg-white form-control ">
-                  <AutoSuggestInput />
-                </div>
-                <div className="pt-10">
-                  {selectedSkills.length > 0 && (
-                    <div className="flex flex-wrap mt-4 ">
-                      {selectedSkills.map((skill, index) => (
-                        <div
-                          key={index}
-                          className="border border-[#FFC905] flex items-center bg-gray-200 rounded-full py-1 px-3 m-1"
-                        >
-                          <span className="mr-2">{skill}</span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedSkills(
-                                selectedSkills.filter((_, i) => i !== index)
-                              );
-                            }}
-                            className="w-6 text-black bg-gray-400 rounded-full"
-                          >
-                            &#10005;
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+
             <div className="mt-10 text-right">
               {isLoading ? (
                 <button

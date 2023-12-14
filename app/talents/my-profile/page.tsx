@@ -22,12 +22,13 @@ import { skills } from "@/app/constants/skills";
 import { countries } from "@/app/constants/countries";
 import LabelOption from "@interfaces/label-option";
 import { resumeUploadSizeLimit } from "./constants";
-import { ToogleButton } from "@components/toogle-button";
+import { ToggleButton } from "@components/toggle-button";
 import { SocialLink } from "./social-link";
 import { AutoSuggestInput } from "@components/autosuggest-input/autosuggest-input";
 import { socialLinks } from "./constant";
 import { Button } from "@/app/components/button";
 import { useRouter } from "next/navigation";
+import { uploadFileToBucket } from "@utils/upload-file-bucket";
 
 export default function MyProfile() {
   const imageInputValue = useRef(null);
@@ -113,46 +114,6 @@ export default function MyProfile() {
       return;
     }
     setCvFile(cvFile);
-  };
-
-  const uploadFileToBucket = async (file: File | null) => {
-    return new Promise(async (resolve, reject) => {
-      if (!file) return resolve(null);
-
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-
-      reader.onload = async () => {
-        const base64File = reader.result;
-
-        try {
-          const postImageResponse = await fetch("/api/upload-file", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ file: base64File, fileType: file.type }),
-          });
-
-          if (postImageResponse.ok) {
-            const { fileUrl } = await postImageResponse.json();
-            console.log("File url >>", fileUrl);
-            resolve(fileUrl);
-          } else {
-            console.error(postImageResponse.statusText);
-            resolve(null);
-          }
-        } catch (error) {
-          console.error(error);
-          resolve(null);
-        }
-      };
-
-      reader.onerror = (error) => {
-        console.error("File reading failed:", error);
-        reject(error);
-      };
-    });
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -505,12 +466,12 @@ export default function MyProfile() {
             </div>
 
             <div className="flex w-full justify-between mt-9">
-              <ToogleButton
+              <ToggleButton
                 label="Freelance Only"
                 name="freelance-only"
                 checked={profileData.freelance_only}
               />
-              <ToogleButton
+              <ToggleButton
                 label="Remote Only"
                 name="remote-only"
                 checked={profileData.remote_only}

@@ -8,6 +8,7 @@ import type { FC } from "react";
 import { Button } from "@components/button";
 
 interface Props {
+  jobId?: number;
   type: string;
   title: string;
   postedBy: string;
@@ -26,6 +27,7 @@ interface Props {
 }
 
 export const Card: FC<Props> = ({
+  jobId,
   title,
   postedBy,
   postedOn,
@@ -48,6 +50,9 @@ export const Card: FC<Props> = ({
       ? description.substring(0, 100) + "..."
       : description;
   const profileImage = image ? image : "/img/placeholder-image.png";
+  const knowMoreLink = jobId
+    ? `/companies/${walletAddress}`
+    : `/talents/${walletAddress}`;
 
   return (
     <div className="box-border block p-3 mt-11 bg-white bg-blend-darken rounded-3xl shadow-[2px_7px_20px_4px_#e2e8f0]">
@@ -71,7 +76,7 @@ export const Card: FC<Props> = ({
             <p className="text-lg font-semibold text-gray-800 sm:leading-tight sm:text-xs sm:mb-1">
               {croppedTitle}
             </p>
-            <p className="text-base text-gray-600 sm:text-xs sm:mb-1">{postedBy}</p>
+            <Link href={jobId ? `/companies/${walletAddress}` : `/talents/${walletAddress}`}><p className="text-base text-gray-600 sm:text-xs sm:mb-1">{postedBy}</p></Link>
             <p className="mb-3 text-xs font-bold text-gray-600 sm:text-xs">{postedOn}</p>
           </div>
           <div className="flex flex-col items-end pt-2 grow">
@@ -109,7 +114,7 @@ export const Card: FC<Props> = ({
         </div>
 
         <div className="flex justify-end w-full md-2 gap-3 sm:gap-1.5 sm:flex-col sm:items-center">
-          <Link href={`/talents/${walletAddress}`}>
+          <Link href={{ pathname: knowMoreLink, query: {id: jobId} }}>
             <Button text="Know more..." type="secondary" size="small" />
           </Link>
 
