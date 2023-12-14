@@ -2,7 +2,7 @@ import Image from "next/image";
 
 import { FC } from "react";
 import { generateJobTypeEngage } from "@utils/generate-job-type-engage";
-import { jobTypes } from "../constants/common";
+import { jobTypes } from "@constants/common";
 
 interface Props {
   type: string;
