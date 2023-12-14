@@ -5,7 +5,7 @@ import { JobCard } from "../../components/job-card";
 
 export default function JobResult() {
   return (
-    <div className="flex flex-col min-w-full  gap-3 ">
+    <div className="flex flex-col min-w-full gap-3 ">
       <JobCard
         type="Job"
         title="Responsible for In publishing and graphic design, Lorem ipsum."
