@@ -67,6 +67,7 @@ export async function fetchJobs({
       `;
 
     const jobs = jobsQuery.map((item) => ({
+      id: item.id,
       title: item.title,
       companyName: item.company_name,
       typeEngagement: item.type_engagement,
@@ -77,7 +78,11 @@ export async function fetchJobs({
       skills: item.skills.split(","),
       country: item.country,
       city: item.city,
+      walletAddress: item.wallet_address,
+      image_url: item.image_url,
     }));
+
+    console.log("jobs >>", jobs);
 
     return { jobs, count };
   } catch (error) {
