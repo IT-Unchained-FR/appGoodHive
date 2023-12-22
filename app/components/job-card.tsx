@@ -189,7 +189,7 @@ export const JobCard: FC<Props> = ({
                   text="Apply"
                   type="primary"
                   size="small"
-                  loading={!isLoading}
+                  loading={isLoading}
                   onClickHandler={onApplyHandler}
                 />
               )}
