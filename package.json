@@ -11,6 +11,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.327.0",
     "@aws-sdk/signature-v4-crt": "^3.310.0",
+    "@nextui-org/tooltip": "^2.0.29",
     "@rainbow-me/rainbowkit": "^1.0.1",
     "@rainbow-me/rainbowkit-siwe-next-auth": "^0.2.0",
     "@types/node": "18.15.11",
@@ -32,6 +33,7 @@
     "react-dom": "18.2.0",
     "react-hot-toast": "^2.4.0",
     "react-loading-skeleton": "^3.2.1",
+    "resend": "^2.0.0",
     "siwe": "^2.1.4",
     "tailwindcss": "^3.3.1",
     "typescript": "5.0.4",

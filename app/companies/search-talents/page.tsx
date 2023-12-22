@@ -40,7 +40,8 @@ export default async function SearchTalentsPage({
             image={talent.imageUrl}
             countryFlag="/img/country_flag.png" // TODO: create flag table
             city={talent.city}
-            rate={Number(talent.rate)}
+            budget={Number(talent.rate)}
+            projectType="hourly"
             currency={talent.currency}
             description={talent.description}
             skills={talent.skills}

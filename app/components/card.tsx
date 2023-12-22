@@ -16,7 +16,8 @@ interface Props {
   image: string;
   countryFlag: string;
   city: string;
-  rate: number;
+  budget: number;
+  projectType: string;
   currency: string;
   description: string;
   skills: string[];
@@ -36,13 +37,17 @@ export const Card: FC<Props> = ({
   city,
   description,
   skills,
-  rate,
+  budget,
+  projectType,
   currency = "$", // TODO: Add mapping with currencies (USD, EUR, etc.)
   escrowAmount,
   escrowCurrency = "ETH",
   walletAddress,
 }) => {
-  const ratePerHour = rate && currency ? `${rate}${currency}/Hour` : null;
+  const rate =
+    budget && currency
+      ? `${budget}${currency} - ${projectType === "fixed" ? "Fixed" : "Hourly"}`
+      : null;
   const croppedTitle =
     title.length > 28 ? title.substring(0, 28) + "..." : title;
   const croppedDescription =
@@ -56,7 +61,7 @@ export const Card: FC<Props> = ({
 
   return (
     <div className="box-border block p-3 mt-11 bg-white bg-blend-darken rounded-3xl shadow-[2px_7px_20px_4px_#e2e8f0]">
-      <div className="px-4 sm:px-2">
+      <div className="flex flex-col h-full px-4 sm:px-2">
         <div className="flex md:flex-row">
           <div
             className="relative flex items-center justify-center bg-yellow-300 cursor-pointer h-20 w-20 md:h-18 md:w-18 sm:h-18 sm:w-18"
@@ -76,8 +81,20 @@ export const Card: FC<Props> = ({
             <p className="text-lg font-semibold text-gray-800 sm:leading-tight sm:text-xs sm:mb-1">
               {croppedTitle}
             </p>
-            <Link href={jobId ? `/companies/${walletAddress}` : `/talents/${walletAddress}`}><p className="text-base text-gray-600 sm:text-xs sm:mb-1">{postedBy}</p></Link>
-            <p className="mb-3 text-xs font-bold text-gray-600 sm:text-xs">{postedOn}</p>
+            <Link
+              href={
+                jobId
+                  ? `/companies/${walletAddress}`
+                  : `/talents/${walletAddress}`
+              }
+            >
+              <p className="text-base text-gray-600 sm:text-xs sm:mb-1">
+                {postedBy}
+              </p>
+            </Link>
+            <p className="mb-3 text-xs font-bold text-gray-600 sm:text-xs">
+              {postedOn}
+            </p>
           </div>
           <div className="flex flex-col items-end pt-2 grow">
             <div className="flex mb-1">
@@ -88,9 +105,11 @@ export const Card: FC<Props> = ({
                 <Image src={countryFlag} alt="country" fill />
               </div>
             </div>
-            <p className="font-light mb-1 text-sm text-gray-500 text-right sm:text-xs sm:max-w-[80px]">{city}</p>
+            <p className="font-light mb-1 text-sm text-gray-500 text-right sm:text-xs sm:max-w-[80px]">
+              {city}
+            </p>
             <div className="flex space-between">
-              <div className="text-sm font-bold sm:text-xs">{ratePerHour}</div>
+              <div className="text-sm font-bold sm:text-xs">{rate}</div>
               {!!escrowAmount && (
                 <div>
                   {escrowAmount?.toString()} {escrowCurrency}
@@ -113,8 +132,8 @@ export const Card: FC<Props> = ({
           ))}
         </div>
 
-        <div className="flex justify-end w-full md-2 gap-3 sm:gap-1.5 sm:flex-col sm:items-center">
-          <Link href={{ pathname: knowMoreLink, query: {id: jobId} }}>
+        <div className="flex grow justify-end items-end w-full md-2 gap-3 sm:gap-1.5 sm:flex-col sm:items-center">
+          <Link href={{ pathname: knowMoreLink, query: { id: jobId } }}>
             <Button text="Know more..." type="secondary" size="small" />
           </Link>
 
