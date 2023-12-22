@@ -39,7 +39,8 @@ export default function JobResult({ jobOffers }: { jobOffers: any[] }) {
           image={jobOffer.image_url || "/img/company_img.png"} //TODO: connect job_offers table to companies table
           countryFlag="/img/country_flag.png" // TODO: create flag table
           city={jobOffer.city} //TODO: connect job_offers table to companies table
-          rate={jobOffer.rate}
+          budget={jobOffer.budget}
+          projectType={jobOffer.projectType}
           currency={jobOffer.currency}
           description={jobOffer.jobDescription}
           skills={jobOffer.skills}
