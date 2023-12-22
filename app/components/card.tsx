@@ -109,7 +109,7 @@ export const Card: FC<Props> = ({
               {city}
             </p>
             <div className="flex space-between">
-              <div className="text-sm font-bold sm:text-xs">{rate}</div>
+              <div className="text-xs font-bold">{rate}</div>
               {!!escrowAmount && (
                 <div>
                   {escrowAmount?.toString()} {escrowCurrency}
