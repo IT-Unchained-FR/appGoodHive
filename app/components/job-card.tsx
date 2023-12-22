@@ -1,10 +1,17 @@
-import Image from "next/image";
+"use client";
 
-import { FC } from "react";
+import Image from "next/image";
+import Link from "next/link";
+
+import { FC, useContext, useState } from "react";
 import { generateJobTypeEngage } from "@utils/generate-job-type-engage";
-import { jobTypes } from "@constants/common";
+import { jobTypes, projectDuration } from "@constants/common";
+import { AddressContext } from "./context";
+import { Button } from "./button";
+import toast from "react-hot-toast";
 
 interface Props {
+  id: number;
   type: string;
   title: string;
   postedBy: string;
@@ -14,14 +21,18 @@ interface Props {
   country: string;
   countryFlag: string;
   city: string;
-  ratePerHour: string;
   typeEngagement: string;
   skills: string[];
   buttonText: string;
+  budget: number;
   jobType: string;
+  projectType?: string;
+  companyEmail?: string;
+  walletAddress: string;
 }
 
 export const JobCard: FC<Props> = ({
+  id,
   title,
   postedBy,
   details,
@@ -33,14 +44,67 @@ export const JobCard: FC<Props> = ({
   typeEngagement,
   jobType,
   skills,
+  companyEmail,
+  projectType,
+  budget,
+  walletAddress,
 }) => {
   const typeEngagementMsg = generateJobTypeEngage(typeEngagement);
   const jobTypeMsg = jobTypes.find((job) => job.value === jobType)?.label;
+  const durationMsg = projectDuration.find(
+    (job) => job.value === duration
+  )?.label;
+  const [isLoading, setIsLoading] = useState(false);
+
+  const userWalletAddress = useContext(AddressContext);
+  const isOwner = walletAddress === userWalletAddress;
+
+  const onApplyHandler = async () => {
+    if (!userWalletAddress) {
+      toast.error("Please connect your wallet first!");
+      return;
+    }
+    try {
+      setIsLoading(true);
+      const userDataResponse = await fetch(
+        `/api/talents/my-profile?walletAddress=${userWalletAddress}`
+      );
+
+      if (!userDataResponse.ok) {
+        throw new Error(`HTTP error! status: ${userDataResponse.status}`);
+      }
+
+      const userProfile = await userDataResponse.json();
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        body: JSON.stringify({
+          name: userProfile?.first_name,
+          email: companyEmail,
+          jobtitle: title,
+          userProfile: `${window.location.origin}/talents/${userWalletAddress}`,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!response.ok) {
+        throw new Error("Something went wrong!");
+      } else {
+        setIsLoading(false);
+        toast.success("Applied successfully!");
+      }
+    } catch (error) {
+      setIsLoading(false);
+      toast.error("Something went wrong!");
+    }
+  };
 
   return (
     <div className="mt-11 ">
       <div className="block relative p-6 bg-blend-darken rounded-3xl box-border border-r-2 border-l-2 border-radius  bg-white shadow-[2px_7px_20px_4px_#e2e8f0]">
-        <div className="absolute w-32 h-40 top-5 right-7 flex flex-col items-end">
+        <div
+          className={`absolute w-32 h-40 top-5 right-7 flex flex-col items-end`}
+        >
           <p className="text-base mb-2">• {jobTypeMsg}</p>
           <div className="flex gap-2">
             <p className="text-sm">2500$</p>
@@ -49,14 +113,6 @@ export const JobCard: FC<Props> = ({
             </div>
           </div>
         </div>
-        {/* <div className="flex items-center justify-end">
-          <a href="" className="inline-block mr-2">
-            <img src="/img/bin.png" alt="bin" width="25" height="25" />
-          </a>
-          <a href="" className="inline-block">
-            <img src="/img/edit.png" alt="edit" width="25" height="25" />
-          </a>
-        </div> */}
         <div className="pl-4 pr-5">
           <div className="flex flex-col">
             <div
@@ -77,8 +133,11 @@ export const JobCard: FC<Props> = ({
               <p className="font-semibold text-xl  text-gray-800 ">
                 {postedBy}
               </p>
-              <p className="text-base text-gray-600 ">
-                {typeEngagementMsg} - {duration}
+              <p className="text-base text-gray-600">
+                {typeEngagementMsg} - {budget} USD {projectType}
+              </p>
+              <p className="text-base text-gray-600">
+                {durationMsg}
               </p>
               <div className="flex flex-row">
                 <p className="text-base text-gray-600 mb-5">
@@ -89,8 +148,7 @@ export const JobCard: FC<Props> = ({
           </div>
           <div>
             <div className="pt-2 ">
-              <p className="font-bold text-base pr-1 whitespace-nowrap ">
-                {" "}
+              <p className="font-bold text-base pr-1 whitespace-nowrap">
                 Job header
               </p>
               <p className=" flex text-justify text-gray-500 font-light">
@@ -99,14 +157,13 @@ export const JobCard: FC<Props> = ({
             </div>
             <div className="pt-2 ">
               <p className="font-bold text-base pr-1 whitespace-nowrap">
-                {" "}
                 Job description
               </p>
               <span className=" flex text-justify text-gray-500 font-light">
                 {details}
               </span>
             </div>
-            <div className="flex flex-col pt-4 ">
+            <div className="flex flex-col pt-4">
               <p className="font-bold text-base whitespace-nowrap">
                 Mandatory Skill:
               </p>
@@ -120,6 +177,22 @@ export const JobCard: FC<Props> = ({
                   </span>
                 ))}
               </div>
+            </div>
+
+            <div className="mt-3 mb-2 flex w-full justify-end">
+              {isOwner ? (
+                <Link href={`/companies/create-job?id=${id}`}>
+                  <Button text="Edit" type="secondary" size="small" />
+                </Link>
+              ) : (
+                <Button
+                  text="Apply"
+                  type="primary"
+                  size="small"
+                  loading={!isLoading}
+                  onClickHandler={onApplyHandler}
+                />
+              )}
             </div>
           </div>
         </div>

@@ -2,6 +2,7 @@
 
 import { useState, FormEvent, useContext, useEffect } from "react";
 import toast from "react-hot-toast";
+import { useSearchParams } from "next/navigation";
 
 import { SelectInput } from "@components/select-input";
 import { SearchSelectInput } from "@components/search-select-input";
@@ -15,8 +16,16 @@ import {
 import { chains } from "@/app/constants/chains";
 import LabelOption from "@interfaces/label-option";
 import { Loader } from "@components/loader";
-import { jobTypes, typeEngagements } from "@constants/common";
+import {
+  createJobServices,
+  jobTypes,
+  projectDuration,
+  projectTypes,
+  typeEngagements,
+} from "@constants/common";
 import { AutoSuggestInput } from "@components/autosuggest-input";
+import { ToggleButton } from "@/app/components/toggle-button";
+import { calculateJobCreateFees } from "@/app/utils/calculate-job-create-fees";
 
 export default function CreateJob() {
   const [isLoading, setIsLoading] = useState(false);
@@ -29,9 +38,26 @@ export default function CreateJob() {
     null
   );
   const [jobType, setJobType] = useState<LabelOption | null>(null);
+  const [duration, setDuration] = useState<LabelOption | null>(null);
+  const [projectType, setProjectType] = useState<LabelOption | null>(null);
   const [companyData, setCompanyData] = useState<any | null>(null);
+  const [jobData, setJobData] = useState<any | null>(null);
+  const [budget, setBudget] = useState("");
+  const [jobServices, setJobServices] = useState({
+    talent: false,
+    recruiter: false,
+    mentor: false,
+  });
 
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id");
   const walletAddress = useContext(AddressContext);
+
+  const onBudgetChange = (e: any) => {
+    setBudget(e.target.value);
+  };
+
+  const totalFees = calculateJobCreateFees(projectType, budget, jobServices);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -39,13 +65,17 @@ export default function CreateJob() {
 
     const formData = new FormData(e.currentTarget);
 
+    const talent = formData.get("talent") === "on";
+    const recruiter = formData.get("recruiter") === "on";
+    const mentor = formData.get("mentor") === "on";
+
     const dataForm = {
       title: formData.get("title"),
       typeEngagement: typeEngagement ? typeEngagement.value : "",
       description: formData.get("description"),
-      duration: formData.get("duration"),
-      ratePerHour: formData.get("rate-per-hour"),
-      budget: formData.get("budget"),
+      duration: duration ? duration?.value : "",
+      ratePerHour: "",
+      budget: Number(budget),
       chain: selectedChain ? selectedChain.value : "",
       currency: selectedCurrency ? selectedCurrency.value : "",
       skills: selectedSkills,
@@ -55,9 +85,16 @@ export default function CreateJob() {
       companyName: companyData?.designation,
       imageUrl: companyData?.image_url,
       jobType: jobType ? jobType.value : "",
+      projectType: projectType ? projectType.value : "",
+      talent,
+      recruiter,
+      mentor,
+      id,
     };
 
-    const jobResponse = await fetch("/api/companies/create-job", {
+    const jobSaveUrl = id ? "/api/companies/update-job" : "/api/companies/create-job";
+
+    const jobResponse = await fetch(jobSaveUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -72,6 +109,13 @@ export default function CreateJob() {
     } else {
       toast.success("Job Offer Saved!");
     }
+  };
+
+  const onJobServicesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setJobServices({
+      ...jobServices,
+      [event.target.name]: event.target.checked,
+    });
   };
 
   const fetchCompanyData = async () => {
@@ -89,11 +133,35 @@ export default function CreateJob() {
     }
   };
 
+  const fetchJobData = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/companies/job-data?id=${id}`);
+      const data = await response.json();
+      console.log("job data >>", data);
+      setJobData(data);
+      setJobServices({
+        talent: data.talent === "true" || false,
+        recruiter: data.recruiter === "true" || false,
+        mentor: data.mentor === "true" || false,
+      });
+      setSelectedSkills(data.skills);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
     if (walletAddress) {
       fetchCompanyData();
     }
   }, [walletAddress]);
+
+  useEffect(() => {
+    if (id) {
+      fetchJobData();
+    }
+  }, [id]);
 
   if (!walletAddress) {
     return (
@@ -143,6 +211,7 @@ export default function CreateJob() {
                   type="text"
                   required
                   maxLength={100}
+                  defaultValue={jobData?.title}
                 />
               </div>
               <div className="w-full flex gap-5 justify-between">
@@ -154,6 +223,13 @@ export default function CreateJob() {
                   inputValue={typeEngagement}
                   setInputValue={setTypeEngagement}
                   options={typeEngagements}
+                  defaultValue={
+                    typeEngagements[
+                      typeEngagements.findIndex(
+                        (type) => type.value === jobData?.typeEngagement
+                      )
+                    ]
+                  }
                 />
 
                 <SelectInput
@@ -164,6 +240,13 @@ export default function CreateJob() {
                   inputValue={jobType}
                   setInputValue={setJobType}
                   options={jobTypes}
+                  defaultValue={
+                    jobTypes[
+                      jobTypes.findIndex(
+                        (type) => type.value === jobData?.jobType
+                      )
+                    ]
+                  }
                 />
               </div>
             </div>
@@ -180,6 +263,7 @@ export default function CreateJob() {
                 placeholder="Project Description"
                 maxLength={255}
                 rows={5}
+                defaultValue={jobData?.description}
               />
             </div>
             <div className="relative flex flex-col gap-4 mt-12 mb-10 sm:flex-row">
@@ -224,51 +308,89 @@ export default function CreateJob() {
                 </div>
               </div>
             </div>
+
+            {/* Add three checkbox here which are Talent, Recruiter and Mentor and aslo match up the styles we are having here. And add a i circular button in the right side of every checkbox lebel and if hover over it should show text just like tooltip */}
+            <div className="w-1/2 sm:w-full mb-5 px-3 flex justify-between">
+              {createJobServices.map((service) => {
+                const { label, value, tooltip } = service;
+                const isChecked = jobData?.[value] === "true" || false;
+                console.log("isChecked >>",value, isChecked);
+                return (
+                  <ToggleButton
+                    key={value}
+                    label={label}
+                    name={value}
+                    checked={isChecked}
+                    tooltip={tooltip}
+                    onChange={onJobServicesChange}
+                  />
+                );
+              })}
+            </div>
+
             <div className="flex gap-4 mt-4">
               <div className="flex-1">
-                <label
-                  htmlFor="duration"
-                  className="inline-block ml-3 text-base text-black form-label"
-                >
-                  Project Duration*
-                </label>
-                <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  type="text"
+                <SelectInput
+                  labelText="Project Duration"
                   name="duration"
-                  required
-                  maxLength={100}
+                  required={true}
+                  disabled={false}
+                  inputValue={duration}
+                  setInputValue={setDuration}
+                  options={projectDuration}
+                  defaultValue={
+                    projectDuration[
+                      projectDuration.findIndex(
+                        (type) => type.value === jobData?.duration
+                      )
+                    ]
+                  }
                 />
               </div>
+
               <div className="flex-1">
-                <label
-                  htmlFor="rate-per-hour"
-                  className="inline-block ml-3 text-base text-black form-label"
-                >
-                  Expected rate per hour
-                </label>
-                <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  type="number"
-                  name="rate-per-hour"
-                  maxLength={100}
+                <SelectInput
+                  labelText="Project Type"
+                  name="projectType"
+                  required={true}
+                  disabled={false}
+                  inputValue={projectType}
+                  setInputValue={setProjectType}
+                  options={projectTypes}
+                  defaultValue={
+                    projectTypes[
+                      projectTypes.findIndex(
+                        (type) => type.value === jobData?.projectType
+                      )
+                    ]
+                  }
                 />
               </div>
-              <div className="flex-1">
-                <label
-                  htmlFor="budget"
-                  className="inline-block ml-3 text-base text-black form-label"
-                >
-                  Budget of the project
-                </label>
-                <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  type="number"
-                  name="budget"
-                  maxLength={100}
-                />
-              </div>
+              {projectType || jobData?.projectType ? (
+                <div className="flex-1">
+                  <label
+                    htmlFor="budget"
+                    className="inline-block ml-3 text-base text-black form-label"
+                  >
+                    {projectType && projectType.value === "fixed"
+                      ? "Budget*"
+                      : "Expected Hourly Rate*"}
+                  </label>
+                  <input
+                    className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                    type="number"
+                    name="budget"
+                    onChange={onBudgetChange}
+                    required
+                    value={budget}
+                    maxLength={100}
+                    defaultValue={jobData?.budget}
+                  />
+                </div>
+              ): null}
             </div>
+            {jobData?.budget || budget ? <p className="mt-2 text-right">Total fees: {totalFees} USD</p> : null}
+            <div className="flex gap-4 mt-3"></div>
             <div className="flex flex-col gap-4 mt-4 sm:flex-row">
               <div className="flex sm:w-1/4">
                 <SelectInput
@@ -279,6 +401,11 @@ export default function CreateJob() {
                   inputValue={selectedChain}
                   setInputValue={setSelectedChain}
                   options={chains}
+                  defaultValue={
+                    chains[
+                      chains.findIndex((type) => type.value === jobData?.chain)
+                    ]
+                  }
                 />
               </div>
               <div className="flex sm:w-3/4">

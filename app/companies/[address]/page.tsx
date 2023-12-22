@@ -148,6 +148,7 @@ export default async function CompanyProfilePage(
               <div className="flex flex-col min-w-full gap-3 ">
                 <JobCard
                   key={singleJob.id}
+                  id={singleJob.id}
                   type="Job"
                   title={singleJob.title}
                   postedBy={singleJob.companyName}
@@ -159,9 +160,12 @@ export default async function CompanyProfilePage(
                   country={singleJob.country}
                   typeEngagement={singleJob.typeEngagement}
                   jobType={singleJob.jobType}
-                  ratePerHour={singleJob.rate}
+                  projectType={singleJob.projectType}
+                  budget={singleJob.budget}
                   skills={singleJob.skills}
                   buttonText="Connect"
+                  walletAddress={singleJob.walletAddress}
+                  companyEmail={email}
                 />
               </div>
             </div>
@@ -177,7 +181,8 @@ export default async function CompanyProfilePage(
                 companyName,
                 description,
                 city,
-                rate,
+                budget,
+                projectType,
                 skills,
                 image_url,
                 walletAddress,
@@ -193,7 +198,8 @@ export default async function CompanyProfilePage(
                   image={image_url || "/img/company_img.png"}
                   countryFlag="/img/country_flag.png"
                   city={city}
-                  rate={rate}
+                  budget={budget}
+                  projectType={projectType}
                   currency="USD"
                   description={description}
                   skills={skills}
