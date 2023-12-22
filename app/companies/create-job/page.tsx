@@ -2,7 +2,7 @@
 
 import { useState, FormEvent, useContext, useEffect } from "react";
 import toast from "react-hot-toast";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { SelectInput } from "@components/select-input";
 import { SearchSelectInput } from "@components/search-select-input";
@@ -44,11 +44,12 @@ export default function CreateJob() {
   const [jobData, setJobData] = useState<any | null>(null);
   const [budget, setBudget] = useState("");
   const [jobServices, setJobServices] = useState({
-    talent: false,
+    talent: true,
     recruiter: false,
     mentor: false,
   });
 
+  const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const walletAddress = useContext(AddressContext);
@@ -65,7 +66,6 @@ export default function CreateJob() {
 
     const formData = new FormData(e.currentTarget);
 
-    const talent = formData.get("talent") === "on";
     const recruiter = formData.get("recruiter") === "on";
     const mentor = formData.get("mentor") === "on";
 
@@ -86,13 +86,15 @@ export default function CreateJob() {
       imageUrl: companyData?.image_url,
       jobType: jobType ? jobType.value : "",
       projectType: projectType ? projectType.value : "",
-      talent,
+      talent: true,
       recruiter,
       mentor,
       id,
     };
 
-    const jobSaveUrl = id ? "/api/companies/update-job" : "/api/companies/create-job";
+    const jobSaveUrl = id
+      ? "/api/companies/update-job"
+      : "/api/companies/create-job";
 
     const jobResponse = await fetch(jobSaveUrl, {
       method: "POST",
@@ -108,6 +110,7 @@ export default function CreateJob() {
       toast.error("Something went wrong!");
     } else {
       toast.success("Job Offer Saved!");
+      router.push(`/companies/${walletAddress}`);
     }
   };
 
@@ -141,7 +144,7 @@ export default function CreateJob() {
       console.log("job data >>", data);
       setJobData(data);
       setJobServices({
-        talent: data.talent === "true" || false,
+        talent: true,
         recruiter: data.recruiter === "true" || false,
         mentor: data.mentor === "true" || false,
       });
@@ -313,8 +316,9 @@ export default function CreateJob() {
             <div className="w-1/2 sm:w-full mb-5 px-3 flex justify-between">
               {createJobServices.map((service) => {
                 const { label, value, tooltip } = service;
-                const isChecked = jobData?.[value] === "true" || false;
-                console.log("isChecked >>",value, isChecked);
+                const isChecked =
+                  jobData?.[value] === "true" || value === "talent" || false;
+                const isTalent = value === "talent";
                 return (
                   <ToggleButton
                     key={value}
@@ -323,6 +327,7 @@ export default function CreateJob() {
                     checked={isChecked}
                     tooltip={tooltip}
                     onChange={onJobServicesChange}
+                    disabled={isTalent}
                   />
                 );
               })}
@@ -387,9 +392,11 @@ export default function CreateJob() {
                     defaultValue={jobData?.budget}
                   />
                 </div>
-              ): null}
+              ) : null}
             </div>
-            {jobData?.budget || budget ? <p className="mt-2 text-right">Total fees: {totalFees} USD</p> : null}
+            {jobData?.budget || budget ? (
+              <p className="mt-2 text-right">Total fees: {totalFees} USD</p>
+            ) : null}
             <div className="flex gap-4 mt-3"></div>
             <div className="flex flex-col gap-4 mt-4 sm:flex-row">
               <div className="flex sm:w-1/4">

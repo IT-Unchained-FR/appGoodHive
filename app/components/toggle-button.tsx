@@ -7,6 +7,7 @@ interface ToggleButtonProps {
   checked: boolean;
   tooltip?: string;
   onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  disabled?: boolean;
 }
 
 export const ToggleButton: FC<ToggleButtonProps> = (props) => {
