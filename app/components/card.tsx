@@ -25,6 +25,8 @@ interface Props {
   escrowAmount?: BigNumberish;
   escrowCurrency?: string;
   walletAddress?: string;
+  mentor?: boolean;
+  recruiter?: boolean;
 }
 
 export const Card: FC<Props> = ({
@@ -43,6 +45,8 @@ export const Card: FC<Props> = ({
   escrowAmount,
   escrowCurrency = "ETH",
   walletAddress,
+  mentor,
+  recruiter,
 }) => {
   const rate =
     budget && currency
@@ -132,12 +136,25 @@ export const Card: FC<Props> = ({
           ))}
         </div>
 
-        <div className="flex grow justify-end items-end w-full md-2 gap-3 sm:gap-1.5 sm:flex-col sm:items-center">
+        <div
+          className={`flex grow ${
+            mentor || recruiter ? "justify-between" : "justify-end"
+          } items-end w-full md-2 gap-3 sm:gap-1.5 sm:flex-col sm:items-center`}
+        >
+          {mentor && recruiter && (
+            <p className="text-sm text-gray-500">
+              Open to Mentors & Recruiters
+            </p>
+          )}
+          {mentor && !recruiter && (
+            <p className="text-sm text-gray-500">Open to Mentors</p>
+          )}
+          {!mentor && recruiter && (
+            <p className="text-sm text-gray-500">Open to Recruiters</p>
+          )}
           <Link href={{ pathname: knowMoreLink, query: { id: jobId } }}>
-            <Button text="Know more..." type="secondary" size="small" />
+            <Button text="Know more" type="primary" size="small" />
           </Link>
-
-          <Button text="Apply Now" type="primary" size="small" />
         </div>
       </div>
     </div>
