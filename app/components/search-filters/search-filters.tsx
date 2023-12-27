@@ -25,6 +25,10 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
 
   const { isSearchTalent = false } = props;
 
+  const title = isSearchTalent
+    ? TRANSLATIONS.talentSearchTitle
+    : TRANSLATIONS.jobSearchTitle;
+
   const handleSearchChange = (skills: string[]) => {
     console.log("mara dile skill >>", skills);
     setQuery((q) => ({ ...q, search: skills[0] }));
@@ -40,7 +44,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
 
   return (
     <div className="mx-5">
-      <h1 className="my-5 font-bold text-2xl">{TRANSLATIONS.title}</h1>
+      <h1 className="my-5 font-bold text-2xl">{title}</h1>
       <div className="relative pt-12 space-y-6 w-6/12 sm:w-full md:w-full">
         <div className="absolute w-full top-0 left-0">
           <AutoSuggestInput

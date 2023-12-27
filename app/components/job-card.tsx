@@ -186,7 +186,7 @@ export const JobCard: FC<Props> = ({
                 </Link>
               ) : (
                 <Button
-                  text="Apply"
+                  text="Apply Now"
                   type="primary"
                   size="small"
                   loading={isLoading}
