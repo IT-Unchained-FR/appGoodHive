@@ -17,12 +17,16 @@ export async function fetchTalents({
   name = "",
   items = 9,
   page = 1,
+  freelancer = "",
+  remote = "",
 }: {
   search?: string;
   location?: string;
   name?: string;
   items: number;
   page: number;
+  freelancer?: string;
+  remote?: string;
 }) {
   try {
     const countCursor = await sql`
@@ -39,7 +43,11 @@ export async function fetchTalents({
     AND
       (LOWER(first_name) LIKE ${contains(
         name
-      )} OR LOWER(last_name) LIKE ${contains(name)})
+      )} OR LOWER(last_name) LIKE ${contains(
+        name
+      )})
+    ${freelancer === "true" ? sql`AND NOT freelance_only` : sql``}
+    ${remote === "true" ? sql`AND NOT remote_only` : sql``}
     `;
 
     const count = countCursor[0].count as number;
@@ -61,11 +69,16 @@ export async function fetchTalents({
       AND
       (LOWER(first_name) LIKE ${contains(
         name
-      )} OR LOWER(last_name) LIKE ${contains(name)})
+      )} OR LOWER(last_name) LIKE ${contains(
+        name
+      )})
+      ${freelancer === "true" ? sql`AND freelance_only` : sql``}
+      ${remote === "true" ? sql`AND remote_only` : sql``}
       LIMIT ${limit}
       OFFSET ${offset}
       `;
 
+    console.log("talentsCursor>> ", talentsCursor, freelancer === "true");
     const talents: Talent[] = talentsCursor.map((talent) => {
       return {
         title: talent.title,
@@ -84,6 +97,8 @@ export async function fetchTalents({
         skills: talent.skills.split(","),
         imageUrl: talent.image_url,
         walletAddress: talent.wallet_address,
+        freelancer: talent.freelance_only ? true : false,
+        remote: talent.remote_only ? true : false,
       };
     });
 

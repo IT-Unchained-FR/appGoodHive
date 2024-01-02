@@ -46,6 +46,8 @@ export default function JobResult({ jobOffers }: { jobOffers: any[] }) {
           skills={jobOffer.skills}
           buttonText="Apply"
           walletAddress={jobOffer.walletAddress}
+          mentor={jobOffer.mentor}
+          recruiter={jobOffer.recruiter}
           // escrowAmount={jobOffer.escrowAmount} Add escrowAmount to job_offers table
           // escrowCurrency={jobOffer.escrowCurrency} Add escrowCurrency to job_offers table
         />

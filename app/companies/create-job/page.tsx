@@ -149,6 +149,7 @@ export default function CreateJob() {
         mentor: data.mentor === "true" || false,
       });
       setSelectedSkills(data.skills);
+      setBudget(data.budget);
     } catch (error) {
       console.log(error);
     }
@@ -395,7 +396,12 @@ export default function CreateJob() {
               ) : null}
             </div>
             {jobData?.budget || budget ? (
-              <p className="mt-2 text-right">Total fees: {totalFees} USD</p>
+              <p className="mt-2 text-right">
+                {projectType && projectType.value === "hourly" 
+                  ? "Total fees per hour:"
+                  : "Total fees:"}{" "}
+                {totalFees} USD
+              </p>
             ) : null}
             <div className="flex gap-4 mt-3"></div>
             <div className="flex flex-col gap-4 mt-4 sm:flex-row">

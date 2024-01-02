@@ -47,6 +47,8 @@ export default async function SearchTalentsPage({
             skills={talent.skills}
             buttonText="Connect"
             walletAddress={talent.walletAddress}
+            freelancer={talent.freelancer}
+            remote={talent.remote}
           />
         ))}
       </div>
