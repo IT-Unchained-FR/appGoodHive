@@ -38,6 +38,10 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
     portfolio,
     freelance_only,
     remote_only,
+    talent,
+    mentor,
+    recruiter,
+    status,
   } = profileData;
 
   const availabilityStatus = generateAvailabilityStatus(
@@ -46,6 +50,14 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
   );
 
   const contactUrl = email ? `mailto:${email}` : `https://t.me/${telegram}`;
+
+  if (status && status === "pending") {
+    return (
+      <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+        🚀 Your profile is pending approval. It will be live soon.
+      </p>
+    );
+  }
 
   return (
     <main className="relative pt-16">
@@ -82,6 +94,21 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
         {availabilityStatus && (
           <h4 className="text-[#4E4E4E] text-base font-medium mb-7">
             {availabilityStatus}
+          </h4>
+        )}
+        {talent && (
+          <h4 className="text-[#4E4E4E] text-base font-medium mb-7">
+            • I can help you as a talent
+          </h4>
+        )}
+        {mentor && (
+          <h4 className="text-[#4E4E4E] text-base font-medium mb-7">
+            • I can help you as a mentor
+          </h4>
+        )}
+        {recruiter && (
+          <h4 className="text-[#4E4E4E] text-base font-medium mb-7">
+            • I can help you as a recruiter
           </h4>
         )}
         <div className="flex w-full justify-center gap-5 mb-12">

@@ -42,7 +42,13 @@ export const projectTypes = [
   },
 ];
 
-export const createJobServices = [
+type createJobServicesType = {
+  label: string;
+  value: "talent" | "recruiter" | "mentor";
+  tooltip: string;
+};
+
+export const createJobServices: createJobServicesType[] = [
   {
     label: "Talent",
     value: "talent",
@@ -51,11 +57,13 @@ export const createJobServices = [
   {
     label: "Recruiter",
     value: "recruiter",
-    tooltip: "I want a recruiter to introduce me to a shortlist of talents - 8% Fee",
+    tooltip:
+      "I want a recruiter to introduce me to a shortlist of talents - 8% Fee",
   },
   {
     label: "Mentor",
     value: "mentor",
-    tooltip: "I want a tech mentor to assess technical skills of my talent before the mission starts and will mentor the talent all along the mission - 12% Fee",
+    tooltip:
+      "I want a tech mentor to assess technical skills of my talent before the mission starts and will mentor the talent all along the mission - 12% Fee",
   },
-]
+];
