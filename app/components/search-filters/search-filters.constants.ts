@@ -5,6 +5,10 @@ export const TRANSLATIONS = {
   locationPlaceholder: "Location Paris, Lodon, Remote...",
   searchByDeveloperName: "Search by Developer Name",
   searchByCompanyName: "Search by Company Name",
+  openToRecruiter: "Open to Recruiter",
+  openToMentor: "Open to Mentor",
+  excludeFreelancer: "Exclude Freelancer",
+  excludeRemote: "Exclude Remote",
 };
 
 export const InputClasses = [

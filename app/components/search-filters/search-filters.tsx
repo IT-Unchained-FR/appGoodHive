@@ -15,12 +15,17 @@ import addIcon from "@/public/icons/add.svg";
 import { skills } from "@constants/skills";
 import { GooglePlaceSuggestion } from "@components/google-places-suggestion";
 import { AutoSuggestInput } from "@components/autosuggest-input";
+import { ToggleButton } from "../toggle-button";
 
 export const SearchFilters: FC<SearchFiltersProps> = (props) => {
   const [query, setQuery] = useState<SearchQueryProps>({
     search: "",
     location: "",
     name: "",
+    recruiter: false,
+    mentor: false,
+    freelancer: false,
+    remote: false,
   });
 
   const { isSearchTalent = false } = props;
@@ -40,6 +45,30 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setQuery((q) => ({ ...q, name: event.target.value }));
+  };
+
+  const handleOpenToRecruiterChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setQuery((q) => ({ ...q, recruiter: event.target.checked }));
+  };
+
+  const handleOpenToMentorChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setQuery((q) => ({ ...q, mentor: event.target.checked }));
+  };
+
+  const handleExcludeFreelancerChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setQuery((q) => ({ ...q, freelancer: event.target.checked }));
+  };
+
+  const handleExcludeRemoteChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setQuery((q) => ({ ...q, remote: event.target.checked }));
   };
 
   return (
@@ -73,6 +102,38 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
           value={query.name}
           onChange={handleNameChange}
         />
+
+        {isSearchTalent ? (
+          <div className="flex gap-5">
+            <ToggleButton
+              label={TRANSLATIONS.excludeFreelancer}
+              name="excludeFreelancer"
+              checked={query.freelancer}
+              onChange={handleExcludeFreelancerChange}
+            />
+            <ToggleButton
+              label={TRANSLATIONS.excludeRemote}
+              name="excludeRemote"
+              checked={query.remote}
+              onChange={handleExcludeRemoteChange}
+            />
+          </div>
+        ) : (
+          <div className="flex gap-5">
+            <ToggleButton
+              label={TRANSLATIONS.openToRecruiter}
+              name="openToRecruiter"
+              checked={query.recruiter}
+              onChange={handleOpenToRecruiterChange}
+            />
+            <ToggleButton
+              label={TRANSLATIONS.openToMentor}
+              name="openToMentor"
+              checked={query.mentor}
+              onChange={handleOpenToMentorChange}
+            />
+          </div>
+        )}
 
         <div className="flex space-x-11">
           <LinkButton
