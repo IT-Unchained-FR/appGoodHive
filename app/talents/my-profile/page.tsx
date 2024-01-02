@@ -29,6 +29,7 @@ import { socialLinks } from "./constant";
 import { Button } from "@/app/components/button";
 import { useRouter } from "next/navigation";
 import { uploadFileToBucket } from "@utils/upload-file-bucket";
+import { createJobServices } from "@/app/constants/common";
 
 export default function MyProfile() {
   const imageInputValue = useRef(null);
@@ -59,6 +60,10 @@ export default function MyProfile() {
     github: "",
     stackoverflow: "",
     portfolio: "",
+    mentor: false,
+    talent: false,
+    recruiter: false,
+    status: "pending",
   });
 
   const walletAddress = useContext(AddressContext);
@@ -124,8 +129,12 @@ export default function MyProfile() {
 
     const imageUrl = await uploadFileToBucket(profileImage);
     const cvUrl = await uploadFileToBucket(cvFile);
-    const freelanceOnly = formData.get("freelance-only") === "on" ? true : false;
+    const freelanceOnly =
+      formData.get("freelance-only") === "on" ? true : false;
     const remoteOnly = formData.get("remote-only") === "on" ? true : false;
+    const talent = formData.get("talent") === "on" ? true : false;
+    const mentor = formData.get("mentor") === "on" ? true : false;
+    const recruiter = formData.get("recruiter") === "on" ? true : false;
 
     if (!cvUrl && !isUploadedCvLink) {
       setIsLoading(false);
@@ -156,6 +165,10 @@ export default function MyProfile() {
       stackoverflow: formData.get("stackoverflow"),
       portfolio: formData.get("portfolio"),
       telegram: formData.get("telegram"),
+      talent,
+      mentor,
+      recruiter,
+      status: "pending",
     };
 
     const profileResponse = await fetch("/api/talents/my-profile", {
@@ -518,6 +531,23 @@ export default function MyProfile() {
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+            <div className="flex flex-col mt-3">
+              <p className="my-4">I want to be:</p>
+              <div className="w-1/2 sm:w-full mb-5 px-3 flex justify-between">
+                {createJobServices.map((service) => {
+                  const { label, value } = service;
+                  const isChecked = profileData[value];
+                  return (
+                    <ToggleButton
+                      key={value}
+                      label={label}
+                      name={value}
+                      checked={isChecked}
+                    />
+                  );
+                })}
               </div>
             </div>
 

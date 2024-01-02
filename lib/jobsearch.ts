@@ -6,6 +6,8 @@ type FetchJobsProps = {
   name?: string;
   items: number;
   page: number;
+  recruiter?: string;
+  mentor?: string;
 };
 
 const sql = postgres(process.env.DATABASE_URL || "", {
@@ -26,6 +28,8 @@ export async function fetchJobs({
   name = "",
   items = 9,
   page = 1,
+  recruiter = "",
+  mentor = "",
 }: FetchJobsProps) {
   try {
     const countJobs = await sql`
@@ -41,6 +45,8 @@ export async function fetchJobs({
             )} OR LOWER(country) LIKE ${contains(location)})
             AND
             (LOWER(company_name) LIKE ${contains(name)})
+            ${recruiter === 'true' ? sql`AND recruiter = 'true'` : sql``}
+            ${mentor === 'true' ? sql`AND mentor = 'true'` : sql``}
         `;
 
     const count = countJobs[0].count as number;
@@ -62,6 +68,8 @@ export async function fetchJobs({
     )})
       AND
       (LOWER(company_name) LIKE ${contains(name)})
+      ${recruiter === 'true' ? sql`AND recruiter = 'true'` : sql``}
+      ${mentor === 'true' ? sql`AND mentor = 'true'` : sql``}
       LIMIT ${limit}
       OFFSET ${offset}
       `;
@@ -80,6 +88,8 @@ export async function fetchJobs({
       city: item.city,
       walletAddress: item.wallet_address,
       image_url: item.image_url,
+      mentor: item.mentor === "true",
+      recruiter: item.recruiter === "true",
     }));
 
     console.log("jobs >>", jobs);

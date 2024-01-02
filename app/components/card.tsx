@@ -27,6 +27,8 @@ interface Props {
   walletAddress?: string;
   mentor?: boolean;
   recruiter?: boolean;
+  freelancer?: boolean;
+  remote?: boolean;
 }
 
 export const Card: FC<Props> = ({
@@ -47,6 +49,8 @@ export const Card: FC<Props> = ({
   walletAddress,
   mentor,
   recruiter,
+  freelancer,
+  remote,
 }) => {
   const rate =
     budget && currency
@@ -62,6 +66,8 @@ export const Card: FC<Props> = ({
   const knowMoreLink = jobId
     ? `/companies/${walletAddress}`
     : `/talents/${walletAddress}`;
+
+  console.log("logs mara >>", freelancer, remote);
 
   return (
     <div className="box-border block p-3 mt-11 bg-white bg-blend-darken rounded-3xl shadow-[2px_7px_20px_4px_#e2e8f0]">
@@ -138,20 +144,33 @@ export const Card: FC<Props> = ({
 
         <div
           className={`flex grow ${
-            mentor || recruiter ? "justify-between" : "justify-end"
+            mentor || recruiter || freelancer
+              ? "justify-between"
+              : "justify-end"
           } items-end w-full md-2 gap-3 sm:gap-1.5 sm:flex-col sm:items-center`}
         >
-          {mentor && recruiter && (
-            <p className="text-sm text-gray-500">
-              Open to Mentors & Recruiters
+          {jobId ? (
+            <p className="text-sm text-gray-500 mb-3">
+              {mentor && recruiter
+                ? "Open to Mentors & Recruiters"
+                : mentor
+                ? "Open to Mentors"
+                : recruiter
+                ? "Open to Recruiters"
+                : ""}
+            </p>
+          ) : (
+            <p className="text-sm text-gray-500 mb-3">
+              {freelancer && remote
+                ? "Freelancing & Remote"
+                : freelancer
+                ? "Freelancing Only"
+                : remote
+                ? "Remote Only"
+                : ""}
             </p>
           )}
-          {mentor && !recruiter && (
-            <p className="text-sm text-gray-500">Open to Mentors</p>
-          )}
-          {!mentor && recruiter && (
-            <p className="text-sm text-gray-500">Open to Recruiters</p>
-          )}
+
           <Link href={{ pathname: knowMoreLink, query: { id: jobId } }}>
             <Button text="Know more" type="primary" size="small" />
           </Link>

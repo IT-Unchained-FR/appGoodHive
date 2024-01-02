@@ -29,6 +29,10 @@ export async function POST(request: Request) {
     portfolio,
     freelanceOnly,
     remoteOnly,
+    talent,
+    mentor,
+    recruiter,
+    status
   } = await request.json();
 
   const sql = postgres(process.env.DATABASE_URL || "", {
@@ -61,6 +65,10 @@ export async function POST(request: Request) {
         portfolio,
         freelance_only,
         remote_only,
+        talent,
+        mentor,
+        recruiter,
+        status,
         wallet_address
       ) VALUES (
         ${title},
@@ -84,6 +92,10 @@ export async function POST(request: Request) {
         ${portfolio},
         ${freelanceOnly},
         ${remoteOnly},
+        ${talent},
+        ${mentor},
+        ${recruiter},
+        ${status},
         ${walletAddress}
       )
       ON CONFLICT (wallet_address) DO UPDATE
@@ -109,6 +121,10 @@ export async function POST(request: Request) {
         portfolio = ${portfolio},
         freelance_only = ${freelanceOnly},
         remote_only = ${remoteOnly},
+        talent = ${talent},
+        mentor = ${mentor},
+        recruiter = ${recruiter},
+        status = ${status},
         wallet_address = ${walletAddress};
     `;
 
