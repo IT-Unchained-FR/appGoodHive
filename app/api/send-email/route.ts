@@ -5,13 +5,15 @@ import JobAppliedTemplate from "@/app/email-templates/job-applied";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: Request) {
-  const { name, email, jobtitle, userProfile } = await request.json();
+  const { name, email, userEmail, coverLetter, jobtitle, userProfile } = await request.json();
   try {
     const { data, error } = await resend.emails.send({
       from: "GoodHive <no-reply@goodhive.io>",
       to: [email],
       subject: `Goodhive - ${name} applied for "${jobtitle}"`,
-      react: JobAppliedTemplate({ name, userProfile }) as React.ReactElement,
+      cc: userEmail,
+      bcc: "contact@goodhive.io",
+      react: JobAppliedTemplate({ name, userProfile, coverLetter }) as React.ReactElement,
     });
 
     if (error) {
