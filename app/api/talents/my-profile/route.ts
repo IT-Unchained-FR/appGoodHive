@@ -32,7 +32,9 @@ export async function POST(request: Request) {
     talent,
     mentor,
     recruiter,
-    status
+    talentStatus,
+    mentorStatus,
+    recruiterStatus,
   } = await request.json();
 
   const sql = postgres(process.env.DATABASE_URL || "", {
@@ -68,7 +70,9 @@ export async function POST(request: Request) {
         talent,
         mentor,
         recruiter,
-        status,
+        talent_status,
+        mentor_status,
+        recruiter_status,
         wallet_address
       ) VALUES (
         ${title},
@@ -95,7 +99,9 @@ export async function POST(request: Request) {
         ${talent},
         ${mentor},
         ${recruiter},
-        ${status},
+        ${talentStatus},
+        ${mentorStatus},
+        ${recruiterStatus},
         ${walletAddress}
       )
       ON CONFLICT (wallet_address) DO UPDATE
@@ -124,7 +130,9 @@ export async function POST(request: Request) {
         talent = ${talent},
         mentor = ${mentor},
         recruiter = ${recruiter},
-        status = ${status},
+        talent_status = ${talentStatus},
+        mentor_status = ${mentorStatus},
+        recruiter_status = ${recruiterStatus},
         wallet_address = ${walletAddress};
     `;
 
