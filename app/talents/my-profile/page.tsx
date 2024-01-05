@@ -63,7 +63,9 @@ export default function MyProfile() {
     mentor: false,
     talent: false,
     recruiter: false,
-    status: "pending",
+    talent_status: null,
+    mentor_status: null,
+    recruiter_status: null,
   });
 
   const walletAddress = useContext(AddressContext);
@@ -168,7 +170,10 @@ export default function MyProfile() {
       talent,
       mentor,
       recruiter,
-      status: "pending",
+      talentStatus: profileData.talent_status || "pending",
+      mentorStatus: profileData.mentor_status || mentor ? "pending" : null,
+      recruiterStatus:
+        profileData.recruiter_status || recruiter ? "pending" : null,
     };
 
     const profileResponse = await fetch("/api/talents/my-profile", {
@@ -193,19 +198,39 @@ export default function MyProfile() {
     }
   };
 
+  if (profileData.talent_status === "pending") {
+    return (
+      <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+        🚀 Your profile is pending approval. It will be live soon.
+      </p>
+    );
+  }
+
   return (
     <main className="container mx-auto">
       <h1 className="my-5 text-2xl border-b-[1px] border-slate-300 pb-2">
         My Profile
       </h1>
-      {!walletAddress && (
+      {!walletAddress ? (
         <div>
           <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
             🚀 To get started, please connect your wallet. This will enable you
             to create or save your profile. Thanks!
           </p>
         </div>
-      )}
+      ) : profileData.talent_status === "approved" &&
+        profileData.recruiter_status === "pending" ? (
+        <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+          🚀 Your profile is approved as a talent but pending approval as a
+          recruiter
+        </p>
+      ) : profileData.talent_status === "approved" &&
+        profileData.mentor_status === "pending" ? (
+        <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+          🚀 Your profile is approved as a talent but pending approval as a
+          mentor
+        </p>
+      ) : null}
       <section>
         <form onSubmit={handleSubmit}>
           <div className="flex flex-col items-center justify-center w-full mt-10">

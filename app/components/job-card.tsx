@@ -9,6 +9,7 @@ import { jobTypes, projectDuration } from "@constants/common";
 import { AddressContext } from "./context";
 import { Button } from "./button";
 import toast from "react-hot-toast";
+import { CoverLetterModal } from "@components/cover-letter-modal";
 
 interface Props {
   id: number;
@@ -55,17 +56,23 @@ export const JobCard: FC<Props> = ({
     (job) => job.value === duration
   )?.label;
   const [isLoading, setIsLoading] = useState(false);
+  const [isCoverLetterModal, setIsCoverLetterModal] = useState(false);
 
   const userWalletAddress = useContext(AddressContext);
   const isOwner = walletAddress === userWalletAddress;
 
-  const onApplyHandler = async () => {
+  const onSubmitHandler = async (coverLetter: string) => {
+    if(!coverLetter) {
+      toast.error("Please enter your cover letter!");
+      return;
+    }
     if (!userWalletAddress) {
       toast.error("Please connect your wallet first!");
       return;
     }
     try {
       setIsLoading(true);
+      setIsCoverLetterModal(false);
       const userDataResponse = await fetch(
         `/api/talents/my-profile?walletAddress=${userWalletAddress}`
       );
@@ -81,6 +88,8 @@ export const JobCard: FC<Props> = ({
           name: userProfile?.first_name,
           email: companyEmail,
           jobtitle: title,
+          userEmail: userProfile?.email,
+          coverLetter,
           userProfile: `${window.location.origin}/talents/${userWalletAddress}`,
         }),
         headers: {
@@ -97,6 +106,14 @@ export const JobCard: FC<Props> = ({
       setIsLoading(false);
       toast.error("Something went wrong!");
     }
+  };
+
+  const onApplyClickHandler = () => {
+    setIsCoverLetterModal(true);
+  };
+
+  const onCoverLetterModalCloseHandler = () => {
+    setIsCoverLetterModal(false);
   };
 
   return (
@@ -136,9 +153,7 @@ export const JobCard: FC<Props> = ({
               <p className="text-base text-gray-600">
                 {typeEngagementMsg} - {budget} USD {projectType}
               </p>
-              <p className="text-base text-gray-600">
-                {durationMsg}
-              </p>
+              <p className="text-base text-gray-600">{durationMsg}</p>
               <div className="flex flex-row">
                 <p className="text-base text-gray-600 mb-5">
                   {city}, {country}
@@ -190,13 +205,19 @@ export const JobCard: FC<Props> = ({
                   type="primary"
                   size="small"
                   loading={isLoading}
-                  onClickHandler={onApplyHandler}
+                  onClickHandler={onApplyClickHandler}
                 />
               )}
             </div>
           </div>
         </div>
       </div>
+      {isCoverLetterModal && (
+        <CoverLetterModal
+          onSubmitHandler={onSubmitHandler}
+          onClose={onCoverLetterModalCloseHandler}
+        />
+      )}
     </div>
   );
 };

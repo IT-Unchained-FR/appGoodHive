@@ -41,7 +41,6 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
     talent,
     mentor,
     recruiter,
-    status,
   } = profileData;
 
   const availabilityStatus = generateAvailabilityStatus(
@@ -50,14 +49,6 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
   );
 
   const contactUrl = email ? `mailto:${email}` : `https://t.me/${telegram}`;
-
-  if (status && status === "pending") {
-    return (
-      <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
-        🚀 Your profile is pending approval. It will be live soon.
-      </p>
-    );
-  }
 
   return (
     <main className="relative pt-16">

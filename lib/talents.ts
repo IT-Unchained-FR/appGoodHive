@@ -43,9 +43,7 @@ export async function fetchTalents({
     AND
       (LOWER(first_name) LIKE ${contains(
         name
-      )} OR LOWER(last_name) LIKE ${contains(
-        name
-      )})
+      )} OR LOWER(last_name) LIKE ${contains(name)})
     ${freelancer === "true" ? sql`AND NOT freelance_only` : sql``}
     ${remote === "true" ? sql`AND NOT remote_only` : sql``}
     `;
@@ -69,9 +67,7 @@ export async function fetchTalents({
       AND
       (LOWER(first_name) LIKE ${contains(
         name
-      )} OR LOWER(last_name) LIKE ${contains(
-        name
-      )})
+      )} OR LOWER(last_name) LIKE ${contains(name)})
       ${freelancer === "true" ? sql`AND freelance_only` : sql``}
       ${remote === "true" ? sql`AND remote_only` : sql``}
       LIMIT ${limit}
@@ -79,28 +75,33 @@ export async function fetchTalents({
       `;
 
     console.log("talentsCursor>> ", talentsCursor, freelancer === "true");
-    const talents: Talent[] = talentsCursor.map((talent) => {
-      return {
-        title: talent.title,
-        description: talent.description,
-        firstName: talent.first_name,
-        lastName: talent.last_name,
-        country: talent.country,
-        city: talent.city,
-        phoneCountryCode: talent.phone_country_code,
-        phoneNumber: talent.phone_number,
-        email: talent.email,
-        aboutWork: talent.about_work,
-        telegram: talent.telegram,
-        rate: talent.rate,
-        currency: talent.currency,
-        skills: talent.skills.split(","),
-        imageUrl: talent.image_url,
-        walletAddress: talent.wallet_address,
-        freelancer: talent.freelance_only ? true : false,
-        remote: talent.remote_only ? true : false,
-      };
-    });
+    const talents: Talent[] = talentsCursor
+      .filter(
+        (talent) =>
+          talent.talent_status === "approved" || talent.talent_status === null
+      )
+      .map((talent) => {
+        return {
+          title: talent.title,
+          description: talent.description,
+          firstName: talent.first_name,
+          lastName: talent.last_name,
+          country: talent.country,
+          city: talent.city,
+          phoneCountryCode: talent.phone_country_code,
+          phoneNumber: talent.phone_number,
+          email: talent.email,
+          aboutWork: talent.about_work,
+          telegram: talent.telegram,
+          rate: talent.rate,
+          currency: talent.currency,
+          skills: talent.skills.split(","),
+          imageUrl: talent.image_url,
+          walletAddress: talent.wallet_address,
+          freelancer: talent.freelance_only ? true : false,
+          remote: talent.remote_only ? true : false,
+        };
+      });
 
     return { talents, count };
   } catch (error) {
