@@ -24,8 +24,9 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
     name: "",
     recruiter: false,
     mentor: false,
-    freelancer: false,
-    remote: false,
+    onlyTalent: false,
+    onlyMentor: false,
+    onlyRecruiter: false,
   });
 
   const { isSearchTalent = false } = props;
@@ -59,17 +60,23 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
     setQuery((q) => ({ ...q, mentor: event.target.checked }));
   };
 
-  const handleExcludeFreelancerChange = (
+  const handleOnlyTalentChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    setQuery((q) => ({ ...q, freelancer: event.target.checked }));
-  };
+    setQuery((q) => ({ ...q, onlyTalent: event.target.checked }));
+  }
 
-  const handleExcludeRemoteChange = (
+  const handleOnlyMentorChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    setQuery((q) => ({ ...q, remote: event.target.checked }));
-  };
+    setQuery((q) => ({ ...q, onlyMentor: event.target.checked }));
+  }
+
+  const handleOnlyRecruiterChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setQuery((q) => ({ ...q, onlyRecruiter: event.target.checked }));
+  }
 
   return (
     <div className="mx-5">
@@ -104,18 +111,24 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
         />
 
         {isSearchTalent ? (
-          <div className="flex gap-5">
+          <div className="flex gap-5 my-5 px-3">
             <ToggleButton
-              label={TRANSLATIONS.excludeFreelancer}
-              name="excludeFreelancer"
-              checked={query.freelancer}
-              onChange={handleExcludeFreelancerChange}
+              label={TRANSLATIONS.onlyTalent}
+              name="onlyTalent"
+              checked={query.onlyTalent}
+              onChange={handleOnlyTalentChange}
             />
             <ToggleButton
-              label={TRANSLATIONS.excludeRemote}
-              name="excludeRemote"
-              checked={query.remote}
-              onChange={handleExcludeRemoteChange}
+              label={TRANSLATIONS.onlyMentor}
+              name="onlyMentor"
+              checked={query.onlyMentor}
+              onChange={handleOnlyMentorChange}
+            />
+            <ToggleButton
+              label={TRANSLATIONS.onlyRecruiter}
+              name="onlyRecruiter"
+              checked={query.onlyRecruiter}
+              onChange={handleOnlyRecruiterChange}
             />
           </div>
         ) : (
