@@ -7,8 +7,9 @@ export const TRANSLATIONS = {
   searchByCompanyName: "Search by Company Name",
   openToRecruiter: "Open to Recruiter",
   openToMentor: "Open to Mentor",
-  excludeFreelancer: "Exclude Freelancer",
-  excludeRemote: "Exclude Remote",
+  onlyTalent: "Only Talent",
+  onlyMentor: "Only Mentor",
+  onlyRecruiter: "Only Recruiter",
 };
 
 export const InputClasses = [

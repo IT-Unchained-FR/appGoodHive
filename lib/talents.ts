@@ -17,16 +17,18 @@ export async function fetchTalents({
   name = "",
   items = 9,
   page = 1,
-  freelancer = "",
-  remote = "",
+  onlyTalent = "",
+  onlyMentor = "",
+  onlyRecruiter = "",
 }: {
   search?: string;
   location?: string;
   name?: string;
   items: number;
   page: number;
-  freelancer?: string;
-  remote?: string;
+  onlyTalent?: string;
+  onlyMentor?: string;
+  onlyRecruiter?: string;
 }) {
   try {
     const countCursor = await sql`
@@ -34,18 +36,19 @@ export async function fetchTalents({
     FROM goodhive.users
     WHERE
       (LOWER(title) LIKE ${contains(search)} OR LOWER(skills) LIKE ${contains(
-      search
-    )})
+        search
+      )})
       AND
       (LOWER(city) LIKE ${contains(location)} OR LOWER(country) LIKE ${contains(
-      location
-    )})
-    AND
+        location
+      )})
+      AND
       (LOWER(first_name) LIKE ${contains(
         name
       )} OR LOWER(last_name) LIKE ${contains(name)})
-    ${freelancer === "true" ? sql`AND NOT freelance_only` : sql``}
-    ${remote === "true" ? sql`AND NOT remote_only` : sql``}
+      ${onlyTalent === "true" ? sql`AND talent_status = 'approved'` : sql``}
+      ${onlyMentor === "true" ? sql`AND mentor_status = 'approved'` : sql``}
+      ${onlyRecruiter === "true" ? sql`AND recruiter_status = 'approved'` : sql``}
     `;
 
     const count = countCursor[0].count as number;
@@ -68,13 +71,14 @@ export async function fetchTalents({
       (LOWER(first_name) LIKE ${contains(
         name
       )} OR LOWER(last_name) LIKE ${contains(name)})
-      ${freelancer === "true" ? sql`AND freelance_only` : sql``}
-      ${remote === "true" ? sql`AND remote_only` : sql``}
+      ${onlyTalent === "true" ? sql`AND talent_status = 'approved'` : sql``}
+      ${onlyMentor === "true" ? sql`AND mentor_status = 'approved'` : sql``}
+      ${onlyRecruiter === "true" ? sql`AND recruiter_status = 'approved'` : sql``}
       LIMIT ${limit}
       OFFSET ${offset}
       `;
 
-    console.log("talentsCursor>> ", talentsCursor, freelancer === "true");
+    
     const talents: Talent[] = talentsCursor
       .filter(
         (talent) =>
