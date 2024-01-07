@@ -8,6 +8,7 @@ export type SearchQueryProps = {
     name: string;
     recruiter: boolean;
     mentor: boolean;
-    freelancer: boolean;
-    remote: boolean;
+    onlyTalent: boolean;
+    onlyMentor: boolean;
+    onlyRecruiter: boolean;
 }
