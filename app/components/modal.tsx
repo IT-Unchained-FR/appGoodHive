@@ -28,7 +28,7 @@ const Modal = ({ open, onClose, children }: ModalProps) => {
 
   return (
     <div
-      className={`fixed top-0 left-0 w-full h-full z-[99999999] bg-black bg-opacity-30 flex items-center justify-center ${
+      className={`fixed top-0 left-0 w-[100vw] h-[100vh] z-[99999999] rounded bg-black bg-opacity-30 flex items-center justify-center ${
         open ? "block" : "hidden"
       }`}
       onClick={handleOutsideClick}
