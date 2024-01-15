@@ -26,9 +26,9 @@ import {
 import { AutoSuggestInput } from "@components/autosuggest-input";
 import { ToggleButton } from "@/app/components/toggle-button";
 import { calculateJobCreateFees } from "@/app/utils/calculate-job-create-fees";
-import { Button } from "@/app/components/button";
-import Modal from "@/app/components/modal";
 import { useCreateJob } from "@/app/hooks/CreateJob";
+import { PopupModal } from "./PopupModal";
+import { polygonTestnetTokens } from "@/app/constants/token-list/polygon";
 
 export default function CreateJob() {
   const [isLoading, setIsLoading] = useState(false);
@@ -48,9 +48,6 @@ export default function CreateJob() {
   const [budget, setBudget] = useState("");
   const [isPopupModalOpen, setIsPopupModalOpen] = useState(false);
   const [popupModalType, setPopupModalType] = useState("");
-  const [provisionAmount, setProvisionAmount] = useState(0);
-  const [partialAmountSelected, setPartialAmountSelected] = useState(false);
-  const [withdrawAmount, setWithdrawAmount] = useState(0);
 
   const [jobServices, setJobServices] = useState({
     talent: true,
@@ -60,61 +57,76 @@ export default function CreateJob() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const id = searchParams.get("id");
+  const id = Number(searchParams.get("id"));
+  const addFunds = searchParams.get("addFunds");
   const walletAddress = useContext(AddressContext);
 
-  const { createJobTx, withdrawFundsTx, checkBalanceTx } = useCreateJob({
-    walletAddress,
-  });
+  const { createJobTx, withdrawFundsTx, checkBalanceTx, transferFundsTx } =
+    useCreateJob({
+      walletAddress,
+    });
 
   const handlePopupModal = (type: string) => {
     setPopupModalType(type);
     setIsPopupModalOpen(true);
   };
 
-  const onProvisionFundsClick = () => {
-    handlePopupModal("provision-funds");
-    console.log("provision funds");
-  };
-
-  const handleProvisionFunds = () => {
-    if (Number(provisionAmount) <= 0) {
-      toast.error("Please enter a valid amount");
-      return;
+  const onPopupModalSubmit = (
+    amount: number,
+    type: string,
+    toAddress: string | null
+  ) => {
+    switch (type) {
+      case "addFunds":
+        toast.loading("Adding funds...");
+        createJobTx(id, amount);
+        break;
+      case "withdraw":
+        toast.loading("Withdrawing funds...");
+        withdrawFundsTx(id, amount);
+        break;
+      case "transfer":
+        if (!toAddress) {
+          toast.error("Please enter a valid transfer address!");
+          return;
+        }
+        toast.loading("Transferring funds...");
+        transferFundsTx(id, amount, toAddress);
+        break;
     }
-    console.log("provision funds", Number(provisionAmount));
-    createJobTx(Number(id), Number(provisionAmount));
-  };
-
-  const handleWithdrawFunds = () => {
-    if (withdrawAmount < 1) {
-      toast.error("Please enter a valid amount");
-      return;
-    }
-    if (jobData.escrow_amount && !partialAmountSelected) {
-      console.log("full amount", Number(jobData.escrow_amount));
-    }
-    console.log("withdraw funds", withdrawAmount);
   };
 
   const handleCheckBalance = async () => {
-    const balance = await checkBalanceTx(Number(id));
+    const balance = await checkBalanceTx(id);
     if (balance) {
       toast.success(`Balance: ${balance} ETH`);
+    }
+  };
+
+  const handleCancelJob = async () => {
+    const balance = await checkBalanceTx(id);
+    if (balance) {
+      toast.error(`Please withdraw funds before cancelling the job!`);
+      return;
+    }
+    const response = await fetch(`/api/companies/delete-job`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id }),
+    });
+    if (response.ok) {
+      toast.success("Job cancelled!");
+      router.push(`/companies/${walletAddress}`);
+    } else {
+      toast.error("Something went wrong!");
     }
   };
 
   const handlePopupModalClose = () => {
     setIsPopupModalOpen(false);
     setPopupModalType("");
-  };
-
-  const handleProvisionAmountChange = (e: any) => {
-    setProvisionAmount(e.target.value);
-  };
-
-  const handleWithdrawAmountChange = (e: any) => {
-    setWithdrawAmount(e.target.value);
   };
 
   const onBudgetChange = (e: any) => {
@@ -124,9 +136,8 @@ export default function CreateJob() {
   const totalFees = calculateJobCreateFees(projectType, budget, jobServices);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    console.log("submitting...");
     e.preventDefault();
-    setIsLoading(true);
+    toast.loading("Saving...");
 
     const formData = new FormData(e.currentTarget);
 
@@ -168,13 +179,18 @@ export default function CreateJob() {
       body: JSON.stringify(dataForm),
     });
 
-    setIsLoading(false);
+    const savedJobData = await jobResponse.json();
 
     if (!jobResponse.ok) {
       toast.error("Something went wrong!");
     } else {
-      toast.success("Job Offer Saved!");
-      router.push(`/companies/${walletAddress}`);
+      if (id) toast.success("Job Offer Saved!");
+      else {
+        toast.success("Job Offer Created! Now add some funds to it.");
+        router.push(
+          `/companies/create-job?id=${savedJobData.jobId}&addFunds=true`
+        );
+      }
     }
   };
 
@@ -229,7 +245,10 @@ export default function CreateJob() {
     if (id) {
       fetchJobData();
     }
-  }, [id]);
+    if (id && addFunds === "true") {
+      handlePopupModal("addFunds");
+    }
+  }, [id, addFunds]);
 
   if (!walletAddress) {
     return (
@@ -468,7 +487,7 @@ export default function CreateJob() {
               </p>
             ) : null}
             <div className="flex gap-4 mt-3"></div>
-            {/* <div className="flex flex-col gap-4 mt-4 sm:flex-row">
+            <div className="flex flex-col gap-4 mt-4 sm:flex-row">
               <div className="flex sm:w-1/4">
                 <SelectInput
                   labelText="Chain"
@@ -497,30 +516,63 @@ export default function CreateJob() {
                     selectedChain?.value === "ethereum"
                       ? ethereumTokens
                       : selectedChain?.value === "polygon"
-                      ? polygonTokens
+                      ? polygonTestnetTokens
                       : selectedChain?.value === "gnosis-chain"
                       ? gnosisChainTokens
                       : []
                   }
                 />
               </div>
-            </div> */}
+            </div>
 
             <div className="mt-10 w-full flex justify-end gap-4 text-right">
-              <button
-                className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
-                type="button"
-                onClick={handleCheckBalance}
-              >
-                Check Balance
-              </button>
-              <button
-                className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
-                type="button"
-                onClick={onProvisionFundsClick}
-              >
-                Provision the funds
-              </button>
+              {id && jobData?.escrowAmount && (
+                <button
+                  className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
+                  type="button"
+                  onClick={() => handlePopupModal("withdraw")}
+                >
+                  Withdraw Funds
+                </button>
+              )}
+
+              {id && jobData?.escrowAmount && (
+                <button
+                  className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
+                  type="button"
+                  onClick={handleCheckBalance}
+                >
+                  Check Job Balance
+                </button>
+              )}
+              {id && jobData?.escrowAmount && (
+                <button
+                  className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
+                  type="button"
+                  onClick={() => handlePopupModal("transfer")}
+                >
+                  Pay the Fees
+                </button>
+              )}
+              {id && (
+                <button
+                  className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
+                  type="button"
+                  onClick={() => handlePopupModal("addFunds")}
+                >
+                  Provision Funds
+                </button>
+              )}
+              {id && (
+                <button
+                  className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
+                  type="button"
+                  onClick={handleCancelJob}
+                >
+                  Cancel Job
+                </button>
+              )}
+
               {isLoading ? (
                 <button
                   className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full opacity-50 cursor-not-allowed transition duration-150 ease-in-out"
@@ -541,114 +593,13 @@ export default function CreateJob() {
           </div>
         </form>
       </section>
-      <Modal open={isPopupModalOpen} onClose={handlePopupModalClose}>
-        {popupModalType === "provision-funds" ? (
-          <div className="relative bg-white w-full h-full rounded shadow-lg border-0 p-0">
-            <div className="flex flex-col items-center justify-center p-5">
-              <div className="flex justify-between w-full">
-                <h3 className="text-2xl font-semibold text-black">
-                  Provision the funds
-                </h3>
-                <button
-                  type="button"
-                  onClick={handlePopupModalClose}
-                  className="w-6 text-black bg-gray-400 rounded-full"
-                >
-                  &#10005;
-                </button>
-              </div>
-              <div className="flex flex-col items-center justify-center mt-5">
-                <p className="text-base font-normal text-gray-600">
-                  Please put some provision funds to create a job offer. You
-                  will be charged gas fee on top of your budget.
-                </p>
-                <div className="flex flex-col items-center justify-center mt-5">
-                  {/* Input field for provision amount */}
-                  <input
-                    className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                    type="number"
-                    name="provisionAmount"
-                    required
-                    maxLength={100}
-                    placeholder="Enter the amount"
-                    onChange={handleProvisionAmountChange}
-                  />
-                  <button
-                    className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
-                    type="submit"
-                    onClick={handleProvisionFunds}
-                  >
-                    Submit
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : popupModalType === "withdraw-funds" ? (
-          <div className="relative bg-white w-full h-full rounded shadow-lg border-0 p-0">
-            <div className="flex flex-col items-center justify-center p-5">
-              <div className="flex justify-between w-full">
-                <h3 className="text-2xl font-semibold text-black">
-                  Withdraw the funds
-                </h3>
-                <button
-                  type="button"
-                  onClick={handlePopupModalClose}
-                  className="w-6 text-black bg-gray-400 rounded-full"
-                >
-                  &#10005;
-                </button>
-              </div>
-              <div className="flex flex-col items-center justify-center mt-5">
-                <div className="flex flex-col items-center justify-center mt-5">
-                  {/* Will be 2 checkbox one is Full amount another partial amount if partial amount is selected then there will be a input field for amount */}
-
-                  <div>
-                    <input
-                      type="checkbox"
-                      id="fullAmount"
-                      name="amount"
-                      value="Full"
-                    />
-                    <label htmlFor="fullAmount">Full Amount</label>
-                  </div>
-                  <div>
-                    <input
-                      type="checkbox"
-                      id="partialAmount"
-                      name="amount"
-                      value="Partial"
-                      onClick={() =>
-                        setPartialAmountSelected(!partialAmountSelected)
-                      }
-                    />
-                    <label htmlFor="partialAmount">Partial Amount</label>
-                  </div>
-                  {partialAmountSelected && (
-                    <div>
-                      <label htmlFor="amount">Amount:</label>
-                      <input
-                        type="number"
-                        id="amount"
-                        name="amount"
-                        onChange={handleWithdrawAmountChange}
-                      />
-                    </div>
-                  )}
-
-                  <button
-                    className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
-                    type="submit"
-                    onClick={handleWithdrawFunds}
-                  >
-                    Submit
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : null}
-      </Modal>
+      <PopupModal
+        open={isPopupModalOpen}
+        onClose={handlePopupModalClose}
+        jobId={id}
+        type={popupModalType}
+        onSubmit={onPopupModalSubmit}
+      />
     </main>
   );
 }

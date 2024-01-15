@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
       talent: item.talent,
       recruiter: item.recruiter,
       mentor: item.mentor,
+      escrowAmount: item.escrow_amount,
       walletAddress: item.wallet_address,
     }));
 
