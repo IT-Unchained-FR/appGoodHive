@@ -71,27 +71,42 @@ export default function CreateJob() {
     setIsPopupModalOpen(true);
   };
 
-  const onPopupModalSubmit = (
+  const onPopupModalSubmit = async (
     amount: number,
     type: string,
     toAddress: string | null
   ) => {
     switch (type) {
       case "addFunds":
-        toast.loading("Adding funds...");
-        createJobTx(id, amount);
+        const fundsRes = createJobTx(id, amount);
+        toast.promise(fundsRes, {
+          loading: "Adding funds...",
+          success: "Funds added successfully!",
+          error: "Error adding funds!",
+        });
+        handlePopupModalClose();
         break;
       case "withdraw":
-        toast.loading("Withdrawing funds...");
-        withdrawFundsTx(id, amount);
+        const WithdrawRes = withdrawFundsTx(id, amount);
+        toast.promise(WithdrawRes, {
+          loading: "Withdrawing funds...",
+          success: "Funds withdrawn successfully!",
+          error: "Error withdrawing funds!",
+        });
+        handlePopupModalClose();
         break;
       case "transfer":
         if (!toAddress) {
           toast.error("Please enter a valid transfer address!");
           return;
         }
-        toast.loading("Transferring funds...");
-        transferFundsTx(id, amount, toAddress);
+        const transferRes = transferFundsTx(id, amount, toAddress);
+        toast.promise(transferRes, {
+          loading: "Transferring funds...",
+          success: "Funds transferred successfully!",
+          error: "Error transferring funds!",
+        });
+        handlePopupModalClose();
         break;
     }
   };
@@ -105,10 +120,12 @@ export default function CreateJob() {
 
   const handleCancelJob = async () => {
     const balance = await checkBalanceTx(id);
-    if (balance) {
-      toast.error(`Please withdraw funds before cancelling the job!`);
+    console.log("balance >>", balance);
+    if (Number(balance) > 0) {
+      toast.error(`Please withdraw all funds before cancelling the job!`);
       return;
     }
+    toast.loading("Cancelling...", { duration: 2000 });
     const response = await fetch(`/api/companies/delete-job`, {
       method: "POST",
       headers: {
@@ -121,6 +138,7 @@ export default function CreateJob() {
       router.push(`/companies/${walletAddress}`);
     } else {
       toast.error("Something went wrong!");
+      window.location.reload();
     }
   };
 
@@ -129,7 +147,7 @@ export default function CreateJob() {
     setPopupModalType("");
   };
 
-  const onBudgetChange = (e: any) => {
+  const onBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setBudget(e.target.value);
   };
 
@@ -137,7 +155,7 @@ export default function CreateJob() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    toast.loading("Saving...");
+    toast.loading("Saving...", { duration: 2000 });
 
     const formData = new FormData(e.currentTarget);
 
@@ -184,7 +202,10 @@ export default function CreateJob() {
     if (!jobResponse.ok) {
       toast.error("Something went wrong!");
     } else {
-      if (id) toast.success("Job Offer Saved!");
+      if (id) {
+        toast.success("Job Offer Saved!");
+        router.push(`/companies/${walletAddress}`);
+      }
       else {
         toast.success("Job Offer Created! Now add some funds to it.");
         router.push(
@@ -487,8 +508,8 @@ export default function CreateJob() {
               </p>
             ) : null}
             <div className="flex gap-4 mt-3"></div>
-            <div className="flex flex-col gap-4 mt-4 sm:flex-row">
-              <div className="flex sm:w-1/4">
+            <div className="flex gap-4 mt-4">
+              <div className="flex-1">
                 <SelectInput
                   labelText="Chain"
                   name="chain"
@@ -504,7 +525,7 @@ export default function CreateJob() {
                   }
                 />
               </div>
-              <div className="flex sm:w-3/4">
+              <div className="flex-1">
                 <SearchSelectInput
                   labelText="Currency"
                   name="currency"
@@ -525,7 +546,7 @@ export default function CreateJob() {
               </div>
             </div>
 
-            <div className="mt-10 w-full flex justify-end gap-4 text-right">
+            <div className="mt-12 mb-8 w-full flex justify-end gap-4 text-right">
               {id && jobData?.escrowAmount && (
                 <button
                   className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"

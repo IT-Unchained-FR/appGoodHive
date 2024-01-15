@@ -3,7 +3,7 @@ export const generateContent = (type: string) => {
     case "addFunds":
       return {
         title: "Add Funds",
-        description: "Enter the amount you want to add to your job",
+        description: "Enter the amount you want to add for your job",
         buttonText: "Add Funds",
       };
     case "withdraw":
