@@ -22,7 +22,7 @@ interface Props {
   description: string;
   skills: string[];
   buttonText: string;
-  escrowAmount?: BigNumberish;
+  escrowAmount?: string;
   escrowCurrency?: string;
   walletAddress?: string;
   mentor?: boolean;
@@ -108,9 +108,11 @@ export const Card: FC<Props> = ({
           </div>
           <div className="flex flex-col items-end pt-2 grow">
             <div className="flex mb-1">
-              <div className="relative w-6 mr-2 h-6">
-                <Image alt="balance" src="/icons/money.svg" fill />
-              </div>
+              {jobId && escrowAmount && (
+                <div className="relative w-6 mr-2 h-6">
+                  <Image alt="balance" src="/icons/money.svg" fill />
+                </div>
+              )}
               <div className="relative h-4 w-6">
                 <Image src={countryFlag} alt="country" fill />
               </div>
@@ -120,11 +122,11 @@ export const Card: FC<Props> = ({
             </p>
             <div className="flex space-between">
               <div className="text-xs font-bold">{rate}</div>
-              {!!escrowAmount && (
+              {/* {!!escrowAmount && (
                 <div>
                   {escrowAmount?.toString()} {escrowCurrency}
                 </div>
-              )}
+              )} */}
             </div>
           </div>
         </div>

@@ -2,14 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { CoverLetterModal } from "@components/cover-letter-modal";
+import toast from "react-hot-toast";
 
-import { FC, useContext, useState } from "react";
+import { useCreateJob } from "../hooks/CreateJob";
+import { FC, useContext, useState, useEffect } from "react";
 import { generateJobTypeEngage } from "@utils/generate-job-type-engage";
 import { jobTypes, projectDuration } from "@constants/common";
 import { AddressContext } from "./context";
 import { Button } from "./button";
-import toast from "react-hot-toast";
-import { CoverLetterModal } from "@components/cover-letter-modal";
 
 interface Props {
   id: number;
@@ -57,12 +58,16 @@ export const JobCard: FC<Props> = ({
   )?.label;
   const [isLoading, setIsLoading] = useState(false);
   const [isCoverLetterModal, setIsCoverLetterModal] = useState(false);
+  const [escrowBalance, setEscrowBalance] = useState("0.00");
 
   const userWalletAddress = useContext(AddressContext);
+  const { checkBalanceTx } = useCreateJob({
+    walletAddress: userWalletAddress,
+  });
   const isOwner = walletAddress === userWalletAddress;
 
   const onSubmitHandler = async (coverLetter: string) => {
-    if(!coverLetter) {
+    if (!coverLetter) {
       toast.error("Please enter your cover letter!");
       return;
     }
@@ -116,6 +121,14 @@ export const JobCard: FC<Props> = ({
     setIsCoverLetterModal(false);
   };
 
+  useEffect(() => {
+    const getBalance = async () => {
+      const balance = await checkBalanceTx(id);
+      setEscrowBalance(balance);
+    };
+    getBalance();
+  }, [id]);
+
   return (
     <div className="mt-11 ">
       <div className="block relative p-6 bg-blend-darken rounded-3xl box-border border-r-2 border-l-2 border-radius  bg-white shadow-[2px_7px_20px_4px_#e2e8f0]">
@@ -124,7 +137,7 @@ export const JobCard: FC<Props> = ({
         >
           <p className="text-base mb-2">• {jobTypeMsg}</p>
           <div className="flex gap-2">
-            <p className="text-sm">2500$</p>
+            <p className="text-sm">{escrowBalance}</p>
             <div className="relative mt-1 h-3 w-5 mb-4">
               <Image src={countryFlag} alt="country" fill />
             </div>
