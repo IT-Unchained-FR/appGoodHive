@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { WagmiConfig, createConfig, configureChains, mainnet } from "wagmi";
+import { WagmiConfig, createConfig, configureChains } from "wagmi";
+import { polygonMumbai } from "wagmi/chains";
+import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
 import { publicProvider } from "wagmi/providers/public";
 import {
   getDefaultWallets,
@@ -27,8 +29,12 @@ import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
-  [mainnet],
-  [publicProvider()]
+  [polygonMumbai],
+  [jsonRpcProvider({
+    rpc: () => ({
+      http: "https://polygon-mumbai.infura.io/v3/515aadd2e166439faf967dc2aee45a97",
+    })
+  })]
 );
 
 const projectId = "c1de7de6d9dac11ced03c7516792c20c";
