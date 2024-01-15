@@ -12,6 +12,9 @@ export const jobTypes = [
   { value: "onsite", label: "On-site" },
 ];
 
+export const GoodhiveContractAddress =
+  process.env.NEXT_PUBLIC_GOODHIVE_POLYGON_MUMBAI_CONTRACT_ADDRESS as string;
+
 export const projectDuration = [
   {
     value: "lessThanSevenDays",
