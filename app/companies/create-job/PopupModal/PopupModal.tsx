@@ -32,10 +32,10 @@ export const PopupModal: FC<AddFundsModalProps> = (props) => {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setTransferAddress(event.target.value);
-  }
+  };
 
-  const handleProvisionFunds = async () => {
-    if (amount <= 0) {
+  const handleSubmit = async () => {
+    if (!isFullAmount && amount <= 0) {
       toast.error("Please enter a valid amount!");
       return;
     }
@@ -45,6 +45,8 @@ export const PopupModal: FC<AddFundsModalProps> = (props) => {
       else if (contractBalance < amount) {
         toast.error("Insufficient funds!");
         return;
+      } else {
+        onSubmit(amount, type, null);
       }
     } else if (type === "transfer") {
       const contractBalance = await checkBalanceTx(jobId);
@@ -52,6 +54,8 @@ export const PopupModal: FC<AddFundsModalProps> = (props) => {
       else if (contractBalance < amount) {
         toast.error("Insufficient funds!");
         return;
+      } else {
+        onSubmit(amount, type, transferAddress);
       }
     } else {
       onSubmit(amount, type, null);
@@ -73,10 +77,24 @@ export const PopupModal: FC<AddFundsModalProps> = (props) => {
             </button>
           </div>
           <div className="flex flex-col items-center justify-center mt-5">
-            <p className="text-base font-normal text-gray-600">{description}</p>
+            <p className="mb-3 text-base font-normal text-gray-600">
+              {description}
+            </p>
             <div className="flex flex-col items-center justify-center mt-5">
+              {!isFullAmount && (
+                <input
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  type="number"
+                  name="amount"
+                  maxLength={100}
+                  placeholder="Enter the amount"
+                  onChange={handleProvisionAmountChange}
+                  value={amount}
+                  disabled={isFullAmount}
+                />
+              )}
               {type === "withdraw" || type === "transfer" ? (
-                <div className="flex items-center justify-center mt-2">
+                <div className="mb-3 flex items-center justify-center mt-2">
                   <input
                     className="form-checkbox h-5 w-5 text-gray-600"
                     type="checkbox"
@@ -91,16 +109,6 @@ export const PopupModal: FC<AddFundsModalProps> = (props) => {
                   </label>
                 </div>
               ) : null}
-              <input
-                className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                type="number"
-                name="amount"
-                maxLength={100}
-                placeholder="Enter the amount"
-                onChange={handleProvisionAmountChange}
-                value={amount}
-                disabled={isFullAmount}
-              />
               {type === "transfer" && (
                 <input
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
@@ -112,10 +120,11 @@ export const PopupModal: FC<AddFundsModalProps> = (props) => {
                   value={transferAddress}
                 />
               )}
+
               <button
-                className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
+                className="my-4 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
                 type="button"
-                onClick={handleProvisionFunds}
+                onClick={handleSubmit}
               >
                 {buttonText}
               </button>
