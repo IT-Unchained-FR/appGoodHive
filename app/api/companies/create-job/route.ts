@@ -74,9 +74,21 @@ export async function POST(request: Request) {
       );
     `;
 
-    return new Response(
-      JSON.stringify({ message: "Data inserted successfully" })
-    );
+    // now get the saved job id and return that
+    const savedJob = await sql`
+      SELECT id
+      FROM goodhive.job_offers
+      WHERE wallet_address = ${walletAddress}
+      ORDER BY id DESC
+      LIMIT 1
+    `;
+    const jobId = savedJob[0].id;
+    console.log("jobId", jobId);
+
+    return new Response(JSON.stringify({ jobId }), {
+      status: 200,
+    });
+
   } catch (error) {
     console.error("Error inserting data:", error);
 
