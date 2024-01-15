@@ -21,7 +21,7 @@ export interface JobOffer {
   currency: string;
   skills: string[];
   buttonText: string;
-  escrow: BigNumberish;
+  escrowAmount: string;
   walletAddress?: string;
 }
 
@@ -48,6 +48,7 @@ export default function JobResult({ jobOffers }: { jobOffers: any[] }) {
           walletAddress={jobOffer.walletAddress}
           mentor={jobOffer.mentor}
           recruiter={jobOffer.recruiter}
+          escrowAmount={jobOffer.escrowAmount}
           // escrowAmount={jobOffer.escrowAmount} Add escrowAmount to job_offers table
           // escrowCurrency={jobOffer.escrowCurrency} Add escrowCurrency to job_offers table
         />
