@@ -3,7 +3,6 @@ import Web3 from "web3";
 import { useEffect, useState } from "react";
 import GoodhiveJobContract from "@/contracts/GoodhiveJobContract.json";
 import { GoodhiveContractAddress } from "@constants/common";
-import { toast } from "react-hot-toast";
 
 interface Props {
   walletAddress: string;
@@ -47,10 +46,9 @@ export const useCreateJob = (props: Props) => {
       });
       console.log("Fund Added successfully!");
       handleUpdateEscrowAmount(jobId);
-      toast.success("Fund Added successfully!");
     } catch (error) {
-      toast.error("Error putting funds in");
       console.error("Error putting funds in:", error);
+      throw error;
     }
   };
 
@@ -74,9 +72,9 @@ export const useCreateJob = (props: Props) => {
         .send({ from: accounts[0] });
       console.log("Funds withdrawn successfully!");
       handleUpdateEscrowAmount(jobId);
-      toast.success("Funds withdrawn successfully!");
     } catch (error) {
       console.error("Error withdrawing funds:", error);
+      throw error;
     }
   };
 
@@ -89,7 +87,6 @@ export const useCreateJob = (props: Props) => {
         .send({ from: accounts[0] });
       console.log("Funds transferred successfully!");
       handleUpdateEscrowAmount(jobId);
-      toast.success("Funds transferred successfully!");
     } catch (error) {
       console.error("Error transferring funds:", error);
     }
