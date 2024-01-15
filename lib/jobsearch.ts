@@ -90,6 +90,7 @@ export async function fetchJobs({
       image_url: item.image_url,
       mentor: item.mentor === "true",
       recruiter: item.recruiter === "true",
+      escrowAmount: item.escrow_amount,
     }));
 
     console.log("jobs >>", jobs);
