@@ -26,6 +26,9 @@ import {
 import { AutoSuggestInput } from "@components/autosuggest-input";
 import { ToggleButton } from "@/app/components/toggle-button";
 import { calculateJobCreateFees } from "@/app/utils/calculate-job-create-fees";
+import { Button } from "@/app/components/button";
+import Modal from "@/app/components/modal";
+import { useCreateJob } from "@/app/hooks/CreateJob";
 
 export default function CreateJob() {
   const [isLoading, setIsLoading] = useState(false);
@@ -43,6 +46,12 @@ export default function CreateJob() {
   const [companyData, setCompanyData] = useState<any | null>(null);
   const [jobData, setJobData] = useState<any | null>(null);
   const [budget, setBudget] = useState("");
+  const [isPopupModalOpen, setIsPopupModalOpen] = useState(false);
+  const [popupModalType, setPopupModalType] = useState("");
+  const [provisionAmount, setProvisionAmount] = useState(0);
+  const [partialAmountSelected, setPartialAmountSelected] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState(0);
+
   const [jobServices, setJobServices] = useState({
     talent: true,
     recruiter: false,
@@ -54,6 +63,60 @@ export default function CreateJob() {
   const id = searchParams.get("id");
   const walletAddress = useContext(AddressContext);
 
+  const { createJobTx, withdrawFundsTx, checkBalanceTx } = useCreateJob({
+    walletAddress,
+  });
+
+  const handlePopupModal = (type: string) => {
+    setPopupModalType(type);
+    setIsPopupModalOpen(true);
+  };
+
+  const onProvisionFundsClick = () => {
+    handlePopupModal("provision-funds");
+    console.log("provision funds");
+  };
+
+  const handleProvisionFunds = () => {
+    if (Number(provisionAmount) <= 0) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+    console.log("provision funds", Number(provisionAmount));
+    createJobTx(Number(id), Number(provisionAmount));
+  };
+
+  const handleWithdrawFunds = () => {
+    if (withdrawAmount < 1) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+    if (jobData.escrow_amount && !partialAmountSelected) {
+      console.log("full amount", Number(jobData.escrow_amount));
+    }
+    console.log("withdraw funds", withdrawAmount);
+  };
+
+  const handleCheckBalance = async () => {
+    const balance = await checkBalanceTx(Number(id));
+    if (balance) {
+      toast.success(`Balance: ${balance} ETH`);
+    }
+  };
+
+  const handlePopupModalClose = () => {
+    setIsPopupModalOpen(false);
+    setPopupModalType("");
+  };
+
+  const handleProvisionAmountChange = (e: any) => {
+    setProvisionAmount(e.target.value);
+  };
+
+  const handleWithdrawAmountChange = (e: any) => {
+    setWithdrawAmount(e.target.value);
+  };
+
   const onBudgetChange = (e: any) => {
     setBudget(e.target.value);
   };
@@ -61,6 +124,7 @@ export default function CreateJob() {
   const totalFees = calculateJobCreateFees(projectType, budget, jobServices);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    console.log("submitting...");
     e.preventDefault();
     setIsLoading(true);
 
@@ -397,14 +461,14 @@ export default function CreateJob() {
             </div>
             {jobData?.budget || budget ? (
               <p className="mt-2 text-right">
-                {projectType && projectType.value === "hourly" 
+                {projectType && projectType.value === "hourly"
                   ? "Total fees per hour:"
                   : "Total fees:"}{" "}
                 {totalFees} USD
               </p>
             ) : null}
             <div className="flex gap-4 mt-3"></div>
-            <div className="flex flex-col gap-4 mt-4 sm:flex-row">
+            {/* <div className="flex flex-col gap-4 mt-4 sm:flex-row">
               <div className="flex sm:w-1/4">
                 <SelectInput
                   labelText="Chain"
@@ -440,9 +504,23 @@ export default function CreateJob() {
                   }
                 />
               </div>
-            </div>
+            </div> */}
 
-            <div className="mt-10 text-right">
+            <div className="mt-10 w-full flex justify-end gap-4 text-right">
+              <button
+                className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
+                type="button"
+                onClick={handleCheckBalance}
+              >
+                Check Balance
+              </button>
+              <button
+                className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
+                type="button"
+                onClick={onProvisionFundsClick}
+              >
+                Provision the funds
+              </button>
               {isLoading ? (
                 <button
                   className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full opacity-50 cursor-not-allowed transition duration-150 ease-in-out"
@@ -463,6 +541,114 @@ export default function CreateJob() {
           </div>
         </form>
       </section>
+      <Modal open={isPopupModalOpen} onClose={handlePopupModalClose}>
+        {popupModalType === "provision-funds" ? (
+          <div className="relative bg-white w-full h-full rounded shadow-lg border-0 p-0">
+            <div className="flex flex-col items-center justify-center p-5">
+              <div className="flex justify-between w-full">
+                <h3 className="text-2xl font-semibold text-black">
+                  Provision the funds
+                </h3>
+                <button
+                  type="button"
+                  onClick={handlePopupModalClose}
+                  className="w-6 text-black bg-gray-400 rounded-full"
+                >
+                  &#10005;
+                </button>
+              </div>
+              <div className="flex flex-col items-center justify-center mt-5">
+                <p className="text-base font-normal text-gray-600">
+                  Please put some provision funds to create a job offer. You
+                  will be charged gas fee on top of your budget.
+                </p>
+                <div className="flex flex-col items-center justify-center mt-5">
+                  {/* Input field for provision amount */}
+                  <input
+                    className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                    type="number"
+                    name="provisionAmount"
+                    required
+                    maxLength={100}
+                    placeholder="Enter the amount"
+                    onChange={handleProvisionAmountChange}
+                  />
+                  <button
+                    className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
+                    type="submit"
+                    onClick={handleProvisionFunds}
+                  >
+                    Submit
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : popupModalType === "withdraw-funds" ? (
+          <div className="relative bg-white w-full h-full rounded shadow-lg border-0 p-0">
+            <div className="flex flex-col items-center justify-center p-5">
+              <div className="flex justify-between w-full">
+                <h3 className="text-2xl font-semibold text-black">
+                  Withdraw the funds
+                </h3>
+                <button
+                  type="button"
+                  onClick={handlePopupModalClose}
+                  className="w-6 text-black bg-gray-400 rounded-full"
+                >
+                  &#10005;
+                </button>
+              </div>
+              <div className="flex flex-col items-center justify-center mt-5">
+                <div className="flex flex-col items-center justify-center mt-5">
+                  {/* Will be 2 checkbox one is Full amount another partial amount if partial amount is selected then there will be a input field for amount */}
+
+                  <div>
+                    <input
+                      type="checkbox"
+                      id="fullAmount"
+                      name="amount"
+                      value="Full"
+                    />
+                    <label htmlFor="fullAmount">Full Amount</label>
+                  </div>
+                  <div>
+                    <input
+                      type="checkbox"
+                      id="partialAmount"
+                      name="amount"
+                      value="Partial"
+                      onClick={() =>
+                        setPartialAmountSelected(!partialAmountSelected)
+                      }
+                    />
+                    <label htmlFor="partialAmount">Partial Amount</label>
+                  </div>
+                  {partialAmountSelected && (
+                    <div>
+                      <label htmlFor="amount">Amount:</label>
+                      <input
+                        type="number"
+                        id="amount"
+                        name="amount"
+                        onChange={handleWithdrawAmountChange}
+                      />
+                    </div>
+                  )}
+
+                  <button
+                    className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
+                    type="submit"
+                    onClick={handleWithdrawFunds}
+                  >
+                    Submit
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
     </main>
   );
 }
