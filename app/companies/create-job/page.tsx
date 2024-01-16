@@ -1,21 +1,13 @@
 "use client";
 
-import { useState, FormEvent, useContext, useEffect } from "react";
 import toast from "react-hot-toast";
+import { useState, FormEvent, useContext, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Tooltip } from "@nextui-org/tooltip";
 
-import { SelectInput } from "@components/select-input";
-import { SearchSelectInput } from "@components/search-select-input";
-import { AddressContext } from "@components/context";
-import { skills } from "@/app/constants/skills";
-import {
-  ethereumTokens,
-  polygonTokens,
-  gnosisChainTokens,
-} from "@/app/constants/token-list/index.js";
-import { chains } from "@/app/constants/chains";
-import LabelOption from "@interfaces/label-option";
-import { Loader } from "@components/loader";
+import { useCreateJob } from "@hooks/CreateJob";
+import { chains } from "@constants/chains";
+import { skills } from "@constants/skills";
 import {
   createJobServices,
   jobTypes,
@@ -23,14 +15,24 @@ import {
   projectTypes,
   typeEngagements,
 } from "@constants/common";
+import {
+  ethereumTokens,
+  polygonTokens,
+  gnosisChainTokens,
+} from "@constants/token-list/index.js";
+import { polygonTestnetTokens } from "@constants/token-list/polygon";
+
+import { calculateJobCreateFees } from "@utils/calculate-job-create-fees";
+import LabelOption from "@interfaces/label-option";
+
+import Modal from "@components/modal";
+import { AddressContext } from "@components/context";
+import { SelectInput } from "@components/select-input";
+import { SearchSelectInput } from "@components/search-select-input";
+import { Loader } from "@components/loader";
 import { AutoSuggestInput } from "@components/autosuggest-input";
-import { ToggleButton } from "@/app/components/toggle-button";
-import { calculateJobCreateFees } from "@/app/utils/calculate-job-create-fees";
-import { useCreateJob } from "@/app/hooks/CreateJob";
+import { ToggleButton } from "@components/toggle-button";
 import { PopupModal } from "./PopupModal";
-import { polygonTestnetTokens } from "@/app/constants/token-list/polygon";
-import Modal from "@/app/components/modal";
-import { Tooltip } from "@nextui-org/tooltip";
 
 export default function CreateJob() {
   const [isLoading, setIsLoading] = useState(false);
@@ -63,6 +65,8 @@ export default function CreateJob() {
   const id = Number(searchParams.get("id"));
   const addFunds = searchParams.get("addFunds");
   const walletAddress = useContext(AddressContext);
+  const provisionalAmount =
+    jobData && Number(jobData.escrowAmount) > 0 ? jobData.escrowAmount : 0;
 
   const { createJobTx, withdrawFundsTx, checkBalanceTx, transferFundsTx } =
     useCreateJob({
@@ -111,7 +115,7 @@ export default function CreateJob() {
 
   const handleCancelJob = async () => {
     const balance = await checkBalanceTx(id);
-    console.log("balance >>", balance);
+
     if (Number(balance) > 0) {
       toast.error(`Please withdraw all funds before cancelling the job!`);
       return;
@@ -134,7 +138,11 @@ export default function CreateJob() {
   };
 
   const onManageFundsClick = () => {
-    setIsManageFundsModalOpen(true);
+    if (selectedChain?.value && selectedCurrency?.value) {
+      setIsManageFundsModalOpen(true);
+    } else {
+      toast.error("Please select chain and currency first!");
+    }
   };
 
   const handlePopupModal = (type: string) => {
@@ -152,8 +160,8 @@ export default function CreateJob() {
     setPopupModalType("");
   };
 
-  const onBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setBudget(e.target.value);
+  const onBudgetChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setBudget(event.target.value);
   };
 
   const totalFees = calculateJobCreateFees(projectType, budget, jobServices);
@@ -246,7 +254,6 @@ export default function CreateJob() {
       setIsLoading(true);
       const response = await fetch(`/api/companies/job-data?id=${id}`);
       const data = await response.json();
-      console.log("job data >>", data);
       setJobData(data);
       setJobServices({
         talent: true,
@@ -255,6 +262,28 @@ export default function CreateJob() {
       });
       setSelectedSkills(data.skills);
       setBudget(data.budget);
+      setSelectedChain(
+        chains[chains.findIndex((chain) => chain.value === data.chain)]
+      );
+      setSelectedCurrency(
+        data.chain === "ethereum"
+          ? ethereumTokens[
+              ethereumTokens.findIndex((token) => token.value === data.currency)
+            ]
+          : data.chain === "polygon"
+          ? polygonTestnetTokens[
+              polygonTestnetTokens.findIndex(
+                (token) => token.value === data.currency
+              )
+            ]
+          : data.chain === "gnosis-chain"
+          ? gnosisChainTokens[
+              gnosisChainTokens.findIndex(
+                (token) => token.value === data.currency
+              )
+            ]
+          : null
+      );
     } catch (error) {
       console.log(error);
     }
@@ -308,8 +337,7 @@ export default function CreateJob() {
       {id && jobData && (
         <div className="w-full mb-1 flex justify-end">
           <h3 className="font-bold">
-            Provision Amount:{" "}
-            {Number(jobData.escrowAmount) > 0 ? jobData.escrowAmount : 0} MATIC
+            Provision Amount: {provisionalAmount} MATIC
           </h3>
         </div>
       )}
@@ -525,7 +553,7 @@ export default function CreateJob() {
                 <SelectInput
                   labelText="Chain"
                   name="chain"
-                  required={false}
+                  required={true}
                   disabled={false}
                   inputValue={selectedChain}
                   setInputValue={setSelectedChain}
@@ -538,10 +566,10 @@ export default function CreateJob() {
                 />
               </div>
               <div className="flex-1">
-                <SearchSelectInput
+                <SelectInput
                   labelText="Currency"
                   name="currency"
-                  required={false}
+                  required={true}
                   disabled={!selectedChain}
                   inputValue={selectedCurrency}
                   setInputValue={setSelectedCurrency}
@@ -553,6 +581,13 @@ export default function CreateJob() {
                       : selectedChain?.value === "gnosis-chain"
                       ? gnosisChainTokens
                       : []
+                  }
+                  defaultValue={
+                    polygonTestnetTokens[
+                      polygonTestnetTokens.findIndex(
+                        (token) => token.value === jobData?.currency
+                      )
+                    ]
                   }
                 />
               </div>
@@ -635,15 +670,6 @@ export default function CreateJob() {
             </button>
           )}
 
-          {/* {id && jobData?.escrowAmount && (
-            <button
-              className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
-              type="button"
-              onClick={handleCheckBalance}
-            >
-              Check Job Balance
-            </button>
-          )} */}
           {id && jobData?.escrowAmount && (
             <button
               className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"

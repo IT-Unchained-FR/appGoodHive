@@ -13,14 +13,13 @@ export const useCreateJob = (props: Props) => {
   const [web3, setWeb3] = useState<any>();
   const [contract, setContract] = useState<any>();
 
-  const handleUpdateEscrowAmount = async (id: number) => {
-    const escrowAmount = await checkBalanceTx(id);
+  const handleUpdateEscrowAmount = async (id: number, amount: number) => {
     await fetch(`/api/companies/update-escrow`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ id, escrowAmount }),
+      body: JSON.stringify({ id, escrowAmount: amount }),
     });
     
   };
@@ -40,12 +39,14 @@ export const useCreateJob = (props: Props) => {
     try {
       const accounts = await web3.eth.getAccounts();
       const amountInWei = web3.utils.toWei(amount.toString(), "ether");
+      const balance = await checkBalanceTx(jobId);
+      const EndingBalance = Number(balance) + Number(amount);
       await contract.methods.createJob(jobId, amountInWei).send({
         from: accounts[0],
         value: amountInWei,
       });
       console.log("Fund Added successfully!");
-      handleUpdateEscrowAmount(jobId);
+      handleUpdateEscrowAmount(jobId, EndingBalance);
     } catch (error) {
       console.error("Error putting funds in:", error);
       throw error;
@@ -67,11 +68,13 @@ export const useCreateJob = (props: Props) => {
     try {
       const accounts = await web3.eth.getAccounts();
       const amountInWei = web3.utils.toWei(amount.toString(), "ether");
+      const balance = await checkBalanceTx(jobId);
+      const EndingBalance = Number(balance) - Number(amount);
       await contract.methods
         .withdrawFunds(jobId, amountInWei)
         .send({ from: accounts[0] });
       console.log("Funds withdrawn successfully!");
-      handleUpdateEscrowAmount(jobId);
+      handleUpdateEscrowAmount(jobId, EndingBalance);
     } catch (error) {
       console.error("Error withdrawing funds:", error);
       throw error;
@@ -82,13 +85,16 @@ export const useCreateJob = (props: Props) => {
     try {
       const accounts = await web3.eth.getAccounts();
       const amountInWei = web3.utils.toWei(amount.toString(), "ether");
+      const balance = await checkBalanceTx(jobId);
+      const EndingBalance = Number(balance) - Number(amount);
       await contract.methods
         .payTheFees(jobId, toAddress, amountInWei)
         .send({ from: accounts[0] });
       console.log("Funds transferred successfully!");
-      handleUpdateEscrowAmount(jobId);
+      handleUpdateEscrowAmount(jobId, EndingBalance);
     } catch (error) {
       console.error("Error transferring funds:", error);
+      throw error;
     }
   }
 

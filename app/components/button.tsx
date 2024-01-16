@@ -11,7 +11,7 @@ interface Props {
 }
 
 export const Button: FC<Props> = (props) => {
-  const { text, type, size, loading= false, onClickHandler, ...rest } = props;
+  const { text, type, size, loading = false, onClickHandler, ...rest } = props;
   let styleType = `${type}${size}`;
 
   switch (styleType) {
@@ -53,7 +53,13 @@ export const Button: FC<Props> = (props) => {
   }
 
   return (
-    <button className={styleType} onClick={onClickHandler} disabled={loading} {...rest}>
+    <button
+      className={styleType}
+      onClick={onClickHandler}
+      type="button"
+      disabled={loading}
+      {...rest}
+    >
       {loading ? <Loader color="#ffffff" /> : text}
     </button>
   );
