@@ -1,4 +1,3 @@
-"use client";
 import React, { FC, useState } from "react";
 import { Button } from "./button";
 
@@ -22,7 +21,6 @@ export const CoverLetterModal: FC<Props> = (props) => {
     }
     onSubmitHandler(coverLetter);
   };
-  /* Use tailwind only */
   return (
     <div
       className="fixed z-10 inset-0 overflow-y-auto"

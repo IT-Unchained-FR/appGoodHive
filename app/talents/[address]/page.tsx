@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { getProfileData } from "@/lib/fetch-profile-data";
 import { generateAvailabilityStatus } from "./utils";
-import { Button } from "@/app/components/button";
+import { Button } from "@components/button";
 
 export const revalidate = 0;
 
@@ -106,7 +106,7 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
           <Link href={{ pathname: contactUrl }}>
             <Button text="Contact me" type="secondary" size="medium"></Button>
           </Link>
-          <Button text="Hire me" type="primary" size="medium"></Button>
+          {/* <Button text="Hire me" type="primary" size="medium"></Button> */}
         </div>
         <div className="flex flex-col w-1/2">
           <h3 className="text-[#4E4E4E] text-lg font-bold mb-5">Bio:</h3>

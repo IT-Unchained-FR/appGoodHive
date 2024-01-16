@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
       country: item.country,
       city: item.city,
       chain: item.chain,
+      currency: item.currency,
       jobType: item.job_type,
       image_url: item.image_url,
       projectType: item.project_type,
