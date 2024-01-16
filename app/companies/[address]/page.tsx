@@ -23,7 +23,6 @@ export default async function CompanyProfilePage(
 ) {
   const { address } = context.params;
   const { id } = context.searchParams;
-  console.log("job id >>", id);
   const profileData = await getCompanyData(address);
   const jobs = await getCompanyJobs(address);
   const singleJob = await getSingleJob(id);
@@ -188,6 +187,7 @@ export default async function CompanyProfilePage(
                 image_url,
                 walletAddress,
                 country,
+                escrowAmount,
               } = job;
               return (
                 <Card
@@ -207,6 +207,7 @@ export default async function CompanyProfilePage(
                   skills={skills}
                   buttonText="Apply"
                   walletAddress={walletAddress}
+                  escrowAmount={escrowAmount}
                 />
               );
             })}

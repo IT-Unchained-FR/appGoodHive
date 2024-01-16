@@ -46,7 +46,6 @@ export const Card: FC<Props> = ({
   projectType,
   currency = "$", // TODO: Add mapping with currencies (USD, EUR, etc.)
   escrowAmount,
-  escrowCurrency = "ETH",
   walletAddress,
   mentor,
   recruiter,
@@ -68,11 +67,8 @@ export const Card: FC<Props> = ({
     ? `/companies/${walletAddress}`
     : `/talents/${walletAddress}`;
   const countryFlag = generateCountryFlag(country);
-  console.log("countryFlag >>", countryFlag, country);
   const moneyIcon =
-    jobId && escrowAmount ? "/icons/money.svg" : "/icons/no-money.svg";
-
-  console.log("logs mara >>", freelancer, remote);
+    jobId && Number(escrowAmount) > 0 ? "/icons/money.svg" : "/icons/no-money.svg";
 
   return (
     <div className="box-border block p-3 mt-11 bg-white bg-blend-darken rounded-3xl shadow-[2px_7px_20px_4px_#e2e8f0]">

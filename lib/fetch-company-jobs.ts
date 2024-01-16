@@ -33,6 +33,7 @@ export async function getCompanyJobs(walletAddress: string) {
       jobType: item.job_type,
       image_url: item.image_url,
       walletAddress: item.wallet_address,
+      escrowAmount: item.escrow_amount,
     }));
 
     console.log("jobs >>", jobs);
