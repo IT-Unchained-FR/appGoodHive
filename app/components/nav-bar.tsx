@@ -22,7 +22,6 @@ const talentsLinks = [
 
 const companiesLinks = [
   { href: "/companies/search-talents", label: "Search Talents" },
-  { href: "/companies/job-listing", label: "Jobs Listing" },
   // { href: "/companies/create-job", label: "Create Job" },
   { href: "/companies/my-profile", label: "My Company Profile" },
 ];

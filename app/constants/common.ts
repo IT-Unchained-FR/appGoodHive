@@ -70,3 +70,5 @@ export const createJobServices: createJobServicesType[] = [
       "I want a tech mentor to assess technical skills of my talent before the mission starts and will mentor the talent all along the mission - 12% Fee",
   },
 ];
+
+export const GoodHiveContractEmail = "contact@goodhive.io";

@@ -35,7 +35,7 @@ const Modal = ({ open, onClose, children }: ModalProps) => {
     >
       <dialog
         ref={dialogRef}
-        className="relative bg-white rounded shadow-lg border-0 p-0 max-h-[80%] max-w-[80%] z-[9999999]"
+        className="relative bg-white rounded-xl shadow-lg border-0 p-0 max-h-[80%] max-w-[80%] z-[9999999]"
       >
         {children}
       </dialog>
