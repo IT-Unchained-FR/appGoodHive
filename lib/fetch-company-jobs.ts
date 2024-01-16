@@ -74,6 +74,7 @@ export async function getSingleJob(id: number | undefined) {
       jobType: item.job_type,
       image_url: item.image_url,
       walletAddress: item.wallet_address,
+      escrowAmount: item.escrow_amount,
     }));
     
     return singleJob[0];

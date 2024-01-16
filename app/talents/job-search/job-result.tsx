@@ -14,7 +14,6 @@ export interface JobOffer {
   duration: string;
   image: string;
   country: string;
-  countryFlag: string;
   city: string;
   rate: number;
   typeEngagement: string;
@@ -37,7 +36,7 @@ export default function JobResult({ jobOffers }: { jobOffers: any[] }) {
           postedBy={jobOffer.companyName} //TODO: connect job_offers table to companies table
           postedOn="posted 2 days ago"
           image={jobOffer.image_url || "/img/company_img.png"} //TODO: connect job_offers table to companies table
-          countryFlag="/img/country_flag.png" // TODO: create flag table
+          country={jobOffer.country} // TODO: create flag table
           city={jobOffer.city} //TODO: connect job_offers table to companies table
           budget={jobOffer.budget}
           projectType={jobOffer.projectType}

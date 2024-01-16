@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import type { FC } from "react";
 import { Button } from "@components/button";
+import { generateCountryFlag } from "@utils/generate-country-flag";
 
 interface Props {
   jobId?: number;
@@ -14,7 +15,7 @@ interface Props {
   postedBy: string;
   postedOn: string;
   image: string;
-  countryFlag: string;
+  country: string;
   city: string;
   budget: number;
   projectType: string;
@@ -37,7 +38,7 @@ export const Card: FC<Props> = ({
   postedBy,
   postedOn,
   image,
-  countryFlag,
+  country,
   city,
   description,
   skills,
@@ -66,6 +67,10 @@ export const Card: FC<Props> = ({
   const knowMoreLink = jobId
     ? `/companies/${walletAddress}`
     : `/talents/${walletAddress}`;
+  const countryFlag = generateCountryFlag(country);
+  console.log("countryFlag >>", countryFlag, country);
+  const moneyIcon =
+    jobId && escrowAmount ? "/icons/money.svg" : "/icons/no-money.svg";
 
   console.log("logs mara >>", freelancer, remote);
 
@@ -108,25 +113,22 @@ export const Card: FC<Props> = ({
           </div>
           <div className="flex flex-col items-end pt-2 grow">
             <div className="flex mb-1">
-              {jobId && escrowAmount && (
+              {jobId && (
                 <div className="relative w-6 mr-2 h-6">
-                  <Image alt="balance" src="/icons/money.svg" fill />
+                  <Image alt="balance" src={moneyIcon} fill />
                 </div>
               )}
-              <div className="relative h-4 w-6">
-                <Image src={countryFlag} alt="country" fill />
-              </div>
+              {countryFlag && (
+                <div className="relative h-4 w-6">
+                  <Image src={countryFlag} alt="country" fill />
+                </div>
+              )}
             </div>
             <p className="font-light mb-1 text-sm text-gray-500 text-right sm:text-xs sm:max-w-[80px]">
               {city}
             </p>
             <div className="flex space-between">
               <div className="text-xs font-bold">{rate}</div>
-              {/* {!!escrowAmount && (
-                <div>
-                  {escrowAmount?.toString()} {escrowCurrency}
-                </div>
-              )} */}
             </div>
           </div>
         </div>

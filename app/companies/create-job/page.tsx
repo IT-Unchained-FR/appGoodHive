@@ -29,6 +29,8 @@ import { calculateJobCreateFees } from "@/app/utils/calculate-job-create-fees";
 import { useCreateJob } from "@/app/hooks/CreateJob";
 import { PopupModal } from "./PopupModal";
 import { polygonTestnetTokens } from "@/app/constants/token-list/polygon";
+import Modal from "@/app/components/modal";
+import { Tooltip } from "@nextui-org/tooltip";
 
 export default function CreateJob() {
   const [isLoading, setIsLoading] = useState(false);
@@ -48,6 +50,7 @@ export default function CreateJob() {
   const [budget, setBudget] = useState("");
   const [isPopupModalOpen, setIsPopupModalOpen] = useState(false);
   const [popupModalType, setPopupModalType] = useState("");
+  const [isManageFundsModalOpen, setIsManageFundsModalOpen] = useState(false);
 
   const [jobServices, setJobServices] = useState({
     talent: true,
@@ -65,11 +68,6 @@ export default function CreateJob() {
     useCreateJob({
       walletAddress,
     });
-
-  const handlePopupModal = (type: string) => {
-    setPopupModalType(type);
-    setIsPopupModalOpen(true);
-  };
 
   const onPopupModalSubmit = async (
     amount: number,
@@ -111,13 +109,6 @@ export default function CreateJob() {
     }
   };
 
-  const handleCheckBalance = async () => {
-    const balance = await checkBalanceTx(id);
-    if (balance) {
-      toast.success(`Balance: ${balance} ETH`);
-    }
-  };
-
   const handleCancelJob = async () => {
     const balance = await checkBalanceTx(id);
     console.log("balance >>", balance);
@@ -140,6 +131,20 @@ export default function CreateJob() {
       toast.error("Something went wrong!");
       window.location.reload();
     }
+  };
+
+  const onManageFundsClick = () => {
+    setIsManageFundsModalOpen(true);
+  };
+
+  const handlePopupModal = (type: string) => {
+    handleManageFundsModalClose();
+    setPopupModalType(type);
+    setIsPopupModalOpen(true);
+  };
+
+  const handleManageFundsModalClose = () => {
+    setIsManageFundsModalOpen(false);
   };
 
   const handlePopupModalClose = () => {
@@ -205,8 +210,7 @@ export default function CreateJob() {
       if (id) {
         toast.success("Job Offer Saved!");
         router.push(`/companies/${walletAddress}`);
-      }
-      else {
+      } else {
         toast.success("Job Offer Created! Now add some funds to it.");
         router.push(
           `/companies/create-job?id=${savedJobData.jobId}&addFunds=true`
@@ -298,12 +302,20 @@ export default function CreateJob() {
 
   return (
     <main className="container mx-auto">
-      <h1 className="my-5 text-2xl border-b-[1px] border-slate-300 ">
+      <h1 className="my-2 text-2xl border-b-[1px] border-slate-300 ">
         Create Job
       </h1>
+      {id && jobData && (
+        <div className="w-full mb-1 flex justify-end">
+          <h3 className="font-bold">
+            Provision Amount:{" "}
+            {Number(jobData.escrowAmount) > 0 ? jobData.escrowAmount : 0} MATIC
+          </h3>
+        </div>
+      )}
       <section>
         <form onSubmit={handleSubmit}>
-          <div className="flex flex-col w-full mt-4">
+          <div className="flex flex-col w-full">
             <div className="flex flex-col gap-4 mt-10 sm:flex-row">
               <div className="flex-1">
                 <label
@@ -547,42 +559,16 @@ export default function CreateJob() {
             </div>
 
             <div className="mt-12 mb-8 w-full flex justify-end gap-4 text-right">
-              {id && jobData?.escrowAmount && (
-                <button
-                  className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
-                  type="button"
-                  onClick={() => handlePopupModal("withdraw")}
-                >
-                  Withdraw Funds
-                </button>
-              )}
-
-              {id && jobData?.escrowAmount && (
-                <button
-                  className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
-                  type="button"
-                  onClick={handleCheckBalance}
-                >
-                  Check Job Balance
-                </button>
-              )}
-              {id && jobData?.escrowAmount && (
-                <button
-                  className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
-                  type="button"
-                  onClick={() => handlePopupModal("transfer")}
-                >
-                  Pay the Fees
-                </button>
-              )}
               {id && (
-                <button
-                  className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
-                  type="button"
-                  onClick={() => handlePopupModal("addFunds")}
-                >
-                  Provision Funds
-                </button>
+                <Tooltip content="Provisioning funds boost swift community response to your job offer.">
+                  <button
+                    className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
+                    type="button"
+                    onClick={onManageFundsClick}
+                  >
+                    Manage Funds
+                  </button>
+                </Tooltip>
               )}
               {id && (
                 <button
@@ -614,6 +600,61 @@ export default function CreateJob() {
           </div>
         </form>
       </section>
+      <Modal
+        open={isManageFundsModalOpen}
+        onClose={handleManageFundsModalClose}
+      >
+        <div className="flex justify-between p-5 min-w-[300px]">
+          <h3 className="text-2xl font-semibold text-black">Manage Funds:</h3>
+          <button
+            type="button"
+            onClick={handleManageFundsModalClose}
+            className="w-6 h-6 text-black bg-gray-400 rounded-full"
+          >
+            &#10005;
+          </button>
+        </div>
+        <p className="px-5 mt-2 mb-3 font-base">{`Funds will primarily be allocated to cover the Protocol's Fees.`}</p>
+        <div className="flex flex-col p-5 justify-center items-center">
+          {id && (
+            <button
+              className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
+              type="button"
+              onClick={() => handlePopupModal("addFunds")}
+            >
+              Provision Funds
+            </button>
+          )}
+          {id && jobData?.escrowAmount && (
+            <button
+              className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
+              type="button"
+              onClick={() => handlePopupModal("withdraw")}
+            >
+              Withdraw Funds
+            </button>
+          )}
+
+          {/* {id && jobData?.escrowAmount && (
+            <button
+              className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
+              type="button"
+              onClick={handleCheckBalance}
+            >
+              Check Job Balance
+            </button>
+          )} */}
+          {id && jobData?.escrowAmount && (
+            <button
+              className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
+              type="button"
+              onClick={() => handlePopupModal("transfer")}
+            >
+              Make Payment
+            </button>
+          )}
+        </div>
+      </Modal>
       <PopupModal
         open={isPopupModalOpen}
         onClose={handlePopupModalClose}
