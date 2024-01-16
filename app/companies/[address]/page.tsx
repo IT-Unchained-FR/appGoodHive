@@ -166,6 +166,7 @@ export default async function CompanyProfilePage(
                   buttonText="Connect"
                   walletAddress={singleJob.walletAddress}
                   companyEmail={email}
+                  escrowAmount={singleJob.escrowAmount}
                 />
               </div>
             </div>
@@ -186,6 +187,7 @@ export default async function CompanyProfilePage(
                 skills,
                 image_url,
                 walletAddress,
+                country,
               } = job;
               return (
                 <Card
@@ -196,7 +198,7 @@ export default async function CompanyProfilePage(
                   postedBy={companyName}
                   postedOn="posted 2 days ago"
                   image={image_url || "/img/company_img.png"}
-                  countryFlag="/img/country_flag.png"
+                  country={country}
                   city={city}
                   budget={budget}
                   projectType={projectType}

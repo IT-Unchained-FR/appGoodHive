@@ -14,9 +14,9 @@ export const generateContent = (type: string) => {
       };
     case "transfer":
       return {
-        title: "Pay The Fees",
+        title: "Make Payment",
         description: "Enter the amount you want to pay",
-        buttonText: "Pay Fees",
+        buttonText: "Make Payment",
       };
     default:
       return {
