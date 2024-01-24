@@ -9,8 +9,15 @@ export async function POST(request: Request) {
     },
   });
 
-  if (!id) {
-    return new Response(JSON.stringify({ message: "Job id not found" }), {
+  // Input Validation
+  if (!id || typeof id !== 'number') { // Assuming 'id' is a numeric value
+    return new Response(JSON.stringify({ message: "Invalid or missing job id" }), {
+      status: 400,
+    });
+  }
+
+  if (typeof escrowAmount !== 'number') { // Validate escrowAmount as a number
+    return new Response(JSON.stringify({ message: "Invalid escrow amount" }), {
       status: 400,
     });
   }

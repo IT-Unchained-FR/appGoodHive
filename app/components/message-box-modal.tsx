@@ -2,24 +2,26 @@ import React, { FC, useState } from "react";
 import { Button } from "./button";
 
 interface Props {
-  onSubmitHandler: (coverLetter: string) => void;
+  title: string;
+  messageLengthLimit: number;
+  onSubmit: (coverLetter: string) => void;
   onClose: () => void;
 }
 
-export const CoverLetterModal: FC<Props> = (props) => {
-  const { onClose, onSubmitHandler } = props;
-  const [coverLetter, setCoverLetter] = useState("");
+export const MessageBoxModal: FC<Props> = (props) => {
+  const { title, messageLengthLimit, onClose, onSubmit } = props;
+  const [message, setMessage] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setCoverLetter(e.target.value);
+    setMessage(e.target.value);
   };
 
   const onClickSubmitHandler = () => {
-    if (coverLetter.length < 200) {
-      alert("Cover letter must be at least 200 characters");
+    if (message.length < messageLengthLimit) {
+      alert(`Must be at least ${messageLengthLimit} characters`);
       return;
     }
-    onSubmitHandler(coverLetter);
+    onSubmit(message);
   };
   return (
     <div
@@ -50,8 +52,7 @@ export const CoverLetterModal: FC<Props> = (props) => {
                   className="text-lg mb-5 font-medium text-gray-900"
                   id="modal-title"
                 >
-                  Describe who you are and why you are a good fit for this job
-                  (200 characters minimum):
+                  {title}
                 </h4>
 
                 <textarea
@@ -59,10 +60,11 @@ export const CoverLetterModal: FC<Props> = (props) => {
                   placeholder="Enter your cover letter here"
                   onChange={handleChange}
                 ></textarea>
+                <p className="text-left mt-2 text-sm text-gray-500">{`minimum ${messageLengthLimit} characters *`}</p>
               </div>
             </div>
           </div>
-          <div className="w-full flex justify-end px-4 py-3 mb-4 sm:px-6 sm:flex sm:flex-row-reverse">
+          <div className="w-full flex justify-end px-4 py-2 mb-4 sm:px-6 sm:flex sm:flex-row-reverse">
             <Button
               text="Submit"
               type="primary"

@@ -1,4 +1,4 @@
-import { countriesData } from "@constants/countriesData";
+import { countriesData } from "@constants/countries-data";
 
 export const generateCountryFlag = (countryCode: string) => {
   const country = countriesData.find(

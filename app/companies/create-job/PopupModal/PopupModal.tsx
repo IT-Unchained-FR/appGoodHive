@@ -1,12 +1,12 @@
 import React, { useContext, useState } from "react";
 import { toast } from "react-hot-toast";
 
+import { useCreateJob } from "@/app/hooks/create-job";
+import { AddressContext } from "@components/context";
 import Modal from "@components/modal";
 import type { FC } from "react";
 import type { AddFundsModalProps } from "./PopupModal.types";
 import { generateContent } from "./PopupModal.utils";
-import { AddressContext } from "@components/context";
-import { useCreateJob } from "@hooks/CreateJob";
 
 export const PopupModal: FC<AddFundsModalProps> = (props) => {
   const [amount, setAmount] = useState(0);
