@@ -12,15 +12,35 @@ interface Props {
 
 export const TalentContact = ({ toEmail }: Props) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isCoverLetterModal, setIsCoverLetterModal] = useState(false);
+  const [isPopupModal, setIsPopupModal] = useState(false);
   const userWalletAddress = useContext(AddressContext);
 
-  const onContactMeBtnClickHandler = () => {
-    setIsCoverLetterModal(true);
+  const onContactMeBtnClickHandler = async () => {
+    setIsLoading(true);
+    const userDataResponse = await fetch(
+      `/api/companies/my-profile?walletAddress=${userWalletAddress}`
+    );
+
+    if (!userDataResponse.ok) {
+      toast.error("You don't have a company profile yet! Please create one.");
+      setIsLoading(false);
+      return;
+    }
+
+    const userProfile = await userDataResponse.json();
+    if (userProfile.status !== "approved") {
+      setIsLoading(false);
+      toast.error(
+        "Only verified company can contact talent! Please wait for your company to be verified."
+      );
+      return;
+    }
+    setIsPopupModal(true);
   };
 
   const onCoverLetterModalCloseHandler = () => {
-    setIsCoverLetterModal(false);
+    setIsPopupModal(false);
+    setIsLoading(false);
   };
 
   const onSubmitHandler = async (message: string) => {
@@ -33,8 +53,7 @@ export const TalentContact = ({ toEmail }: Props) => {
       return;
     }
     try {
-      setIsLoading(true);
-      setIsCoverLetterModal(false);
+      setIsPopupModal(false);
       const userDataResponse = await fetch(
         `/api/companies/my-profile?walletAddress=${userWalletAddress}`
       );
@@ -45,8 +64,10 @@ export const TalentContact = ({ toEmail }: Props) => {
       }
 
       const userProfile = await userDataResponse.json();
-      if(userProfile.status !== "approved") {
-        toast.error("Only verified company can contact talent! Please wait for your company to be verified.");
+      if (userProfile.status !== "approved") {
+        toast.error(
+          "Only verified company can contact talent! Please wait for your company to be verified."
+        );
         return;
       }
       const response = await fetch("/api/send-email", {
@@ -85,7 +106,7 @@ export const TalentContact = ({ toEmail }: Props) => {
         size="medium"
         loading={isLoading}
       ></Button>
-      {isCoverLetterModal && (
+      {isPopupModal && (
         <MessageBoxModal
           title="Describe why would you like to hire this talent?"
           messageLengthLimit={50}
