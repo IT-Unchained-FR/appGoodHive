@@ -83,7 +83,6 @@ export async function POST(request: Request) {
       LIMIT 1
     `;
     const jobId = savedJob[0].id;
-    console.log("jobId", jobId);
 
     return new Response(JSON.stringify({ jobId }), {
       status: 200,

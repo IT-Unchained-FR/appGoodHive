@@ -3,7 +3,8 @@ import Link from "next/link";
 
 import { getProfileData } from "@/lib/fetch-profile-data";
 import { generateAvailabilityStatus } from "./utils";
-import { Button } from "@components/button";
+import { TalentContact } from "@components/talent-contact";
+import { TalentSocialMedia } from "@components/talents/social-media";
 
 export const revalidate = 0;
 
@@ -41,14 +42,13 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
     talent_status,
     mentor_status,
     recruiter_status,
+    hide_contact_details,
   } = profileData;
 
   const availabilityStatus = generateAvailabilityStatus(
     freelance_only,
     remote_only
   );
-
-  const contactUrl = email ? `mailto:${email}` : `https://t.me/${telegram}`;
 
   return (
     <main className="relative pt-16">
@@ -103,9 +103,7 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
           </h4>
         )}
         <div className="flex w-full justify-center gap-5 mb-12">
-          <Link href={{ pathname: contactUrl }}>
-            <Button text="Contact me" type="secondary" size="medium"></Button>
-          </Link>
+          <TalentContact toEmail={email} />
           {/* <Button text="Hire me" type="primary" size="medium"></Button> */}
         </div>
         <div className="flex flex-col w-1/2">
@@ -119,62 +117,14 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
           <p className="w-full max-h-52 mb-10 text-ellipsis overflow-hidden">
             {about_work}
           </p>
-          <div className="flex flex-col mb-10">
-            <h4 className="text-[#3E3E3E] font-bold text-lg mb-5">
-              Social Media:
-            </h4>
-            <div className="flex gap-2">
-              {linkedin && (
-                <Link
-                  href={linkedin}
-                  target="_blank"
-                  className="relative w-7 h-7 rounded-full"
-                >
-                  <Image src="/icons/linkedin.svg" alt="social-icon" fill />
-                </Link>
-              )}
-              {telegram && (
-                <Link
-                  href={`https://t.me/${telegram}`}
-                  target="_blank"
-                  className="relative w-7 h-7 rounded-full"
-                >
-                  <Image src="/icons/telegram.svg" alt="social-icon" fill />
-                </Link>
-              )}
-              {github && (
-                <Link
-                  href={github}
-                  target="_blank"
-                  className="relative w-7 h-7 rounded-full"
-                >
-                  <Image src="/icons/github.svg" alt="social-icon" fill />
-                </Link>
-              )}
-              {stackoverflow && (
-                <Link
-                  href={stackoverflow}
-                  target="_blank"
-                  className="relative w-7 h-7 rounded-full"
-                >
-                  <Image
-                    src="/icons/stackoverflow.svg"
-                    alt="social-icon"
-                    fill
-                  />
-                </Link>
-              )}
-              {portfolio && (
-                <Link
-                  href={portfolio}
-                  target="_blank"
-                  className="relative w-7 h-7 rounded-full"
-                >
-                  <Image src="/icons/portfolio.svg" alt="social-icon" fill />
-                </Link>
-              )}
-            </div>
-          </div>
+
+          <TalentSocialMedia
+            linkedin={linkedin}
+            telegram={telegram}
+            github={github}
+            stackoverflow={stackoverflow}
+            portfolio={portfolio}
+          />
 
           <h3 className="text-[#4E4E4E] text-lg font-bold mb-5">
             Specialization and Skills
@@ -204,24 +154,27 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
               </Link>
             </div>
           )}
-
-          <h3 className="text-[#4E4E4E] text-lg font-bold mb-5">
-            Contact info
-          </h3>
-          <div className="flex w-full justify-between mb-8">
-            <h4 className="text-[#4E4E4E] text-base font-bold">Email</h4>
-            <p className="text-[#4E4E4E] text-base">{email}</p>
-          </div>
-          <div className="flex w-full justify-between mb-8">
-            <h4 className="text-[#4E4E4E] text-base font-bold">Phone</h4>
-            <p className="text-[#4E4E4E] text-base">{`${phone_country_code} ${phone_number}`}</p>
-          </div>
-          <div className="flex w-full justify-between mb-8">
-            <h4 className="text-[#4E4E4E] text-base font-bold">Address</h4>
-            <p className="text-[#4E4E4E] text-base">
-              {city}, {country}
-            </p>
-          </div>
+          {!hide_contact_details && (
+            <div>
+              <h3 className="text-[#4E4E4E] text-lg font-bold mb-5">
+                Contact info
+              </h3>
+              <div className="flex w-full justify-between mb-8">
+                <h4 className="text-[#4E4E4E] text-base font-bold">Email</h4>
+                <p className="text-[#4E4E4E] text-base">{email}</p>
+              </div>
+              <div className="flex w-full justify-between mb-8">
+                <h4 className="text-[#4E4E4E] text-base font-bold">Phone</h4>
+                <p className="text-[#4E4E4E] text-base">{`${phone_country_code} ${phone_number}`}</p>
+              </div>
+              <div className="flex w-full justify-between mb-8">
+                <h4 className="text-[#4E4E4E] text-base font-bold">Address</h4>
+                <p className="text-[#4E4E4E] text-base">
+                  {city}, {country}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </main>

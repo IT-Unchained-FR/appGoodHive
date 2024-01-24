@@ -45,8 +45,8 @@ export async function fetchJobs({
             )} OR LOWER(country) LIKE ${contains(location)})
             AND
             (LOWER(company_name) LIKE ${contains(name)})
-            ${recruiter === 'true' ? sql`AND recruiter = 'true'` : sql``}
-            ${mentor === 'true' ? sql`AND mentor = 'true'` : sql``}
+            ${recruiter === "true" ? sql`AND recruiter = 'true'` : sql``}
+            ${mentor === "true" ? sql`AND mentor = 'true'` : sql``}
         `;
 
     const count = countJobs[0].count as number;
@@ -68,10 +68,9 @@ export async function fetchJobs({
     )})
       AND
       (LOWER(company_name) LIKE ${contains(name)})
-      ${recruiter === 'true' ? sql`AND recruiter = 'true'` : sql``}
-      ${mentor === 'true' ? sql`AND mentor = 'true'` : sql``}
-      LIMIT ${limit}
-      OFFSET ${offset}
+      ${recruiter === "true" ? sql`AND recruiter = 'true'` : sql``}
+      ${mentor === "true" ? sql`AND mentor = 'true'` : sql``}
+      ORDER BY id DESC
       `;
 
     const jobs = jobsQuery.map((item) => ({
@@ -92,10 +91,13 @@ export async function fetchJobs({
       recruiter: item.recruiter === "true",
       escrowAmount: item.escrow_amount,
     }));
+    
+    const sortedJobs = jobs.sort(
+      (a, b) => Number(b.escrowAmount) - Number(a.escrowAmount)
+    );
+    const paginatedJobs = sortedJobs.slice(offset, offset + limit);
 
-    console.log("jobs >>", jobs);
-
-    return { jobs, count };
+    return { jobs: paginatedJobs, count };
   } catch (error) {
     console.log("💥", error);
     throw new Error("Failed to fetch data from the server");
