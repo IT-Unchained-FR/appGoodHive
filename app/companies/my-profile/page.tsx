@@ -110,7 +110,7 @@ export default function MyProfile() {
       toast.error("Something went wrong!");
     } else {
       if (profileData.status === "approved") {
-      toast.success("Profile Saved!");
+        toast.success("Profile Saved!");
       } else {
         toast.success("Profile saved but still under review by the core team!");
       }
@@ -125,15 +125,14 @@ export default function MyProfile() {
       </h2>
     );
   }
-  if (profileData.status === "pending") {
-    return (
-      <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
-        🚀 Your profile is pending approval. It will be live soon.
-      </p>
-    );
-  }
+
   return (
     <main className="container mx-auto">
+      {profileData && profileData.status === "pending" && (
+        <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+          🚀 Your profile is pending approval. It will be live soon.
+        </p>
+      )}
       <h1 className="my-5 text-2xl border-b-[1px] border-slate-300 pb-2">
         My Profile
       </h1>
