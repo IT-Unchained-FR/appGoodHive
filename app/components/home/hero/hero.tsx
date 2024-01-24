@@ -11,12 +11,12 @@ export const Hero = () => {
 
   const onFindJobBtnClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    router.push("/companies/search-talents");
+    router.push("/talents/job-search");
   };
 
   const onFindTalentBtnClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    router.push("/talents/job-search");
+    router.push("/companies/search-talents");
   };
 
   return (

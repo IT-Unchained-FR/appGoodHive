@@ -6,16 +6,15 @@ interface EmailTemplateProps {
   message: string;
 }
 
-export const JobAppliedTemplate: React.FC<Readonly<EmailTemplateProps>> = (
+export const ContactTalentTemplate: React.FC<Readonly<EmailTemplateProps>> = (
   props
 ) => {
   const { name, userProfile, message } = props;
   return (
     <div>
       <p>Hi,</p>
-      <p>{name} applied to your job</p>
-      <a href={userProfile}>{`${name}'s`} Profile link</a>
-      <p>Cover Letter:</p>
+      <p>{name} interested in your profile</p>
+      <a href={userProfile}>{name} company link</a>
       <p>{message}</p>
       <br />
       <br />
@@ -25,4 +24,4 @@ export const JobAppliedTemplate: React.FC<Readonly<EmailTemplateProps>> = (
   );
 };
 
-export default JobAppliedTemplate;
+export default ContactTalentTemplate;
