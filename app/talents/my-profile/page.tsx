@@ -66,6 +66,7 @@ export default function MyProfile() {
     talent_status: null,
     mentor_status: null,
     recruiter_status: null,
+    hide_contact_details: false,
   });
 
   const walletAddress = useContext(AddressContext);
@@ -137,6 +138,8 @@ export default function MyProfile() {
     const talent = formData.get("talent") === "on" ? true : false;
     const mentor = formData.get("mentor") === "on" ? true : false;
     const recruiter = formData.get("recruiter") === "on" ? true : false;
+    const hideContactDetails =
+      formData.get("hide-contact-details") === "on" ? true : false;
 
     if (!cvUrl && !isUploadedCvLink) {
       setIsLoading(false);
@@ -174,6 +177,7 @@ export default function MyProfile() {
       mentorStatus: profileData.mentor_status || mentor ? "pending" : null,
       recruiterStatus:
         profileData.recruiter_status || recruiter ? "pending" : null,
+      hideContactDetails,
     };
 
     const profileResponse = await fetch("/api/talents/my-profile", {
@@ -448,6 +452,13 @@ export default function MyProfile() {
                   defaultValue={profileData?.rate}
                 />
               </div>
+            </div>
+            <div className="w-full mt-5 pl-2">
+              <ToggleButton
+                label="Hide my contact details"
+                name="hide-contact-details"
+                checked={profileData.hide_contact_details}
+              />
             </div>
             <div className="mt-4">
               <label

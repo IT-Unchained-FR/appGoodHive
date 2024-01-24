@@ -34,6 +34,7 @@ export default function MyProfile() {
     github: "",
     stackoverflow: "",
     portfolio: "",
+    status: "",
   });
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
@@ -58,7 +59,6 @@ export default function MyProfile() {
 
       if (profileResponse.ok) {
         const profileData = await profileResponse.json();
-        console.log("profile >>", profileData);
         setProfileData(profileData);
       } else {
         console.error(profileResponse.statusText);
@@ -92,6 +92,7 @@ export default function MyProfile() {
       github: formData.get("github"),
       stackoverflow: formData.get("stackoverflow"),
       portfolio: formData.get("portfolio"),
+      status: profileData.status || "pending",
     };
 
     // TODO: POST formData to the server with fetch
@@ -108,7 +109,11 @@ export default function MyProfile() {
     if (!profileResponse.ok) {
       toast.error("Something went wrong!");
     } else {
+      if (profileData.status === "approved") {
       toast.success("Profile Saved!");
+      } else {
+        toast.success("Profile saved but still under review by the core team!");
+      }
     }
   };
 
@@ -118,6 +123,13 @@ export default function MyProfile() {
         🚀 To get started, please connect your wallet. This will enable you to
         create or save your profile. Thanks!
       </h2>
+    );
+  }
+  if (profileData.status === "pending") {
+    return (
+      <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+        🚀 Your profile is pending approval. It will be live soon.
+      </p>
     );
   }
   return (

@@ -1,13 +1,12 @@
 "use client";
 
-import toast from "react-hot-toast";
-import { useState, FormEvent, useContext, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import { Tooltip } from "@nextui-org/tooltip";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, useContext, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
-import { useCreateJob } from "@hooks/CreateJob";
+import { useCreateJob } from "@/app/hooks/create-job";
 import { chains } from "@constants/chains";
-import { skills } from "@constants/skills";
 import {
   createJobServices,
   jobTypes,
@@ -15,22 +14,21 @@ import {
   projectTypes,
   typeEngagements,
 } from "@constants/common";
+import { skills } from "@constants/skills";
 import {
   ethereumTokens,
-  polygonTokens,
-  gnosisChainTokens,
+  gnosisChainTokens
 } from "@constants/token-list/index.js";
 import { polygonTestnetTokens } from "@constants/token-list/polygon";
 
-import { calculateJobCreateFees } from "@utils/calculate-job-create-fees";
 import LabelOption from "@interfaces/label-option";
+import { calculateJobCreateFees } from "@utils/calculate-job-create-fees";
 
-import Modal from "@components/modal";
-import { AddressContext } from "@components/context";
-import { SelectInput } from "@components/select-input";
-import { SearchSelectInput } from "@components/search-select-input";
-import { Loader } from "@components/loader";
 import { AutoSuggestInput } from "@components/autosuggest-input";
+import { AddressContext } from "@components/context";
+import { Loader } from "@components/loader";
+import Modal from "@components/modal";
+import { SelectInput } from "@components/select-input";
 import { ToggleButton } from "@components/toggle-button";
 import { PopupModal } from "./PopupModal";
 
@@ -245,7 +243,7 @@ export default function CreateJob() {
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
-      console.log(error);
+      console.error(error);
     }
   };
 
@@ -285,7 +283,7 @@ export default function CreateJob() {
           : null
       );
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
@@ -317,6 +315,15 @@ export default function CreateJob() {
     return (
       <h3 className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
         🚀 Complete your company profile first before creating a job.
+      </h3>
+    );
+  }
+
+  if (companyData && companyData?.status === "pending") {
+    return (
+      <h3 className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+        🚀 Your company profile is under review. You will be able to create jobs
+        once it is approved.
       </h3>
     );
   }

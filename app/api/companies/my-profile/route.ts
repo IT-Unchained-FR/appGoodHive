@@ -19,6 +19,7 @@ export async function POST(request: Request) {
     github,
     stackoverflow,
     portfolio,
+    status,
   } = await request.json();
 
   const sql = postgres(process.env.DATABASE_URL || "", {
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
         github,
         stackoverflow,
         portfolio,
+        status,
         wallet_address
       ) VALUES (
         ${headline},
@@ -60,6 +62,7 @@ export async function POST(request: Request) {
         ${github},
         ${stackoverflow},
         ${portfolio},
+        ${status},
         ${walletAddress}
       )
       ON CONFLICT (wallet_address) DO UPDATE
@@ -77,6 +80,7 @@ export async function POST(request: Request) {
           github = ${github},
           stackoverflow = ${stackoverflow},
           portfolio = ${portfolio},
+          status = ${status},
           wallet_address = ${walletAddress};
     `;
 
@@ -96,8 +100,6 @@ export async function GET(request: NextRequest) {
   const searchParams = Object.fromEntries(searchParamsEntries);
   
   const { walletAddress } = searchParams;
-
-  console.log("wall address >>", walletAddress);
 
   const sql = postgres(process.env.DATABASE_URL || "", {
     ssl: {
@@ -126,8 +128,6 @@ export async function GET(request: NextRequest) {
         status: 404,
       });
     }
-
-    console.log("company >>", company[0]);
 
     return new Response(JSON.stringify(company[0]));
   } catch (error) {

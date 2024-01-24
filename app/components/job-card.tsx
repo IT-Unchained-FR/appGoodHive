@@ -1,15 +1,15 @@
 "use client";
 
+import { MessageBoxModal } from "@/app/components/message-box-modal";
 import Image from "next/image";
 import Link from "next/link";
-import { CoverLetterModal } from "@components/cover-letter-modal";
 import toast from "react-hot-toast";
 
-import { FC, useContext, useState, useEffect } from "react";
-import { generateJobTypeEngage } from "@utils/generate-job-type-engage";
 import { jobTypes, projectDuration } from "@constants/common";
-import { AddressContext } from "./context";
+import { generateJobTypeEngage } from "@utils/generate-job-type-engage";
+import { FC, useContext, useState } from "react";
 import { Button } from "./button";
+import { AddressContext } from "./context";
 
 interface Props {
   id: number;
@@ -62,7 +62,8 @@ export const JobCard: FC<Props> = ({
 
   const userWalletAddress = useContext(AddressContext);
   const isOwner = walletAddress === userWalletAddress;
-  const jobBalance = Number(escrowAmount) > 0 ? `${escrowAmount} MATIC` : "0 MATIC";
+  const jobBalance =
+    Number(escrowAmount) > 0 ? `${escrowAmount} MATIC` : "0 MATIC";
 
   const onSubmitHandler = async (coverLetter: string) => {
     if (!coverLetter) {
@@ -90,9 +91,10 @@ export const JobCard: FC<Props> = ({
         body: JSON.stringify({
           name: userProfile?.first_name,
           email: companyEmail,
-          jobtitle: title,
+          type: "job-applied",
+          subject: `Goodhive - ${name} applied for "${title}"`,
           userEmail: userProfile?.email,
-          coverLetter,
+          message: coverLetter,
           userProfile: `${window.location.origin}/talents/${userWalletAddress}`,
         }),
         headers: {
@@ -111,8 +113,24 @@ export const JobCard: FC<Props> = ({
     }
   };
 
-  const onApplyClickHandler = () => {
-    setIsCoverLetterModal(true);
+  const onApplyClickHandler = async () => {
+    const userDataResponse = await fetch(
+      `/api/talents/my-profile?walletAddress=${userWalletAddress}`
+    );
+
+    if (!userDataResponse.ok) {
+      toast.error("You don't have a talent profile yet! Please create one.");
+    }
+
+    const userProfile = await userDataResponse.json();
+    if (userProfile.talent_status !== "approved") {
+      toast.error(
+        "Only verified talent can apply for job! Please wait for your talent to be verified."
+      );
+      return;
+    } else {
+      setIsCoverLetterModal(true);
+    }
   };
 
   const onCoverLetterModalCloseHandler = () => {
@@ -216,8 +234,10 @@ export const JobCard: FC<Props> = ({
         </div>
       </div>
       {isCoverLetterModal && (
-        <CoverLetterModal
-          onSubmitHandler={onSubmitHandler}
+        <MessageBoxModal
+          title="Describe who you are and why you are a good fit for this job?"
+          messageLengthLimit={200}
+          onSubmit={onSubmitHandler}
           onClose={onCoverLetterModalCloseHandler}
         />
       )}
