@@ -341,7 +341,7 @@ export default function CreateJob() {
       <h1 className="my-2 text-2xl border-b-[1px] border-slate-300 ">
         Create Job
       </h1>
-      {id && jobData && (
+      {!!id && jobData && (
         <div className="w-full mb-1 flex justify-end">
           <h3 className="font-bold">
             Provision Amount: {provisionalAmount} MATIC
@@ -351,7 +351,7 @@ export default function CreateJob() {
       <section>
         <form onSubmit={handleSubmit}>
           <div className="flex flex-col w-full">
-            <div className="flex flex-col gap-4 mt-10 sm:flex-row">
+            <div className="flex flex-col gap-4 mt-10">
               <div className="flex-1">
                 <label
                   htmlFor="title"
@@ -369,7 +369,7 @@ export default function CreateJob() {
                   defaultValue={jobData?.title}
                 />
               </div>
-              <div className="w-full flex gap-5 justify-between">
+              <div className="w-full flex gap-5 justify-between sm:flex-col">
                 <SelectInput
                   labelText="Type of engagement"
                   name="type-engagement"
@@ -465,7 +465,7 @@ export default function CreateJob() {
             </div>
 
             {/* Add three checkbox here which are Talent, Recruiter and Mentor and aslo match up the styles we are having here. And add a i circular button in the right side of every checkbox lebel and if hover over it should show text just like tooltip */}
-            <div className="w-1/2 sm:w-full mb-5 px-3 flex justify-between">
+            <div className="w-1/2 sm:w-full mb-5 px-3 flex justify-between sm:flex-wrap sm:gap-5">
               {createJobServices.map((service) => {
                 const { label, value, tooltip } = service;
                 const isChecked =
@@ -485,7 +485,7 @@ export default function CreateJob() {
               })}
             </div>
 
-            <div className="flex gap-4 mt-4">
+            <div className="flex gap-4 mt-4 sm:flex-col">
               <div className="flex-1">
                 <SelectInput
                   labelText="Project Duration"
@@ -555,7 +555,7 @@ export default function CreateJob() {
               </p>
             ) : null}
             <div className="flex gap-4 mt-3"></div>
-            <div className="flex gap-4 mt-4">
+            <div className="flex gap-4 mt-4 sm:flex-col">
               <div className="flex-1">
                 <SelectInput
                   labelText="Chain"
@@ -601,7 +601,7 @@ export default function CreateJob() {
             </div>
 
             <div className="mt-12 mb-8 w-full flex justify-end gap-4 text-right">
-              {id && (
+              {!!id && (
                 <Tooltip content="Provisioning funds boost swift community response to your job offer.">
                   <button
                     className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
@@ -612,7 +612,7 @@ export default function CreateJob() {
                   </button>
                 </Tooltip>
               )}
-              {id && (
+              {!!id && (
                 <button
                   className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
                   type="button"
@@ -658,7 +658,7 @@ export default function CreateJob() {
         </div>
         <p className="px-5 mt-2 mb-3 font-base">{`Funds will primarily be allocated to cover the Protocol's Fees.`}</p>
         <div className="flex flex-col p-5 justify-center items-center">
-          {id && (
+          {!!id && (
             <button
               className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
               type="button"
@@ -667,7 +667,7 @@ export default function CreateJob() {
               Provision Funds
             </button>
           )}
-          {id && jobData?.escrowAmount && (
+          {!!id && !!jobData?.escrowAmount && (
             <button
               className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
               type="button"
@@ -677,7 +677,7 @@ export default function CreateJob() {
             </button>
           )}
 
-          {id && jobData?.escrowAmount && (
+          {!!id && !!jobData?.escrowAmount && (
             <button
               className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
               type="button"
