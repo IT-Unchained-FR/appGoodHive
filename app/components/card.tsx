@@ -68,7 +68,11 @@ export const Card: FC<Props> = ({
     : `/talents/${walletAddress}`;
   const countryFlag = generateCountryFlag(country);
   const moneyIcon =
-    jobId && Number(escrowAmount) > 0 ? "/icons/money.svg" : "/icons/no-money.svg";
+    jobId && Number(escrowAmount) > 0
+      ? "/icons/money.svg"
+      : "/icons/no-money.svg";
+  const shortSkillList =
+    skills.length > 3 ? [...skills.slice(0, 3), "..."] : skills;
 
   return (
     <div className="box-border block p-3 mt-11 bg-white bg-blend-darken rounded-3xl shadow-[2px_7px_20px_4px_#e2e8f0]">
@@ -128,11 +132,11 @@ export const Card: FC<Props> = ({
             </div>
           </div>
         </div>
-        <p className="flex pt-3 mb-3 h-16 sm:h-10 text-sm overflow-hidden text-ellipsis font-light text-[#151414]">
+        <p className="flex pt-3 mb-3 text-sm font-light text-[#151414]">
           {croppedDescription}
         </p>
         <div className="flex flex-wrap mb-3">
-          {skills.map((skill, index) => (
+          {shortSkillList.map((skill, index) => (
             <div
               key={index}
               className="px-2 py-1 mb-2 mr-2 rounded-full bg-amber-100"

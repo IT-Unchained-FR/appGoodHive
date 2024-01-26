@@ -36,7 +36,6 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
     : TRANSLATIONS.jobSearchTitle;
 
   const handleSearchChange = (skills: string[]) => {
-    console.log("mara dile skill >>", skills);
     setQuery((q) => ({ ...q, search: skills[0] }));
   };
 
@@ -79,7 +78,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
   }
 
   return (
-    <div className="mx-5">
+    <div>
       <h1 className="my-5 font-bold text-2xl">{title}</h1>
       <div className="relative pt-12 space-y-6 w-6/12 sm:w-full md:w-full">
         <div className="absolute w-full top-0 left-0">
@@ -111,7 +110,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
         />
 
         {isSearchTalent ? (
-          <div className="flex gap-5 my-5 px-3">
+          <div className="flex gap-5 my-5 px-3 sm:flex-col">
             <ToggleButton
               label={TRANSLATIONS.onlyTalent}
               name="onlyTalent"
@@ -132,7 +131,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
             />
           </div>
         ) : (
-          <div className="flex gap-5">
+          <div className="flex gap-5 sm:flex-col">
             <ToggleButton
               label={TRANSLATIONS.openToRecruiter}
               name="openToRecruiter"
@@ -148,7 +147,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
           </div>
         )}
 
-        <div className="flex space-x-11">
+        <div className="flex justify-between gap-3">
           <LinkButton
             href={{
               href: isSearchTalent
