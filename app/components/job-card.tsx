@@ -200,17 +200,17 @@ export const JobCard: FC<Props> = ({
               </span>
             </div>
             <div className="flex flex-col pt-4">
-              <p className="font-bold text-base whitespace-nowrap">
-                Mandatory Skill:
+              <p className="font-bold mb-2 text-base whitespace-nowrap">
+                Mandatory Skills:
               </p>
-              <div className="pt-3 grid grid-cols-7 grid-flow-row sm:grid-cols-5 gap-1">
-                {skills.map((skill, i) => (
-                  <span
-                    key={i}
-                    className="inline-block bg-gray-100 border border-solid border-[#FFC905] rounded-full py-1 text-xs font-semibold text-center mr-1 mb-1"
+              <div className="flex flex-wrap mb-3">
+                {skills.map((skill, index) => (
+                  <div
+                    key={index}
+                    className="px-2 py-1 mb-2 mr-2 rounded-full bg-amber-100"
                   >
-                    {skill}
-                  </span>
+                    <span className="flex text-sm items-center">{skill}</span>
+                  </div>
                 ))}
               </div>
             </div>
