@@ -514,7 +514,7 @@ export default function MyProfile() {
               )}
             </div>
 
-            <div className="flex w-full justify-between mt-9">
+            <div className="flex w-full justify-between mt-9 sm:flex-wrap sm:gap-3">
               <ToggleButton
                 label="Freelance Only"
                 name="freelance-only"
@@ -571,7 +571,7 @@ export default function MyProfile() {
             </div>
             <div className="flex flex-col mt-3">
               <p className="my-4">I want to be:</p>
-              <div className="w-1/2 sm:w-full mb-5 px-3 flex justify-between">
+              <div className="w-1/2 sm:w-full mb-5 px-3 flex justify-between sm:px-1 sm:flex-wrap sm:gap-3">
                 {createJobServices.map((service) => {
                   const { label, value } = service;
                   const isChecked = profileData[value];
