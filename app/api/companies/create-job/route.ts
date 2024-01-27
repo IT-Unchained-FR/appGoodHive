@@ -12,6 +12,15 @@ export async function POST(request: Request) {
     chain,
     currency,
     walletAddress,
+    city,
+    country,
+    imageUrl,
+    jobType,
+    companyName,
+    projectType,
+    talent,
+    recruiter,
+    mentor,
   } = await request.json();
 
   const sql = postgres(process.env.DATABASE_URL || "", {
@@ -32,6 +41,15 @@ export async function POST(request: Request) {
         chain,
         currency,
         skills,
+        city,
+        country,
+        company_name,
+        image_url,
+        job_type,
+        project_type,
+        talent,
+        recruiter,
+        mentor,
         wallet_address
       ) VALUES (
         ${title},
@@ -43,13 +61,33 @@ export async function POST(request: Request) {
         ${chain},
         ${currency},
         ${skills},
+        ${city},
+        ${country},
+        ${companyName},
+        ${imageUrl},
+        ${jobType},
+        ${projectType},
+        ${talent},
+        ${recruiter},
+        ${mentor},
         ${walletAddress}
       );
     `;
 
-    return new Response(
-      JSON.stringify({ message: "Data inserted successfully" })
-    );
+    // now get the saved job id and return that
+    const savedJob = await sql`
+      SELECT id
+      FROM goodhive.job_offers
+      WHERE wallet_address = ${walletAddress}
+      ORDER BY id DESC
+      LIMIT 1
+    `;
+    const jobId = savedJob[0].id;
+
+    return new Response(JSON.stringify({ jobId }), {
+      status: 200,
+    });
+
   } catch (error) {
     console.error("Error inserting data:", error);
 

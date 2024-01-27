@@ -154,7 +154,7 @@ export default function Design() {
         <h2 className="text-2xl font-bold">Links</h2>
       </section>
 
-      <section className="mt-5 body-font font-montserrat">
+      {/* <section className="mt-5 body-font font-montserrat">
         <h2 className="text-2xl font-bold">Cards</h2>
         <h3 className="mt-2 text-xl">Company Card</h3>
         <div className="grid min-w-full grid-flow-row grid-cols-1 gap-3 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-1 xl:grid-cols-2 2xl:grid-cols-2 3xl:grid-cols-2 4xl:grid-cols-3">
@@ -246,7 +246,7 @@ export default function Design() {
             buttonText="Connect"
           />
         </div>
-      </section>
+      </section> */}
 
       <section className="mt-5 body-font font-montserrat">
         <h2 className="text-2xl font-bold">Inputs</h2>

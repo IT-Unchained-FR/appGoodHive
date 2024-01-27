@@ -10,21 +10,20 @@ import { useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 const commonLinks = [
-  { href: "/talents/job-search", label: "Talent" },
-  { href: "/companies/search-talents", label: "Companies" },
+  { href: "/talents/job-search", label: "For Talents" },
+  { href: "/companies/search-talents", label: "For Companies" },
 ];
 
 const talentsLinks = [
   { href: "/talents/job-search", label: "Job Search" },
   // { href: "/talents/my-applications", label: "My Applications" },
-  { href: "/talents/my-profile", label: "My Profile" },
+  { href: "/talents/my-profile", label: "My Talent Profile" },
 ];
 
 const companiesLinks = [
   { href: "/companies/search-talents", label: "Search Talents" },
-  { href: "/companies/job-listing", label: "Jobs Listing" },
   // { href: "/companies/create-job", label: "Create Job" },
-  { href: "/companies/my-profile", label: "My Profile" },
+  { href: "/companies/my-profile", label: "My Company Profile" },
 ];
 
 export const NavBar = () => {
