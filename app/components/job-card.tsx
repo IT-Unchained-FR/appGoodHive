@@ -90,12 +90,14 @@ export const JobCard: FC<Props> = ({
         method: "POST",
         body: JSON.stringify({
           name: userProfile?.first_name,
+          toUserName: postedBy,
           email: companyEmail,
           type: "job-applied",
-          subject: `Goodhive - ${name} applied for "${title}"`,
+          subject: `Goodhive - ${userProfile?.first_name} applied for "${title}"`,
           userEmail: userProfile?.email,
           message: coverLetter,
           userProfile: `${window.location.origin}/talents/${userWalletAddress}`,
+          jobLink: `${window.location.origin}/companies/${walletAddress}?id=${id}`,
         }),
         headers: {
           "Content-Type": "application/json",

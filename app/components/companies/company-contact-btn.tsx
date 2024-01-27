@@ -8,9 +8,10 @@ import { MessageBoxModal } from "@components/message-box-modal";
 
 interface Props {
   toEmail: string;
+  toUserName: string;
 }
 
-export const TalentContact = ({ toEmail }: Props) => {
+export const CompanyContactBtn = ({ toEmail, toUserName }: Props) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isPopupModal, setIsPopupModal] = useState(false);
   const userWalletAddress = useContext(AddressContext);
@@ -18,27 +19,27 @@ export const TalentContact = ({ toEmail }: Props) => {
   const onContactMeBtnClickHandler = async () => {
     setIsLoading(true);
     const userDataResponse = await fetch(
-      `/api/companies/my-profile?walletAddress=${userWalletAddress}`
+      `/api/talents/my-profile?walletAddress=${userWalletAddress}`
     );
 
     if (!userDataResponse.ok) {
-      toast.error("You don't have a company profile yet! Please create one.");
       setIsLoading(false);
-      return;
+      toast.error("You don't have a talent profile yet! Please create one.");
     }
 
     const userProfile = await userDataResponse.json();
-    if (userProfile.status !== "approved") {
+    if (userProfile.talent_status !== "approved") {
       setIsLoading(false);
       toast.error(
-        "Only verified company can contact talent! Please wait for your company to be verified."
+        "Only verified talent can contact company! Please wait for your profile to be verified."
       );
       return;
+    } else {
+      setIsPopupModal(true);
     }
-    setIsPopupModal(true);
   };
 
-  const onCoverLetterModalCloseHandler = () => {
+  const onPopupModalCloseHandler = () => {
     setIsPopupModal(false);
     setIsLoading(false);
   };
@@ -55,31 +56,25 @@ export const TalentContact = ({ toEmail }: Props) => {
     try {
       setIsPopupModal(false);
       const userDataResponse = await fetch(
-        `/api/companies/my-profile?walletAddress=${userWalletAddress}`
+        `/api/talents/my-profile?walletAddress=${userWalletAddress}`
       );
 
       if (!userDataResponse.ok) {
-        toast.error("You don't have a company profile yet! Please create one.");
-        return;
+        throw new Error(`HTTP error! status: ${userDataResponse.status}`);
       }
 
       const userProfile = await userDataResponse.json();
-      if (userProfile.status !== "approved") {
-        toast.error(
-          "Only verified company can contact talent! Please wait for your company to be verified."
-        );
-        return;
-      }
       const response = await fetch("/api/send-email", {
         method: "POST",
         body: JSON.stringify({
-          name: userProfile?.designation,
+          name: userProfile?.first_name,
+          toUserName: toUserName,
           email: toEmail,
-          type: "contact-talent",
-          subject: `Goodhive - ${userProfile?.designation} interested in your profile`,
+          type: "contact-company",
+          subject: `Goodhive - ${userProfile?.first_name} send you a message`,
           userEmail: userProfile?.email,
           message,
-          userProfile: `${window.location.origin}/companies/${userWalletAddress}`,
+          userProfile: `${window.location.origin}/talents/${userWalletAddress}`,
         }),
         headers: {
           "Content-Type": "application/json",
@@ -108,10 +103,10 @@ export const TalentContact = ({ toEmail }: Props) => {
       ></Button>
       {isPopupModal && (
         <MessageBoxModal
-          title="Describe why would you like to hire this talent?"
-          messageLengthLimit={50}
+          title="Write your message:"
+          messageLengthLimit={30}
           onSubmit={onSubmitHandler}
-          onClose={onCoverLetterModalCloseHandler}
+          onClose={onPopupModalCloseHandler}
         />
       )}
     </div>
