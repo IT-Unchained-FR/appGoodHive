@@ -1,13 +1,17 @@
 import type { FC } from "react";
+import { Loader } from "./loader";
 
 interface Props {
   text: string;
   type: string;
   size: string;
+  loading?: boolean;
   onClickHandler?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  disabled?: boolean;
 }
 
-export const Button: FC<Props> = ({ text, type, size, onClickHandler }) => {
+export const Button: FC<Props> = (props) => {
+  const { text, type, size, loading = false, onClickHandler, ...rest } = props;
   let styleType = `${type}${size}`;
 
   switch (styleType) {
@@ -49,8 +53,14 @@ export const Button: FC<Props> = ({ text, type, size, onClickHandler }) => {
   }
 
   return (
-    <button className={styleType} onClick={onClickHandler}>
-      {text}
+    <button
+      className={styleType}
+      onClick={onClickHandler}
+      type="button"
+      disabled={loading}
+      {...rest}
+    >
+      {loading ? <Loader color="#ffffff" /> : text}
     </button>
   );
 };

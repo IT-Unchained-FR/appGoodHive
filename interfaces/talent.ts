@@ -17,6 +17,8 @@ interface Talent {
   skills: string[];
   imageUrl: string;
   walletAddress: string;
+  freelancer: boolean;
+  remote: boolean;
 }
 
 export default Talent;

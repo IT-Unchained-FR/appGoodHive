@@ -38,14 +38,17 @@ export default async function SearchTalentsPage({
             postedBy={`${talent.firstName} ${talent.lastName}`}
             postedOn="Active 2 days ago" // TODO: use real data instead when available
             image={talent.imageUrl}
-            countryFlag="/img/country_flag.png" // TODO: create flag table
+            country={talent.country} // TODO: create flag table
             city={talent.city}
-            rate={Number(talent.rate)}
+            budget={Number(talent.rate)}
+            projectType="hourly"
             currency={talent.currency}
             description={talent.description}
             skills={talent.skills}
             buttonText="Connect"
             walletAddress={talent.walletAddress}
+            freelancer={talent.freelancer}
+            remote={talent.remote}
           />
         ))}
       </div>
