@@ -20,7 +20,7 @@ export const socialLinks = [
     {
         name: 'telegram',
         icon: '/icons/telegram.svg',
-        placeholder: 'Telegram',
+        placeholder: 'Telegram*',
         isRequired: true
     },
     {

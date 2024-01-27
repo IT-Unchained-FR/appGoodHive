@@ -28,14 +28,14 @@ const Modal = ({ open, onClose, children }: ModalProps) => {
 
   return (
     <div
-      className={`fixed top-0 left-0 w-full h-full bg-black bg-opacity-30 flex items-center justify-center ${
+      className={`fixed top-0 left-0 w-[100vw] h-[100vh] z-[99999999] rounded bg-black bg-opacity-30 flex items-center justify-center ${
         open ? "block" : "hidden"
       }`}
       onClick={handleOutsideClick}
     >
       <dialog
         ref={dialogRef}
-        className="relative bg-white rounded shadow-lg border-0 p-0 max-h-[80%] max-w-[80%]"
+        className="relative bg-white rounded-xl shadow-lg border-0 p-0 max-h-[80%] max-w-[80%] z-[9999999]"
       >
         {children}
       </dialog>

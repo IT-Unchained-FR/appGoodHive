@@ -7083,3 +7083,14 @@ export const polygonTokens = [
     label: "BreederDAO | BREED (0x6949...9f7f)",
   },
 ];
+
+export const polygonTestnetTokens = [
+  {
+    value: "0x0000000000000000000000000000000000001010",
+    label: "Mubmai - PoS | MATIC",
+  },
+  {
+    value: "0x9999f7Fea5938fD3b1E26A12c3f2fb024e194f97",
+    label: "USDC Token | USDC",
+  }
+]
