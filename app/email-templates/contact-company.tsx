@@ -8,22 +8,19 @@ interface EmailTemplateProps {
   jobLink?: string;
 }
 
-export const JobAppliedTemplate: React.FC<Readonly<EmailTemplateProps>> = (
+export const ContactCompanyTemplate: React.FC<Readonly<EmailTemplateProps>> = (
   props
 ) => {
-  const { name, toUserName, userProfile, message, jobLink } = props;
+  const { name, toUserName, userProfile, message } = props;
   return (
     <div>
       <p>Hello {toUserName},</p>
-
-      <p>Cover Letter:</p>
       <p style={{ whiteSpace: "pre-wrap" }}>{message}</p>
       <br />
       <p>
         Find {name}&apos;s Goodhive profile here :{" "}
         <a href={userProfile}>{`Talent's profile Url`}</a>
       </p>
-      <a href={jobLink}>Your Job Url</a>
       <br />
       <br />
       <p>GoodHive Team</p>
@@ -31,4 +28,4 @@ export const JobAppliedTemplate: React.FC<Readonly<EmailTemplateProps>> = (
   );
 };
 
-export default JobAppliedTemplate;
+export default ContactCompanyTemplate;

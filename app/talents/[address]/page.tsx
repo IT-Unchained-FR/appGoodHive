@@ -1,10 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { TalentSocialMedia } from "@/app/components/talents/profile-social-media";
+import { TalentContactBtn } from "@/app/components/talents/talent-contact-btn";
 import { getProfileData } from "@/lib/fetch-profile-data";
 import { generateAvailabilityStatus } from "./utils";
-import { TalentContact } from "@components/talent-contact";
-import { TalentSocialMedia } from "@components/talents/social-media";
 
 export const revalidate = 0;
 
@@ -103,7 +103,7 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
           </h4>
         )}
         <div className="flex w-full justify-center gap-5 mb-12">
-          <TalentContact toEmail={email} />
+          <TalentContactBtn toEmail={email} toUserName={first_name} />
           {/* <Button text="Hire me" type="primary" size="medium"></Button> */}
         </div>
         <div className="flex flex-col w-1/2">
@@ -165,7 +165,7 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
               </div>
               <div className="flex w-full justify-between mb-8">
                 <h4 className="text-[#4E4E4E] text-base font-bold">Phone</h4>
-                <p className="text-[#4E4E4E] text-base">{`${phone_country_code} ${phone_number}`}</p>
+                <p className="text-[#4E4E4E] text-base">+{`${phone_country_code} ${phone_number}`}</p>
               </div>
               <div className="flex w-full justify-between mb-8">
                 <h4 className="text-[#4E4E4E] text-base font-bold">Address</h4>
