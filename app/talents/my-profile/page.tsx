@@ -22,12 +22,14 @@ import { skills } from "@/app/constants/skills";
 import { countries } from "@/app/constants/countries";
 import LabelOption from "@interfaces/label-option";
 import { resumeUploadSizeLimit } from "./constants";
-import { ToogleButton } from "@components/toogle-button";
+import { ToggleButton } from "@components/toggle-button";
 import { SocialLink } from "./social-link";
 import { AutoSuggestInput } from "@components/autosuggest-input/autosuggest-input";
 import { socialLinks } from "./constant";
 import { Button } from "@/app/components/button";
 import { useRouter } from "next/navigation";
+import { uploadFileToBucket } from "@utils/upload-file-bucket";
+import { createJobServices } from "@/app/constants/common";
 
 export default function MyProfile() {
   const imageInputValue = useRef(null);
@@ -58,6 +60,13 @@ export default function MyProfile() {
     github: "",
     stackoverflow: "",
     portfolio: "",
+    mentor: false,
+    talent: false,
+    recruiter: false,
+    talent_status: null,
+    mentor_status: null,
+    recruiter_status: null,
+    hide_contact_details: false,
   });
 
   const walletAddress = useContext(AddressContext);
@@ -115,46 +124,6 @@ export default function MyProfile() {
     setCvFile(cvFile);
   };
 
-  const uploadFileToBucket = async (file: File | null) => {
-    return new Promise(async (resolve, reject) => {
-      if (!file) return resolve(null);
-
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-
-      reader.onload = async () => {
-        const base64File = reader.result;
-
-        try {
-          const postImageResponse = await fetch("/api/upload-file", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ file: base64File, fileType: file.type }),
-          });
-
-          if (postImageResponse.ok) {
-            const { fileUrl } = await postImageResponse.json();
-            console.log("File url >>", fileUrl);
-            resolve(fileUrl);
-          } else {
-            console.error(postImageResponse.statusText);
-            resolve(null);
-          }
-        } catch (error) {
-          console.error(error);
-          resolve(null);
-        }
-      };
-
-      reader.onerror = (error) => {
-        console.error("File reading failed:", error);
-        reject(error);
-      };
-    });
-  };
-
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
@@ -163,8 +132,14 @@ export default function MyProfile() {
 
     const imageUrl = await uploadFileToBucket(profileImage);
     const cvUrl = await uploadFileToBucket(cvFile);
-    const freelanceOnly = formData.get("freelance-only") === "on" ? true : false;
+    const freelanceOnly =
+      formData.get("freelance-only") === "on" ? true : false;
     const remoteOnly = formData.get("remote-only") === "on" ? true : false;
+    const talent = formData.get("talent") === "on" ? true : false;
+    const mentor = formData.get("mentor") === "on" ? true : false;
+    const recruiter = formData.get("recruiter") === "on" ? true : false;
+    const hideContactDetails =
+      formData.get("hide-contact-details") === "on" ? true : false;
 
     if (!cvUrl && !isUploadedCvLink) {
       setIsLoading(false);
@@ -195,6 +170,14 @@ export default function MyProfile() {
       stackoverflow: formData.get("stackoverflow"),
       portfolio: formData.get("portfolio"),
       telegram: formData.get("telegram"),
+      talent,
+      mentor,
+      recruiter,
+      talentStatus: profileData.talent_status || "pending",
+      mentorStatus: profileData.mentor_status || mentor ? "pending" : null,
+      recruiterStatus:
+        profileData.recruiter_status || recruiter ? "pending" : null,
+      hideContactDetails,
     };
 
     const profileResponse = await fetch("/api/talents/my-profile", {
@@ -219,19 +202,39 @@ export default function MyProfile() {
     }
   };
 
+  if (profileData.talent_status === "pending") {
+    return (
+      <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+        🚀 Your profile is pending approval. It will be live soon.
+      </p>
+    );
+  }
+
   return (
     <main className="container mx-auto">
       <h1 className="my-5 text-2xl border-b-[1px] border-slate-300 pb-2">
         My Profile
       </h1>
-      {!walletAddress && (
+      {!walletAddress ? (
         <div>
           <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
             🚀 To get started, please connect your wallet. This will enable you
             to create or save your profile. Thanks!
           </p>
         </div>
-      )}
+      ) : profileData.talent_status === "approved" &&
+        profileData.recruiter_status === "pending" ? (
+        <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+          🚀 Your profile is approved as a talent but pending approval as a
+          recruiter
+        </p>
+      ) : profileData.talent_status === "approved" &&
+        profileData.mentor_status === "pending" ? (
+        <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+          🚀 Your profile is approved as a talent but pending approval as a
+          mentor
+        </p>
+      ) : null}
       <section>
         <form onSubmit={handleSubmit}>
           <div className="flex flex-col items-center justify-center w-full mt-10">
@@ -450,6 +453,13 @@ export default function MyProfile() {
                 />
               </div>
             </div>
+            <div className="w-full mt-5 pl-2">
+              <ToggleButton
+                label="Hide my contact details"
+                name="hide-contact-details"
+                checked={profileData.hide_contact_details}
+              />
+            </div>
             <div className="mt-4">
               <label
                 htmlFor="about-work"
@@ -504,13 +514,13 @@ export default function MyProfile() {
               )}
             </div>
 
-            <div className="flex w-full justify-between mt-9">
-              <ToogleButton
+            <div className="flex w-full justify-between mt-9 sm:flex-wrap sm:gap-3">
+              <ToggleButton
                 label="Freelance Only"
                 name="freelance-only"
                 checked={profileData.freelance_only}
               />
-              <ToogleButton
+              <ToggleButton
                 label="Remote Only"
                 name="remote-only"
                 checked={profileData.remote_only}
@@ -557,6 +567,23 @@ export default function MyProfile() {
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+            <div className="flex flex-col mt-3">
+              <p className="my-4">I want to be:</p>
+              <div className="w-1/2 sm:w-full mb-5 px-3 flex justify-between sm:px-1 sm:flex-wrap sm:gap-3">
+                {createJobServices.map((service) => {
+                  const { label, value } = service;
+                  const isChecked = profileData[value];
+                  return (
+                    <ToggleButton
+                      key={value}
+                      label={label}
+                      name={value}
+                      checked={isChecked}
+                    />
+                  );
+                })}
               </div>
             </div>
 

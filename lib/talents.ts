@@ -17,12 +17,18 @@ export async function fetchTalents({
   name = "",
   items = 9,
   page = 1,
+  onlyTalent = "",
+  onlyMentor = "",
+  onlyRecruiter = "",
 }: {
   search?: string;
   location?: string;
   name?: string;
   items: number;
   page: number;
+  onlyTalent?: string;
+  onlyMentor?: string;
+  onlyRecruiter?: string;
 }) {
   try {
     const countCursor = await sql`
@@ -30,16 +36,19 @@ export async function fetchTalents({
     FROM goodhive.users
     WHERE
       (LOWER(title) LIKE ${contains(search)} OR LOWER(skills) LIKE ${contains(
-      search
-    )})
+        search
+      )})
       AND
       (LOWER(city) LIKE ${contains(location)} OR LOWER(country) LIKE ${contains(
-      location
-    )})
-    AND
+        location
+      )})
+      AND
       (LOWER(first_name) LIKE ${contains(
         name
       )} OR LOWER(last_name) LIKE ${contains(name)})
+      ${onlyTalent === "true" ? sql`AND talent_status = 'approved'` : sql``}
+      ${onlyMentor === "true" ? sql`AND mentor_status = 'approved'` : sql``}
+      ${onlyRecruiter === "true" ? sql`AND recruiter_status = 'approved'` : sql``}
     `;
 
     const count = countCursor[0].count as number;
@@ -62,30 +71,41 @@ export async function fetchTalents({
       (LOWER(first_name) LIKE ${contains(
         name
       )} OR LOWER(last_name) LIKE ${contains(name)})
+      ${onlyTalent === "true" ? sql`AND talent_status = 'approved'` : sql``}
+      ${onlyMentor === "true" ? sql`AND mentor_status = 'approved'` : sql``}
+      ${onlyRecruiter === "true" ? sql`AND recruiter_status = 'approved'` : sql``}
       LIMIT ${limit}
       OFFSET ${offset}
       `;
 
-    const talents: Talent[] = talentsCursor.map((talent) => {
-      return {
-        title: talent.title,
-        description: talent.description,
-        firstName: talent.first_name,
-        lastName: talent.last_name,
-        country: talent.country,
-        city: talent.city,
-        phoneCountryCode: talent.phone_country_code,
-        phoneNumber: talent.phone_number,
-        email: talent.email,
-        aboutWork: talent.about_work,
-        telegram: talent.telegram,
-        rate: talent.rate,
-        currency: talent.currency,
-        skills: talent.skills.split(","),
-        imageUrl: talent.image_url,
-        walletAddress: talent.wallet_address,
-      };
-    });
+    
+    const talents: Talent[] = talentsCursor
+      .filter(
+        (talent) =>
+          talent.talent_status === "approved" || talent.talent_status === null
+      )
+      .map((talent) => {
+        return {
+          title: talent.title,
+          description: talent.description,
+          firstName: talent.first_name,
+          lastName: talent.last_name,
+          country: talent.country,
+          city: talent.city,
+          phoneCountryCode: talent.phone_country_code,
+          phoneNumber: talent.phone_number,
+          email: talent.email,
+          aboutWork: talent.about_work,
+          telegram: talent.telegram,
+          rate: talent.rate,
+          currency: talent.currency,
+          skills: talent.skills.split(","),
+          imageUrl: talent.image_url,
+          walletAddress: talent.wallet_address,
+          freelancer: talent.freelance_only ? true : false,
+          remote: talent.remote_only ? true : false,
+        };
+      });
 
     return { talents, count };
   } catch (error) {

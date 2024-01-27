@@ -6,6 +6,8 @@ type FetchJobsProps = {
   name?: string;
   items: number;
   page: number;
+  recruiter?: string;
+  mentor?: string;
 };
 
 const sql = postgres(process.env.DATABASE_URL || "", {
@@ -26,6 +28,8 @@ export async function fetchJobs({
   name = "",
   items = 9,
   page = 1,
+  recruiter = "",
+  mentor = "",
 }: FetchJobsProps) {
   try {
     const countJobs = await sql`
@@ -41,6 +45,8 @@ export async function fetchJobs({
             )} OR LOWER(country) LIKE ${contains(location)})
             AND
             (LOWER(company_name) LIKE ${contains(name)})
+            ${recruiter === "true" ? sql`AND recruiter = 'true'` : sql``}
+            ${mentor === "true" ? sql`AND mentor = 'true'` : sql``}
         `;
 
     const count = countJobs[0].count as number;
@@ -62,24 +68,36 @@ export async function fetchJobs({
     )})
       AND
       (LOWER(company_name) LIKE ${contains(name)})
-      LIMIT ${limit}
-      OFFSET ${offset}
+      ${recruiter === "true" ? sql`AND recruiter = 'true'` : sql``}
+      ${mentor === "true" ? sql`AND mentor = 'true'` : sql``}
+      ORDER BY id DESC
       `;
 
     const jobs = jobsQuery.map((item) => ({
+      id: item.id,
       title: item.title,
       companyName: item.company_name,
       typeEngagement: item.type_engagement,
       jobDescription: item.description,
       duration: item.duration,
-      rate: item.rate_per_hour,
       budget: item.budget,
+      projectType: item.project_type,
       skills: item.skills.split(","),
       country: item.country,
       city: item.city,
+      walletAddress: item.wallet_address,
+      image_url: item.image_url,
+      mentor: item.mentor === "true",
+      recruiter: item.recruiter === "true",
+      escrowAmount: item.escrow_amount,
     }));
+    
+    const sortedJobs = jobs.sort(
+      (a, b) => Number(b.escrowAmount) - Number(a.escrowAmount)
+    );
+    const paginatedJobs = sortedJobs.slice(offset, offset + limit);
 
-    return { jobs, count };
+    return { jobs: paginatedJobs, count };
   } catch (error) {
     console.log("💥", error);
     throw new Error("Failed to fetch data from the server");

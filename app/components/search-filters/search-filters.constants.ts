@@ -1,9 +1,15 @@
 export const TRANSLATIONS = {
-  title: "Looking for Job",
+  jobSearchTitle: "Looking for Job",
+  talentSearchTitle: "Looking for Talent",
   searchPlaceholder: "Try Developer Solidity, Rust, C++...",
   locationPlaceholder: "Location Paris, Lodon, Remote...",
   searchByDeveloperName: "Search by Developer Name",
   searchByCompanyName: "Search by Company Name",
+  openToRecruiter: "Open to Recruiter",
+  openToMentor: "Open to Mentor",
+  onlyTalent: "Only Talent",
+  onlyMentor: "Only Mentor",
+  onlyRecruiter: "Only Recruiter",
 };
 
 export const InputClasses = [

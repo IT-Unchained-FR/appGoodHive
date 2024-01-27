@@ -15,18 +15,27 @@ import addIcon from "@/public/icons/add.svg";
 import { skills } from "@constants/skills";
 import { GooglePlaceSuggestion } from "@components/google-places-suggestion";
 import { AutoSuggestInput } from "@components/autosuggest-input";
+import { ToggleButton } from "../toggle-button";
 
 export const SearchFilters: FC<SearchFiltersProps> = (props) => {
   const [query, setQuery] = useState<SearchQueryProps>({
     search: "",
     location: "",
     name: "",
+    recruiter: false,
+    mentor: false,
+    onlyTalent: false,
+    onlyMentor: false,
+    onlyRecruiter: false,
   });
 
   const { isSearchTalent = false } = props;
 
+  const title = isSearchTalent
+    ? TRANSLATIONS.talentSearchTitle
+    : TRANSLATIONS.jobSearchTitle;
+
   const handleSearchChange = (skills: string[]) => {
-    console.log("mara dile skill >>", skills);
     setQuery((q) => ({ ...q, search: skills[0] }));
   };
 
@@ -38,9 +47,39 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
     setQuery((q) => ({ ...q, name: event.target.value }));
   };
 
+  const handleOpenToRecruiterChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setQuery((q) => ({ ...q, recruiter: event.target.checked }));
+  };
+
+  const handleOpenToMentorChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setQuery((q) => ({ ...q, mentor: event.target.checked }));
+  };
+
+  const handleOnlyTalentChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setQuery((q) => ({ ...q, onlyTalent: event.target.checked }));
+  }
+
+  const handleOnlyMentorChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setQuery((q) => ({ ...q, onlyMentor: event.target.checked }));
+  }
+
+  const handleOnlyRecruiterChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setQuery((q) => ({ ...q, onlyRecruiter: event.target.checked }));
+  }
+
   return (
-    <div className="mx-5">
-      <h1 className="my-5 font-bold text-2xl">{TRANSLATIONS.title}</h1>
+    <div>
+      <h1 className="my-5 font-bold text-2xl">{title}</h1>
       <div className="relative pt-12 space-y-6 w-6/12 sm:w-full md:w-full">
         <div className="absolute w-full top-0 left-0">
           <AutoSuggestInput
@@ -70,7 +109,45 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
           onChange={handleNameChange}
         />
 
-        <div className="flex space-x-11">
+        {isSearchTalent ? (
+          <div className="flex gap-5 my-5 px-3 sm:flex-col">
+            <ToggleButton
+              label={TRANSLATIONS.onlyTalent}
+              name="onlyTalent"
+              checked={query.onlyTalent}
+              onChange={handleOnlyTalentChange}
+            />
+            <ToggleButton
+              label={TRANSLATIONS.onlyMentor}
+              name="onlyMentor"
+              checked={query.onlyMentor}
+              onChange={handleOnlyMentorChange}
+            />
+            <ToggleButton
+              label={TRANSLATIONS.onlyRecruiter}
+              name="onlyRecruiter"
+              checked={query.onlyRecruiter}
+              onChange={handleOnlyRecruiterChange}
+            />
+          </div>
+        ) : (
+          <div className="flex gap-5 sm:flex-col">
+            <ToggleButton
+              label={TRANSLATIONS.openToRecruiter}
+              name="openToRecruiter"
+              checked={query.recruiter}
+              onChange={handleOpenToRecruiterChange}
+            />
+            <ToggleButton
+              label={TRANSLATIONS.openToMentor}
+              name="openToMentor"
+              checked={query.mentor}
+              onChange={handleOpenToMentorChange}
+            />
+          </div>
+        )}
+
+        <div className="flex justify-between gap-3">
           <LinkButton
             href={{
               href: isSearchTalent
