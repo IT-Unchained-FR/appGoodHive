@@ -2,24 +2,28 @@ import * as React from "react";
 
 interface EmailTemplateProps {
   name: string;
+  toUserName: string;
   userProfile: string;
   message: string;
+  jobLink?: string;
 }
 
 export const ContactTalentTemplate: React.FC<Readonly<EmailTemplateProps>> = (
   props
 ) => {
-  const { name, userProfile, message } = props;
+  const { toUserName, userProfile, message } = props;
   return (
     <div>
-      <p>Hi,</p>
-      <p>{name} interested in your profile</p>
-      <a href={userProfile}>{name} company link</a>
-      <p>{message}</p>
+      <p>Hello {toUserName},</p>
+      <p style={{ whiteSpace: "pre-wrap" }}>{message}</p>
+      <br />
+      <p>
+        Please visit our profile on GoodHive:
+        <a href={userProfile}>{`Company profile url`}</a>
+      </p>
       <br />
       <br />
-      <br />
-      <p>GoodHive</p>
+      <p>GoodHive Team</p>
     </div>
   );
 };
