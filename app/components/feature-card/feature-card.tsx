@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import type { FC } from "react";
 
@@ -11,7 +13,7 @@ export const FeatureCard: FC<FeatureCardProps> = (props) => {
   };
 
   return (
-    <div className="w-full flex max-w-[470px] sm:max-w-[300px]">
+    <div className="w-full flex max-w-[540px] sm:max-w-[300px]">
       <div className="relative w-[353px] h-[117px] mr-5 sm:w-[360px] sm:h-[87px]">
         <Image alt="feature card polygon image" src={imageSrc} fill={true} />
       </div>
@@ -23,7 +25,7 @@ export const FeatureCard: FC<FeatureCardProps> = (props) => {
           {description}
         </p>
         <button
-          className="w-[120px] h-10 rounded-2xl bg-[#ffc905] border-none text-black text-base font-normal sm:w-24 sm:h-8 sm:text-xs"
+          className="w-[230px] h-10 rounded-2xl bg-[#ffc905] border-none text-black text-base font-normal sm:w-32 sm:h-12 sm:text-xs"
           onClick={onCtaClickHandler}
         >
           {btnText}
