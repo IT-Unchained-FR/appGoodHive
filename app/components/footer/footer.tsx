@@ -34,7 +34,6 @@ export const Footer = () => {
           <Link className="text-white text-lg font-normal" href={`mailto:${contactDetails.email}`}>
             {contactDetails.email}
           </Link>
-          <p className="text-white text-lg font-normal">{contactDetails.phone}</p>
         </div>
       </div>
       <p className="text-white text-lg font-normal mb-5">
