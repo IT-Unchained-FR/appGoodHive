@@ -5,15 +5,15 @@ export const pageLinks = [
   },
   {
     name: "Talent",
-    url: "/talent",
+    url: "/talents/job-search",
   },
   {
     name: "Companies",
-    url: "/companies",
+    url: "/companies/search-talents",
   },
   {
     name: "About",
-    url: "/about",
+    url: "https://linktr.ee/goodhive",
   },
   {
     name: "FAQ",
@@ -23,20 +23,15 @@ export const pageLinks = [
 
 export const socialLinks = [
   {
-    name: "facebook",
-    url: "https://www.facebook.com/goodhive",
-  },
-  {
-    name: "twitter",
+    name: "Twitter",
     url: "https://twitter.com/goodhiveio",
   },
   {
-    name: "linkedin",
+    name: "Linkedin",
     url: "https://www.linkedin.com/company/goodhive",
   },
 ];
 
 export const contactDetails = {
-  email: "support@goodhive.io",
-  phone: "XXX-XXX-XXXX",
+  email: "contact@goodhive.io",
 };

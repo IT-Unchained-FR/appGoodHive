@@ -3,22 +3,22 @@ export const allServices = [
     id: "talent",
     title: "For Job Seekers / Talent",
     description:
-      "GoodHive is a decentralized platform, which means that it is not owned by any single entity. Instead, it is owned by the community of freelancers and clients who use it.",
+      "Play collaboratively and co-own your platform. 100% commission returned for your participation and excellence. Earn more as a recruiter, mentor, or referrer.",
     imageSrc: "/img/polygon.png",
-    btnText: "Learn more...",
+    btnText: "Create your talent profile",
   },
   {
     id: "companies",
     title: "For Companies / Recruiter",
     description:
-      "GoodHive is a transparent platform. All transactions and interactions are recorded on the blockchain, which means that they are public and cannot be changed.",
+      "GoodHive fosters stake-backed recruiters committed to client success, rewards talents for their excellence with protocol fees, and enhances peer performance through community mentoring",
     imageSrc: "/img/polygon.png",
-    btnText: "Learn more...",
+    btnText: "Create your company profile",
   },
 ];
 
 export const TRANSLATION = {
-    title: "Why to Choose GoodHive?",
-    description: "GoodHive is platform drive by the community, for the community. We are a group of freelancers, developers, designers, and crypto enthusiasts who are passionate about building a better future for freelancers.",
-    
-}
+  title: "Why Choose GoodHive",
+  description:
+    "GoodHive stands as a community-centric platform, built by developers and blockchain enthusiasts devoted to shaping a fairer #futureofwork. It leverages smart contracts and decentralization ideals to fairly distribute value created by the community back to its contributors. This ecosystem incentivizes committed talents, ensuring they deliver excellence to trusted clients.",
+};
