@@ -30,6 +30,7 @@ import { Button } from "@/app/components/button";
 import { useRouter } from "next/navigation";
 import { uploadFileToBucket } from "@utils/upload-file-bucket";
 import { createJobServices } from "@/app/constants/common";
+import { ReferralSection } from "@/app/components/referral/referral-section";
 
 export default function MyProfile() {
   const imageInputValue = useRef(null);
@@ -607,6 +608,8 @@ export default function MyProfile() {
                 />
               ))}
             </div>
+
+            <ReferralSection />
 
             <div className="mt-10 mb-16 text-center">
               {!!walletAddress && (
