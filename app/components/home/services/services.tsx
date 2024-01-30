@@ -1,12 +1,20 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { FeatureCard } from "@/app/components/feature-card";
 import { TRANSLATION, allServices } from "./services.constants";
 
 export const Services = () => {
+  const router = useRouter();
+
   const onCtaClickHandler = (id: string) => {
-    /* TODO: Implement Service Card click handler */
+    if (id === "talent") {
+      router.push("/talents/job-search");
+    } else if (id === "companies") {
+      router.push("/companies/search-talents");
+    }
   };
+
   return (
     <div className="container mx-auto w-full pt-12">
       <h1 className="text-black text-center text-3xl font-bold mb-4 sm:text-2xl">
