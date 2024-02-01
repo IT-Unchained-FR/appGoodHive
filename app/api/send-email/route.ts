@@ -39,7 +39,6 @@ export async function POST(request: Request) {
     userProfile,
     jobLink,
   }: RequestContentType = await request.json();
-  console.log("toUserName >>>", toUserName);
   try {
     const { data, error } = await resend.emails.send({
       from: "GoodHive <no-reply@goodhive.io>",
