@@ -104,10 +104,22 @@ export async function fetchTalents({
           walletAddress: talent.wallet_address,
           freelancer: talent.freelance_only ? true : false,
           remote: talent.remote_only ? true : false,
+          availability: talent.availability,
         };
       });
 
-    return { talents, count };
+      // sort talents by availability
+      const sortedTalents = talents.sort((a, b) => {
+        if (a.availability && !b.availability) {
+          return -1;
+        }
+        if (!a.availability && b.availability) {
+          return 1;
+        }
+        return 0;
+      });
+
+    return { talents: sortedTalents, count };
   } catch (error) {
     console.log("💥", error);
     throw new Error("Failed to fetch data from the server");
