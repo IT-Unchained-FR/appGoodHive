@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, FormEvent, useEffect, useContext } from "react";
-
+import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 
 import DragAndDropFile from "../../components/drag-and-drop-file";
@@ -15,6 +15,7 @@ import Image from "next/image";
 import { SocialLink } from "@/app/talents/my-profile/social-link";
 import { socialLinks } from "@/app/talents/my-profile/constant";
 import { uploadFileToBucket } from "@utils/upload-file-bucket";
+import { ReferralSection } from "@/app/components/referral/referral-section";
 
 export default function MyProfile() {
   const imageInputValue = useRef(null);
@@ -35,9 +36,11 @@ export default function MyProfile() {
     stackoverflow: "",
     portfolio: "",
     status: "",
+    referrer: "",
   });
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
+  const [isShowReferralSection, setIsShowReferralSection] = useState(false);
 
   const [selectedCountry, setSelectedCountry] = useState<LabelOption | null>(
     null
@@ -60,6 +63,7 @@ export default function MyProfile() {
       if (profileResponse.ok) {
         const profileData = await profileResponse.json();
         setProfileData(profileData);
+        setIsShowReferralSection(true);
       } else {
         console.error(profileResponse.statusText);
       }
@@ -73,8 +77,11 @@ export default function MyProfile() {
     e.preventDefault();
     setIsLoading(true);
 
+    const referralCode = Cookies.get("referralCode");
     const formData = new FormData(e.currentTarget);
     const imageUrl = await uploadFileToBucket(profileImage);
+
+    const isAlreadyReferred = profileData.referrer ? true : false;
 
     const dataForm = {
       headline: formData.get("headline"),
@@ -93,6 +100,7 @@ export default function MyProfile() {
       stackoverflow: formData.get("stackoverflow"),
       portfolio: formData.get("portfolio"),
       status: profileData.status || "pending",
+      referralCode: isAlreadyReferred ? null : referralCode,
     };
 
     // TODO: POST formData to the server with fetch
@@ -334,7 +342,7 @@ export default function MyProfile() {
             </div>
 
             {/* Social media links: Linkedin, github, stackoverflow, telegram, portfolio */}
-            <div className="flex w-full flex-col mt-7">
+            <div className="flex w-full flex-col my-7">
               <h3 className="inline-block mt-7 mb-2 ml-1 text-base font-medium text-black form-label">
                 Social Media Links:
               </h3>
@@ -353,6 +361,8 @@ export default function MyProfile() {
                 />
               ))}
             </div>
+
+            {isShowReferralSection && <ReferralSection />}
 
             <div className="mt-10 text-right">
               {isLoading ? (

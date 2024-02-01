@@ -1,7 +1,9 @@
 "use client";
 
+import { useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import Cookies from 'js-cookie';
 import { WagmiConfig, createConfig, configureChains } from "wagmi";
 import { polygonMumbai } from "wagmi/chains";
 import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
@@ -66,6 +68,16 @@ export default function RootLayout({
   const verifyingRef = useRef(false);
   const [authStatus, setAuthStatus] = useState<AuthenticationStatus>("loading");
   const [walletAddress, setWalletAddress] = useState<string>("");
+
+  const searchParams = useSearchParams();
+  const referralCode = searchParams.get('ref');
+
+  useEffect(() => {
+    if (referralCode) {
+      Cookies.set('referralCode', referralCode, { expires: 30 });
+    }
+  }, [referralCode]);
+
 
   useEffect(() => {
     const fetchStatus = async () => {
