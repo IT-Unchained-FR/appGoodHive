@@ -17,7 +17,6 @@ export const MessageBoxModal: FC<Props> = (props) => {
   const googleSiteKey = process.env.NEXT_PUBLIC_GOOGLE_RECAPTCHA_SITE_KEY || "";
   
   const onChange = (value: any) => {
-    console.log("Captcha value: >>", value);
     if (value) {
       setIsCaptchaValid(true);
     } else {

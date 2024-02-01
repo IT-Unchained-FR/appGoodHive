@@ -38,13 +38,12 @@ export async function GET(request: NextRequest) {
 
     if (user.length === 0) {
       const referralCode = generateReferralCode(6);
-      const existingReferralList = ["0xjshfjfjf", "0xjshfjfjf", "0xjshfjfjf"];
+
       await sql`
-        INSERT INTO goodhive.referrals (wallet_address, referral_code, talents)
+        INSERT INTO goodhive.referrals (wallet_address, referral_code)
         VALUES (
           ${walletAddress},
-          ${referralCode},
-          ${existingReferralList}
+          ${referralCode}
         )
       `;
       return new Response(JSON.stringify({ message: "Referral code created successfully!" }), {
