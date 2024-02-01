@@ -19,6 +19,7 @@ interface Talent {
   walletAddress: string;
   freelancer: boolean;
   remote: boolean;
+  availability: boolean;
 }
 
 export default Talent;
