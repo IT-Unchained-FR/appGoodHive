@@ -10,6 +10,7 @@ import {
 } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import Cookies from "js-cookie";
 
 import toast from "react-hot-toast";
 
@@ -30,6 +31,7 @@ import { Button } from "@/app/components/button";
 import { useRouter } from "next/navigation";
 import { uploadFileToBucket } from "@utils/upload-file-bucket";
 import { createJobServices } from "@/app/constants/common";
+import { ReferralSection } from "@/app/components/referral/referral-section";
 
 export default function MyProfile() {
   const imageInputValue = useRef(null);
@@ -38,6 +40,7 @@ export default function MyProfile() {
   const [cvFile, setCvFile] = useState<null | File>(null);
   const [isUploadedCvLink, setIsUploadedCvLink] = useState(false);
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
+  const [isShowReferralSection, setIsShowReferralSection] = useState(false);
   const [profileData, setProfileData] = useState({
     title: "",
     description: "",
@@ -67,10 +70,11 @@ export default function MyProfile() {
     mentor_status: null,
     recruiter_status: null,
     hide_contact_details: false,
+    referrer: "",
+    availability: false,
   });
 
   const walletAddress = useContext(AddressContext);
-  console.log("wallet address: >>", walletAddress);
 
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<LabelOption | null>(
@@ -98,11 +102,12 @@ export default function MyProfile() {
         }
 
         const profile = await response.json();
-        console.log("profile >>", profile);
+        
         if (profile.cv_url) setIsUploadedCvLink(true);
 
         setProfileData(profile);
         setSelectedSkills(profile.skills.split(","));
+        setIsShowReferralSection(true);
       } catch (error) {
         console.error("There was an error!", error);
       }
@@ -129,6 +134,7 @@ export default function MyProfile() {
     setIsLoading(true);
 
     const formData = new FormData(event.currentTarget);
+    const referralCode = Cookies.get("referralCode");
 
     const imageUrl = await uploadFileToBucket(profileImage);
     const cvUrl = await uploadFileToBucket(cvFile);
@@ -140,6 +146,9 @@ export default function MyProfile() {
     const recruiter = formData.get("recruiter") === "on" ? true : false;
     const hideContactDetails =
       formData.get("hide-contact-details") === "on" ? true : false;
+    const availability = formData.get("availability") === "on" ? true : false;
+
+    const isAlreadyReferred = profileData.referrer ? true : false;
 
     if (!cvUrl && !isUploadedCvLink) {
       setIsLoading(false);
@@ -178,6 +187,8 @@ export default function MyProfile() {
       recruiterStatus:
         profileData.recruiter_status || recruiter ? "pending" : null,
       hideContactDetails,
+      referralCode: isAlreadyReferred ? null : referralCode,
+      availability,
     };
 
     const profileResponse = await fetch("/api/talents/my-profile", {
@@ -202,14 +213,6 @@ export default function MyProfile() {
     }
   };
 
-  if (profileData.talent_status === "pending") {
-    return (
-      <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
-        🚀 Your profile is pending approval. It will be live soon.
-      </p>
-    );
-  }
-
   return (
     <main className="container mx-auto">
       <h1 className="my-5 text-2xl border-b-[1px] border-slate-300 pb-2">
@@ -222,6 +225,10 @@ export default function MyProfile() {
             to create or save your profile. Thanks!
           </p>
         </div>
+      ) : profileData.talent_status === "pending" ? (
+        <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+          🚀 Your profile is pending approval. It will be live soon.
+        </p>
       ) : profileData.talent_status === "approved" &&
         profileData.recruiter_status === "pending" ? (
         <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
@@ -270,6 +277,20 @@ export default function MyProfile() {
               type="secondary"
               size="medium"
               onClickHandler={handlePublicViewClick}
+            />
+          </div>
+          <div className="flex w-full justify-center mt-5">
+            <label
+              htmlFor="availability"
+              className="inline-block ml-3 mr-5 text-base text-black form-label"
+            >
+              Set Availability*
+            </label>
+            <ToggleButton
+              label="Active"
+              name="availability"
+              checked={profileData.availability}
+              tooltip="If Seeking Jobs"
             />
           </div>
           <div className="flex flex-col w-full mt-10">
@@ -588,7 +609,7 @@ export default function MyProfile() {
             </div>
 
             {/* Social media links: Linkedin, github, stackoverflow, telegram, portfolio */}
-            <div className="flex w-full flex-col mt-7">
+            <div className="flex w-full flex-col mt-7 mb-12">
               <h3 className="inline-block mt-7 mb-2 ml-1 text-base font-medium text-black form-label">
                 Social Media Links:
               </h3>
@@ -607,6 +628,8 @@ export default function MyProfile() {
                 />
               ))}
             </div>
+
+            {isShowReferralSection && <ReferralSection />}
 
             <div className="mt-10 mb-16 text-center">
               {!!walletAddress && (
