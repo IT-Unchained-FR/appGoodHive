@@ -36,6 +36,8 @@ export async function POST(request: Request) {
     mentorStatus,
     recruiterStatus,
     hideContactDetails,
+    referralCode,
+    availability,
   } = await request.json();
 
   const sql = postgres(process.env.DATABASE_URL || "", {
@@ -45,6 +47,27 @@ export async function POST(request: Request) {
   });
 
   try {
+    let referrerWalletAddress = "";
+
+    if (referralCode) {
+      const user = await sql`
+      SELECT *
+      FROM goodhive.referrals
+      WHERE referral_code = ${referralCode}
+      `;
+
+      if (user.length) {
+        referrerWalletAddress = user[0].wallet_address;
+        const referralTalents = user[0].talents;
+        await sql`
+        UPDATE goodhive.referrals
+        SET
+          talents = ${referralTalents ? [...referralTalents, walletAddress] : [walletAddress]}
+        WHERE wallet_address = ${referrerWalletAddress}
+        `;
+      }
+    }
+
     await sql`
       INSERT INTO goodhive.users (
         title,
@@ -75,6 +98,8 @@ export async function POST(request: Request) {
         mentor_status,
         recruiter_status,
         hide_contact_details,
+        referrer,
+        availability,
         wallet_address
       ) VALUES (
         ${title},
@@ -105,6 +130,8 @@ export async function POST(request: Request) {
         ${mentorStatus},
         ${recruiterStatus},
         ${hideContactDetails},
+        ${referrerWalletAddress},
+        ${availability},
         ${walletAddress}
       )
       ON CONFLICT (wallet_address) DO UPDATE
@@ -137,6 +164,7 @@ export async function POST(request: Request) {
         mentor_status = ${mentorStatus},
         recruiter_status = ${recruiterStatus},
         hide_contact_details = ${hideContactDetails},
+        availability = ${availability},
         wallet_address = ${walletAddress};
     `;
 

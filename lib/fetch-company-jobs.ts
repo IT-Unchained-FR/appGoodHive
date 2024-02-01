@@ -36,8 +36,6 @@ export async function getCompanyJobs(walletAddress: string) {
       escrowAmount: item.escrow_amount,
     }));
 
-    console.log("jobs >>", jobs);
-
     return jobs;
   } catch (error) {
     console.log("💥", error);

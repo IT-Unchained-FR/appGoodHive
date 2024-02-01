@@ -20,6 +20,7 @@ export async function POST(request: Request) {
     stackoverflow,
     portfolio,
     status,
+    referralCode,
   } = await request.json();
 
   const sql = postgres(process.env.DATABASE_URL || "", {
@@ -29,6 +30,27 @@ export async function POST(request: Request) {
   });
 
   try {
+    let referrerWalletAddress = "";
+
+    if (referralCode) {
+      const user = await sql`
+      SELECT *
+      FROM goodhive.referrals
+      WHERE referral_code = ${referralCode}
+      `;
+
+      if (user.length) {
+        referrerWalletAddress = user[0].wallet_address;
+        const referralCompanies = user[0].companies;
+        await sql`
+        UPDATE goodhive.referrals
+        SET
+          companies = ${referralCompanies ? [...referralCompanies, walletAddress] : [walletAddress]}
+        WHERE wallet_address = ${referrerWalletAddress}
+        `;
+      }
+    }
+
     await sql`
       INSERT INTO goodhive.companies (
         headline,
@@ -46,6 +68,7 @@ export async function POST(request: Request) {
         stackoverflow,
         portfolio,
         status,
+        referrer,
         wallet_address
       ) VALUES (
         ${headline},
@@ -63,6 +86,7 @@ export async function POST(request: Request) {
         ${stackoverflow},
         ${portfolio},
         ${status},
+        ${referrerWalletAddress},
         ${walletAddress}
       )
       ON CONFLICT (wallet_address) DO UPDATE

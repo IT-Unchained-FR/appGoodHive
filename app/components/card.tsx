@@ -30,6 +30,7 @@ interface Props {
   recruiter?: boolean;
   freelancer?: boolean;
   remote?: boolean;
+  availability?: boolean;
 }
 
 export const Card: FC<Props> = ({
@@ -51,10 +52,11 @@ export const Card: FC<Props> = ({
   recruiter,
   freelancer,
   remote,
+  availability,
 }) => {
   const rate =
     budget && currency
-      ? `${budget}${currency} - ${projectType === "fixed" ? "Fixed" : "Hourly"}`
+      ? `${budget}${currency}/${projectType === "fixed" ? "Fixed" : "H"}`
       : null;
   const croppedTitle =
     title.length > 28 ? title.substring(0, 28) + "..." : title;
@@ -127,8 +129,10 @@ export const Card: FC<Props> = ({
             <p className="font-light mb-1 text-sm text-gray-500 text-right sm:text-xs sm:max-w-[80px]">
               {city}
             </p>
-            <div className="flex space-between">
+            <div className="flex flex-col items-end gap-1">
               <div className="text-xs font-bold">{rate}</div>
+              {!jobId && availability && <p className="text-xs">🟢 Active</p>}
+              {!jobId && !availability && <p className="text-xs">🔴 Inactive</p>}
             </div>
           </div>
         </div>
