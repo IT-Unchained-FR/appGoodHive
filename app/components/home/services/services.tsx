@@ -23,7 +23,7 @@ export const Services = () => {
       <p className="text-black text-center text-lg font-normal mb-24 sm:text-base sm:mb-12">
         {TRANSLATION.description}
       </p>
-      <div className="w-full flex flex-wrap justify-center gap-12 mb-24 sm:mb-12">
+      <div className="w-full flex flex-wrap justify-center gap-16 mb-24 sm:mb-12">
         {allServices.map((service) => {
           const { id, title, description, imageSrc, btnText } = service;
           return (
