@@ -102,7 +102,7 @@ export default function MyProfile() {
         }
 
         const profile = await response.json();
-        
+
         if (profile.cv_url) setIsUploadedCvLink(true);
 
         setProfileData(profile);
@@ -133,6 +133,7 @@ export default function MyProfile() {
     event.preventDefault();
     setIsLoading(true);
 
+    const isNewUser = !profileData.first_name;
     const formData = new FormData(event.currentTarget);
     const referralCode = Cookies.get("referralCode");
 
@@ -204,6 +205,19 @@ export default function MyProfile() {
     if (!profileResponse.ok) {
       toast.error("Something went wrong!");
     } else {
+      if (isNewUser) {
+        await fetch("/api/send-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: dataForm.email,
+            type: "new-talent",
+            subject: `Welcome to GoodHive, ${dataForm.firstName}! 🎉 Let's Shape the Future of Work Together`,
+          }),
+        });
+      }
       toast.success(
         `🎉 Your profile has been successfully saved!
 

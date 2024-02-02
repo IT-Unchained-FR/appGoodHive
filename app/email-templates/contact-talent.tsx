@@ -1,12 +1,5 @@
 import * as React from "react";
-
-interface EmailTemplateProps {
-  name: string;
-  toUserName: string;
-  userProfile: string;
-  message: string;
-  jobLink?: string;
-}
+import { EmailTemplateProps } from "@/interfaces/email-template";
 
 export const ContactTalentTemplate: React.FC<Readonly<EmailTemplateProps>> = (
   props
@@ -18,10 +11,9 @@ export const ContactTalentTemplate: React.FC<Readonly<EmailTemplateProps>> = (
       <p style={{ whiteSpace: "pre-wrap" }}>{message}</p>
       <br />
       <p>
-        Please visit our profile on GoodHive:
-        <a href={userProfile}>{`Company profile url`}</a>
+        Discover more about us on GoodHive by visiting our{" "}
+        <a href={userProfile}>company profile</a>
       </p>
-      <br />
       <br />
       <p>GoodHive Team</p>
     </div>
