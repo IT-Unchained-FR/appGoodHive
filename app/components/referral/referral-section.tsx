@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { AddressContext } from "../context";
 import { toast } from "react-hot-toast";
+import { Tooltip } from "@nextui-org/tooltip";
 
 type referralObject = {
   wallet_address: string;
@@ -90,13 +91,32 @@ export const ReferralSection = () => {
             <strong>Your referral link:</strong>{" "}
             {`http://goodhive.io/?ref=${referral?.referral_code}`}
           </p>
-          <h3 className="text-base mb-2">
+
+          <h3 className="flex gap-2 items-center text-base mb-2">
             <strong>Total talents you referred:</strong> {totalTalentsReferred}
+            <Tooltip
+              style={{ background: "#fff" }}
+              content="Earn a 5% bonus on the first year's commission from talents you refer."
+            >
+              <span className="ml-1 w-5 h-5 flex items-center justify-center rounded-full text-center text-base text-white bg-[#FFC905] cursor-pointer">
+                ?
+              </span>
+            </Tooltip>
           </h3>
-          <h3 className="text-base mb-2">
+
+          <h3 className="flex gap-2 items-center text-base mb-2">
             <strong>Total company you referred:</strong>{" "}
             {totalCompaniesReferred}
+            <Tooltip
+              style={{ background: "#fff" }}
+              content="Earn a 20% bonus on the first year's commission from clients you refer and onboard."
+            >
+              <span className="ml-1 w-5 h-5 flex items-center justify-center rounded-full text-center text-base text-white bg-[#FFC905] cursor-pointer">
+                ?
+              </span>
+            </Tooltip>
           </h3>
+
           <h3 className="text-base mb-2">
             <strong>Approved Talents:</strong> {totalTalentsApproved}
           </h3>
