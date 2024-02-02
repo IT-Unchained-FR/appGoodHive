@@ -5,6 +5,8 @@ import JobAppliedTemplate from "@/app/email-templates/job-applied";
 import ContactTalentTemplate from "@/app/email-templates/contact-talent";
 import ContactCompanyTemplate from "@/app/email-templates/contact-company";
 import { GoodHiveContractEmail } from "@constants/common";
+import TalentRegistrationTemplate from "@/app/email-templates/new-talent-user";
+import CompanyRegistrationTemplate from "@/app/email-templates/new-company-user";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -12,6 +14,8 @@ const TEMPLATES = {
   "contact-talent": ContactTalentTemplate,
   "job-applied": JobAppliedTemplate,
   "contact-company": ContactCompanyTemplate,
+  "new-talent": TalentRegistrationTemplate,
+  "new-company": CompanyRegistrationTemplate
 };
 
 interface RequestContentType {
@@ -44,7 +48,7 @@ export async function POST(request: Request) {
       from: "GoodHive <no-reply@goodhive.io>",
       to: [email],
       subject,
-      bcc: [GoodHiveContractEmail, userEmail],
+      bcc: GoodHiveContractEmail,
       react: TEMPLATES[type]({
         name,
         toUserName,
@@ -55,7 +59,7 @@ export async function POST(request: Request) {
     });
 
     if (error) {
-      throw new Error("Something went wrong!");
+      console.error("Resend error >>", error);
     }
     return new Response(JSON.stringify({ message: "Email sent" }), {
       status: 200,

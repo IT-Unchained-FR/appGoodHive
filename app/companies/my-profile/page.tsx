@@ -77,6 +77,7 @@ export default function MyProfile() {
     e.preventDefault();
     setIsLoading(true);
 
+    const isNewUser = !profileData.designation;
     const referralCode = Cookies.get("referralCode");
     const formData = new FormData(e.currentTarget);
     const imageUrl = await uploadFileToBucket(profileImage);
@@ -117,6 +118,19 @@ export default function MyProfile() {
     if (!profileResponse.ok) {
       toast.error("Something went wrong!");
     } else {
+      if (isNewUser) {
+        await fetch("/api/send-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: dataForm.email,
+            type: "new-company",
+            subject: `Welcome to GoodHive, ${dataForm.designation}! 🌟 Let's Connect You with Top IT Talent`,
+          }),
+        });
+      }
       if (profileData.status === "approved") {
         toast.success("Profile Saved!");
       } else {
