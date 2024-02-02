@@ -1,12 +1,5 @@
 import * as React from "react";
-
-interface EmailTemplateProps {
-  name: string;
-  toUserName: string;
-  userProfile: string;
-  message: string;
-  jobLink?: string;
-}
+import { EmailTemplateProps } from "@/interfaces/email-template";
 
 export const ContactCompanyTemplate: React.FC<Readonly<EmailTemplateProps>> = (
   props
