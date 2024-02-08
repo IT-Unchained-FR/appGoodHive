@@ -30,6 +30,14 @@ export const socialLinks = [
     name: "Linkedin",
     url: "https://www.linkedin.com/company/goodhivefoundation",
   },
+  {
+    name: "Discord",
+    url: "https://discord.gg/WmxHQvwd5h",
+  },
+  {
+    name: "Our Quests",
+    url: "https://zealy.io/c/goodhive",
+  },
 ];
 
 export const contactDetails = {
