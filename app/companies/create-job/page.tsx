@@ -328,6 +328,14 @@ export default function CreateJob() {
     );
   }
 
+  if (id && companyData && companyData?.walletAddress !== walletAddress) {
+    return (
+      <h3 className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+        🚀 You are not authorized to edit this job.
+      </h3>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex w-full items-center justify-center h-screen">

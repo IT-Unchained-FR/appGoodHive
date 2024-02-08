@@ -38,9 +38,6 @@ export async function GET(request: NextRequest) {
     if (user.length === 0) {
       return new Response(JSON.stringify({ referralCode: null}));
     }
-    
-
-    console.log("referral >>", user[0]);
 
     return new Response(JSON.stringify(user[0]));
 
