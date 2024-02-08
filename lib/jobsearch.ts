@@ -50,7 +50,6 @@ export async function fetchJobs({
         `;
 
     const count = countJobs[0].count as number;
-    console.log("total jobs counts", count);
 
     const limit = Number(items);
     const offset = limit * (Number(page) - 1);
