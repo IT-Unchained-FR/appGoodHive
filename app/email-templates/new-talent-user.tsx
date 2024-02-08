@@ -34,8 +34,11 @@ export const TalentRegistrationTemplate: React.FC<
         GoodHive. Let&apos;s make something awesome together!
       </p>
       <br />
+      <br />
       <p>All the best,</p>
       <p>The GoodHive Core Team 🐝</p>
+      <a href="mailto:contact@goodhive.io">contact@goodhive.io</a>
+      <p>GoodHive, 39 rue de l&apos;Arrivée 95880 Enghien les Bains - France</p>
     </div>
   );
 };

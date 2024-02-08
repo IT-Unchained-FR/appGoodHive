@@ -224,13 +224,14 @@ export default function MyProfile() {
         profileData.recruiter_status === "approved"
       ) {
         toast.success(`🎉 Your profile has been successfully saved!`);
-      }
-      toast.success(
-        `🎉 Your profile has been successfully saved!
+      } else {
+        toast.success(
+          `🎉 Your profile has been successfully saved!
 
         It is now under review.
         `
-      );
+        );
+      }
     }
   };
 
