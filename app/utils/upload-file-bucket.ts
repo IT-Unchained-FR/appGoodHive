@@ -19,7 +19,6 @@ export const uploadFileToBucket = async (file: File | null) => {
 
           if (response.ok) {
             const { fileUrl } = await response.json();
-            console.log("File url >>", fileUrl);
             resolve(fileUrl);
           } else {
             console.error(response.statusText);

@@ -57,7 +57,7 @@ export const useCreateJob = (props: Props) => {
     try {
       const balance = await contract.methods.checkBalance(jobId).call();
       const balanceInEther = web3.utils.fromWei(balance, "ether");
-      console.log("Job balance >>", balanceInEther);
+
       return balanceInEther;
     } catch (error) {
       console.error("Error checking balance:", error);
