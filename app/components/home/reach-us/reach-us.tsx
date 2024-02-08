@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 import { Button } from "@components/button";
 import { TRANSLATION } from "./reach-us.constants";
@@ -11,10 +12,6 @@ export const ReachUs = () => {
       "https://calendly.com/benoit-kulesza/virtual-coffe-10-mins",
       "_blank"
     );
-  };
-
-  const onMessageUsClick = () => {
-    window.open("mailto:contact@goodhive.io");
   };
 
   return (
@@ -32,12 +29,9 @@ export const ReachUs = () => {
           size="medium"
           onClickHandler={onContactUsClick}
         />
-        <Button
-          text="Message us"
-          type="secondary"
-          size="medium"
-          onClickHandler={onMessageUsClick}
-        />
+        <Link href="/contact">
+          <Button text="Message us" type="secondary" size="medium" />
+        </Link>
       </div>
       <div className="absolute right-8 top-[-90px] w-48 h-48 sm:w-28 sm:h-28 sm:top-[-50px] sm:right-5">
         <Image alt="reach-us" src="/img/polygon.png" fill={true} />
