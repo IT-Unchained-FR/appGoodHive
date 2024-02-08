@@ -10,7 +10,6 @@ export async function getProfileData(address: string) {
   if (!address) {
     return {};
   }
-  console.log("wallet address: ", address);
 
   try {
     const user = await sql`
