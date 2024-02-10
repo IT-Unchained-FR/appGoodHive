@@ -11,7 +11,6 @@ import { generateContent } from "./PopupModal.utils";
 export const PopupModal: FC<AddFundsModalProps> = (props) => {
   const [amount, setAmount] = useState(0);
   const [isFullAmount, setIsFullAmount] = useState(false);
-  const [transferAddress, setTransferAddress] = useState("");
 
   const { jobId, open, onClose, type, onSubmit } = props;
 
@@ -28,12 +27,6 @@ export const PopupModal: FC<AddFundsModalProps> = (props) => {
     setAmount(Number(event.target.value));
   };
 
-  const handleTransferAddressChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setTransferAddress(event.target.value);
-  };
-
   const handleSubmit = async () => {
     if (!isFullAmount && amount <= 0) {
       toast.error("Please enter a valid amount!");
@@ -41,24 +34,24 @@ export const PopupModal: FC<AddFundsModalProps> = (props) => {
     }
     if (type === "withdraw") {
       const contractBalance = await checkBalanceTx(jobId);
-      if (isFullAmount) onSubmit(contractBalance, type, null);
+      if (isFullAmount) onSubmit(contractBalance, type);
       else if (contractBalance < amount) {
         toast.error("Insufficient funds!");
         return;
       } else {
-        onSubmit(amount, type, null);
+        onSubmit(amount, type);
       }
     } else if (type === "transfer") {
       const contractBalance = await checkBalanceTx(jobId);
-      if (isFullAmount) onSubmit(contractBalance, type, transferAddress);
+      if (isFullAmount) onSubmit(contractBalance, type);
       else if (contractBalance < amount) {
         toast.error("Insufficient funds!");
         return;
       } else {
-        onSubmit(amount, type, transferAddress);
+        onSubmit(amount, type);
       }
     } else {
-      onSubmit(amount, type, null);
+      onSubmit(amount, type);
     }
   };
 
@@ -109,17 +102,6 @@ export const PopupModal: FC<AddFundsModalProps> = (props) => {
                   </label>
                 </div>
               ) : null}
-              {type === "transfer" && (
-                <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  type="text"
-                  name="address"
-                  maxLength={100}
-                  placeholder="Enter the address"
-                  onChange={handleTransferAddressChange}
-                  value={transferAddress}
-                />
-              )}
 
               <button
                 className="my-4 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
