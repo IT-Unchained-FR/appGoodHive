@@ -12,8 +12,8 @@ export const jobTypes = [
   { value: "onsite", label: "On-site" },
 ];
 
-export const GoodhiveContractAddress =
-  process.env.NEXT_PUBLIC_GOODHIVE_POLYGON_MUMBAI_CONTRACT_ADDRESS as string;
+export const GoodhiveContractAddress = process.env
+  .NEXT_PUBLIC_GOODHIVE_POLYGON_MUMBAI_CONTRACT_ADDRESS as string;
 
 export const projectDuration = [
   {
@@ -73,4 +73,7 @@ export const createJobServices: createJobServicesType[] = [
 
 export const GoodHiveContractEmail = "contact@goodhive.io";
 
-export const GoodhiveQuestLink = 'https://zealy.io/cw/goodhive';
+export const GoodhiveQuestLink = "https://zealy.io/cw/goodhive";
+
+export const GoodHiveWalletAddress =
+  "0x92ED8F6A9211F9eb0F16c83A052E75099B7bf4A5";
