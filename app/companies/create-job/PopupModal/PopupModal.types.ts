@@ -3,5 +3,5 @@ export type AddFundsModalProps = {
     open: boolean;
     type: string;
     onClose: VoidFunction;
-    onSubmit: (amount: number, type: string, toAddress: string | null) => void;
+    onSubmit: (amount: number, type: string) => void;
 };
