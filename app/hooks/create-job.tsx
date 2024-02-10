@@ -2,7 +2,7 @@
 import Web3 from "web3";
 import { useEffect, useState } from "react";
 import GoodhiveJobContract from "@/contracts/GoodhiveJobContract.json";
-import { GoodhiveContractAddress } from "@constants/common";
+import { GoodHiveWalletAddress, GoodhiveContractAddress } from "@constants/common";
 
 interface Props {
   walletAddress: string;
@@ -81,14 +81,14 @@ export const useCreateJob = (props: Props) => {
     }
   };
 
-  const transferFundsTx = async (jobId: number, amount: number, toAddress: string) => {
+  const transferFundsTx = async (jobId: number, amount: number) => {
     try {
       const accounts = await web3.eth.getAccounts();
       const amountInWei = web3.utils.toWei(amount.toString(), "ether");
       const balance = await checkBalanceTx(jobId);
       const EndingBalance = Number(balance) - Number(amount);
       await contract.methods
-        .payTheFees(jobId, toAddress, amountInWei)
+        .payTheFees(jobId, GoodHiveWalletAddress, amountInWei)
         .send({ from: accounts[0] });
       console.log("Funds transferred successfully!");
       handleUpdateEscrowAmount(jobId, EndingBalance);

@@ -71,11 +71,7 @@ export default function CreateJob() {
       walletAddress,
     });
 
-  const onPopupModalSubmit = async (
-    amount: number,
-    type: string,
-    toAddress: string | null
-  ) => {
+  const onPopupModalSubmit = async (amount: number, type: string) => {
     switch (type) {
       case "addFunds":
         const fundsRes = createJobTx(id, amount);
@@ -96,11 +92,7 @@ export default function CreateJob() {
         handlePopupModalClose();
         break;
       case "transfer":
-        if (!toAddress) {
-          toast.error("Please enter a valid transfer address!");
-          return;
-        }
-        const transferRes = transferFundsTx(id, amount, toAddress);
+        const transferRes = transferFundsTx(id, amount);
         toast.promise(transferRes, {
           loading: "Transferring funds...",
           success: "Funds transferred successfully!",
@@ -328,7 +320,7 @@ export default function CreateJob() {
     );
   }
 
-  if (id && companyData && companyData?.walletAddress !== walletAddress) {
+  if (id && jobData && jobData?.walletAddress !== walletAddress) {
     return (
       <h3 className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
         🚀 You are not authorized to edit this job.
@@ -610,7 +602,7 @@ export default function CreateJob() {
 
             <div className="mt-12 mb-8 w-full flex justify-end gap-4 text-right">
               {!!id && (
-                <Tooltip content="Provisioning funds boost swift community response to your job offer.">
+                <Tooltip content="Click 'Pay Now' to proceed with your contribution to the community.">
                   <button
                     className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
                     type="button"
@@ -672,7 +664,7 @@ export default function CreateJob() {
               type="button"
               onClick={() => handlePopupModal("addFunds")}
             >
-              Provision Funds
+              Pay Now
             </button>
           )}
           {!!id && !!jobData?.escrowAmount && (
