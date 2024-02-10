@@ -602,7 +602,7 @@ export default function CreateJob() {
 
             <div className="mt-12 mb-8 w-full flex justify-end gap-4 text-right">
               {!!id && (
-                <Tooltip content="Click 'Pay Now' to proceed with your contribution to the community.">
+                <Tooltip content="Provisioning funds boost swift community response to your job offer.">
                   <button
                     className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
                     type="button"
@@ -664,7 +664,7 @@ export default function CreateJob() {
               type="button"
               onClick={() => handlePopupModal("addFunds")}
             >
-              Pay Now
+              Provision Funds
             </button>
           )}
           {!!id && !!jobData?.escrowAmount && (
@@ -683,7 +683,7 @@ export default function CreateJob() {
               type="button"
               onClick={() => handlePopupModal("transfer")}
             >
-              Make Payment
+              Pay Now
             </button>
           )}
         </div>
