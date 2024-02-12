@@ -1,9 +1,9 @@
 "use client";
 
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import Cookies from 'js-cookie';
+import Cookies from "js-cookie";
 import { WagmiConfig, createConfig, configureChains } from "wagmi";
 import { polygonMumbai } from "wagmi/chains";
 import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
@@ -23,6 +23,7 @@ import {
 import { Toaster } from "react-hot-toast";
 import { SiweMessage } from "siwe";
 
+import { SwitchWalletCheck } from "@components/switch-wallet-check";
 import { NavBar } from "@components/nav-bar";
 import { AddressContext } from "@components/context";
 import { Footer } from "@components/footer/footer";
@@ -32,11 +33,13 @@ import "./globals.css";
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
   [polygonMumbai],
-  [jsonRpcProvider({
-    rpc: () => ({
-      http: "https://polygon-mumbai.infura.io/v3/515aadd2e166439faf967dc2aee45a97",
-    })
-  })]
+  [
+    jsonRpcProvider({
+      rpc: () => ({
+        http: "https://polygon-mumbai.infura.io/v3/515aadd2e166439faf967dc2aee45a97",
+      }),
+    }),
+  ]
 );
 
 const projectId = "c1de7de6d9dac11ced03c7516792c20c";
@@ -70,14 +73,13 @@ export default function RootLayout({
   const [walletAddress, setWalletAddress] = useState<string>("");
 
   const searchParams = useSearchParams();
-  const referralCode = searchParams.get('ref');
+  const referralCode = searchParams.get("ref");
 
   useEffect(() => {
     if (referralCode) {
-      Cookies.set('referralCode', referralCode, { expires: 30 });
+      Cookies.set("referralCode", referralCode, { expires: 30 });
     }
   }, [referralCode]);
-
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -175,9 +177,25 @@ export default function RootLayout({
 
       signOut: async () => {
         setAuthStatus("unauthenticated");
+        const logoutResponse = await fetch("/api/auth/logout");
+
+        if (!logoutResponse.ok) {
+          console.error("Error logging out");
+        } else {
+          window.location.reload();
+        }
       },
     });
   }, []);
+
+  const handleWalletChange = async () => {
+    setAuthStatus("unauthenticated");
+    const logoutResponse = await fetch("/api/auth/logout");
+
+    if (!logoutResponse.ok) {
+      console.error("Error logging out");
+    }
+  };
 
   return (
     <html lang="en">
@@ -188,6 +206,10 @@ export default function RootLayout({
             status={authStatus}
           >
             <RainbowKitProvider chains={chains}>
+              <SwitchWalletCheck
+                walletAddress={walletAddress}
+                handleWalletChange={handleWalletChange}
+              />
               <div className="flex flex-col min-h-screen">
                 <NavBar />
                 <Toaster />

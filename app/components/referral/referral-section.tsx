@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
+import Image from "next/image";
 import { AddressContext } from "../context";
 import { toast } from "react-hot-toast";
 import { Tooltip } from "@nextui-org/tooltip";
@@ -68,6 +69,13 @@ export const ReferralSection = () => {
     }
   };
 
+  const refLinkCopyToClipboard = () => {
+    navigator.clipboard.writeText(
+      `https://goodhive.io/?ref=${referral?.referral_code}`
+    );
+    toast.success("Referral link copied to clipboard");
+  };
+
   const onMyStatsClick = () => {
     setIsMyStats(true);
   };
@@ -100,9 +108,17 @@ export const ReferralSection = () => {
       ) : null}
       {referral && isMyStats && !!Object.keys(referral).length && (
         <div>
-          <p className="text-base mb-2">
+          <p className="text-base mb-2 flex gap-2 items-center">
             <strong>Your referral link:</strong>{" "}
-            {`http://goodhive.io/?ref=${referral?.referral_code}`}
+            {`https://goodhive.io/?ref=${referral?.referral_code}`}
+            <Image
+              src="/icons/copy.svg"
+              alt="copy-icon"
+              width={20}
+              height={20}
+              className="cursor-pointer"
+              onClick={refLinkCopyToClipboard}
+            />
           </p>
 
           <h3 className="flex gap-2 items-center text-base mb-2">
