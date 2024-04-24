@@ -12,6 +12,12 @@ export const socialLinks = [
         isRequired: false,
     },
     {
+        name: "twitter",
+        icon: "/icons/twitter.jpg",
+        placeholder: "Twitter",
+        isRequired: false,
+    },
+    {
         name: 'stackoverflow',
         icon: '/icons/stackoverflow.svg',
         placeholder: 'Stackoverflow' ,
@@ -28,5 +34,5 @@ export const socialLinks = [
         icon: '/icons/portfolio.svg',
         placeholder: 'Portfolio',
         isRequired: false
-    }
+    },
 ];
