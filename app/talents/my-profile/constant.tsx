@@ -2,13 +2,19 @@ export const socialLinks = [
     {
         name: "linkedin",
         icon: "/icons/linkedin.svg",
-        placeholder: "Linkedin*",
-        isRequired: true,
+        placeholder: "Linkedin",
+        isRequired: false,
     },
     {
         name: "github",
         icon: "/icons/github.svg",
         placeholder: "Github",
+        isRequired: false,
+    },
+    {
+        name: "twitter",
+        icon: "/icons/twitter.jpg",
+        placeholder: "Twitter",
         isRequired: false,
     },
     {
@@ -28,5 +34,5 @@ export const socialLinks = [
         icon: '/icons/portfolio.svg',
         placeholder: 'Portfolio',
         isRequired: false
-    }
+    },
 ];

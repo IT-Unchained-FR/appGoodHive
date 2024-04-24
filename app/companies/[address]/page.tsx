@@ -82,9 +82,6 @@ export default async function CompanyProfilePage(
                 {headline}
               </p>
               <div className="flex flex-col mb-10">
-                <h4 className="text-[#3E3E3E] font-bold text-lg mb-5">
-                  Social Media:
-                </h4>
                 <CompanySocialMediaAndContact
                   linkedin={linkedin}
                   telegram={telegram}

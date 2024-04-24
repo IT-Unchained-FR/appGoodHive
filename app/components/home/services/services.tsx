@@ -12,14 +12,10 @@ export const Services = () => {
 
   const onCtaClickHandler = (id: string) => {
     if (id === "talent") {
-      router.push("/talents/job-search");
+      router.push("/talents/my-profile");
     } else if (id === "companies") {
-      router.push("/companies/search-talents");
+      router.push("/companies/my-profile");
     }
-  };
-
-  const onJoinQuestsClickHandler = () => {
-    window.open(GoodhiveQuestLink, "_blank");
   };
 
   return (
@@ -27,19 +23,6 @@ export const Services = () => {
       <h1 className="text-black text-center text-3xl font-bold mb-4 sm:text-2xl">
         {TRANSLATION.title}
       </h1>
-      <div className="flex flex-col items-center mb-12">
-        <p className="text-center mb-4">
-          Unlock exclusive referrals rewards and gain governance power. Enjoy
-          privileged access to Airdrops and Whitelists, and become an esteemed
-          holder of our Scout and/or Pioneer NFTs.
-        </p>
-        <Button
-          text="Join our Quests"
-          type="primary"
-          size="small"
-          onClickHandler={onJoinQuestsClickHandler}
-        />
-      </div>
       <p className="text-black text-center text-lg font-normal mb-24 sm:text-base sm:mb-12">
         {TRANSLATION.description}
       </p>
