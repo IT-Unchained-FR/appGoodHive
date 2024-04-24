@@ -14,7 +14,7 @@ export const SocialLink: FC<SocialLinkProps> = (props) => {
 
   return (
     <div className="flex w-full mt-9">
-      <div className="relative flex items-center justify-center w-10 h-10 rounded-full">
+      <div className="relative flex items-center justify-center w-10 h-10 rounded-full overflow-hidden">
         <Image src={icon} alt="social-icon" fill />
       </div>
       <input
