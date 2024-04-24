@@ -2,8 +2,8 @@ export const socialLinks = [
     {
         name: "linkedin",
         icon: "/icons/linkedin.svg",
-        placeholder: "Linkedin*",
-        isRequired: true,
+        placeholder: "Linkedin",
+        isRequired: false,
     },
     {
         name: "github",
