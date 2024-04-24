@@ -63,19 +63,19 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setQuery((q) => ({ ...q, onlyTalent: event.target.checked }));
-  }
+  };
 
   const handleOnlyMentorChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setQuery((q) => ({ ...q, onlyMentor: event.target.checked }));
-  }
+  };
 
   const handleOnlyRecruiterChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setQuery((q) => ({ ...q, onlyRecruiter: event.target.checked }));
-  }
+  };
 
   return (
     <div>
@@ -170,7 +170,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
             iconSize="large"
             variant="secondary"
           >
-            {isSearchTalent ? "Create Job" : "Create Profile"}
+            {isSearchTalent ? "Create Job" : "My Talent Profile"}
           </LinkButton>
         </div>
       </div>

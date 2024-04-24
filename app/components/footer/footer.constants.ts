@@ -38,6 +38,14 @@ export const socialLinks = [
     name: "Our Quests",
     url: "https://zealy.io/c/goodhive",
   },
+  {
+    name: "Web3TalentFair",
+    url: "https://web3talentfair.tech",
+  },
+  {
+    name: "IT Unchained",
+    url: "https://it-unchained.com",
+  },
 ];
 
 export const contactDetails = {
