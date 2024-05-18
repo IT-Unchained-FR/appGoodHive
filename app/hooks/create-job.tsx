@@ -132,7 +132,7 @@ export const useCreateJob = (props: Props) => {
     try {
       const balance = await contract.methods.checkBalance(jobId).call();
 
-      const balanceInEther = balance / 1000000;
+      const balanceInEther = Number(balance) / 1000000;
       return balanceInEther;
     } catch (error) {
       console.error("Error checking balance:", error);
