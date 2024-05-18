@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import Cookies from "js-cookie";
 import { WagmiConfig, createConfig, configureChains } from "wagmi";
-import { polygonMumbai } from "wagmi/chains";
+import { polygon } from "wagmi/chains";
 import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
 import { publicProvider } from "wagmi/providers/public";
 import {
@@ -27,16 +27,17 @@ import { SwitchWalletCheck } from "@components/switch-wallet-check";
 import { NavBar } from "@components/nav-bar";
 import { AddressContext } from "@components/context";
 import { Footer } from "@components/footer/footer";
+import { GoodhiveInfuraApi } from "./constants/common";
 
 import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
-  [polygonMumbai],
+  [polygon],
   [
     jsonRpcProvider({
       rpc: () => ({
-        http: "https://polygon-mumbai.infura.io/v3/515aadd2e166439faf967dc2aee45a97",
+        http: GoodhiveInfuraApi,
       }),
     }),
   ]
@@ -54,7 +55,7 @@ const connectors = connectorsForWallets([
   },
 ]);
 
-const config = createConfig({
+export const config = createConfig({
   autoConnect: true,
   publicClient,
   connectors,
