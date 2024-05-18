@@ -25,12 +25,12 @@ export const useCreateJob = (props: Props) => {
       body: JSON.stringify({ id, escrowAmount: amount }),
     });
   };
-  const waitForTransactionReceipt = async (txHash: string) => {
+  const waitForTransactionReceipt = async (txHash: `0x${string}`) => {
     if (!window.ethereum) return;
     while (true) {
       const receipt = await window.ethereum.request({
         method: "eth_getTransactionReceipt",
-        params: [txHash as string],
+        params: [txHash], // Fix: Pass txHash as a single string
       });
       if (receipt) {
         return receipt;
@@ -46,7 +46,7 @@ export const useCreateJob = (props: Props) => {
     if (accounts.length === 0) {
       return console.log("no accout found");
     }
-    const contract = new web3.eth.Contract(TokenAbi, token, {
+    const contract:any = new web3.eth.Contract(TokenAbi, token, {
       from: accounts[0],
     });
     const tx = contract.methods
@@ -66,7 +66,7 @@ export const useCreateJob = (props: Props) => {
         method: "eth_sendTransaction",
         params: [receipt as any],
       });
-      await waitForTransactionReceipt(txHash as string);
+      await waitForTransactionReceipt(txHash);
     } catch (error) {
       console.error("Error approving token transfer:", error);
       throw error;
@@ -96,7 +96,7 @@ export const useCreateJob = (props: Props) => {
       if (accounts.length === 0) {
         return console.log("no accout found");
       }
-      const contract = new web3.eth.Contract(
+      const contract:any = new web3.eth.Contract(
         GoodhiveJobContract.abi,
         GoodhiveContractAddress,
         { from: accounts[0] }
@@ -117,7 +117,7 @@ export const useCreateJob = (props: Props) => {
           method: "eth_sendTransaction",
           params: [receipt as any],
         });
-        await waitForTransactionReceipt(txHash as string);
+        await waitForTransactionReceipt(txHash);
       } catch (error) {
         throw error;
       }
@@ -146,7 +146,7 @@ export const useCreateJob = (props: Props) => {
     if (accounts.length === 0) {
       return console.log("no accout found");
     }
-    const contract = new web3.eth.Contract(
+    const contract:any = new web3.eth.Contract(
       GoodhiveJobContract.abi,
       GoodhiveContractAddress,
       { from: accounts[0] }
@@ -167,7 +167,7 @@ export const useCreateJob = (props: Props) => {
         method: "eth_sendTransaction",
         params: [receipt as any],
       });
-      await waitForTransactionReceipt(txHash as string);
+      await waitForTransactionReceipt(txHash);
       handleUpdateEscrowAmount(jobId, EndingBalance);
     } catch (error) {
       console.error("Error approving token transfer:", error);
@@ -182,7 +182,7 @@ export const useCreateJob = (props: Props) => {
     if (accounts.length === 0) {
       return console.log("no accout found");
     }
-    const contract = new web3.eth.Contract(
+    const contract:any = new web3.eth.Contract(
       GoodhiveJobContract.abi,
       GoodhiveContractAddress,
       { from: accounts[0] }
@@ -203,7 +203,7 @@ export const useCreateJob = (props: Props) => {
         method: "eth_sendTransaction",
         params: [receipt as any],
       });
-      await waitForTransactionReceipt(txHash as string);
+      await waitForTransactionReceipt(txHash);
       handleUpdateEscrowAmount(jobId, EndingBalance);
     } catch (error) {
       console.error("Error approving token transfer:", error);
