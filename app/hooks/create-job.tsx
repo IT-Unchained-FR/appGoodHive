@@ -136,6 +136,7 @@ export const useCreateJob = (props: Props) => {
       return balanceInEther;
     } catch (error) {
       console.error("Error checking balance:", error);
+      return 0;
     }
   };
 
