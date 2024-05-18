@@ -15,6 +15,12 @@ export const jobTypes = [
 export const GoodhiveContractAddress = process.env
   .NEXT_PUBLIC_GOODHIVE_POLYGON_MUMBAI_CONTRACT_ADDRESS as string;
 
+export const GoodhiveInfuraApi = process.env
+  .NEXT_PUBLIC_GOODHIVE_INFURA_API as string;
+
+export const GoodhiveUsdcTokenPolygon = process.env
+  .NEXT_PUBLIC_GOODHIVE_USDC_TOKEN_POLYGON as string;
+
 export const projectDuration = [
   {
     value: "lessThanSevenDays",
