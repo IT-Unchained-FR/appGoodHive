@@ -7084,13 +7084,9 @@ export const polygonTokens = [
   },
 ];
 
-export const polygonTestnetTokens = [
+export const polygonMainnetTokens = [
   {
-    value: "0x0000000000000000000000000000000000001010",
-    label: "Mubmai - PoS | MATIC",
-  },
-  {
-    value: "0x9999f7Fea5938fD3b1E26A12c3f2fb024e194f97",
+    value: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
     label: "USDC Token | USDC",
   }
 ]

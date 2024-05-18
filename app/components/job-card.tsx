@@ -63,7 +63,7 @@ export const JobCard: FC<Props> = ({
   const userWalletAddress = useContext(AddressContext);
   const isOwner = walletAddress === userWalletAddress;
   const jobBalance =
-    Number(escrowAmount) > 0 ? `${escrowAmount} MATIC` : "0 MATIC";
+    Number(escrowAmount) > 0 ? `${escrowAmount} USDC` : "0 USDC";
 
   const onSubmitHandler = async (coverLetter: string) => {
     if (!coverLetter) {
