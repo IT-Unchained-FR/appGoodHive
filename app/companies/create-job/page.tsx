@@ -19,7 +19,7 @@ import {
   ethereumTokens,
   gnosisChainTokens,
 } from "@constants/token-list/index.js";
-import { polygonTestnetTokens } from "@constants/token-list/polygon";
+import { polygonMainnetTokens } from "@constants/token-list/polygon";
 
 import LabelOption from "@interfaces/label-option";
 import { calculateJobCreateFees } from "@utils/calculate-job-create-fees";
@@ -261,8 +261,8 @@ export default function CreateJob() {
               ethereumTokens.findIndex((token) => token.value === data.currency)
             ]
           : data.chain === "polygon"
-          ? polygonTestnetTokens[
-              polygonTestnetTokens.findIndex(
+          ? polygonMainnetTokens[
+            polygonMainnetTokens.findIndex(
                 (token) => token.value === data.currency
               )
             ]
@@ -344,7 +344,7 @@ export default function CreateJob() {
       {!!id && jobData && (
         <div className="w-full mb-1 flex justify-end">
           <h3 className="font-bold">
-            Provision Amount: {provisionalAmount} MATIC
+            Provision Amount: {provisionalAmount} USDC
           </h3>
         </div>
       )}
@@ -584,14 +584,14 @@ export default function CreateJob() {
                     selectedChain?.value === "ethereum"
                       ? ethereumTokens
                       : selectedChain?.value === "polygon"
-                      ? polygonTestnetTokens
+                      ? polygonMainnetTokens
                       : selectedChain?.value === "gnosis-chain"
                       ? gnosisChainTokens
                       : []
                   }
                   defaultValue={
-                    polygonTestnetTokens[
-                      polygonTestnetTokens.findIndex(
+                    polygonMainnetTokens[
+                      polygonMainnetTokens.findIndex(
                         (token) => token.value === jobData?.currency
                       )
                     ]
