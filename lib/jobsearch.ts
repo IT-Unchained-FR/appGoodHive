@@ -31,6 +31,7 @@ export async function fetchJobs({
   recruiter = "",
   mentor = "",
 }: FetchJobsProps) {
+  console.log("search params job search >>>", search, location, name, items, page);
   try {
     const countJobs = await sql`
         SELECT COUNT(*)
@@ -90,6 +91,8 @@ export async function fetchJobs({
       recruiter: item.recruiter === "true",
       escrowAmount: item.escrow_amount,
     }));
+
+    console.log("jobs we got>>>", jobs);
     
     const sortedJobs = jobs.sort(
       (a, b) => Number(b.escrowAmount) - Number(a.escrowAmount)
