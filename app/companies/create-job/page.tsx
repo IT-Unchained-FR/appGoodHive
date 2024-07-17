@@ -695,6 +695,7 @@ export default function CreateJob() {
         jobId={id}
         type={popupModalType}
         onSubmit={onPopupModalSubmit}
+        currencyToken={selectedCurrency?.value ?? ""}
       />
     </main>
   );
