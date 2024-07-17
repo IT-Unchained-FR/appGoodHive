@@ -205,7 +205,6 @@ export const useCreateJob = (props: Props) => {
 
   const transferFundsTx = async (jobId: number, amount: number) => {
     if (!window.ethereum) return "";
-    let token = props.token;
     const web3 = new Web3(process.env.NEXT_PUBLIC_GOODHIVE_INFURA_API);
     const accounts = await window.ethereum.request({ method: "eth_accounts" });
     if (accounts.length === 0) {
