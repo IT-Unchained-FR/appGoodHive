@@ -141,10 +141,6 @@ export default function MyProfile() {
       try {
         console.log(user_email_auth, "User Email Auth");
 
-        if (!user_email_auth) {
-          router.push(`/auth/login`);
-        }
-
         const response = await fetch(
           `/api/talents/my-profile?walletAddress=${walletAddress}`
         );
@@ -166,6 +162,9 @@ export default function MyProfile() {
     };
     if (walletAddress) {
       fetchProfileData();
+    }
+    if (!user_email_auth) {
+      router.push("/auth/login");
     }
   }, [walletAddress, user_email_auth, router]);
 
@@ -334,14 +333,7 @@ export default function MyProfile() {
       <h1 className="my-5 text-2xl border-b-[1px] border-slate-300 pb-2">
         My Profile
       </h1>
-      {!walletAddress ? (
-        <div>
-          <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
-            🚀 To get started, please connect your wallet. This will enable you
-            to create or save your profile. Thanks!
-          </p>
-        </div>
-      ) : profileData.talent_status === "pending" ? (
+      {profileData.talent_status === "pending" ? (
         <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
           🚀 Your profile is pending approval. It will be live soon.
         </p>
@@ -436,7 +428,6 @@ export default function MyProfile() {
               required
               maxLength={100}
               defaultValue={profileData?.title}
-              disabled={!walletAddress}
             />
             <div className="mt-5">
               <textarea
@@ -447,7 +438,6 @@ export default function MyProfile() {
                 maxLength={255}
                 rows={5}
                 defaultValue={profileData?.description}
-                disabled={!walletAddress}
               />
             </div>
             <div className="flex gap-4 mt-4 sm:flex-col">
@@ -467,7 +457,6 @@ export default function MyProfile() {
                   pattern="[a-zA-Z -]+"
                   maxLength={100}
                   defaultValue={profileData?.first_name}
-                  disabled={!walletAddress}
                 />
               </div>
               <div className="flex-1">
@@ -486,7 +475,6 @@ export default function MyProfile() {
                   pattern="[a-zA-Z -]+"
                   maxLength={100}
                   defaultValue={profileData?.last_name}
-                  disabled={!walletAddress}
                 />
               </div>
             </div>
@@ -496,7 +484,6 @@ export default function MyProfile() {
                   labelText="Country"
                   name="country"
                   required
-                  disabled={!walletAddress}
                   inputValue={selectedCountry}
                   setInputValue={setSelectedCountry}
                   options={countries}
@@ -525,7 +512,6 @@ export default function MyProfile() {
                   pattern="[a-zA-Z -]+"
                   maxLength={100}
                   defaultValue={profileData?.city}
-                  disabled={!walletAddress}
                 />
               </div>
             </div>
@@ -544,7 +530,6 @@ export default function MyProfile() {
                     type="text"
                     name="phone-country-code"
                     value={selectedCountry?.phoneCode || "+1"}
-                    disabled={!walletAddress}
                     defaultValue={
                       countries[
                         countries.findIndex(
@@ -571,7 +556,6 @@ export default function MyProfile() {
                   name="phone-number"
                   maxLength={20}
                   defaultValue={profileData?.phone_number}
-                  disabled={!walletAddress}
                 />
               </div>
             </div>
@@ -591,7 +575,6 @@ export default function MyProfile() {
                   name="email"
                   maxLength={255}
                   defaultValue={profileData?.email}
-                  disabled={!walletAddress}
                 />
               </div>
               <div className="flex-1">
@@ -608,7 +591,6 @@ export default function MyProfile() {
                   name="rate"
                   maxLength={255}
                   defaultValue={profileData?.rate}
-                  disabled={!walletAddress}
                 />
               </div>
             </div>
@@ -617,7 +599,6 @@ export default function MyProfile() {
                 label="Hide my contact details"
                 name="hide-contact-details"
                 checked={profileData.hide_contact_details}
-                disabled={!walletAddress}
               />
             </div>
             <div className="mt-4">
@@ -635,7 +616,6 @@ export default function MyProfile() {
                 rows={5}
                 maxLength={65000}
                 defaultValue={profileData?.about_work}
-                disabled={!walletAddress}
               />
             </div>
             <div className="mt-4">
@@ -671,7 +651,6 @@ export default function MyProfile() {
                   name="cv"
                   accept=".pdf"
                   onChange={onCvInputChange}
-                  disabled={!walletAddress}
                 />
               )}
             </div>
@@ -681,13 +660,11 @@ export default function MyProfile() {
                 label="Freelance Only"
                 name="freelance-only"
                 checked={profileData.freelance_only}
-                disabled={!walletAddress}
               />
               <ToggleButton
                 label="Remote Only"
                 name="remote-only"
                 checked={profileData.remote_only}
-                disabled={!walletAddress}
               />
             </div>
 
@@ -775,8 +752,6 @@ export default function MyProfile() {
             {isShowReferralSection && <ReferralSection />}
 
             <div className="mt-10 mb-16 text-center flex gap-4 justify-center">
-              {!!walletAddress && (
-                <>
                   <button
                     className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
                     type="submit"
@@ -795,8 +770,6 @@ export default function MyProfile() {
                       ? "Sending Profile To Review..."
                       : "Send Profile To Review"}
                   </button>
-                </>
-              )}
             </div>
           </div>
         </form>
