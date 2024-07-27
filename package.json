@@ -12,6 +12,7 @@
     "@aws-sdk/client-s3": "^3.327.0",
     "@aws-sdk/signature-v4-crt": "^3.310.0",
     "@formspree/react": "^2.5.1",
+    "@nextui-org/theme": "^2.2.9",
     "@nextui-org/tooltip": "^2.0.29",
     "@rainbow-me/rainbowkit": "^1.0.1",
     "@rainbow-me/rainbowkit-siwe-next-auth": "^0.2.0",
@@ -26,6 +27,7 @@
     "encoding": "^0.1.13",
     "eslint": "8.38.0",
     "eslint-config-next": "13.3.0",
+    "framer-motion": "^11.3.19",
     "iron-session": "^6.3.1",
     "js-cookie": "^3.0.5",
     "next": "latest",
@@ -46,6 +48,7 @@
     "web3": "^4.3.0"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
     "@types/js-cookie": "^3.0.6",
     "@types/react-autosuggest": "^10.1.6",
     "@types/react-google-recaptcha": "^2.1.9",
