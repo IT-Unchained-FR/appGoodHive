@@ -8,6 +8,7 @@ import {
   useContext,
   ChangeEvent,
 } from "react";
+
 import Image from "next/image";
 import Link from "next/link";
 import Cookies from "js-cookie";
@@ -34,8 +35,10 @@ import { createJobServices } from "@/app/constants/common";
 import { ReferralSection } from "@/app/components/referral/referral-section";
 
 export default function MyProfile() {
+  const router = useRouter();
   const imageInputValue = useRef(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [reviewProfileLoading, setReviewProfileLoading] = useState(false);
+  const [saveProfileLoading, setSaveProfileLoading] = useState(false);
   const [profileImage, setProfileImage] = useState<null | File>(null);
   const [cvFile, setCvFile] = useState<null | File>(null);
   const [isUploadedCvLink, setIsUploadedCvLink] = useState(false);
@@ -75,13 +78,18 @@ export default function MyProfile() {
     availability: false,
   });
 
-  const walletAddress = useContext(AddressContext);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+
+  const user_email_auth = Cookies.get("user_email");
+
+  const walletAddressFromContext = useContext(AddressContext);
+
+  const loggedInUserEmail = Cookies.get("user_email");
 
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<LabelOption | null>(
     null
   );
-  const router = useRouter();
 
   const handleImageClick = () => {
     setProfileData({ ...profileData, image_url: "" });
@@ -92,11 +100,58 @@ export default function MyProfile() {
   };
 
   useEffect(() => {
+    if (walletAddressFromContext) {
+      setWalletAddress(walletAddressFromContext);
+    }
+  }, [walletAddressFromContext]);
+
+  // checking if there is any user in the auth db with the same wallet address
+  useEffect(() => {
+    const fetchWalletAddress = async () => {
+      try {
+        const response = await fetch("/api/talents/wallet-address", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: loggedInUserEmail }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const { walletAddress } = await response.json();
+
+        if (walletAddress) {
+          if (walletAddress === "undefined") {
+            setWalletAddress(null);
+          }
+          setWalletAddress(walletAddress);
+        }
+      } catch (error) {
+        console.error("There was an error!", error);
+      }
+    };
+
+    if (!walletAddress && loggedInUserEmail) {
+      fetchWalletAddress();
+    }
+  }, [loggedInUserEmail, walletAddress]);
+
+  // fetching the profile data of the user with wallet address
+  useEffect(() => {
     const fetchProfileData = async () => {
       try {
+        console.log(user_email_auth, "User Email Auth");
+
+        if (!user_email_auth) {
+          router.push(`/auth/login`);
+        }
+
         const response = await fetch(
           `/api/talents/my-profile?walletAddress=${walletAddress}`
-        ); // replace with your actual API endpoint
+        );
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -116,6 +171,31 @@ export default function MyProfile() {
     if (walletAddress) {
       fetchProfileData();
     }
+  }, [walletAddress, user_email_auth, router]);
+
+  useEffect(() => {
+    const storeWalletAddress = async () => {
+      try {
+        const response = await fetch("/api/auth/set-wallet-address", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            walletAddress: walletAddress,
+            userId: Number(Cookies.get("user_id")),
+          }),
+        });
+      } catch (error) {
+        console.log(error, "Error...On Storing Wallet Address...");
+      }
+    };
+
+    const walletAddressIsNotNull = walletAddress !== null;
+    const walletAddressIsNotUndefined = walletAddress !== "undefined";
+
+    if (walletAddressIsNotNull && walletAddressIsNotUndefined)
+      storeWalletAddress();
   }, [walletAddress]);
 
   const onCvInputChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -130,9 +210,16 @@ export default function MyProfile() {
     setCvFile(cvFile);
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement>,
+    saveTalentOnly: boolean
+  ) => {
     event.preventDefault();
-    setIsLoading(true);
+    if (saveTalentOnly) {
+      setSaveProfileLoading(true);
+    } else {
+      setReviewProfileLoading(true);
+    }
 
     const isNewUser = !profileData.first_name;
     const formData = new FormData(event.currentTarget);
@@ -153,7 +240,11 @@ export default function MyProfile() {
     const isAlreadyReferred = profileData.referrer ? true : false;
 
     if (!cvUrl && !isUploadedCvLink) {
-      setIsLoading(false);
+      if (saveTalentOnly) {
+        setSaveProfileLoading(false);
+      } else {
+        setReviewProfileLoading(false);
+      }
       toast.error("CV upload failed!");
       return;
     }
@@ -185,7 +276,13 @@ export default function MyProfile() {
       talent,
       mentor,
       recruiter,
-      talentStatus: profileData.talent_status || "pending",
+      talentStatus: saveTalentOnly
+        ? profileData.talent_status
+          ? profileData.talent_status
+          : null
+        : profileData.talent_status !== "approved"
+        ? "pending"
+        : profileData.talent_status,
       mentorStatus: profileData.mentor_status || mentor ? "pending" : null,
       recruiterStatus:
         profileData.recruiter_status || recruiter ? "pending" : null,
@@ -202,9 +299,13 @@ export default function MyProfile() {
       body: JSON.stringify(dataForm),
     });
 
-    setIsLoading(false);
-
+    if (saveTalentOnly) {
+      setSaveProfileLoading(false);
+    } else {
+      setReviewProfileLoading(false);
+    }
     if (!profileResponse.ok) {
+      1;
       toast.error("Something went wrong!");
     } else {
       if (isNewUser) {
@@ -227,47 +328,73 @@ export default function MyProfile() {
       ) {
         toast.success(`🎉 Your profile has been successfully saved!`);
       } else {
-        toast.success(
-          `🎉 Your profile has been successfully saved!
-
-        It is now under review.
-        `
-        );
+        toast.success(`🎉 Your profile has been successfully saved!
+          ${saveTalentOnly ? " " : " It is now under review."}
+       `);
       }
     }
   };
+
+  const PendingApprovalMessage = () => (
+    <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+      🚀 Your profile is pending approval. It will be live soon.
+    </p>
+  );
+
+  const PendingRecruiterApprovalMessage = () => (
+    <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+      🚀 Your profile is approved as a talent but pending approval as a
+      recruiter.
+    </p>
+  );
+
+  const PendingMentorApprovalMessage = () => (
+    <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+      🚀 Your profile is approved as a talent but pending approval as a mentor.
+    </p>
+  );
+  const ConnectWalletMessage = () => (
+    <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+      🚀 To get started, please connect your wallet. This will enable you to
+      create or save your profile. Thanks!
+    </p>
+  );
 
   return (
     <main className="container mx-auto">
       <h1 className="my-5 text-2xl border-b-[1px] border-slate-300 pb-2">
         My Profile
       </h1>
-      {!walletAddress ? (
-        <div>
-          <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
-            🚀 To get started, please connect your wallet. This will enable you
-            to create or save your profile. Thanks!
-          </p>
-        </div>
-      ) : profileData.talent_status === "pending" ? (
-        <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
-          🚀 Your profile is pending approval. It will be live soon.
-        </p>
-      ) : profileData.talent_status === "approved" &&
-        profileData.recruiter_status === "pending" ? (
-        <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
-          🚀 Your profile is approved as a talent but pending approval as a
-          recruiter
-        </p>
-      ) : profileData.talent_status === "approved" &&
-        profileData.mentor_status === "pending" ? (
-        <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
-          🚀 Your profile is approved as a talent but pending approval as a
-          mentor
-        </p>
-      ) : null}
+
+      {/* Showing Connect Wallet Message If Not */}
+      {!walletAddress ||
+        (walletAddress === "undefined" && <ConnectWalletMessage />)}
+
+      {/* Showing The Pending Approval Message */}
+      <>
+        {profileData.talent_status === "pending" && <PendingApprovalMessage />}
+        {profileData.talent_status === "approved" &&
+          profileData.recruiter_status === "pending" && (
+            <PendingRecruiterApprovalMessage />
+          )}
+        {profileData.talent_status === "approved" &&
+          profileData.mentor_status === "pending" && (
+            <PendingMentorApprovalMessage />
+          )}
+      </>
+
       <section>
-        <form onSubmit={handleSubmit}>
+        <form
+          onSubmit={(e: any) => {
+            const isSaveTalentOnly =
+              e.nativeEvent.submitter.name === "save-talent-only";
+            if (isSaveTalentOnly) {
+              handleSubmit(e, true);
+            } else {
+              handleSubmit(e, false);
+            }
+          }}
+        >
           <div className="flex flex-col items-center justify-center w-full mt-10">
             {profileData.image_url ? (
               <div
@@ -669,15 +796,28 @@ export default function MyProfile() {
 
             {isShowReferralSection && <ReferralSection />}
 
-            <div className="mt-10 mb-16 text-center">
+            <div className="mt-10 mb-16 text-center flex gap-4 justify-center">
               {!!walletAddress && (
-                <button
-                  className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
-                  type="submit"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Saving..." : "Save"}
-                </button>
+                <>
+                  <button
+                    className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
+                    type="submit"
+                    name="save-talent-only"
+                    disabled={saveProfileLoading}
+                  >
+                    {saveProfileLoading ? "Saving Profile..." : "Save Profile"}
+                  </button>
+                  <button
+                    className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
+                    type="submit"
+                    name="send-for-review"
+                    disabled={reviewProfileLoading}
+                  >
+                    {reviewProfileLoading
+                      ? "Sending Profile To Review..."
+                      : "Send Profile To Review"}
+                  </button>
+                </>
               )}
             </div>
           </div>
