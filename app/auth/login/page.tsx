@@ -90,15 +90,11 @@ const Login = () => {
           </div>
 
           <div>
-            <p className="pl-4">
-              If you don&apos;t have any account
-              <Link
-                href={"/auth/signup"}
-                className="ml-2 text-[#FFC905] text-lg underline"
-              >
-                {" "}
-                Sign up
-              </Link>
+            <p>
+              If You Don&apos;t Have Any Account{" "}
+              <span className="text-[#FFC905] underline">
+                <Link href={"/auth/signup"}>Sign Up Here</Link>
+              </span>
             </p>
           </div>
 

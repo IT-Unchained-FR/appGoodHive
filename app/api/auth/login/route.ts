@@ -61,6 +61,7 @@ export async function POST(req: Request) {
         }
       );
     } catch (error) {
+      console.log(error, "Error From The API...");
       return new Response(
         JSON.stringify({ message: "There was an error logging in" }),
         {
