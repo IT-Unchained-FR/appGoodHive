@@ -360,6 +360,11 @@ export default function MyProfile() {
     </p>
   );
 
+  const handleDescriptionChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    const description = event.target.value;
+    setProfileData({ ...profileData, description });
+  };
+
   return (
     <main className="container mx-auto">
       <h1 className="my-5 text-2xl border-b-[1px] border-slate-300 pb-2">
@@ -465,13 +470,20 @@ export default function MyProfile() {
             <div className="mt-5">
               <textarea
                 name="description"
-                className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                className="form-control block w-full px-4 py-2 pb-4 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                 placeholder="Describe your skills and experience in a few words*"
                 required
-                maxLength={255}
+                maxLength={5000}
                 rows={5}
                 defaultValue={profileData?.description}
+                onChange={handleDescriptionChange}
               />
+              <p
+                className="text-[13px] mt-2 text-right w-full"
+                style={{ color: "#FFC905" }}
+              >
+                {profileData.description.length}/5000
+              </p>
             </div>
             <div className="flex gap-4 mt-4 sm:flex-col">
               <div className="flex-1">
