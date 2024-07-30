@@ -5,6 +5,7 @@ import { TalentSocialMedia } from "@/app/components/talents/profile-social-media
 import { TalentContactBtn } from "@/app/components/talents/talent-contact-btn";
 import { getProfileData } from "@/lib/fetch-profile-data";
 import { generateAvailabilityStatus } from "./utils";
+import ProfileAboutWork from "@/app/components/talents/ProfileAboutWork";
 
 export const revalidate = 0;
 
@@ -149,9 +150,7 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
           <h3 className="text-[#4E4E4E] text-lg font-bold mb-5">
             About my work:
           </h3>
-          <p className="w-full max-h-52 mb-10 text-ellipsis overflow-hidden">
-            {about_work}
-          </p>
+          <ProfileAboutWork about_work={about_work} />
 
           <TalentSocialMedia
             linkedin={linkedin}
