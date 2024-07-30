@@ -365,6 +365,11 @@ export default function MyProfile() {
     setProfileData({ ...profileData, description });
   };
 
+  const handleAboutWorkChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    const about_work = event.target.value;
+    setProfileData({ ...profileData, about_work });
+  };
+
   return (
     <main className="container mx-auto">
       <h1 className="my-5 text-2xl border-b-[1px] border-slate-300 pb-2">
@@ -474,7 +479,7 @@ export default function MyProfile() {
                 placeholder="Describe your skills and experience in a few words*"
                 required
                 maxLength={5000}
-                rows={5}
+                rows={8}
                 defaultValue={profileData?.description}
                 onChange={handleDescriptionChange}
               />
@@ -658,10 +663,17 @@ export default function MyProfile() {
                 className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                 placeholder="What you are looking for?"
                 required
-                rows={5}
-                maxLength={65000}
+                rows={8}
+                maxLength={5000}
                 defaultValue={profileData?.about_work}
+                onChange={handleAboutWorkChange}
               />
+              <p
+                className="text-[13px] mt-2 text-right w-full"
+                style={{ color: "#FFC905" }}
+              >
+                {profileData.about_work.length}/5000
+              </p>
             </div>
             <div className="mt-4">
               <label
