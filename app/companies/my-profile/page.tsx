@@ -141,6 +141,11 @@ export default function MyProfile() {
     }
   };
 
+  const handleHeadlineChange = (e: FormEvent<HTMLTextAreaElement>) => {
+    const { value } = e.currentTarget;
+    setProfileData({ ...profileData, headline: value });
+  };
+
   if (!walletAddress) {
     return (
       <h2 className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
@@ -232,10 +237,17 @@ export default function MyProfile() {
                 className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                 placeholder="Describe your company in a few words?"
                 required
-                maxLength={255}
-                rows={5}
+                maxLength={5000}
+                rows={8}
                 defaultValue={profileData.headline}
+                onChange={handleHeadlineChange}
               />
+              <p
+                className="text-[13px] mt-2 text-right w-full"
+                style={{ color: "#FFC905" }}
+              >
+                {profileData.headline.length}/5000
+              </p>
             </div>
 
             <div className="flex flex-col gap-4 mt-10">
