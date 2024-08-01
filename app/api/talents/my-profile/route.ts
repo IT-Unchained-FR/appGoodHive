@@ -62,7 +62,11 @@ export async function POST(request: Request) {
         await sql`
         UPDATE goodhive.referrals
         SET
-          talents = ${referralTalents ? [...referralTalents, walletAddress] : [walletAddress]}
+          talents = ${
+            referralTalents
+              ? [...referralTalents, walletAddress]
+              : [walletAddress]
+          }
         WHERE wallet_address = ${referrerWalletAddress}
         `;
       }
