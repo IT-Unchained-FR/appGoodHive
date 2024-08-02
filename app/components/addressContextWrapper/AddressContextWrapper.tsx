@@ -45,7 +45,7 @@ const AddressContextWrapper = ({
 
   return (
     <div className="address__context__wrapper">
-      <AddressContext.Provider value={walletAddress}>
+      <AddressContext.Provider value={walletAddress as string}>
         {children}
       </AddressContext.Provider>
     </div>
