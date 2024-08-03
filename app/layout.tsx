@@ -30,6 +30,7 @@ import AddressContextWrapper from "./components/addressContextWrapper/AddressCon
 import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
 import ReferralCodeHandler from "./components/referralCodeHandler/ReferralCodeHandler";
+import LastActiveHandler from "./components/lastActiveHandler/LastActiveHandler";
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
   [polygon],

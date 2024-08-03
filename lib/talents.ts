@@ -36,19 +36,23 @@ export async function fetchTalents({
     FROM goodhive.users
     WHERE
       (LOWER(title) LIKE ${contains(search)} OR LOWER(skills) LIKE ${contains(
-        search
-      )})
+      search
+    )})
       AND
       (LOWER(city) LIKE ${contains(location)} OR LOWER(country) LIKE ${contains(
-        location
-      )})
+      location
+    )})
       AND
       (LOWER(first_name) LIKE ${contains(
         name
       )} OR LOWER(last_name) LIKE ${contains(name)})
       ${onlyTalent === "true" ? sql`AND talent_status = 'approved'` : sql``}
       ${onlyMentor === "true" ? sql`AND mentor_status = 'approved'` : sql``}
-      ${onlyRecruiter === "true" ? sql`AND recruiter_status = 'approved'` : sql``}
+      ${
+        onlyRecruiter === "true"
+          ? sql`AND recruiter_status = 'approved'`
+          : sql``
+      }
     `;
 
     const count = countCursor[0].count as number;
@@ -73,12 +77,15 @@ export async function fetchTalents({
       )} OR LOWER(last_name) LIKE ${contains(name)})
       ${onlyTalent === "true" ? sql`AND talent_status = 'approved'` : sql``}
       ${onlyMentor === "true" ? sql`AND mentor_status = 'approved'` : sql``}
-      ${onlyRecruiter === "true" ? sql`AND recruiter_status = 'approved'` : sql``}
+      ${
+        onlyRecruiter === "true"
+          ? sql`AND recruiter_status = 'approved'`
+          : sql``
+      }
       LIMIT ${limit}
       OFFSET ${offset}
       `;
 
-    
     const talents: Talent[] = talentsCursor
       .filter(
         (talent) =>
@@ -105,19 +112,20 @@ export async function fetchTalents({
           freelancer: talent.freelance_only ? true : false,
           remote: talent.remote_only ? true : false,
           availability: talent.availability,
+          last_active: talent.last_active,
         };
       });
 
-      // sort talents by availability
-      const sortedTalents = talents.sort((a, b) => {
-        if (a.availability && !b.availability) {
-          return -1;
-        }
-        if (!a.availability && b.availability) {
-          return 1;
-        }
-        return 0;
-      });
+    // sort talents by availability
+    const sortedTalents = talents.sort((a, b) => {
+      if (a.availability && !b.availability) {
+        return -1;
+      }
+      if (!a.availability && b.availability) {
+        return 1;
+      }
+      return 0;
+    });
 
     return { talents: sortedTalents, count };
   } catch (error) {
