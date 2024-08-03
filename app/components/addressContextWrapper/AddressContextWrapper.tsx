@@ -13,6 +13,7 @@ const AddressContextWrapper = ({
   const { address } = useAccount();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
+  // Fetch the authentication status of the user
   useEffect(() => {
     const fetchStatus = async () => {
       try {
