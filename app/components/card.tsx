@@ -7,6 +7,7 @@ import Link from "next/link";
 import type { FC } from "react";
 import { Button } from "@components/button";
 import { generateCountryFlag } from "@utils/generate-country-flag";
+import moment from "moment";
 
 interface Props {
   jobId?: number;
@@ -31,6 +32,7 @@ interface Props {
   freelancer?: boolean;
   remote?: boolean;
   availability?: boolean;
+  last_active?: Date;
 }
 
 export const Card: FC<Props> = ({
@@ -53,6 +55,7 @@ export const Card: FC<Props> = ({
   freelancer,
   remote,
   availability,
+  last_active,
 }) => {
   const rate =
     budget && currency
@@ -75,6 +78,12 @@ export const Card: FC<Props> = ({
       : "/icons/no-money.svg";
   const shortSkillList =
     skills.length > 3 ? [...skills.slice(0, 3), "..."] : skills;
+
+  // see if the last active time was more than five minutes ago with moment js
+
+  const last_active_minute = moment().diff(last_active, "minutes");
+  console.log(last_active_minute, "last_active_minute");
+  const relativeTime = moment(last_active).local().fromNow();
 
   return (
     <div className="box-border block p-3 mt-11 bg-white bg-blend-darken rounded-3xl shadow-[2px_7px_20px_4px_#e2e8f0]">
@@ -110,7 +119,7 @@ export const Card: FC<Props> = ({
               </p>
             </Link>
             <p className="mb-3 mt-1 text-xs font-bold text-gray-600 sm:text-xs">
-              {postedOn}
+              {last_active_minute > 5 ? `Active ${relativeTime}` : `Active Now`}
             </p>
           </div>
           <div className="flex flex-col items-end pt-2 grow">
@@ -131,9 +140,11 @@ export const Card: FC<Props> = ({
             </p>
             <div className="flex flex-col items-end gap-1">
               <div className="text-xs font-bold mt-1">{rate}</div>
-              {!jobId && availability && <p className="text-xs">🟢 Active</p>}
-              {!jobId && !availability && (
+
+              {last_active_minute > 5 ? (
                 <p className="text-xs">🔴 Inactive</p>
+              ) : (
+                <p className="text-xs">🟢 Active</p>
               )}
             </div>
           </div>
