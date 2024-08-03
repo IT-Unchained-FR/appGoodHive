@@ -1,15 +1,12 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
-import Cookies from "js-cookie";
+import { Suspense } from "react";
 import { WagmiConfig, createConfig, configureChains } from "wagmi";
 import { polygon } from "wagmi/chains";
 import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
-import { publicProvider } from "wagmi/providers/public";
 import {
-  getDefaultWallets,
   RainbowKitProvider,
   RainbowKitAuthenticationProvider,
   createAuthenticationAdapter,
@@ -32,6 +29,7 @@ import AddressContextWrapper from "./components/addressContextWrapper/AddressCon
 
 import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
+import ReferralCodeHandler from "./components/referralCodeHandler/ReferralCodeHandler";
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
   [polygon],
@@ -73,15 +71,6 @@ export default function RootLayout({
   const verifyingRef = useRef(false);
   const [authStatus, setAuthStatus] = useState<AuthenticationStatus>("loading");
   const [walletAddress, setWalletAddress] = useState<string>("");
-
-  const searchParams = useSearchParams();
-  const referralCode = searchParams.get("ref");
-
-  useEffect(() => {
-    if (referralCode) {
-      Cookies.set("referralCode", referralCode, { expires: 30 });
-    }
-  }, [referralCode]);
 
   // FIXED BUT KEP FOR REFERENCE - ADDRESS CONTEXT WRAPPER
   // useEffect(() => {
@@ -218,11 +207,14 @@ export default function RootLayout({
                 <NavBar />
                 <Toaster />
 
-                <div className="flex-grow">
-                  <AddressContextWrapper setAuthStatus={setAuthStatus}>
-                    {children}
-                  </AddressContextWrapper>
-                </div>
+                <Suspense>
+                  <ReferralCodeHandler />
+                  <div className="flex-grow">
+                    <AddressContextWrapper setAuthStatus={setAuthStatus}>
+                      {children}
+                    </AddressContextWrapper>
+                  </div>
+                </Suspense>
                 <Footer />
               </div>
             </RainbowKitProvider>
