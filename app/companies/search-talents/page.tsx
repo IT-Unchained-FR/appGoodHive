@@ -22,6 +22,8 @@ export default async function SearchTalentsPage({
     count: 0,
   };
 
+  console.log(talents, "talents");
+
   return (
     <div className="mb-12">
       <h1 className="pt-16 text-xl font-bold">
@@ -50,6 +52,7 @@ export default async function SearchTalentsPage({
             freelancer={talent.freelancer}
             remote={talent.remote}
             availability={talent.availability}
+            last_active={talent.last_active}
           />
         ))}
       </div>

@@ -2,6 +2,7 @@ import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { AddressContext } from "../context";
 import { useAccount } from "wagmi";
 import { AuthenticationStatus } from "@rainbow-me/rainbowkit";
+import Cookies from "js-cookie";
 
 const AddressContextWrapper = ({
   children,
@@ -13,7 +14,57 @@ const AddressContextWrapper = ({
   const { address } = useAccount();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
-  // Fetch the authentication status of the user
+  // Send a request to the server to store last active time
+  useEffect(() => {
+    const user_email = Cookies.get("user_email");
+    const sendLastActiveTime = async () => {
+      try {
+        const lastActiveTimeResponse = await fetch(
+          "/api/auth/last-active-time",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ walletAddress, email: user_email }),
+          }
+        );
+
+        console.log(lastActiveRequestSentTime, "lastActiveRequestSentTime");
+
+        if (lastActiveTimeResponse.ok) {
+          Cookies.set(
+            "last_active_request_sent_time",
+            new Date().toISOString()
+          );
+        }
+      } catch (error) {
+        console.error(error, "Error sending last active time");
+      } finally {
+      }
+    };
+
+    // Send the last active time if it has been more than 5 minutes since the last request
+    const lastActiveRequestSentTime = Cookies.get(
+      "last_active_request_sent_time"
+    );
+
+    console.log(lastActiveRequestSentTime, "lastActiveRequestSentTime");
+
+    if (lastActiveRequestSentTime === undefined) {
+      if (walletAddress || user_email) {
+        sendLastActiveTime();
+      }
+    } else {
+      const last_req_less_than_5_minutes =
+        new Date().getTime() -
+          new Date(lastActiveRequestSentTime as string).getTime() <
+        300000;
+
+      if ((walletAddress || user_email) && !last_req_less_than_5_minutes) {
+        sendLastActiveTime();
+      }
+    }
+  }, [walletAddress]);
+
   useEffect(() => {
     const fetchStatus = async () => {
       try {
