@@ -10,6 +10,7 @@ import { useState } from "react";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Cookies from "js-cookie";
+import { useAccount } from "wagmi";
 
 const commonLinks = [
   { href: "/talents/job-search", label: "Find a Job" },
@@ -29,6 +30,8 @@ const companiesLinks = [
 ];
 
 export const NavBar = () => {
+  const { address, isConnected } = useAccount();
+
   const [isOpenMobileMenu, setIsOpenMobileMenu] = useState(false);
 
   const router = useRouter();
@@ -49,6 +52,11 @@ export const NavBar = () => {
 
     router.push("/");
   };
+
+  // Set the wallet address in the cookies
+  if (isConnected && address) {
+    Cookies.set("wallet_address", address);
+  }
 
   return (
     <header aria-label="Site Header" className="bg-black ">

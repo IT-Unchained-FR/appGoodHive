@@ -6,6 +6,7 @@ import { TalentContactBtn } from "@/app/components/talents/talent-contact-btn";
 import { getProfileData } from "@/lib/fetch-profile-data";
 import { generateAvailabilityStatus } from "./utils";
 import ProfileAboutWork from "@/app/components/talents/ProfileAboutWork";
+import { getCompanyData } from "@/lib/fetch-company-data";
 
 export const revalidate = 0;
 
@@ -28,6 +29,7 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
   console.log(ref, isValidVkey);
 
   const profileData = await getProfileData(address);
+  const companyData = await getCompanyData(address);
   const {
     skills,
     title,
