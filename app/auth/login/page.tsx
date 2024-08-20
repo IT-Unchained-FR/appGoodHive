@@ -33,8 +33,11 @@ const Login = () => {
     console.log(responseBody);
     if (response.ok) {
       setIsLoading(false);
+
       Cookies.set("user_email", responseBody.email);
       Cookies.set("user_id", responseBody.userId);
+      Cookies.set("wallet_address", responseBody.wallet_address);
+
       window.location.href = "/talents/my-profile";
     } else {
       setIsLoading(false);
