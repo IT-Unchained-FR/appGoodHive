@@ -1,6 +1,7 @@
 "use client";
 
 import { Route } from "next";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -8,6 +9,8 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import Cookies from "js-cookie";
+import { useAccount } from "wagmi";
 
 const commonLinks = [
   { href: "/talents/job-search", label: "Find a Job" },
@@ -27,15 +30,33 @@ const companiesLinks = [
 ];
 
 export const NavBar = () => {
+  const { address, isConnected } = useAccount();
+
   const [isOpenMobileMenu, setIsOpenMobileMenu] = useState(false);
 
+  const router = useRouter();
   const pathname = usePathname();
+
+  // Get the logged in user email and id from cookies
+  const loggedin_user_email = Cookies.get("user_email");
 
   const links = pathname.startsWith("/talents")
     ? talentsLinks
     : pathname.startsWith("/companies")
     ? companiesLinks
     : commonLinks;
+
+  const handleLogout = () => {
+    Cookies.remove("user_email");
+    Cookies.remove("user_id");
+
+    router.push("/");
+  };
+
+  // Set the wallet address in the cookies
+  if (isConnected && address) {
+    Cookies.set("wallet_address", address);
+  }
 
   return (
     <header aria-label="Site Header" className="bg-black ">
@@ -75,6 +96,23 @@ export const NavBar = () => {
           </nav>
 
           <div className="flex items-center gap-4">
+            {loggedin_user_email ? (
+              <button
+                className="my-2 text-base font-semibold bg-[#FFC905] h-10 w-40 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
+                type="submit"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+            ) : (
+              <button
+                className="my-2 text-base font-semibold bg-[#FFC905] h-10 w-40 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
+                type="submit"
+                onClick={() => router.push("/auth/login")}
+              >
+                Login
+              </button>
+            )}
             <div className="flex gap-4">
               <ConnectButton />
             </div>

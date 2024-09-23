@@ -1,15 +1,12 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
-import Cookies from "js-cookie";
+import { Suspense } from "react";
 import { WagmiConfig, createConfig, configureChains } from "wagmi";
 import { polygon } from "wagmi/chains";
 import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
-import { publicProvider } from "wagmi/providers/public";
 import {
-  getDefaultWallets,
   RainbowKitProvider,
   RainbowKitAuthenticationProvider,
   createAuthenticationAdapter,
@@ -25,12 +22,15 @@ import { SiweMessage } from "siwe";
 
 import { SwitchWalletCheck } from "@components/switch-wallet-check";
 import { NavBar } from "@components/nav-bar";
-import { AddressContext } from "@components/context";
 import { Footer } from "@components/footer/footer";
 import { GoodhiveInfuraApi } from "./constants/common";
 
+import AddressContextWrapper from "./components/addressContextWrapper/AddressContextWrapper";
+
 import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
+import ReferralCodeHandler from "./components/referralCodeHandler/ReferralCodeHandler";
+import LastActiveHandler from "./components/lastActiveHandler/LastActiveHandler";
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
   [polygon],
@@ -73,51 +73,44 @@ export default function RootLayout({
   const [authStatus, setAuthStatus] = useState<AuthenticationStatus>("loading");
   const [walletAddress, setWalletAddress] = useState<string>("");
 
-  const searchParams = useSearchParams();
-  const referralCode = searchParams.get("ref");
+  // FIXED BUT KEP FOR REFERENCE - ADDRESS CONTEXT WRAPPER
+  // useEffect(() => {
+  //   const fetchStatus = async () => {
+  //     if (fetchingStatusRef.current || verifyingRef.current) {
+  //       return;
+  //     }
 
-  useEffect(() => {
-    if (referralCode) {
-      Cookies.set("referralCode", referralCode, { expires: 30 });
-    }
-  }, [referralCode]);
+  //     fetchingStatusRef.current = true;
 
-  useEffect(() => {
-    const fetchStatus = async () => {
-      if (fetchingStatusRef.current || verifyingRef.current) {
-        return;
-      }
+  //     try {
+  //       const checkAuthResponse = await fetch("/api/auth/me");
 
-      fetchingStatusRef.current = true;
+  //       const authResponse = await checkAuthResponse.json();
 
-      try {
-        const checkAuthResponse = await fetch("/api/auth/me");
+  //       const authenticated = Boolean(authResponse?.ok === true);
 
-        const authResponse = await checkAuthResponse.json();
+  //       if (authenticated) {
+  //         setAuthStatus("authenticated");
+  //         Cookies.set("walletAddress", authResponse?.address);
+  //         setWalletAddress(authResponse?.address);
+  //       } else {
+  //         setAuthStatus("unauthenticated");
+  //       }
+  //     } catch (error) {
+  //       console.error(error);
 
-        const authenticated = Boolean(authResponse?.ok === true);
+  //       setAuthStatus("unauthenticated");
+  //     } finally {
+  //       fetchingStatusRef.current = false;
+  //     }
+  //   };
 
-        if (authenticated) {
-          setAuthStatus("authenticated");
-          setWalletAddress(authResponse?.address);
-        } else {
-          setAuthStatus("unauthenticated");
-        }
-      } catch (error) {
-        console.error(error);
+  //   if (!walletAddressCookie) fetchStatus();
 
-        setAuthStatus("unauthenticated");
-      } finally {
-        fetchingStatusRef.current = false;
-      }
-    };
+  //   window.addEventListener("focus", fetchStatus);
 
-    fetchStatus();
-
-    window.addEventListener("focus", fetchStatus);
-
-    return () => window.removeEventListener("focus", fetchStatus);
-  }, []);
+  //   return () => window.removeEventListener("focus", fetchStatus);
+  // }, [walletAddressCookie]);
 
   const authAdapter = useMemo(() => {
     return createAuthenticationAdapter({
@@ -215,11 +208,14 @@ export default function RootLayout({
                 <NavBar />
                 <Toaster />
 
-                <div className="flex-grow">
-                  <AddressContext.Provider value={walletAddress}>
-                    {children}
-                  </AddressContext.Provider>
-                </div>
+                <Suspense>
+                  <ReferralCodeHandler />
+                  <div className="flex-grow">
+                    <AddressContextWrapper setAuthStatus={setAuthStatus}>
+                      {children}
+                    </AddressContextWrapper>
+                  </div>
+                </Suspense>
                 <Footer />
               </div>
             </RainbowKitProvider>

@@ -10,14 +10,16 @@ export default async function JobSearchPage({
   searchParams,
 }: {
   searchParams: {
-    items?: number;
-    page: number;
     search?: string;
     location?: string;
     name?: string;
+    page: number;
+    recruiter?: string;
+    mentor?: string;
   };
 }) {
   const query = { items: itemsPerPage, ...searchParams };
+  console.log("search params job search >>>", query);
   const { jobs, count } = (await fetchJobs(query)) || {
     jobs: [],
     count: 0,
