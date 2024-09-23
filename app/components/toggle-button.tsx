@@ -11,12 +11,13 @@ interface ToggleButtonProps {
 }
 
 export const ToggleButton: FC<ToggleButtonProps> = (props) => {
-  const { label, name, checked, tooltip, disabled } = props;
+  const { label, name, checked, tooltip, onChange, disabled } = props;
   
   const [isChecked, setIsChecked] = useState(checked);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setIsChecked(event.target.checked);
+    onChange && onChange(event);
   };
 
   useEffect(() => {

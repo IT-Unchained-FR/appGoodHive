@@ -30,6 +30,8 @@ export async function POST(request: Request) {
   });
 
   try {
+    const postedAt = new Date().toISOString();
+
     await sql`
       INSERT INTO goodhive.job_offers (
         title,
@@ -50,7 +52,8 @@ export async function POST(request: Request) {
         talent,
         recruiter,
         mentor,
-        wallet_address
+        wallet_address,
+        posted_at
       ) VALUES (
         ${title},
         ${typeEngagement},
@@ -70,7 +73,8 @@ export async function POST(request: Request) {
         ${talent},
         ${recruiter},
         ${mentor},
-        ${walletAddress}
+        ${walletAddress},
+        ${postedAt}
       );
     `;
 
@@ -87,7 +91,6 @@ export async function POST(request: Request) {
     return new Response(JSON.stringify({ jobId }), {
       status: 200,
     });
-
   } catch (error) {
     console.error("Error inserting data:", error);
 

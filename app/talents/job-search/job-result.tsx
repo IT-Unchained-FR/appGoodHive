@@ -1,4 +1,5 @@
 "use client";
+import moment from "moment";
 
 import { BigNumberish } from "ethers";
 
@@ -34,7 +35,9 @@ export default function JobResult({ jobOffers }: { jobOffers: any[] }) {
           type="company"
           title={jobOffer.title}
           postedBy={jobOffer.companyName} //TODO: connect job_offers table to companies table
-          postedOn="posted 2 days ago"
+          postedOn={`Posted On ${moment(jobOffer.posted_at).format(
+            "MMMM Do YYYY"
+          )}`}
           image={jobOffer.image_url || "/img/company_img.png"} //TODO: connect job_offers table to companies table
           country={jobOffer.country} // TODO: create flag table
           city={jobOffer.city} //TODO: connect job_offers table to companies table

@@ -36,6 +36,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
     : TRANSLATIONS.jobSearchTitle;
 
   const handleSearchChange = (skills: string[]) => {
+    console.log("skills search >>>", skills);
     setQuery((q) => ({ ...q, search: skills[0] }));
   };
 

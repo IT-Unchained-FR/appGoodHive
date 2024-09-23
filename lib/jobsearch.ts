@@ -89,8 +89,9 @@ export async function fetchJobs({
       mentor: item.mentor === "true",
       recruiter: item.recruiter === "true",
       escrowAmount: item.escrow_amount,
+      posted_at: item.posted_at,
     }));
-    
+
     const sortedJobs = jobs.sort(
       (a, b) => Number(b.escrowAmount) - Number(a.escrowAmount)
     );
