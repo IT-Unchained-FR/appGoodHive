@@ -6,7 +6,7 @@ const sql = postgres(process.env.DATABASE_URL || "", {
   },
 });
 
-export async function getCompanyData(address: string) {
+export async function getCompanyData(address: string | undefined) {
   if (!address) {
     return {};
   }
