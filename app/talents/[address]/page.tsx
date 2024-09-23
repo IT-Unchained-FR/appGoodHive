@@ -7,6 +7,8 @@ import { getProfileData } from "@/lib/fetch-profile-data";
 import { generateAvailabilityStatus } from "./utils";
 import ProfileAboutWork from "@/app/components/talents/ProfileAboutWork";
 import { getCompanyData } from "@/lib/fetch-company-data";
+import Cookies from "js-cookie";
+import TalentsCVSection from "@/app/components/talents/TalentsCVSection";
 
 export const revalidate = 0;
 
@@ -22,14 +24,14 @@ type MyProfilePageProps = {
 
 export default async function MyProfilePage(context: MyProfilePageProps) {
   const { address } = context.params;
+  const loggedInUserWalletAddress = Cookies.get("wallet_address");
+
   const { vkey, ref } = context.searchParams;
 
   const isValidVkey = vkey === process.env.NEXT_PUBLIC_ADMIN_VERIFICATION_KEY;
 
-  console.log(ref, isValidVkey);
-
   const profileData = await getProfileData(address);
-  const companyData = await getCompanyData(address);
+
   const {
     skills,
     title,
@@ -177,21 +179,7 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
                 </div>
               ))}
           </div>
-
-          {cv_url && talent_status === "approved" && (
-            <>
-              <h3 className="text-[#4E4E4E] text-lg font-bold mb-3">
-                Resume/CV:
-              </h3>
-
-              <div className="relative w-12 h-10 mb-7">
-                <Link href={cv_url} target="_blank">
-                  <Image src="/icons/resume.svg" alt="resume-icon" fill />
-                </Link>
-              </div>
-            </>
-          )}
-
+          <TalentsCVSection cv_url={cv_url} talent_status={talent_status} />
           {/* {!hide_contact_details && (
             <div>
               <h3 className="text-[#4E4E4E] text-lg font-bold mb-5">

@@ -42,6 +42,7 @@ export const TalentSocialMedia: FC<Props> = (props) => {
     if (walletAddress) {
       fetchCompanyData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [walletAddress]);
 
   return (
@@ -64,7 +65,7 @@ export const TalentSocialMedia: FC<Props> = (props) => {
             </Link>
           )}
 
-          {/* {telegram && (
+          {telegram && (
             <Link
               href={`https://t.me/${telegram}`}
               target="_blank"
@@ -72,7 +73,7 @@ export const TalentSocialMedia: FC<Props> = (props) => {
             >
               <Image src="/icons/telegram.svg" alt="social-icon" fill />
             </Link>
-          )} */}
+          )}
 
           {github && (
             <Link
