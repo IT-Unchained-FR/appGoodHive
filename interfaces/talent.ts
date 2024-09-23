@@ -20,6 +20,7 @@ interface Talent {
   freelancer: boolean;
   remote: boolean;
   availability: boolean;
+  last_active: Date;
 }
 
 export default Talent;

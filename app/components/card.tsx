@@ -31,6 +31,7 @@ interface Props {
   freelancer?: boolean;
   remote?: boolean;
   availability?: boolean;
+  last_active?: Date;
 }
 
 export const Card: FC<Props> = ({
@@ -53,6 +54,7 @@ export const Card: FC<Props> = ({
   freelancer,
   remote,
   availability,
+  last_active,
 }) => {
   const rate =
     budget && currency
@@ -76,6 +78,9 @@ export const Card: FC<Props> = ({
   const shortSkillList =
     skills.length > 3 ? [...skills.slice(0, 3), "..."] : skills;
 
+  // see if the last active time was more than five minutes ago with moment js
+
+  // const diff = now.diff(lastActive, "minutes");
   return (
     <div className="box-border block p-3 mt-11 bg-white bg-blend-darken rounded-3xl shadow-[2px_7px_20px_4px_#e2e8f0]">
       <div className="flex flex-col h-full px-4 sm:px-2">
@@ -109,7 +114,7 @@ export const Card: FC<Props> = ({
                 {postedBy}
               </p>
             </Link>
-            <p className="mb-3 text-xs font-bold text-gray-600 sm:text-xs">
+            <p className="mb-3 mt-1 text-xs font-bold text-gray-600 sm:text-xs">
               {postedOn}
             </p>
           </div>
@@ -130,9 +135,11 @@ export const Card: FC<Props> = ({
               {city}
             </p>
             <div className="flex flex-col items-end gap-1">
-              <div className="text-xs font-bold">{rate}</div>
+              <div className="text-xs font-bold mt-1">{rate}</div>
               {!jobId && availability && <p className="text-xs">🟢 Active</p>}
-              {!jobId && !availability && <p className="text-xs">🔴 Inactive</p>}
+              {!jobId && !availability && (
+                <p className="text-xs">🔴 Inactive</p>
+              )}
             </div>
           </div>
         </div>

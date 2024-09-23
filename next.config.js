@@ -4,6 +4,7 @@ const nextConfig = {
     appDir: true,
     typedRoutes: true,
     serverActions: true,
+    missingSuspenseWithCSRBailout: false,
   },
   images: {
     domains: [
