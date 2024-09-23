@@ -17,18 +17,22 @@ export const HowItWorks = () => {
       <p className="text-black text-center text-lg font-normal mb-16 sm:text-base sm:mb-8">
         {TRANSLATION.description}
       </p>
-      <div className="mb-12">
+      {/* <div className="mb-12">
         <div className="relative w-[1350px] h-[534px] lg:w-[720px] lg:h-[350px] md:w-[640px] md:h-[360px] sm:w-[350px] sm:h-[180px]">
-          <Image src="/img/goodhive-mechanism.jpg" alt="Goodhive Mechanism" fill={true} />
+          <Image
+            src="/img/goodhive-mechanism.jpg"
+            alt="Goodhive Mechanism"
+            fill={true}
+          />
         </div>
-        {/* <iframe
+        <iframe
           className="w-[950px] h-[534px] lg:w-[720px] lg:h-[480] md:w-[640px] md:h-[360px] sm:w-[320px] sm:h-[180px]"
           src={videoLink}
           title="GoodHive"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
-        ></iframe> */}
-      </div>
+        ></iframe>
+      </div> */}
       <Button
         text="Join our Discord"
         type="primary"
