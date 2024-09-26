@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,7 +23,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       />
       <div className="p-6">
         <h3 className="text-xl font-bold mb-2">
-          <Link href={`/blog/${post._id}` as any} prefetch={false}>
+          <Link href={`/blog/${post.slug.current}` as any} prefetch={false}>
             {post.title}
           </Link>
         </h3>
