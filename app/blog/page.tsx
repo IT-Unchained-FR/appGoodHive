@@ -20,6 +20,7 @@ export interface Post {
     _type: string;
     style: string;
     _key: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     markDefs: Array<any>;
     children: Array<{
       _key: string;
@@ -44,11 +45,16 @@ export interface Post {
 
 export default async function Blog() {
   const posts: Post[] = await getAllPosts();
-  console.log(posts, "Posts");
 
   return (
     <div className="container mx-auto px-4 py-12 md:px-6 lg:px-8">
       <div className="grid grid-cols-3 sm:grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="col-span-3 text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900">Our Blog</h1>
+          <p className="text-lg text-gray-600 mt-2">
+            Discover the latest news, tips, and stories from our team.
+          </p>
+        </div>
         {posts.map((post, index) => (
           <PostCard key={index} post={post} />
         ))}
