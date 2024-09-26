@@ -10,6 +10,7 @@ const nextConfig = {
     domains: [
       "goodhive-image.s3.us-east-005.backblazeb2.com",
       "goodhive.s3.us-east-005.backblazeb2.com",
+      "cdn.sanity.io",
     ],
   },
 };
