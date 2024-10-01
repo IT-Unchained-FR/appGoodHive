@@ -1,3 +1,5 @@
+"use client";
+
 import { getAllPosts } from "@/lib/blog";
 import PostCard from "../components/blog/PostCard";
 
