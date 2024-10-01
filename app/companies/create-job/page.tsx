@@ -33,14 +33,15 @@ import { ToggleButton } from "@components/toggle-button";
 import { PopupModal } from "./PopupModal";
 
 export default function CreateJob() {
+  const [description, setDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedCurrency, setSelectedCurrency] = useState<LabelOption | null>(
-    null
+    null,
   );
   const [selectedChain, setSelectedChain] = useState<LabelOption | null>(null);
   const [typeEngagement, setTypeEngagement] = useState<LabelOption | null>(
-    null
+    null,
   );
   const [jobType, setJobType] = useState<LabelOption | null>(null);
   const [duration, setDuration] = useState<LabelOption | null>(null);
@@ -212,7 +213,7 @@ export default function CreateJob() {
       } else {
         toast.success("Job Offer Created! Now add some funds to it.");
         router.push(
-          `/companies/create-job?id=${savedJobData.jobId}&addFunds=true`
+          `/companies/create-job?id=${savedJobData.jobId}&addFunds=true`,
         );
       }
     }
@@ -229,7 +230,7 @@ export default function CreateJob() {
     try {
       setIsLoading(true);
       const response = await fetch(
-        `/api/companies/my-profile?walletAddress=${walletAddress}`
+        `/api/companies/my-profile?walletAddress=${walletAddress}`,
       );
       const data = await response.json();
       setCompanyData(data);
@@ -254,7 +255,7 @@ export default function CreateJob() {
       setSelectedSkills(data.skills);
       setBudget(data.budget);
       setSelectedChain(
-        chains[chains.findIndex((chain) => chain.value === data.chain)]
+        chains[chains.findIndex((chain) => chain.value === data.chain)],
       );
       setSelectedCurrency(
         data.chain === "ethereum"
@@ -262,18 +263,18 @@ export default function CreateJob() {
               ethereumTokens.findIndex((token) => token.value === data.currency)
             ]
           : data.chain === "polygon"
-          ? polygonMainnetTokens[
-              polygonMainnetTokens.findIndex(
-                (token) => token.value === data.currency
-              )
-            ]
-          : data.chain === "gnosis-chain"
-          ? gnosisChainTokens[
-              gnosisChainTokens.findIndex(
-                (token) => token.value === data.currency
-              )
-            ]
-          : null
+            ? polygonMainnetTokens[
+                polygonMainnetTokens.findIndex(
+                  (token) => token.value === data.currency,
+                )
+              ]
+            : data.chain === "gnosis-chain"
+              ? gnosisChainTokens[
+                  gnosisChainTokens.findIndex(
+                    (token) => token.value === data.currency,
+                  )
+                ]
+              : null,
       );
     } catch (error) {
       console.error(error);
@@ -294,6 +295,11 @@ export default function CreateJob() {
       handlePopupModal("addFunds");
     }
   }, [id, addFunds]);
+
+  const handleDescriptionChange = (e: FormEvent<HTMLTextAreaElement>) => {
+    const { value } = e.currentTarget;
+    setDescription(value);
+  };
 
   if (!walletAddress) {
     return (
@@ -382,7 +388,7 @@ export default function CreateJob() {
                   defaultValue={
                     typeEngagements[
                       typeEngagements.findIndex(
-                        (type) => type.value === jobData?.typeEngagement
+                        (type) => type.value === jobData?.typeEngagement,
                       )
                     ]
                   }
@@ -399,7 +405,7 @@ export default function CreateJob() {
                   defaultValue={
                     jobTypes[
                       jobTypes.findIndex(
-                        (type) => type.value === jobData?.jobType
+                        (type) => type.value === jobData?.jobType,
                       )
                     ]
                   }
@@ -417,10 +423,17 @@ export default function CreateJob() {
                 name="description"
                 className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                 placeholder="Project Description"
-                maxLength={255}
+                maxLength={5000}
                 rows={5}
                 defaultValue={jobData?.description}
+                onChange={handleDescriptionChange}
               />
+              <p
+                className="text-[13px] mt-2 text-right w-full"
+                style={{ color: "#FFC905" }}
+              >
+                {description.length}/5000
+              </p>
             </div>
             <div className="relative flex flex-col gap-4 mt-12 mb-10 sm:flex-row">
               <div className="flex-1">
@@ -450,7 +463,7 @@ export default function CreateJob() {
                             type="button"
                             onClick={() => {
                               setSelectedSkills(
-                                selectedSkills.filter((_, i) => i !== index)
+                                selectedSkills.filter((_, i) => i !== index),
                               );
                             }}
                             className="w-6 text-black bg-gray-400 rounded-full"
@@ -499,7 +512,7 @@ export default function CreateJob() {
                   defaultValue={
                     projectDuration[
                       projectDuration.findIndex(
-                        (type) => type.value === jobData?.duration
+                        (type) => type.value === jobData?.duration,
                       )
                     ]
                   }
@@ -518,7 +531,7 @@ export default function CreateJob() {
                   defaultValue={
                     projectTypes[
                       projectTypes.findIndex(
-                        (type) => type.value === jobData?.projectType
+                        (type) => type.value === jobData?.projectType,
                       )
                     ]
                   }
@@ -585,15 +598,15 @@ export default function CreateJob() {
                     selectedChain?.value === "ethereum"
                       ? ethereumTokens
                       : selectedChain?.value === "polygon"
-                      ? polygonMainnetTokens
-                      : selectedChain?.value === "gnosis-chain"
-                      ? gnosisChainTokens
-                      : []
+                        ? polygonMainnetTokens
+                        : selectedChain?.value === "gnosis-chain"
+                          ? gnosisChainTokens
+                          : []
                   }
                   defaultValue={
                     polygonMainnetTokens[
                       polygonMainnetTokens.findIndex(
-                        (token) => token.value === jobData?.currency
+                        (token) => token.value === jobData?.currency,
                       )
                     ]
                   }
