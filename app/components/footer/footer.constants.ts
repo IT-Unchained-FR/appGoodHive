@@ -19,6 +19,10 @@ export const pageLinks = [
     name: "FAQ",
     url: "/faq",
   },
+  {
+    name: "Blog",
+    url: "/blog",
+  },
 ];
 
 export const socialLinks = [
