@@ -3,7 +3,7 @@ import { PortableText } from "@portabletext/react";
 
 import { Post } from "../page";
 import { getPostBySlug } from "@/lib/blog";
-
+import moment from "moment";
 
 type BlogDetailPageProps = {
   params: {
@@ -18,7 +18,7 @@ const BlogDetailPage = async (context: BlogDetailPageProps) => {
     <article className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
 
-      <div className="flex items-center mb-6">
+      <div className="flex items-center mb-6 gap-4">
         <Image
           src={post.author.image.asset.url}
           alt={post.author.name}
@@ -28,7 +28,9 @@ const BlogDetailPage = async (context: BlogDetailPageProps) => {
         />
         <div>
           <p className="font-semibold">{post.author.name}</p>
-          <p className="text-gray-500 text-sm">{post.publishedAt}</p>
+          <p className="text-gray-500 text-sm">
+            {moment(post.publishedAt).format("MMMM Do YYYY, h:mm a")}
+          </p>
         </div>
       </div>
 
@@ -45,15 +47,10 @@ const BlogDetailPage = async (context: BlogDetailPageProps) => {
       </div>
 
       <div className="prose prose-lg max-w-none">
-     <PortableText value={post.body}/>
+        <PortableText value={post.body} />
       </div>
     </article>
   );
 };
 
-
-
-
-
 export default BlogDetailPage;
-
