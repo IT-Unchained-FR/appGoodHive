@@ -4,6 +4,7 @@ import { PortableText } from "@portabletext/react";
 import { Post } from "../page";
 import { getPostBySlug } from "@/lib/blog";
 import moment from "moment";
+import { CustomPortableTextComponents } from "@/app/components/CustomPortableText/CustomPortableText";
 
 type BlogDetailPageProps = {
   params: {
@@ -47,7 +48,10 @@ const BlogDetailPage = async (context: BlogDetailPageProps) => {
       </div>
 
       <div className="prose prose-lg max-w-none">
-        <PortableText value={post.body} />
+        <PortableText
+          value={post.body}
+          components={CustomPortableTextComponents}
+        />
       </div>
     </article>
   );
