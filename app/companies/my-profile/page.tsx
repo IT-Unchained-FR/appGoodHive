@@ -44,7 +44,7 @@ export default function MyProfile() {
   const [isShowReferralSection, setIsShowReferralSection] = useState(false);
 
   const [selectedCountry, setSelectedCountry] = useState<LabelOption | null>(
-    null
+    null,
   );
 
   const walletAddress = useContext(AddressContext);
@@ -58,11 +58,12 @@ export default function MyProfile() {
       setIsLoading(true);
 
       const profileResponse = await fetch(
-        `/api/companies/my-profile?walletAddress=${walletAddress}`
+        `/api/companies/my-profile?walletAddress=${walletAddress}`,
       );
 
       if (profileResponse.ok) {
         const profileData = await profileResponse.json();
+        console.log(profileData, "profileData..");
         setProfileData(profileData);
         setIsShowReferralSection(true);
       } else {
@@ -106,6 +107,9 @@ export default function MyProfile() {
       referralCode: isAlreadyReferred ? null : referralCode,
     };
 
+    if (!dataForm.phoneCountryCode) {
+      dataForm.phoneCountryCode = profileData.phone_country_code;
+    }
     // TODO: POST formData to the server with fetch
     const profileResponse = await fetch("/api/companies/my-profile", {
       method: "POST",
@@ -317,7 +321,7 @@ export default function MyProfile() {
                   defaultValue={
                     countries[
                       countries.findIndex(
-                        (country) => country.value === profileData?.country
+                        (country) => country.value === profileData?.country,
                       )
                     ]
                   }
@@ -343,7 +347,7 @@ export default function MyProfile() {
                     defaultValue={
                       countries[
                         countries.findIndex(
-                          (country) => country.value === profileData?.country
+                          (country) => country.value === profileData?.country,
                         )
                       ]?.phoneCode
                     }

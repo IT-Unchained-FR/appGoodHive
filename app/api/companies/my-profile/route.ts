@@ -113,7 +113,7 @@ export async function POST(request: Request) {
     `;
 
     return new Response(
-      JSON.stringify({ message: "Data inserted successfully" })
+      JSON.stringify({ message: "Data inserted successfully" }),
     );
   } catch (error) {
     console.error("Error inserting data:", error);
@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
       JSON.stringify({ message: "Missing address parameter" }),
       {
         status: 404,
-      }
+      },
     );
   }
 
