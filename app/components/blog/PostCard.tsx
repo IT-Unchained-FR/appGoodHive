@@ -36,10 +36,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           </Avatar>
           <span className="text-gray-500">{post.author.name}</span>
         </div>
-        <p className="text-gray-600 line-clamp-3">
-          {post.body[0].children[0].text} {post.body[1]?.children[0]?.text}{" "}
-          {post.body[2]?.children[0]?.text}
-        </p>
+        <p className="text-gray-600">{post.previewText}</p>
       </div>
     </div>
   );

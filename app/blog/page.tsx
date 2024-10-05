@@ -18,6 +18,7 @@ export interface Post {
   };
   categories: string[];
   publishedAt: string | null;
+  previewText: string;
   body: Array<{
     _type: string;
     style: string;
@@ -44,6 +45,8 @@ export interface Post {
     bio: string;
   };
 }
+
+export const revalidate = 0;
 
 export default async function Blog() {
   const posts: Post[] = await getAllPosts();
