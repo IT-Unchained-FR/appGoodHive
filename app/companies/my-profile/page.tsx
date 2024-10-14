@@ -16,7 +16,7 @@ import { SocialLink } from "@/app/talents/my-profile/social-link";
 import { socialLinks } from "@/app/talents/my-profile/constant";
 import { uploadFileToBucket } from "@utils/upload-file-bucket";
 import { ReferralSection } from "@/app/components/referral/referral-section";
-
+import { countryCodes } from "@/app/constants/phoneNumberCountryCode";
 export default function MyProfile() {
   const imageInputValue = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -107,9 +107,6 @@ export default function MyProfile() {
       referralCode: isAlreadyReferred ? null : referralCode,
     };
 
-    if (!dataForm.phoneCountryCode) {
-      dataForm.phoneCountryCode = profileData.phone_country_code;
-    }
     // TODO: POST formData to the server with fetch
     const profileResponse = await fetch("/api/companies/my-profile", {
       method: "POST",
@@ -329,7 +326,7 @@ export default function MyProfile() {
               </div>
             </div>
             <div className="flex gap-4 mt-4 sm:flex-col">
-              <div className="flex-1">
+              <div className="">
                 <label
                   htmlFor="phone-country-code"
                   className="inline-block ml-3 text-base text-black form-label"
@@ -337,22 +334,25 @@ export default function MyProfile() {
                   Phone Country Code*
                 </label>
                 <div className="relative">
-                  <input
-                    className="form-control block w-full px-10 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none pl-6"
-                    placeholder="Phone Country Code"
-                    type="text"
+                  <select
+                    className="form-control block px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                     name="phone-country-code"
-                    value={selectedCountry?.phoneCode || "+1"}
-                    disabled={true}
-                    defaultValue={
-                      countries[
-                        countries.findIndex(
-                          (country) => country.value === profileData?.country,
-                        )
-                      ]?.phoneCode
-                    }
-                    readOnly
-                  />
+                    id=""
+                    defaultValue={profileData.phone_country_code}
+                  >
+                    {countryCodes.map((countryCode) => (
+                      <option
+                        key={countryCode.code}
+                        value={countryCode.dial_code}
+                        selected={
+                          profileData.phone_country_code ===
+                          countryCode.dial_code
+                        }
+                      >
+                        {countryCode.name} {countryCode.dial_code}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <div className="flex-1">
