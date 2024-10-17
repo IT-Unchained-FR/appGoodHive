@@ -7,7 +7,8 @@ import { ReachUs } from "@components/home/reach-us";
 import GoogleAnalytics from "@components/google-analytics";
 
 export const metadata: Metadata = {
-  title: "Home Page | GoodHive",
+  title:
+    "GoodHive: Decentralized Web3 Recruitment Platform Empowering Tech Talent Collaboration",
   keywords:
     "Recruitment, Web3 Talent, Crypto Jobs, Blockchain Jobs, Collaborative Recruitment",
   description:
