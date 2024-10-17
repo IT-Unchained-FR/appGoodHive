@@ -50,6 +50,7 @@ export async function getPostBySlug(slug: string) {
         url
       }
     },
+  previewText,
   categories,
   publishedAt,
   body,
