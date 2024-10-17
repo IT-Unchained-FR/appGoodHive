@@ -43,6 +43,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function BlogDetailPage({ params }: Props) {
   const post: Post = await getPostBySlug(params.slug);
 
+  console.log(post, "post");
+
   return (
     <article className="max-w-3xl mx-auto px-4 py-8">
       {/* Post Title */}
