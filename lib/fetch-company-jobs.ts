@@ -34,6 +34,8 @@ export async function getCompanyJobs(walletAddress: string) {
       image_url: item.image_url,
       walletAddress: item.wallet_address,
       escrowAmount: item.escrow_amount,
+      mentor: item.mentor,
+      recruiter: item.recruiter,
     }));
 
     return jobs;
@@ -75,7 +77,7 @@ export async function getSingleJob(id: number | undefined) {
       walletAddress: item.wallet_address,
       escrowAmount: item.escrow_amount,
     }));
-    
+
     return singleJob[0];
   } catch (error) {
     console.log("Error retrieving data:", error);

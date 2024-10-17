@@ -1,5 +1,5 @@
 "use client";
-
+// opengraph-image
 import { BigNumberish } from "ethers";
 import Image from "next/image";
 import Link from "next/link";
@@ -56,6 +56,7 @@ export const Card: FC<Props> = ({
   availability,
   last_active,
 }) => {
+  console.log(mentor, recruiter, "mentor and recruiter");
   const rate =
     budget && currency
       ? `${budget}${currency}/${projectType === "fixed" ? "Fixed" : "H"}`
@@ -146,7 +147,7 @@ export const Card: FC<Props> = ({
         <p className="flex pt-3 mb-3 text-sm font-light text-[#151414]">
           {croppedDescription}
         </p>
-        <div className="flex flex-wrap mb-3">
+        <div className="flex flex-wrap my-3">
           {shortSkillList.map((skill, index) => (
             <div
               key={index}
@@ -169,20 +170,20 @@ export const Card: FC<Props> = ({
               {mentor && recruiter
                 ? "Open to Mentors & Recruiters"
                 : mentor
-                ? "Open to Mentors"
-                : recruiter
-                ? "Open to Recruiters"
-                : ""}
+                  ? "Open to Mentors"
+                  : recruiter
+                    ? "Open to Recruiters"
+                    : ""}
             </p>
           ) : (
             <p className="text-sm text-gray-500 mb-3">
               {freelancer && remote
                 ? "Freelancing & Remote"
                 : freelancer
-                ? "Freelancing Only"
-                : remote
-                ? "Remote Only"
-                : ""}
+                  ? "Freelancing Only"
+                  : remote
+                    ? "Remote Only"
+                    : ""}
             </p>
           )}
 
