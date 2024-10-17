@@ -19,7 +19,7 @@ type CompanyProfilePageProps = {
 };
 
 export default async function CompanyProfilePage(
-  context: CompanyProfilePageProps
+  context: CompanyProfilePageProps,
 ) {
   const { address } = context.params;
   const { id } = context.searchParams;
@@ -94,8 +94,6 @@ export default async function CompanyProfilePage(
                   streetAddress={streetAddress}
                 />
               </div>
-
-              
             </div>
           </div>
         </div>
@@ -153,6 +151,8 @@ export default async function CompanyProfilePage(
               } = job;
               return (
                 <Card
+                  mentor={job.mentor === "true"}
+                  recruiter={job.recruiter === "true"}
                   key={id}
                   jobId={id}
                   type="company"
