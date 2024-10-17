@@ -9,7 +9,7 @@ import type { AddFundsModalProps } from "./PopupModal.types";
 import { generateContent } from "./PopupModal.utils";
 
 export const PopupModal: FC<AddFundsModalProps> = (props) => {
-  const [amount, setAmount] = useState(0);
+  const [amount, setAmount] = useState<number>(0); // Keep amount as a number
   const [isFullAmount, setIsFullAmount] = useState(false);
 
   const { jobId, open, onClose, type, onSubmit, currencyToken } = props;
@@ -23,9 +23,15 @@ export const PopupModal: FC<AddFundsModalProps> = (props) => {
   });
 
   const handleProvisionAmountChange = (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    setAmount(Number(event.target.value));
+    const value = event.target.value;
+    const numericValue = Number(value);
+
+    // Update the state with a valid number, no leading zeroes
+    if (!isNaN(numericValue) && numericValue >= 0) {
+      setAmount(numericValue);
+    }
   };
 
   const handleSubmit = async () => {
@@ -33,16 +39,8 @@ export const PopupModal: FC<AddFundsModalProps> = (props) => {
       toast.error("Please enter a valid amount!");
       return;
     }
-    if (type === "withdraw") {
-      const contractBalance = await checkBalanceTx(jobId);
-      if (isFullAmount) onSubmit(contractBalance, type);
-      else if (contractBalance < amount) {
-        toast.error("Insufficient funds!");
-        return;
-      } else {
-        onSubmit(amount, type);
-      }
-    } else if (type === "transfer") {
+
+    if (type === "withdraw" || type === "transfer") {
       const contractBalance = await checkBalanceTx(jobId);
       if (isFullAmount) onSubmit(contractBalance, type);
       else if (contractBalance < amount) {
@@ -83,7 +81,7 @@ export const PopupModal: FC<AddFundsModalProps> = (props) => {
                   maxLength={100}
                   placeholder="Enter the amount"
                   onChange={handleProvisionAmountChange}
-                  value={amount}
+                  value={amount === 0 ? "" : amount} // Display empty string for initial 0 value
                   disabled={isFullAmount}
                 />
               )}
