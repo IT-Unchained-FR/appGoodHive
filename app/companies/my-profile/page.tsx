@@ -96,7 +96,7 @@ export default function MyProfile() {
       phoneNumber: formData.get("phone-number"),
       email: formData.get("email"),
       telegram: formData.get("telegram"),
-      imageUrl,
+      imageUrl: imageUrl || profileData.image_url,
       walletAddress,
       linkedin: formData.get("linkedin"),
       github: formData.get("github"),
