@@ -1,24 +1,54 @@
-import Image from "next/legacy/image";
+import Image from "next/image";
 import { PortableText } from "@portabletext/react";
-
+import { Metadata } from "next";
 import { Post } from "../page";
 import { getPostBySlug } from "@/lib/blog";
 import moment from "moment";
 import { CustomPortableTextComponents } from "@/app/components/CustomPortableText/CustomPortableText";
 
-type BlogDetailPageProps = {
-  params: {
-    slug: string;
-  };
+type Props = {
+  params: { slug: string };
 };
-const BlogDetailPage = async (context: BlogDetailPageProps) => {
-  const { slug } = context.params;
-  const post: Post = await getPostBySlug(slug);
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const post: Post = await getPostBySlug(params.slug);
+
+  return {
+    title: `${post.title} | GoodHive Blog`,
+    description: post.previewText,
+    openGraph: {
+      title: post.title,
+      description: post.previewText,
+      images: [
+        {
+          url: post.mainImage.asset.url,
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
+      type: "article",
+      url: `https://goodhive.io/blog/${post.slug.current}`,
+      siteName: "My Blog",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.previewText,
+      images: [post.mainImage.asset.url],
+    },
+  };
+}
+
+export default async function BlogDetailPage({ params }: Props) {
+  const post: Post = await getPostBySlug(params.slug);
 
   return (
     <article className="max-w-3xl mx-auto px-4 py-8">
+      {/* Post Title */}
       <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
 
+      {/* Post Author Info */}
       <div className="flex items-center mb-6 gap-4">
         <Image
           src={post.author.image.asset.url}
@@ -35,6 +65,7 @@ const BlogDetailPage = async (context: BlogDetailPageProps) => {
         </div>
       </div>
 
+      {/* Main Image */}
       <div className="mb-8">
         <Image
           src={post.mainImage.asset.url}
@@ -47,6 +78,7 @@ const BlogDetailPage = async (context: BlogDetailPageProps) => {
         <p className="text-sm text-gray-500 mt-2">{post.title}</p>
       </div>
 
+      {/* Blog Content */}
       <div className="prose prose-lg max-w-none">
         <PortableText
           value={post.body}
@@ -55,6 +87,4 @@ const BlogDetailPage = async (context: BlogDetailPageProps) => {
       </div>
     </article>
   );
-};
-
-export default BlogDetailPage;
+}
