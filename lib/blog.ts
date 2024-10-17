@@ -2,7 +2,8 @@ import { client } from "./sanity";
 
 export async function getAllPosts() {
   try {
-    const posts = await client.fetch(`*[_type == "post"]{
+    const posts =
+      await client.fetch(`*[_type == "post"] | order(publishedAt desc) {
       title,
       _id,
       slug,
