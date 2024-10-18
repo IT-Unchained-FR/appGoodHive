@@ -77,7 +77,7 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
           </div>
           <div className="flex items-center space-x-2 text-gray-600">
             <Phone size={18} />
-            <span>{`+${user.phone_country_code}${user.phone_number}`}</span>
+            <span>{`${user.phone_country_code}${user.phone_number}`}</span>
           </div>
           <div className="flex items-center space-x-2 text-gray-600">
             <Mail size={18} />
