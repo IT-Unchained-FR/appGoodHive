@@ -7,11 +7,12 @@ import moment from "moment";
 import { CustomPortableTextComponents } from "@/app/components/CustomPortableText/CustomPortableText";
 
 type Props = {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const post: Post = await getPostBySlug(params.slug);
+  const { slug } = await params;
+  const post: Post = await getPostBySlug(slug);
 
   return {
     title: `${post.title} | GoodHive Blog`,
@@ -41,7 +42,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function BlogDetailPage({ params }: Props) {
-  const post: Post = await getPostBySlug(params.slug);
+  const { slug } = await params;
+  const post: Post = await getPostBySlug(slug);
 
   console.log(post, "post...");
 
