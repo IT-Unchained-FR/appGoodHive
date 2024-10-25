@@ -1,30 +1,24 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import postgres from "postgres";
 
-// Define the correct params type
-// type Params = {
-//   params: {
-//     address: string;
-//   };
-//   searchParams: { [key: string]: string | string[] | undefined };
-// };
-
-export async function GET(request: NextRequest, context: any) {
+export async function GET(
+  request: NextRequest,
+  context: { params: { address: string } }
+) {
   const { address: walletAddress } = context.params;
 
   const sql = postgres(process.env.DATABASE_URL || "", {
     ssl: {
-      rejectUnauthorized: false,
+      rejectUnauthorized: false, // This allows connecting to a database with a self-signed certificate
     },
   });
 
   if (!walletAddress) {
-    return new NextResponse(
+    return new Response(
       JSON.stringify({ message: "Missing address parameter" }),
       {
         status: 404,
-      },
+      }
     );
   }
 
@@ -36,20 +30,17 @@ export async function GET(request: NextRequest, context: any) {
       `;
 
     if (user.length === 0) {
-      return new NextResponse(JSON.stringify({ message: "User not found" }), {
+      return new Response(JSON.stringify({ message: "User not found" }), {
         status: 404,
       });
     }
 
-    return new NextResponse(JSON.stringify(user[0]));
+    return new Response(JSON.stringify(user[0]));
   } catch (error) {
     console.error("Error retrieving data:", error);
 
-    return new NextResponse(
-      JSON.stringify({ message: "Error retrieving data" }),
-      {
-        status: 500,
-      },
-    );
+    return new Response(JSON.stringify({ message: "Error retrieving data" }), {
+      status: 500,
+    });
   }
 }
