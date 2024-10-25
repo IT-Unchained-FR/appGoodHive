@@ -1,11 +1,11 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import postgres from "postgres";
 
 export async function GET(
   request: NextRequest,
-  context: { params: { address: string } }
+  { params }: { params: { address: string } },
 ) {
-  const { address: walletAddress } = context.params;
+  const { address: walletAddress } = params;
 
   const sql = postgres(process.env.DATABASE_URL || "", {
     ssl: {
@@ -14,11 +14,11 @@ export async function GET(
   });
 
   if (!walletAddress) {
-    return new Response(
+    return new NextResponse(
       JSON.stringify({ message: "Missing address parameter" }),
       {
         status: 404,
-      }
+      },
     );
   }
 
@@ -30,17 +30,20 @@ export async function GET(
       `;
 
     if (user.length === 0) {
-      return new Response(JSON.stringify({ message: "User not found" }), {
+      return new NextResponse(JSON.stringify({ message: "User not found" }), {
         status: 404,
       });
     }
 
-    return new Response(JSON.stringify(user[0]));
+    return new NextResponse(JSON.stringify(user[0]));
   } catch (error) {
     console.error("Error retrieving data:", error);
 
-    return new Response(JSON.stringify({ message: "Error retrieving data" }), {
-      status: 500,
-    });
+    return new NextResponse(
+      JSON.stringify({ message: "Error retrieving data" }),
+      {
+        status: 500,
+      },
+    );
   }
 }
