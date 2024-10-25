@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -24,37 +20,18 @@
       }
     ],
     "paths": {
-      "@/*": [
-        "./*"
-      ],
-      "@interfaces/*": [
-        "./interfaces/*"
-      ],
-      "@components/*": [
-        "./app/components/*"
-      ],
-      "@hooks/*": [
-        "./app/hooks/*"
-      ],
-      "@constants/*": [
-        "./app/constants/*"
-      ],
-      "@utils/*": [
-        "./app/utils/*"
-      ]
+      "@/*": ["./*"],
+      "@interfaces/*": ["./interfaces/*"],
+      "@components/*": ["./app/components/*"],
+      "@hooks/*": ["./app/hooks/*"],
+      "@constants/*": ["./app/constants/*"],
+      "@utils/*": ["./app/utils/*"]
     }
   },
   "typescript": {
     // FIXME: Dangerously allow production builds to successfully complete even if
     "ignoreBuildErrors": true
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
 }
