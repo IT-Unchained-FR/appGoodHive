@@ -21,7 +21,7 @@ type CompanyProfilePageProps = {
 export default async function CompanyProfilePage({
   params,
   searchParams,
-}: CompanyProfilePageProps) {
+}: any) {
   const { address } = params;
   const { id } = searchParams;
   const profileData = await getCompanyData(address);
