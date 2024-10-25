@@ -18,12 +18,11 @@ type CompanyProfilePageProps = {
   };
 };
 
-export default async function CompanyProfilePage({
-  params,
-  searchParams,
-}: any) {
-  const { address } = params;
-  const { id } = searchParams;
+export default async function CompanyProfilePage(
+  context: CompanyProfilePageProps,
+) {
+  const { address } = context.params;
+  const { id } = context.searchParams;
   const profileData = await getCompanyData(address);
   const jobs = await getCompanyJobs(address);
   const singleJob = await getSingleJob(id);
