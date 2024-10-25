@@ -1,15 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import postgres from "postgres";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { address: string } },
-) {
-  const { address: walletAddress } = params;
+// Define the correct params type
+type Params = {
+  params: {
+    address: string;
+  };
+  searchParams: { [key: string]: string | string[] | undefined };
+};
+
+export async function GET(request: NextRequest, context: Params) {
+  const { address: walletAddress } = context.params;
 
   const sql = postgres(process.env.DATABASE_URL || "", {
     ssl: {
-      rejectUnauthorized: false, // This allows connecting to a database with a self-signed certificate
+      rejectUnauthorized: false,
     },
   });
 
