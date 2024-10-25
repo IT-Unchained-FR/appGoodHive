@@ -1,15 +1,16 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 import postgres from "postgres";
 
 // Define the correct params type
-type Params = {
-  params: {
-    address: string;
-  };
-  searchParams: { [key: string]: string | string[] | undefined };
-};
+// type Params = {
+//   params: {
+//     address: string;
+//   };
+//   searchParams: { [key: string]: string | string[] | undefined };
+// };
 
-export async function GET(request: NextRequest, context: Params) {
+export async function GET(request: NextRequest, context: any) {
   const { address: walletAddress } = context.params;
 
   const sql = postgres(process.env.DATABASE_URL || "", {
