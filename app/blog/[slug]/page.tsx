@@ -1,5 +1,3 @@
-"use client";
-
 import Image from "next/image";
 import { PortableText } from "@portabletext/react";
 import { Metadata } from "next";
@@ -7,105 +5,45 @@ import { Post } from "../page";
 import { getPostBySlug } from "@/lib/blog";
 import moment from "moment";
 import { CustomPortableTextComponents } from "@/app/components/CustomPortableText/CustomPortableText";
-import { useEffect } from "react";
 
 type Props = {
   params: { slug: string };
 };
 
-// export async function generateMetadata({ params }: Props): Promise<Metadata> {
-//   const post: Post = await getPostBySlug(params.slug);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const post: Post = await getPostBySlug(params.slug);
 
-//   return {
-//     title: `${post.title} | GoodHive Blog`,
-//     description: post.previewText,
-//     openGraph: {
-//       title: post.title,
-//       description: post.previewText,
-//       images: [
-//         {
-//           url: post.mainImage.asset.url,
-//           width: 1200,
-//           height: 630,
-//           alt: post.title,
-//         },
-//       ],
-//       type: "article",
-//       url: `https://goodhive.io/blog/${post.slug.current}`,
-//       siteName: "My Blog",
-//     },
-//     twitter: {
-//       card: "summary_large_image",
-//       title: post.title,
-//       description: post.previewText,
-//       images: [post.mainImage.asset.url],
-//     },
-//   };
-// }
+  return {
+    title: `${post.title} | GoodHive Blog`,
+    description: post.previewText,
+    openGraph: {
+      title: post.title,
+      description: post.previewText,
+      images: [
+        {
+          url: post.mainImage.asset.url,
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
+      type: "article",
+      url: `https://goodhive.io/blog/${post.slug.current}`,
+      siteName: "My Blog",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.previewText,
+      images: [post.mainImage.asset.url],
+    },
+  };
+}
 
 export default async function BlogDetailPage({ params }: Props) {
   const post: Post = await getPostBySlug(params.slug);
 
-  if (post) {
-    const metadata = {
-      title: `${post.title} | GoodHive Blog`,
-      description: post.previewText,
-      openGraph: {
-        title: post.title,
-        description: post.previewText,
-        images: [
-          {
-            url: post.mainImage.asset.url,
-            width: 1200,
-            height: 630,
-            alt: post.title,
-          },
-        ],
-        type: "article",
-        url: `https://goodhive.io/blog/${post.slug.current}`,
-        siteName: "My Blog",
-      },
-      twitter: {
-        card: "summary_large_image",
-        title: post.title,
-        description: post.previewText,
-        images: [post.mainImage.asset.url],
-      },
-    };
-
-    document.title = metadata.title;
-    document
-      .querySelector('meta[name="description"]')
-      ?.setAttribute("content", metadata.description);
-
-    // Open Graph meta tags
-    document
-      .querySelector('meta[property="og:title"]')
-      ?.setAttribute("content", metadata.openGraph.title);
-    document
-      .querySelector('meta[property="og:description"]')
-      ?.setAttribute("content", metadata.openGraph.description);
-    document
-      .querySelector('meta[property="og:image"]')
-      ?.setAttribute("content", metadata.openGraph.images[0].url);
-    document
-      .querySelector('meta[property="og:url"]')
-      ?.setAttribute("content", metadata.openGraph.url);
-
-    // Twitter meta tags
-    document
-      .querySelector('meta[name="twitter:card"]')
-      ?.setAttribute("content", metadata.twitter.card);
-    document
-      .querySelector('meta[name="twitter:title"]')
-      ?.setAttribute("content", metadata.twitter.title);
-    document
-      .querySelector('meta[name="twitter:description"]')
-      ?.setAttribute("content", metadata.twitter.description);
-    document
-      .querySelector('meta[name="twitter:image"]')
-      ?.setAttribute("content", metadata.twitter.images[0]);
-  }
+  console.log(post, "post");
 
   return (
     <article className="max-w-3xl mx-auto px-4 py-8">
