@@ -9,44 +9,6 @@ import { CustomPortableTextComponents } from "@/app/components/CustomPortableTex
 type Props = {
   params: { slug: string };
 };
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  let post = null;
-  const fetchedPost: Post = await getPostBySlug(params.slug);
-
-  if (params.slug === "what-is-goodhive-3'") {
-    post = fetchedPost;
-  } else {
-    post = staticPost;
-  }
-
-  return {
-    title: `${post.title} | GoodHive Blog`,
-    description: post.previewText,
-    openGraph: {
-      title: post.title,
-      description: post.previewText,
-      images: [
-        {
-          url: post.mainImage.asset.url,
-          width: 1200,
-          height: 630,
-          alt: post.title,
-        },
-      ],
-      type: "article",
-      url: `https://goodhive.io/blog/${post.slug.current}`,
-      siteName: "My Blog",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: post.title,
-      description: post.previewText,
-      images: [post.mainImage.asset.url],
-    },
-  };
-}
-
 const staticPost = {
   slug: {
     current: "what-is-goodhive-3",
@@ -374,6 +336,43 @@ const staticPost = {
   title: "🚀 What is GoodHive 3? 🚀",
   _id: "45000764-5ae9-4647-aee8-abe0e79f6dbc",
 };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  let post = null;
+  const fetchedPost: Post = await getPostBySlug(params.slug);
+
+  if (params.slug === "what-is-goodhive-3'") {
+    post = fetchedPost;
+  } else {
+    post = staticPost;
+  }
+
+  return {
+    title: `${post.title} | GoodHive Blog`,
+    description: post.previewText,
+    openGraph: {
+      title: post.title,
+      description: post.previewText,
+      images: [
+        {
+          url: post.mainImage.asset.url,
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
+      type: "article",
+      url: `https://goodhive.io/blog/${post.slug.current}`,
+      siteName: "My Blog",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.previewText,
+      images: [post.mainImage.asset.url],
+    },
+  };
+}
 
 export default async function BlogDetailPage({ params }: Props) {
   let post = null;
