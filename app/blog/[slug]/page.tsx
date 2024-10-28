@@ -11,7 +11,14 @@ type Props = {
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const post: Post = await getPostBySlug(params.slug);
+  let post = null;
+  const fetchedPost: Post = await getPostBySlug(params.slug);
+
+  if (params.slug === "what-is-goodhive-3'") {
+    post = fetchedPost;
+  } else {
+    post = staticPost;
+  }
 
   return {
     title: `${post.title} | GoodHive Blog`,
