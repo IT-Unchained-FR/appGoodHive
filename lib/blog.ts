@@ -67,5 +67,7 @@ export async function getPostBySlug(slug: string) {
 }[0]`,
     { slug },
   );
+
+  console.log("Fetched post:", JSON.stringify(post, null, 2));
   return post;
 }
