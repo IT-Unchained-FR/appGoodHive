@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import { PortableText } from "@portabletext/react";
 import { Metadata } from "next";
