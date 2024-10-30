@@ -12,17 +12,19 @@ type Props = {
   github?: string;
   stackoverflow?: string;
   portfolio?: string;
+  twitter: string;
 };
 
 export const TalentSocialMedia: FC<Props> = (props) => {
-  const { linkedin, telegram, github, stackoverflow, portfolio } = props;
+  const { linkedin, telegram, github, stackoverflow, portfolio, twitter } =
+    props;
   const [isShowDetails, setIsShowDetails] = useState(false);
 
   const walletAddress = useContext(AddressContext);
 
   const fetchCompanyData = async () => {
     const userDataResponse = await fetch(
-      `/api/companies/my-profile?walletAddress=${walletAddress}`
+      `/api/companies/my-profile?walletAddress=${walletAddress}`,
     );
 
     if (!userDataResponse.ok) {
@@ -91,6 +93,20 @@ export const TalentSocialMedia: FC<Props> = (props) => {
               className="relative w-7 h-7 rounded-full"
             >
               <Image src="/icons/stackoverflow.svg" alt="social-icon" fill />
+            </Link>
+          )}
+          {twitter && (
+            <Link
+              href={{ pathname: twitter }}
+              target="_blank"
+              className="relative w-7 h-7 rounded-full"
+            >
+              <Image
+                src="/icons/twitter.jpg"
+                alt="social-icon"
+                fill
+                className="rounded-full"
+              />
             </Link>
           )}
           {portfolio && (
