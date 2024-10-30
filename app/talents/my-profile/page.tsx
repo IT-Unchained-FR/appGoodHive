@@ -88,7 +88,7 @@ export default function MyProfile() {
 
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<LabelOption | null>(
-    null
+    null,
   );
 
   const handleImageClick = () => {
@@ -150,7 +150,7 @@ export default function MyProfile() {
         }
 
         const response = await fetch(
-          `/api/talents/my-profile?walletAddress=${walletAddress}`
+          `/api/talents/my-profile?walletAddress=${walletAddress}`,
         );
 
         if (!response.ok) {
@@ -212,7 +212,7 @@ export default function MyProfile() {
 
   const handleSubmit = async (
     event: FormEvent<HTMLFormElement>,
-    saveTalentOnly: boolean
+    saveTalentOnly: boolean,
   ) => {
     event.preventDefault();
     if (saveTalentOnly) {
@@ -281,8 +281,8 @@ export default function MyProfile() {
           ? profileData.talent_status
           : null
         : profileData.talent_status !== "approved"
-        ? "pending"
-        : profileData.talent_status,
+          ? "pending"
+          : profileData.talent_status,
       mentorStatus: profileData.mentor_status || mentor ? "pending" : null,
       recruiterStatus:
         profileData.recruiter_status || recruiter ? "pending" : null,
@@ -540,7 +540,7 @@ export default function MyProfile() {
                   defaultValue={
                     countries[
                       countries.findIndex(
-                        (country) => country.value === profileData?.country
+                        (country) => country.value === profileData?.country,
                       )
                     ]
                   }
@@ -583,7 +583,7 @@ export default function MyProfile() {
                     defaultValue={
                       countries[
                         countries.findIndex(
-                          (country) => country.value === profileData?.country
+                          (country) => country.value === profileData?.country,
                         )
                       ]?.phoneCode
                     }
@@ -753,7 +753,7 @@ export default function MyProfile() {
                             type="button"
                             onClick={() => {
                               setSelectedSkills(
-                                selectedSkills.filter((_, i) => i !== index)
+                                selectedSkills.filter((_, i) => i !== index),
                               );
                             }}
                             className="w-6 text-black bg-gray-400 rounded-full"
