@@ -52,10 +52,11 @@ export const JobCard: FC<Props> = ({
   walletAddress,
   escrowAmount,
 }) => {
+  console.log(countryFlag, "countryFlag");
   const typeEngagementMsg = generateJobTypeEngage(typeEngagement);
   const jobTypeMsg = jobTypes.find((job) => job.value === jobType)?.label;
   const durationMsg = projectDuration.find(
-    (job) => job.value === duration
+    (job) => job.value === duration,
   )?.label;
   const [isLoading, setIsLoading] = useState(false);
   const [isCoverLetterModal, setIsCoverLetterModal] = useState(false);
@@ -78,7 +79,7 @@ export const JobCard: FC<Props> = ({
       setIsLoading(true);
       setIsCoverLetterModal(false);
       const userDataResponse = await fetch(
-        `/api/talents/my-profile?walletAddress=${userWalletAddress}`
+        `/api/talents/my-profile?walletAddress=${userWalletAddress}`,
       );
 
       if (!userDataResponse.ok) {
@@ -117,7 +118,7 @@ export const JobCard: FC<Props> = ({
 
   const onApplyClickHandler = async () => {
     const userDataResponse = await fetch(
-      `/api/talents/my-profile?walletAddress=${userWalletAddress}`
+      `/api/talents/my-profile?walletAddress=${userWalletAddress}`,
     );
 
     if (!userDataResponse.ok) {
@@ -127,7 +128,7 @@ export const JobCard: FC<Props> = ({
     const userProfile = await userDataResponse.json();
     if (userProfile.talent_status !== "approved") {
       toast.error(
-        "Only verified talent can apply for job! Please wait for your talent to be verified."
+        "Only verified talent can apply for job! Please wait for your talent to be verified.",
       );
       return;
     } else {
