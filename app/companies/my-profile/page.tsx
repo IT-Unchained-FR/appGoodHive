@@ -63,7 +63,6 @@ export default function MyProfile() {
 
       if (profileResponse.ok) {
         const profileData = await profileResponse.json();
-        console.log(profileData, "profileData..");
         setProfileData(profileData);
         setIsShowReferralSection(true);
       } else {
