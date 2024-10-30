@@ -6,6 +6,7 @@ import { getCompanyData } from "@/lib/fetch-company-data";
 import { getCompanyJobs, getSingleJob } from "@/lib/fetch-company-jobs";
 import { JobCard } from "@components/job-card";
 import { CompanySocialMediaAndContact } from "@/app/components/companies/profile-social-media-and-contact";
+import { CompanyBio } from "@/app/components/companies/company-bio-section";
 
 export const revalidate = 0;
 
@@ -78,9 +79,10 @@ export default async function CompanyProfilePage(
             </div>
             <div className="flex flex-col w-full px-5 justify-start">
               <h3 className="text-[#4E4E4E] text-lg font-bold mb-5">Bio:</h3>
-              <p className="w-full max-h-52 mb-10 text-ellipsis overflow-hidden">
+              {/* <p className="w-full mb-10 text-ellipsis overflow-hidden">
                 {headline}
-              </p>
+              </p> */}
+              <CompanyBio text={headline} />
               <div className="flex flex-col mb-10">
                 <CompanySocialMediaAndContact
                   linkedin={linkedin}
