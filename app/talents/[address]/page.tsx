@@ -57,12 +57,13 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
     talent_status,
     mentor_status,
     recruiter_status,
+    twitter,
     hide_contact_details,
   } = profileData;
 
   const availabilityStatus = generateAvailabilityStatus(
     freelance_only,
-    remote_only
+    remote_only,
   );
 
   if (ref === "admin" && isValidVkey === false) return;
@@ -157,6 +158,7 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
           <ProfileAboutWork about_work={about_work} />
 
           <TalentSocialMedia
+            twitter={twitter}
             linkedin={linkedin}
             telegram={telegram}
             github={github}
