@@ -26,6 +26,7 @@ export async function POST(request: Request) {
     linkedin,
     github,
     stackoverflow,
+    twitter,
     portfolio,
     freelanceOnly,
     remoteOnly,
@@ -45,6 +46,8 @@ export async function POST(request: Request) {
       rejectUnauthorized: false, // This allows connecting to a database with a self-signed certificate
     },
   });
+
+  console.log(twitter, "twitter");
 
   try {
     let referrerWalletAddress = "";
@@ -92,6 +95,7 @@ export async function POST(request: Request) {
         linkedin,
         github,
         stackoverflow,
+        twitter,
         portfolio,
         freelance_only,
         remote_only,
@@ -124,6 +128,7 @@ export async function POST(request: Request) {
         ${linkedin},
         ${github},
         ${stackoverflow},
+        ${twitter},
         ${portfolio},
         ${freelanceOnly},
         ${remoteOnly},
@@ -158,6 +163,7 @@ export async function POST(request: Request) {
         linkedin = ${linkedin},
         github = ${github},
         stackoverflow = ${stackoverflow},
+        twitter = ${twitter},
         portfolio = ${portfolio},
         freelance_only = ${freelanceOnly},
         remote_only = ${remoteOnly},
@@ -173,7 +179,7 @@ export async function POST(request: Request) {
     `;
 
     return new Response(
-      JSON.stringify({ message: "Data inserted or updated successfully" })
+      JSON.stringify({ message: "Data inserted or updated successfully" }),
     );
   } catch (error) {
     console.error("Error inserting or updating data:", error);
@@ -182,7 +188,7 @@ export async function POST(request: Request) {
       JSON.stringify({ message: "Error inserting or updating data" }),
       {
         status: 500,
-      }
+      },
     );
   }
 }
@@ -205,7 +211,7 @@ export async function GET(request: NextRequest) {
       JSON.stringify({ message: "Missing walletAddress parameter" }),
       {
         status: 404,
-      }
+      },
     );
   }
 
