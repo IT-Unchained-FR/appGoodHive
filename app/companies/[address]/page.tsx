@@ -40,6 +40,7 @@ export default async function CompanyProfilePage(
     email,
     telegram,
     linkedin,
+    twitter,
     github,
     stackoverflow,
     portfolio,
@@ -86,6 +87,7 @@ export default async function CompanyProfilePage(
               <CompanyBio text={headline} />
               <div className="flex flex-col mb-10">
                 <CompanySocialMediaAndContact
+                  twitter={twitter}
                   linkedin={linkedin}
                   telegram={telegram}
                   github={github}
