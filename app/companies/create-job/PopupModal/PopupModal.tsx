@@ -12,7 +12,8 @@ export const PopupModal: FC<AddFundsModalProps> = (props) => {
   const [amount, setAmount] = useState<number>(0); // Keep amount as a number
   const [isFullAmount, setIsFullAmount] = useState(false);
 
-  const { jobId, open, onClose, type, onSubmit, currencyToken } = props;
+  const { jobId, open, onClose, type, onSubmit, currencyToken, currencyLabel } =
+    props;
 
   const { title, description, buttonText } = generateContent(type);
   const walletAddress = useContext(AddressContext);
@@ -56,7 +57,7 @@ export const PopupModal: FC<AddFundsModalProps> = (props) => {
 
   return (
     <Modal open={open} onClose={onClose}>
-      <div className="relative bg-white w-full h-full rounded shadow-lg border-0 p-0">
+      <div className="relative bg-white min-w-[500px] h-full rounded shadow-lg border-0 p-0">
         <div className="flex flex-col items-center justify-center p-5">
           <div className="flex justify-between w-full">
             <h3 className="text-2xl font-semibold text-black">{title}</h3>
@@ -75,11 +76,11 @@ export const PopupModal: FC<AddFundsModalProps> = (props) => {
             <div className="flex flex-col items-center justify-center mt-5">
               {!isFullAmount && (
                 <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  className="w-fit form-control block px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   type="number"
                   name="amount"
                   maxLength={100}
-                  placeholder="Enter the amount"
+                  placeholder={`Enter amount in ${currencyLabel}`}
                   onChange={handleProvisionAmountChange}
                   value={amount === 0 ? "" : amount} // Display empty string for initial 0 value
                   disabled={isFullAmount}

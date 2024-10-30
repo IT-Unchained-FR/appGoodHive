@@ -9,13 +9,15 @@ export const generateContent = (type: string) => {
     case "withdraw":
       return {
         title: "Withdraw Funds",
-        description: "Enter the amount you want to withdraw from your job contract",
+        description:
+          "Enter the amount you want to withdraw from your job contract",
         buttonText: "Withdraw Funds",
       };
     case "transfer":
       return {
         title: "Make Payment",
-        description: "Click 'Pay Now' to proceed with your contribution to the community.",
+        description:
+          "Click 'Pay Now' to proceed with your contribution to the community.",
         buttonText: "Pay Now",
       };
     default:
