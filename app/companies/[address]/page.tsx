@@ -7,6 +7,7 @@ import { getCompanyJobs, getSingleJob } from "@/lib/fetch-company-jobs";
 import { JobCard } from "@components/job-card";
 import { CompanySocialMediaAndContact } from "@/app/components/companies/profile-social-media-and-contact";
 import { CompanyBio } from "@/app/components/companies/company-bio-section";
+import { generateCountryFlag } from "@/app/utils/generate-country-flag";
 
 export const revalidate = 0;
 
@@ -115,7 +116,7 @@ export default async function CompanyProfilePage(
                   details={singleJob.description}
                   duration={singleJob.duration}
                   image={singleJob.image_url || "/img/company_img.png"}
-                  countryFlag="/img/country_flag.png"
+                  countryFlag={generateCountryFlag(singleJob.country)}
                   city={singleJob.city}
                   country={singleJob.country}
                   typeEngagement={singleJob.typeEngagement}
