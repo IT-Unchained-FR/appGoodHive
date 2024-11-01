@@ -341,7 +341,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   let post = null;
   const fetchedPost: Post = await getPostBySlug(params.slug);
 
-  if (params.slug === "what-is-goodhive-3'") {
+  if (params.slug === "what-is-goodhive-3") {
     post = staticPost;
   } else {
     post = fetchedPost;
@@ -378,10 +378,14 @@ export default async function BlogDetailPage({ params }: Props) {
   let post = null;
   const fetchedPost: Post = await getPostBySlug(params.slug);
 
-  if (params.slug === "what-is-goodhive-3'") {
+  if (params.slug === "what-is-goodhive-3") {
     post = staticPost;
   } else {
     post = fetchedPost;
+  }
+
+  if (!post) {
+    return <div>Post not found</div>;
   }
 
   return (
@@ -413,7 +417,6 @@ export default async function BlogDetailPage({ params }: Props) {
           alt={post.title}
           width={800}
           height={400}
-          layout="responsive"
           className="rounded-lg"
         />
         <p className="text-sm text-gray-500 mt-2">{post.title}</p>
