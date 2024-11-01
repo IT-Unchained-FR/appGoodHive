@@ -342,9 +342,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const fetchedPost: Post = await getPostBySlug(params.slug);
 
   if (params.slug === "what-is-goodhive-3'") {
-    post = fetchedPost;
-  } else {
     post = staticPost;
+  } else {
+    post = fetchedPost;
   }
 
   return {
@@ -379,11 +379,10 @@ export default async function BlogDetailPage({ params }: Props) {
   const fetchedPost: Post = await getPostBySlug(params.slug);
 
   if (params.slug === "what-is-goodhive-3'") {
-    post = fetchedPost;
-  } else {
     post = staticPost;
+  } else {
+    post = fetchedPost;
   }
-  console.log(post, "post");
 
   return (
     <article className="max-w-3xl mx-auto px-4 py-8">
