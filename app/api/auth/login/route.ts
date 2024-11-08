@@ -15,14 +15,14 @@ export async function POST(req: Request) {
         JSON.stringify({ message: "Email and Password are required" }),
         {
           status: 400,
-        }
+        },
       );
     }
 
     try {
       // Fetch the user from the database
       const users = await sql`
-        SELECT * FROM auth_users
+        SELECT * FROM goodhive.users
         WHERE email = ${email}
       `;
 
@@ -31,21 +31,21 @@ export async function POST(req: Request) {
           JSON.stringify({ message: "Invalid email or password" }),
           {
             status: 401,
-          }
+          },
         );
       }
 
       const user = users[0];
 
       // Compare the provided password with the stored hashed password
-      const isPasswordValid = await bcrypt.compare(password, user.password);
+      const isPasswordValid = await bcrypt.compare(password, user.passwordhash);
 
       if (!isPasswordValid) {
         return new Response(
           JSON.stringify({ message: "Invalid email or password" }),
           {
             status: 401,
-          }
+          },
         );
       }
 
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
         }),
         {
           status: 200,
-        }
+        },
       );
     } catch (error) {
       console.log(error, "Error From The API...");
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
         JSON.stringify({ message: "There was an error logging in" }),
         {
           status: 500,
-        }
+        },
       );
     }
   } else {
