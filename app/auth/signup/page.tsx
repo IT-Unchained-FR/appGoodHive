@@ -36,7 +36,6 @@ const Signup = () => {
     });
 
     const responseBody = await response.json();
-    console.log(response, "responseBody");
 
     if (response.ok) {
       setIsLoading(false);
