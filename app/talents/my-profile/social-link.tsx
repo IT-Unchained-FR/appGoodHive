@@ -1,5 +1,6 @@
-import { FC } from "react";
+import { FC, useEffect } from "react";
 import Image from "next/image";
+import { FieldValues, UseFormSetValue } from "react-hook-form";
 
 type SocialLinkProps = {
   name: string;
@@ -7,11 +8,26 @@ type SocialLinkProps = {
   placeholder: string;
   value: string;
   isRequired?: boolean;
+  setValue: UseFormSetValue<FieldValues>;
 };
 
 export const SocialLink: FC<SocialLinkProps> = (props) => {
-  const { name, icon, placeholder, value, isRequired = false } = props;
+  const {
+    name,
+    icon,
+    placeholder,
+    value,
+    isRequired = false,
+    setValue,
+  } = props;
 
+  useEffect(() => {
+    setValue(name, value);
+  }, [value, name, setValue]);
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setValue(name, event.target.value);
+  };
   return (
     <div className="flex w-full mt-9">
       <div className="relative flex items-center justify-center w-10 h-10 rounded-full overflow-hidden">
@@ -25,6 +41,7 @@ export const SocialLink: FC<SocialLinkProps> = (props) => {
         maxLength={255}
         defaultValue={value}
         required={isRequired}
+        onChange={handleChange}
       />
     </div>
   );
