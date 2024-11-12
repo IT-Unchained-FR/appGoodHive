@@ -1,5 +1,6 @@
 import { Tooltip } from "@nextui-org/tooltip";
 import { FC, useEffect, useState } from "react";
+import { FieldValues, UseFormSetValue } from "react-hook-form";
 
 interface ToggleButtonProps {
   label: string;
@@ -8,21 +9,26 @@ interface ToggleButtonProps {
   tooltip?: string;
   onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
   disabled?: boolean;
+  setValue?: UseFormSetValue<FieldValues>;
 }
 
 export const ToggleButton: FC<ToggleButtonProps> = (props) => {
-  const { label, name, checked, tooltip, onChange, disabled } = props;
-  
+  const { label, name, checked, tooltip, onChange, disabled, setValue } = props;
+
   const [isChecked, setIsChecked] = useState(checked);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setIsChecked(event.target.checked);
-    onChange && onChange(event);
+    if (onChange) {
+      onChange(event);
+      setValue && setValue(name, event.target.checked);
+    }
   };
 
   useEffect(() => {
     setIsChecked(checked);
-  }, [checked]);
+    setValue && setValue(name, checked);
+  }, [checked, setValue, name]);
 
   return (
     <label className="relative inline-flex items-center me-5 cursor-pointer">
