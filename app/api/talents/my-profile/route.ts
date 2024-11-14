@@ -9,36 +9,34 @@ export async function POST(request: Request) {
   const {
     title,
     description,
-    firstName,
-    lastName,
+    first_name,
+    last_name,
     country,
     city,
-    phoneCountryCode,
-    phoneNumber,
+    phone_country_code,
+    phone_number,
     email,
     telegram,
-    aboutWork,
+    about_work,
     rate,
     skills,
-    imageUrl,
-    cvUrl,
-    walletAddress,
+    image_url,
+    cv_url,
+    wallet_address,
     linkedin,
     github,
     stackoverflow,
     twitter,
     portfolio,
-    freelanceOnly,
-    remoteOnly,
+    freelance_only,
+    remote_only,
     talent,
     mentor,
     recruiter,
-    talentStatus,
-    mentorStatus,
-    recruiterStatus,
-    hideContactDetails,
-    referralCode,
+    hide_contact_details,
+    // referralCode,
     availability,
+    user_id,
   } = await request.json();
 
   const sql = postgres(process.env.DATABASE_URL || "", {
@@ -47,136 +45,59 @@ export async function POST(request: Request) {
     },
   });
 
-  console.log(twitter, "twitter");
-
   try {
-    let referrerWalletAddress = "";
+    const fields = {
+      title,
+      description,
+      first_name: first_name,
+      last_name: last_name,
+      country,
+      city,
+      phone_country_code: phone_country_code,
+      phone_number: phone_number,
+      email,
+      about_work: about_work,
+      rate,
+      skills,
+      image_url: image_url,
+      cv_url: cv_url,
+      telegram,
+      linkedin,
+      github,
+      stackoverflow,
+      twitter,
+      portfolio,
+      freelance_only: freelance_only,
+      remote_only: remote_only,
+      talent,
+      mentor,
+      recruiter,
+      hide_contact_details: hide_contact_details,
+      availability,
+      wallet_address: wallet_address,
+      user_id,
+    };
 
-    if (referralCode) {
-      const user = await sql`
-      SELECT *
-      FROM goodhive.referrals
-      WHERE referral_code = ${referralCode}
-      `;
+    console.log(fields, "fields");
 
-      if (user.length) {
-        referrerWalletAddress = user[0].wallet_address;
-        const referralTalents = user[0].talents;
-        await sql`
-        UPDATE goodhive.referrals
-        SET
-          talents = ${
-            referralTalents
-              ? [...referralTalents, walletAddress]
-              : [walletAddress]
-          }
-        WHERE wallet_address = ${referrerWalletAddress}
-        `;
-      }
-    }
-
-    await sql`
-      INSERT INTO goodhive.users (
-        title,
-        description,
-        first_name,
-        last_name,
-        country,
-        city,
-        phone_country_code,
-        phone_number,
-        email,
-        about_work,
-        rate,
-        skills,
-        image_url,
-        cv_url,
-        telegram,
-        linkedin,
-        github,
-        stackoverflow,
-        twitter,
-        portfolio,
-        freelance_only,
-        remote_only,
-        talent,
-        mentor,
-        recruiter,
-        talent_status,
-        mentor_status,
-        recruiter_status,
-        hide_contact_details,
-        referrer,
-        availability,
-        wallet_address
+    // spell-checker: disable
+    const query = `
+      INSERT INTO goodhive.talents (
+      ${Object.entries(fields)
+        .filter(([, value]) => value !== undefined && value !== "")
+        .map(([key]) => key)
+        .join(", ")}
       ) VALUES (
-        ${title},
-        ${description},
-        ${firstName},
-        ${lastName},
-        ${country},
-        ${city},
-        ${phoneCountryCode},
-        ${phoneNumber},
-        ${email},
-        ${aboutWork},
-        ${rate},
-        ${skills},
-        ${imageUrl},
-        ${cvUrl},
-        ${telegram},
-        ${linkedin},
-        ${github},
-        ${stackoverflow},
-        ${twitter},
-        ${portfolio},
-        ${freelanceOnly},
-        ${remoteOnly},
-        ${talent},
-        ${mentor},
-        ${recruiter},
-        ${talentStatus},
-        ${mentorStatus},
-        ${recruiterStatus},
-        ${hideContactDetails},
-        ${referrerWalletAddress},
-        ${availability},
-        ${walletAddress}
+      ${Object.entries(fields)
+        .filter(([, value]) => value !== undefined && value !== "")
+        .map(([, value]) => (typeof value === "string" ? `'${value}'` : value))
+        .join(", ")}
       )
-      ON CONFLICT (wallet_address) DO UPDATE
-      SET
-        title = ${title},
-        description = ${description},
-        first_name = ${firstName},
-        last_name = ${lastName},
-        country = ${country},
-        city = ${city},
-        phone_country_code = ${phoneCountryCode},
-        phone_number = ${phoneNumber},
-        email = ${email},
-        about_work = ${aboutWork},
-        rate = ${rate},
-        skills = ${skills},
-        image_url = ${imageUrl},
-        cv_url = ${cvUrl},
-        telegram = ${telegram},
-        linkedin = ${linkedin},
-        github = ${github},
-        stackoverflow = ${stackoverflow},
-        twitter = ${twitter},
-        portfolio = ${portfolio},
-        freelance_only = ${freelanceOnly},
-        remote_only = ${remoteOnly},
-        talent = ${talent},
-        mentor = ${mentor},
-        recruiter = ${recruiter},
-        talent_status = ${talentStatus},
-        mentor_status = ${mentorStatus},
-        recruiter_status = ${recruiterStatus},
-        hide_contact_details = ${hideContactDetails},
-        availability = ${availability},
-        wallet_address = ${walletAddress};
     `;
+
+    const formattedQuery = query.replace(/\s+/g, " ").trim();
+    console.log(formattedQuery, "query");
+    // await sql.unsafe(formattedQuery);
 
     return new Response(
       JSON.stringify({ message: "Data inserted or updated successfully" }),
