@@ -1,11 +1,11 @@
 import { Tooltip } from "@nextui-org/tooltip";
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { FieldValues, UseFormSetValue } from "react-hook-form";
 
 interface ToggleButtonProps {
   label: string;
   name: string;
-  checked: boolean;
+  checked?: boolean;
   tooltip?: string;
   onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
   disabled?: boolean;
@@ -15,7 +15,11 @@ interface ToggleButtonProps {
 export const ToggleButton: FC<ToggleButtonProps> = (props) => {
   const { label, name, checked, tooltip, setValue } = props;
 
-  const [isChecked, setIsChecked] = useState(checked);
+  const [isChecked, setIsChecked] = useState(checked || false);
+
+  useEffect(() => {
+    setIsChecked(checked || false);
+  }, [checked]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setIsChecked(event.target.checked);

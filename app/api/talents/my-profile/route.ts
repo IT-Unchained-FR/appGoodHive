@@ -101,9 +101,10 @@ export async function POST(request: Request) {
         .join(", ")}
     `;
 
+    console.log(query, "query");
+
     const formattedQuery = query.replace(/\s+/g, " ").trim();
-    console.log(formattedQuery, "query");
-    // await sql.unsafe(formattedQuery);
+    await sql.unsafe(formattedQuery);
 
     return new Response(
       JSON.stringify({ message: "Data inserted or updated successfully" }),
@@ -124,8 +125,9 @@ export async function GET(request: NextRequest) {
   const searchParamsEntries = request.nextUrl.searchParams.entries();
   const searchParams = Object.fromEntries(searchParamsEntries);
 
+  console.log(searchParams, "searchParams");
   // FIXME: use snake_case instead of camelCase
-  const { walletAddress } = searchParams;
+  const { user_id } = searchParams;
 
   const sql = postgres(process.env.DATABASE_URL || "", {
     ssl: {
@@ -133,20 +135,11 @@ export async function GET(request: NextRequest) {
     },
   });
 
-  if (!walletAddress) {
-    return new Response(
-      JSON.stringify({ message: "Missing walletAddress parameter" }),
-      {
-        status: 404,
-      },
-    );
-  }
-
   try {
     const user = await sql`
       SELECT *
-      FROM goodhive.users
-      WHERE wallet_address = ${walletAddress}
+      FROM goodhive.talents
+      WHERE user_id = ${user_id}
     `;
 
     if (user.length === 0) {
