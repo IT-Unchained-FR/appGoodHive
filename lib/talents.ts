@@ -33,26 +33,7 @@ export async function fetchTalents({
   try {
     const countCursor = await sql`
     SELECT COUNT(*)
-    FROM goodhive.users
-    WHERE
-      (LOWER(title) LIKE ${contains(search)} OR LOWER(skills) LIKE ${contains(
-      search
-    )})
-      AND
-      (LOWER(city) LIKE ${contains(location)} OR LOWER(country) LIKE ${contains(
-      location
-    )})
-      AND
-      (LOWER(first_name) LIKE ${contains(
-        name
-      )} OR LOWER(last_name) LIKE ${contains(name)})
-      ${onlyTalent === "true" ? sql`AND talent_status = 'approved'` : sql``}
-      ${onlyMentor === "true" ? sql`AND mentor_status = 'approved'` : sql``}
-      ${
-        onlyRecruiter === "true"
-          ? sql`AND recruiter_status = 'approved'`
-          : sql``
-      }
+    FROM goodhive.talents
     `;
 
     const count = countCursor[0].count as number;
@@ -62,72 +43,42 @@ export async function fetchTalents({
 
     const talentsCursor = await sql`
       SELECT *
-      FROM goodhive.users
-      WHERE
-      (LOWER(title) LIKE ${contains(search)} OR LOWER(skills) LIKE ${contains(
-      search
-    )})
-      AND
-      (LOWER(city) LIKE ${contains(location)} OR LOWER(country) LIKE ${contains(
-      location
-    )})
-      AND
-      (LOWER(first_name) LIKE ${contains(
-        name
-      )} OR LOWER(last_name) LIKE ${contains(name)})
-      ${onlyTalent === "true" ? sql`AND talent_status = 'approved'` : sql``}
-      ${onlyMentor === "true" ? sql`AND mentor_status = 'approved'` : sql``}
-      ${
-        onlyRecruiter === "true"
-          ? sql`AND recruiter_status = 'approved'`
-          : sql``
-      }
+      FROM goodhive.talents
+      WHERE (${search} = '' OR LOWER(title) LIKE ${contains(search)})
+      AND (${location} = '' OR LOWER(country) LIKE ${contains(location)} OR LOWER(city) LIKE ${contains(location)})
+      AND (${name} = '' OR LOWER(first_name) LIKE ${contains(name)} OR LOWER(last_name) LIKE ${contains(name)})
+      AND (${onlyTalent} = '' OR freelance_only = true)
+      AND (${onlyMentor} = '' OR remote_only = true)
+      AND (${onlyRecruiter} = '' OR availability = true)
       LIMIT ${limit}
       OFFSET ${offset}
-      `;
+    `;
 
-    const talents: Talent[] = talentsCursor
-      .filter(
-        (talent) =>
-          talent.talent_status === "approved" || talent.talent_status === null
-      )
-      .map((talent) => {
-        return {
-          title: talent.title,
-          description: talent.description,
-          firstName: talent.first_name,
-          lastName: talent.last_name,
-          country: talent.country,
-          city: talent.city,
-          phoneCountryCode: talent.phone_country_code,
-          phoneNumber: talent.phone_number,
-          email: talent.email,
-          aboutWork: talent.about_work,
-          telegram: talent.telegram,
-          rate: talent.rate,
-          currency: talent.currency,
-          skills: talent.skills.split(","),
-          imageUrl: talent.image_url,
-          walletAddress: talent.wallet_address,
-          freelancer: talent.freelance_only ? true : false,
-          remote: talent.remote_only ? true : false,
-          availability: talent.availability,
-          last_active: talent.last_active,
-        };
-      });
-
-    // sort talents by availability
-    const sortedTalents = talents.sort((a, b) => {
-      if (a.availability && !b.availability) {
-        return -1;
-      }
-      if (!a.availability && b.availability) {
-        return 1;
-      }
-      return 0;
+    const talents: any[] = talentsCursor.map((talent) => {
+      return {
+        title: talent.title,
+        description: talent.description,
+        firstName: talent.first_name,
+        lastName: talent.last_name,
+        country: talent.country,
+        city: talent.city,
+        phoneCountryCode: talent.phone_country_code,
+        skills: talent.skills?.split(",") || [],
+        email: talent.email,
+        aboutWork: talent.about_work,
+        telegram: talent.telegram,
+        rate: talent.rate,
+        currency: talent.currency,
+        imageUrl: talent.image_url,
+        walletAddress: talent.wallet_address,
+        freelancer: talent.freelance_only ? true : false,
+        remote: talent.remote_only ? true : false,
+        availability: talent.availability,
+        last_active: talent.last_active,
+      };
     });
 
-    return { talents: sortedTalents, count };
+    return { talents, count };
   } catch (error) {
     console.log("💥", error);
     throw new Error("Failed to fetch data from the server");
