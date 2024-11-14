@@ -96,7 +96,6 @@ export default function ProfilePage() {
   }, [reset]);
 
   const handleFormSubmit = async (data: any) => {
-    console.log(data, "data");
     try {
       let imageUrl = profileData.image_url;
       let cvUrl = profileData.cv_url;
@@ -141,20 +140,25 @@ export default function ProfilePage() {
         availability: data.availability,
       };
 
-      return console.log(formData, "formData");
-
       // Filter out undefined, null, and empty string values
+      // eslint-disable-next-line prefer-const
       let filteredData = Object.fromEntries(
         Object.entries(formData).filter(
           ([, value]) => value !== undefined && value !== null && value !== "",
         ),
       );
 
-      delete filteredData["skills"];
-      filteredData.user_id = crypto.randomUUID();
+      // Adding Skills to the filteredData
+      if (filteredData.skills && Array.isArray(filteredData.skills)) {
+        filteredData.skills = filteredData.skills
+          .map(
+            (skill: string) =>
+              skill.charAt(0).toUpperCase() + skill.slice(1).toLowerCase(),
+          )
+          .join(", ");
+      }
 
-      const columns = Object.keys(filteredData);
-      const values = Object.values(filteredData);
+      filteredData.user_id = "e9c86bc5-22d8-457d-b1c6-daf01fadc80b";
 
       const profileResponse = await fetch("/api/talents/my-profile", {
         method: "POST",

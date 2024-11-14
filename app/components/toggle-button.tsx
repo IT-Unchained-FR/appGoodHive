@@ -1,5 +1,5 @@
 import { Tooltip } from "@nextui-org/tooltip";
-import { FC, useEffect, useState } from "react";
+import { FC, useState } from "react";
 import { FieldValues, UseFormSetValue } from "react-hook-form";
 
 interface ToggleButtonProps {
