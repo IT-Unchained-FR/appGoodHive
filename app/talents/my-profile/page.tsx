@@ -153,7 +153,7 @@ export default function ProfilePage() {
 
       // Filter out undefined, null, and empty string values
       // eslint-disable-next-line prefer-const
-      let filteredData = Object.fromEntries(
+      const filteredData = Object.fromEntries(
         Object.entries(formData).filter(
           ([, value]) => value !== undefined && value !== null && value !== "",
         ),
