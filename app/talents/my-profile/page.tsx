@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect, ChangeEvent } from "react";
+import { useState, useEffect, ChangeEvent, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
-import Cookies from "js-cookie";
 import { uploadFileToBucket } from "@/app/utils/upload-file-bucket";
 import Image from "next/image";
 import { Button } from "@/app/components/button";
@@ -18,6 +17,7 @@ import { skills } from "@/app/constants/skills";
 import { createJobServices } from "@/app/constants/common";
 import { socialLinks } from "./constant";
 import { SocialLink } from "./social-link";
+import DragAndDropFile from "@/app/components/drag-and-drop-file";
 
 type ProfileData = {
   first_name: string;
@@ -58,6 +58,7 @@ export default function ProfilePage() {
   const [profileData, setProfileData] = useState<ProfileData>(
     {} as ProfileData,
   );
+  const imageInputValue = useRef(null);
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [saveProfileLoading, setSaveProfileLoading] = useState(false);
@@ -67,6 +68,7 @@ export default function ProfilePage() {
   const [saveOnly, setSaveOnly] = useState(true);
   const [isUploadedCvLink, setIsUploadedCvLink] = useState(false);
   const [walletAddress, setWalletAddress] = useState("");
+  const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
 
   const { register, handleSubmit, setValue, reset } = useForm();
   const router = useRouter();
@@ -110,21 +112,21 @@ export default function ProfilePage() {
       const formData = {
         title: data.title,
         description: data.description,
-        firstName: data["first-name"],
-        lastName: data["last-name"],
+        first_name: data["first-name"],
+        last_name: data["last-name"],
         country: selectedCountry?.value,
         city: data.city,
-        phoneCountryCode: data["phone-country-code"],
-        phoneNumber: data["phone-number"],
+        phone_country_code: data["phone-country-code"],
+        phone_number: data["phone-number"],
         email: data.email,
-        aboutWork: data["about-work"],
+        about_work: data["about-work"],
         rate: data.rate,
-        freelanceOnly: data["freelance-only"],
-        remoteOnly: data["remote-only"],
+        freelance_only: data["freelance-only"],
+        remote_only: data["remote-only"],
         skills: selectedSkills,
-        imageUrl,
-        cvUrl,
-        walletAddress,
+        image_url: imageUrl,
+        cv_url: cvUrl,
+        wallet_address: walletAddress,
         linkedin: data.linkedin,
         github: data.github,
         twitter: data.twitter,
@@ -134,13 +136,39 @@ export default function ProfilePage() {
         talent: data.talent,
         mentor: data.mentor,
         recruiter: data.recruiter,
-        hideContactDetails: data["hide-contact-details"],
-        // referralCode: isAlreadyReferred ? null : referralCode,
+        hide_contact_details: data["hide-contact-details"],
+        // referral_code: isAlreadyReferred ? null : referralCode,
         availability: data.availability,
       };
 
-      return console.log("formData", formData);
-      setSaveProfileLoading(true);
+      return console.log(formData, "formData");
+
+      // Filter out undefined, null, and empty string values
+      let filteredData = Object.fromEntries(
+        Object.entries(formData).filter(
+          ([, value]) => value !== undefined && value !== null && value !== "",
+        ),
+      );
+
+      delete filteredData["skills"];
+      filteredData.user_id = crypto.randomUUID();
+
+      const columns = Object.keys(filteredData);
+      const values = Object.values(filteredData);
+
+      const profileResponse = await fetch("/api/talents/my-profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(filteredData),
+      });
+
+      if (profileResponse.ok) {
+        toast.success("Profile saved successfully");
+      } else {
+        toast.error("Something went wrong while saving your profile");
+      }
     } catch (error) {
       console.error(error);
       toast.error("Something went wrong while saving your profile");
@@ -165,8 +193,7 @@ export default function ProfilePage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-        {/* 
-        // TODO: Add image upload functionality
+        {/* // TODO: Add image upload functionality */}
         <div className="flex flex-col items-center justify-center w-full mt-10">
           {profileData.image_url ? (
             <div
@@ -175,7 +202,6 @@ export default function ProfilePage() {
                 clipPath:
                   "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)",
               }}
-              onClick={handleImageClick}
             >
               <Image
                 className="object-cover"
@@ -193,7 +219,7 @@ export default function ProfilePage() {
               imageInputValue={imageInputValue}
             />
           )}
-        </div> */}
+        </div>
         <div className="w-full flex justify-center mt-7">
           <Button
             text="Public View"
