@@ -391,6 +391,9 @@ export default function MyProfile() {
                     ] as string
                   }
                   isRequired={socialLink.isRequired}
+                  setValue={(value) => {
+                    console.log("Social link value changed:", value);
+                  }}
                 />
               ))}
             </div>
