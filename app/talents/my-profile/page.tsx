@@ -72,7 +72,7 @@ export default function ProfilePage() {
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
   const [isProfileDataFetching, setIsProfileDataFetching] = useState(false);
 
-  const { register, handleSubmit, setValue, reset } = useForm();
+  const { register, handleSubmit, setValue, reset, watch } = useForm();
   const router = useRouter();
 
   const user_id = Cookies.get("user_id");
@@ -298,7 +298,7 @@ export default function ProfilePage() {
               className="text-[13px] mt-2 text-right w-full"
               style={{ color: "#FFC905" }}
             >
-              {(profileData.description ?? "").length}/5000
+              {watch("description")?.length}/5000
             </p>
           </div>
           <div className="flex gap-4 mt-4 sm:flex-col">
@@ -477,7 +477,7 @@ export default function ProfilePage() {
               className="text-[13px] mt-2 text-right w-full"
               style={{ color: "#FFC905" }}
             >
-              {(profileData.about_work ?? "").length}/5000
+              {watch("about-work")?.length}/5000
             </p>
           </div>
           <div className="mt-4">
