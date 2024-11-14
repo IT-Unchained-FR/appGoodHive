@@ -90,7 +90,9 @@ export default function ProfilePage() {
             setSelectedCountry({ value: data.country, label: data.country });
           }
           if (data.skills) {
-            setSelectedSkills(data.skills);
+            setSelectedSkills(
+              data.skills.split(", ").map((skill: string) => skill.trim()),
+            );
           }
         }
       } catch (error) {
@@ -536,8 +538,8 @@ export default function ProfilePage() {
                   setSelectedInputs={setSelectedSkills}
                 />
               </div>
-              {/* <div className="pt-10">
-                {!!selectedSkills && selectedSkills.length > 0 && (
+              <div className="pt-10">
+                {!!selectedSkills && selectedSkills?.length > 0 && (
                   <div className="flex flex-wrap mt-4 ">
                     {selectedSkills.map((skill, index) => (
                       <div
@@ -560,7 +562,7 @@ export default function ProfilePage() {
                     ))}
                   </div>
                 )}
-              </div> */}
+              </div>
             </div>
           </div>
           <div className="flex flex-col mt-3">
