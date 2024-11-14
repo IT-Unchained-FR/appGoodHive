@@ -2,12 +2,10 @@
 
 import React from "react";
 import Cookies from "js-cookie";
-import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
 const Login = () => {
-  const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -30,13 +28,9 @@ const Login = () => {
 
     const responseBody = await response.json();
 
-    console.log(responseBody);
     if (response.ok) {
       setIsLoading(false);
-
-      Cookies.set("user_email", responseBody.email);
-      Cookies.set("user_id", responseBody.userId);
-      Cookies.set("wallet_address", responseBody.wallet_address);
+      Cookies.set("user_id", responseBody.user_id);
 
       window.location.href = "/talents/my-profile";
     } else {

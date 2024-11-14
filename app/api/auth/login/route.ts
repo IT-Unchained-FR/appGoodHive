@@ -49,13 +49,11 @@ export async function POST(req: Request) {
         );
       }
 
-      console.log(user, "uer..");
       return new Response(
         JSON.stringify({
           message: "Login Successful",
           email: user.email,
-          userId: user.id,
-          wallet_address: user.wallet_address,
+          user_id: user.userid,
         }),
         {
           status: 200,

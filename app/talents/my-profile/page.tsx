@@ -18,6 +18,7 @@ import { createJobServices } from "@/app/constants/common";
 import { socialLinks } from "./constant";
 import { SocialLink } from "./social-link";
 import DragAndDropFile from "@/app/components/drag-and-drop-file";
+import Cookies from "js-cookie";
 
 type ProfileData = {
   first_name: string;
@@ -50,7 +51,7 @@ type ProfileData = {
   recruiter_status?: string;
   hide_contact_details?: boolean;
   referrer?: string;
-  availability?: string;
+  availability?: boolean;
   wallet_address?: string;
 };
 
@@ -65,7 +66,6 @@ export default function ProfilePage() {
   const [reviewProfileLoading, setReviewProfileLoading] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [saveOnly, setSaveOnly] = useState(true);
   const [isUploadedCvLink, setIsUploadedCvLink] = useState(false);
   const [walletAddress, setWalletAddress] = useState("");
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
@@ -73,10 +73,15 @@ export default function ProfilePage() {
   const { register, handleSubmit, setValue, reset } = useForm();
   const router = useRouter();
 
+  const user_id = Cookies.get("user_id");
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await fetch("/api/talents/my-profile");
+        const response = await fetch(
+          `/api/talents/my-profile?user_id=${user_id}`,
+        );
+
         if (response.ok) {
           const data = await response.json();
           setProfileData(data);
@@ -93,9 +98,11 @@ export default function ProfilePage() {
       }
     };
     fetchProfile();
-  }, [reset]);
+  }, [reset, user_id]);
 
   const handleFormSubmit = async (data: any) => {
+    console.log(data);
+    setSaveProfileLoading(true);
     try {
       let imageUrl = profileData.image_url;
       let cvUrl = profileData.cv_url;
@@ -140,6 +147,8 @@ export default function ProfilePage() {
         availability: data.availability,
       };
 
+      console.log(formData, "formData...");
+
       // Filter out undefined, null, and empty string values
       // eslint-disable-next-line prefer-const
       let filteredData = Object.fromEntries(
@@ -147,6 +156,8 @@ export default function ProfilePage() {
           ([, value]) => value !== undefined && value !== null && value !== "",
         ),
       );
+
+      console.log(filteredData, "filteredData...");
 
       // Adding Skills to the filteredData
       if (filteredData.skills && Array.isArray(filteredData.skills)) {
@@ -158,7 +169,7 @@ export default function ProfilePage() {
           .join(", ");
       }
 
-      filteredData.user_id = "e9c86bc5-22d8-457d-b1c6-daf01fadc80b";
+      filteredData.user_id = Cookies.get("user_id");
 
       const profileResponse = await fetch("/api/talents/my-profile", {
         method: "POST",
@@ -243,7 +254,7 @@ export default function ProfilePage() {
             label="Active"
             name="availability"
             tooltip="If Seeking Jobs"
-            checked={false}
+            checked={profileData.availability}
             setValue={setValue}
           />
         </div>
@@ -433,7 +444,7 @@ export default function ProfilePage() {
             <ToggleButton
               label="Hide my contact details"
               name="hide-contact-details"
-              checked={false}
+              checked={profileData?.hide_contact_details ?? false}
               setValue={setValue}
             />
           </div>
@@ -499,13 +510,13 @@ export default function ProfilePage() {
             <ToggleButton
               label="Freelance Only"
               name="freelance-only"
-              checked={false}
+              checked={profileData?.freelance_only ?? false}
               setValue={setValue}
             />
             <ToggleButton
               label="Remote Only"
               name="remote-only"
-              checked={false}
+              checked={profileData?.remote_only ?? false}
               setValue={setValue}
             />
           </div>
@@ -525,7 +536,7 @@ export default function ProfilePage() {
                   setSelectedInputs={setSelectedSkills}
                 />
               </div>
-              <div className="pt-10">
+              {/* <div className="pt-10">
                 {!!selectedSkills && selectedSkills.length > 0 && (
                   <div className="flex flex-wrap mt-4 ">
                     {selectedSkills.map((skill, index) => (
@@ -549,7 +560,7 @@ export default function ProfilePage() {
                     ))}
                   </div>
                 )}
-              </div>
+              </div> */}
             </div>
           </div>
           <div className="flex flex-col mt-3">
@@ -563,7 +574,7 @@ export default function ProfilePage() {
                     key={value}
                     label={label}
                     name={value}
-                    checked={false}
+                    checked={isChecked ?? false}
                     setValue={setValue}
                   />
                 );

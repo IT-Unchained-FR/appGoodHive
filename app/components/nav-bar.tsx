@@ -38,13 +38,13 @@ export const NavBar = () => {
   const pathname = usePathname();
 
   // Get the logged in user email and id from cookies
-  const loggedin_user_email = Cookies.get("user_email");
+  const loggedIn_user_id = Cookies.get("user_id");
 
   const links = pathname.startsWith("/talents")
     ? talentsLinks
     : pathname.startsWith("/companies")
-    ? companiesLinks
-    : commonLinks;
+      ? companiesLinks
+      : commonLinks;
 
   const handleLogout = () => {
     Cookies.remove("user_email");
@@ -96,7 +96,7 @@ export const NavBar = () => {
           </nav>
 
           <div className="flex items-center gap-4">
-            {loggedin_user_email ? (
+            {loggedIn_user_id ? (
               <button
                 className="my-2 text-base font-semibold bg-[#FFC905] h-10 w-40 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
                 type="submit"
