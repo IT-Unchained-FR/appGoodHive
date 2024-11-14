@@ -19,6 +19,7 @@ import { socialLinks } from "./constant";
 import { SocialLink } from "./social-link";
 import DragAndDropFile from "@/app/components/drag-and-drop-file";
 import Cookies from "js-cookie";
+import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/honey-bee-spinner";
 
 type ProfileData = {
   first_name: string;
@@ -69,6 +70,7 @@ export default function ProfilePage() {
   const [isUploadedCvLink, setIsUploadedCvLink] = useState(false);
   const [walletAddress, setWalletAddress] = useState("");
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
+  const [isProfileDataFetching, setIsProfileDataFetching] = useState(false);
 
   const { register, handleSubmit, setValue, reset } = useForm();
   const router = useRouter();
@@ -78,6 +80,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
+        setIsProfileDataFetching(true);
         const response = await fetch(
           `/api/talents/my-profile?user_id=${user_id}`,
         );
@@ -97,6 +100,8 @@ export default function ProfilePage() {
         }
       } catch (error) {
         console.error("Error fetching profile:", error);
+      } finally {
+        setIsProfileDataFetching(false);
       }
     };
     fetchProfile();
@@ -207,8 +212,11 @@ export default function ProfilePage() {
     setCvFile(cvFile);
   };
 
+  if (isProfileDataFetching)
+    return <HoneybeeSpinner message={"Loading Your Profile..."} />;
+
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 ">
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
         {/* // TODO: Add image upload functionality */}
         <div className="flex flex-col items-center justify-center w-full mt-10">
