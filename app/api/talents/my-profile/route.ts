@@ -93,6 +93,12 @@ export async function POST(request: Request) {
         .map(([, value]) => (typeof value === "string" ? `'${value}'` : value))
         .join(", ")}
       )
+      ON CONFLICT (user_id) 
+      DO UPDATE SET
+      ${Object.entries(fields)
+        .filter(([, value]) => value !== undefined && value !== "")
+        .map(([key]) => `${key} = EXCLUDED.${key}`)
+        .join(", ")}
     `;
 
     const formattedQuery = query.replace(/\s+/g, " ").trim();
