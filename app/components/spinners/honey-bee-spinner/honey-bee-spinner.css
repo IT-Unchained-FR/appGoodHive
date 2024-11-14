@@ -1,0 +1,68 @@
+@keyframes wing {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(30deg);
+  }
+}
+
+@keyframes drip {
+  0% {
+    transform: scaleY(0);
+  }
+  100% {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes loading-bar {
+  0% {
+    left: -33.33%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.animate-wing {
+  animation: wing 0.5s ease-in-out infinite;
+}
+
+.animate-drip {
+  animation: drip 2s ease-in-out infinite alternate;
+  transform-origin: top;
+}
+
+.animate-loading-bar {
+  animation: loading-bar 1.5s ease-in-out infinite;
+}
+
+.honeycomb-bg {
+  background-color: rgba(251, 191, 36, 0.2);
+}
+
+.bee-body {
+  background-color: #fbbf24;
+}
+
+.bee-stripe {
+  background-color: black;
+}
+
+.bee-wing {
+  background-color: #fbbf24;
+}
+
+.loading-bar-bg {
+  background-color: #fde68a;
+}
+
+.loading-bar {
+  background-color: #f59e0b;
+}
+
+.honey-drip {
+  background-color: #f59e0b;
+}
