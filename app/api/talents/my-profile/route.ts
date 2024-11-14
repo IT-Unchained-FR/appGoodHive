@@ -78,8 +78,6 @@ export async function POST(request: Request) {
       user_id,
     };
 
-    console.log(fields, "fields");
-
     // spell-checker: disable
     const query = `
       INSERT INTO goodhive.talents (
