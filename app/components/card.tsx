@@ -10,6 +10,7 @@ import { generateCountryFlag } from "@utils/generate-country-flag";
 
 interface Props {
   jobId?: number;
+  uniqueId: string;
   type: string;
   title: string;
   postedBy: string;
@@ -36,6 +37,7 @@ interface Props {
 
 export const Card: FC<Props> = ({
   jobId,
+  uniqueId,
   title,
   postedBy,
   postedOn,
@@ -54,28 +56,37 @@ export const Card: FC<Props> = ({
   freelancer,
   remote,
   availability,
-  last_active,
+  type,
 }) => {
-  console.log(mentor, recruiter, "mentor and recruiter");
+  // Rate
   const rate =
     budget && currency
       ? `${budget}${currency}/${projectType === "fixed" ? "Fixed" : "H"}`
       : null;
+
+  // Title and description
   const croppedTitle =
     title.length > 28 ? title.substring(0, 28) + "..." : title;
   const croppedDescription =
     description.length > 100
       ? description.substring(0, 100) + "..."
       : description;
+
+  // Profile image
   const profileImage = image ? image : "/img/placeholder-image.png";
-  const knowMoreLink = jobId
-    ? `/companies/${walletAddress}`
-    : `/talents/${walletAddress}`;
+
+  // Know more link
+  const knowMoreLink =
+    type === "talent" ? `/talents/${uniqueId}` : `/companies/${uniqueId}`;
+
+  // Flag & Icon
   const countryFlag = generateCountryFlag(country);
   const moneyIcon =
     jobId && Number(escrowAmount) > 0
       ? "/icons/money.svg"
       : "/icons/no-money.svg";
+
+  // Skills
   const shortSkillList =
     skills.length > 3 ? [...skills.slice(0, 3), "..."] : skills;
 
