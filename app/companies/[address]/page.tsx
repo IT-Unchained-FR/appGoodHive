@@ -156,6 +156,7 @@ export default async function CompanyProfilePage(
               } = job;
               return (
                 <Card
+                  uniqueId="unique-id-random-247"
                   mentor={job.mentor === "true"}
                   recruiter={job.recruiter === "true"}
                   key={id}
