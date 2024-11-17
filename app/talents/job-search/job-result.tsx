@@ -30,13 +30,14 @@ export default function JobResult({ jobOffers }: { jobOffers: any[] }) {
     <div className="grid grid-cols-3 gap-5 md:gap-4 sm:gap-4 lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1">
       {jobOffers.map((jobOffer, index) => (
         <Card
+          uniqueId="unique-id-random-247"
           key={index}
           jobId={jobOffer.id}
           type="company"
           title={jobOffer.title}
           postedBy={jobOffer.companyName} //TODO: connect job_offers table to companies table
           postedOn={`Posted On ${moment(jobOffer.posted_at).format(
-            "MMMM Do YYYY"
+            "MMMM Do YYYY",
           )}`}
           image={jobOffer.image_url || "/img/company_img.png"} //TODO: connect job_offers table to companies table
           country={jobOffer.country} // TODO: create flag table
