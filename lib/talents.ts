@@ -74,6 +74,7 @@ export async function fetchTalents({
         freelancer: talent.freelance_only ? true : false,
         remote: talent.remote_only ? true : false,
         availability: talent.availability,
+        userId: talent.user_id,
         last_active: talent.last_active,
       };
     });
