@@ -1,20 +1,18 @@
 import Image from "next/image";
-import Link from "next/link";
 
 import { TalentSocialMedia } from "@/app/components/talents/profile-social-media";
 import { TalentContactBtn } from "@/app/components/talents/talent-contact-btn";
 import { getProfileData } from "@/lib/fetch-profile-data";
+import { TalentProfileData } from "./types";
 import { generateAvailabilityStatus } from "./utils";
 import ProfileAboutWork from "@/app/components/talents/ProfileAboutWork";
-import { getCompanyData } from "@/lib/fetch-company-data";
-import Cookies from "js-cookie";
 import TalentsCVSection from "@/app/components/talents/TalentsCVSection";
 
 export const revalidate = 0;
 
 type MyProfilePageProps = {
   params: {
-    address: string;
+    user_id: string;
   };
   searchParams: {
     vkey: string;
@@ -23,14 +21,12 @@ type MyProfilePageProps = {
 };
 
 export default async function MyProfilePage(context: MyProfilePageProps) {
-  const { address } = context.params;
-  const loggedInUserWalletAddress = Cookies.get("wallet_address");
+  const { user_id } = context.params;
 
   const { vkey, ref } = context.searchParams;
 
   const isValidVkey = vkey === process.env.NEXT_PUBLIC_ADMIN_VERIFICATION_KEY;
-
-  const profileData = await getProfileData(address);
+  const profileData = (await getProfileData(user_id)) as TalentProfileData;
 
   const {
     skills,
@@ -42,8 +38,8 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
     cv_url,
     description,
     email,
-    phone_number,
-    phone_country_code,
+    // phone_number,
+    // phone_country_code,
     city,
     rate,
     country,
@@ -58,7 +54,7 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
     mentor_status,
     recruiter_status,
     twitter,
-    hide_contact_details,
+    // hide_contact_details,
   } = profileData;
 
   const availabilityStatus = generateAvailabilityStatus(
