@@ -1,6 +1,5 @@
 "use client";
 // opengraph-image
-import { BigNumberish } from "ethers";
 import Image from "next/image";
 import Link from "next/link";
 
