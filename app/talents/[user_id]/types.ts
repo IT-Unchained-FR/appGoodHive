@@ -21,6 +21,7 @@ export interface TalentProfileData {
   freelance_only: boolean;
   remote_only: boolean;
   talent_status: string;
+  talent_approved: boolean;
   mentor_status: string;
   recruiter_status: string;
   twitter: string;

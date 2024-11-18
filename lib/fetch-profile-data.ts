@@ -35,6 +35,8 @@ export async function getProfileData(userId: string) {
 
     const profileUser = user[0];
 
+    console.log(profileUser, "Profile User....");
+
     const getStatus = (status: string, isActive: boolean) => {
       return isActive ? status : "pending";
     };
@@ -51,6 +53,7 @@ export async function getProfileData(userId: string) {
         profileUser.recruiter_status,
         talent[0].recruiter,
       ),
+      talent_approved: profileUser.talent_status === "approved" ? true : false,
     };
 
     return talentData;
