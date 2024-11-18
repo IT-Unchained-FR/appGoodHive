@@ -48,7 +48,7 @@ export async function POST(request: Request) {
   try {
     const fields = {
       title,
-      description,
+      description: Buffer.from(description, "utf-8").toString("base64"),
       first_name: first_name,
       last_name: last_name,
       country,
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       phone_country_code: phone_country_code,
       phone_number: phone_number,
       email,
-      about_work: about_work,
+      about_work: Buffer.from(about_work, "utf-8").toString("base64"),
       rate,
       skills,
       image_url: image_url,
@@ -99,9 +99,8 @@ export async function POST(request: Request) {
         .join(", ")}
     `;
 
-    console.log(query, "query");
-
     const formattedQuery = query.replace(/\s+/g, " ").trim();
+
     await sql.unsafe(formattedQuery);
 
     return new Response(
@@ -146,7 +145,13 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return new Response(JSON.stringify(user[0]));
+    const userProfile = {
+      ...user[0],
+      description: Buffer.from(user[0].description, "base64").toString("utf-8"),
+      about_work: Buffer.from(user[0].about_work, "base64").toString("utf-8"),
+    };
+
+    return new Response(JSON.stringify(userProfile));
   } catch (error) {
     console.error("Error retrieving data:", error);
 
