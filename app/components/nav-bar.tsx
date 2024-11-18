@@ -6,11 +6,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Cookies from "js-cookie";
-import { useAccount } from "wagmi";
+import { useAccount, useDisconnect } from "wagmi";
 
 const commonLinks = [
   { href: "/talents/job-search", label: "Find a Job" },
@@ -31,6 +31,7 @@ const companiesLinks = [
 
 export const NavBar = () => {
   const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
 
   const [isOpenMobileMenu, setIsOpenMobileMenu] = useState(false);
 
@@ -49,14 +50,42 @@ export const NavBar = () => {
   const handleLogout = () => {
     Cookies.remove("user_email");
     Cookies.remove("user_id");
+    Cookies.remove("wallet_address");
+    disconnect();
 
-    router.push("/");
+    window.location.href = "/";
   };
 
-  // Set the wallet address in the cookies
-  if (isConnected && address) {
-    Cookies.set("wallet_address", address);
-  }
+  useEffect(() => {
+    // Set the wallet address in the cookies
+    if (isConnected && address) {
+      Cookies.set("wallet_address", address);
+    }
+
+    // Checking if there is a user id in the cookies
+    if (!loggedIn_user_id && isConnected && address) {
+      // Check if the user exists in the database
+      fetch("/api/auth/wallet-login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ wallet_address: address }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          // Set the user id in the cookies
+          if (data.user_id) {
+            Cookies.set("user_id", data.user_id);
+          }
+          // Redirect the user to the profile page
+          window.location.href = "/talents/my-profile";
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    }
+  }, [isConnected, address, loggedIn_user_id]);
 
   return (
     <header aria-label="Site Header" className="bg-black ">
