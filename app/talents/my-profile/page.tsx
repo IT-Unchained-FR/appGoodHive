@@ -77,6 +77,33 @@ export default function ProfilePage() {
 
   const user_id = Cookies.get("user_id");
 
+  const fetchProfile = async () => {
+    try {
+      setIsProfileDataFetching(true);
+      const response = await fetch(
+        `/api/talents/my-profile?user_id=${user_id}`,
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setProfileData(data);
+        reset(data);
+        if (data.country) {
+          setSelectedCountry({ value: data.country, label: data.country });
+        }
+        if (data.skills) {
+          setSelectedSkills(
+            data.skills.split(", ").map((skill: string) => skill.trim()),
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    } finally {
+      setIsProfileDataFetching(false);
+    }
+  };
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -108,11 +135,11 @@ export default function ProfilePage() {
   }, [reset, user_id]);
 
   const handleFormSubmit = async (data: any) => {
-    console.log(data);
-    setSaveProfileLoading(true);
     try {
       let imageUrl = profileData.image_url;
       let cvUrl = profileData.cv_url;
+
+      setSaveProfileLoading(true);
 
       if (profileImage) {
         imageUrl = (await uploadFileToBucket(profileImage)) as string;
@@ -154,8 +181,6 @@ export default function ProfilePage() {
         availability: data.availability,
       };
 
-      console.log(formData, "formData...");
-
       // Filter out undefined, null, and empty string values
       // eslint-disable-next-line prefer-const
       const filteredData = Object.fromEntries(
@@ -163,8 +188,6 @@ export default function ProfilePage() {
           ([, value]) => value !== undefined && value !== null && value !== "",
         ),
       );
-
-      console.log(filteredData, "filteredData...");
 
       // Adding Skills to the filteredData
       if (filteredData.skills && Array.isArray(filteredData.skills)) {
@@ -188,6 +211,7 @@ export default function ProfilePage() {
 
       if (profileResponse.ok) {
         toast.success("Profile saved successfully");
+        fetchProfile();
       } else {
         toast.error("Something went wrong while saving your profile");
       }
@@ -212,8 +236,14 @@ export default function ProfilePage() {
     setCvFile(cvFile);
   };
 
-  if (isProfileDataFetching)
+  if (isProfileDataFetching) {
+    window.scrollTo(0, 0);
     return <HoneybeeSpinner message={"Loading Your Profile..."} />;
+  }
+  if (saveProfileLoading) {
+    window.scrollTo(0, 0);
+    return <HoneybeeSpinner message={"Saving Your Profile..."} />;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 ">
