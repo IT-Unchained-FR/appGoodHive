@@ -4,25 +4,20 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { TalentSocialMedia } from "@/app/components/talents/profile-social-media";
 import { TalentContactBtn } from "@/app/components/talents/talent-contact-btn";
-import { getProfileData } from "@/lib/fetch-profile-data";
 import { TalentProfileData } from "./types";
 import { generateAvailabilityStatus } from "./utils";
 import ProfileAboutWork from "@/app/components/talents/ProfileAboutWork";
 import TalentsCVSection from "@/app/components/talents/TalentsCVSection";
+import GoodHiveSpinner from "@/app/components/spinners/hoodhive-spinner/goodhive-spinner";
 
-type MyProfilePageProps = {
+interface MyProfilePageProps {
   params: {
     user_id: string;
   };
-  vkey?: string;
-  ref?: string;
-};
+}
 
-export default function MyProfilePage({
-  params,
-  vkey,
-  ref,
-}: MyProfilePageProps) {
+export default async function MyProfilePage(context: MyProfilePageProps) {
+  const { params } = context;
   const [profileData, setProfileData] = useState<TalentProfileData | null>(
     null,
   );
@@ -52,8 +47,8 @@ export default function MyProfilePage({
     return <p className="text-red-500">{error}</p>;
   }
 
-  if (!profileData) {
-    return <p>No data found.</p>;
+  if (isLoading || !profileData) {
+    return <GoodHiveSpinner size="large" />;
   }
 
   const {
@@ -87,13 +82,14 @@ export default function MyProfilePage({
     remote_only,
   );
 
-  if (
-    ref === "admin" &&
-    vkey !== process.env.NEXT_PUBLIC_ADMIN_VERIFICATION_KEY
-  ) {
-    return null; // Don't render for invalid keys
-  }
-  if (ref !== "admin" && talent_status === "pending") {
+  // if (
+  //   ref === "admin" &&
+  //   vkey !== process.env.NEXT_PUBLIC_ADMIN_VERIFICATION_KEY
+  // ) {
+  //   return null; // Don't render for invalid keys
+  // }
+
+  if (talent_status === "pending") {
     return (
       <div>
         <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
@@ -105,7 +101,6 @@ export default function MyProfilePage({
 
   return (
     <main className="relative pt-16">
-      <div className="bg-yellow-400 absolute w-full top-0 left-0 h-28 z-10"></div>
       <div className="container mx-auto mb-20 bg-white w-full relative rounded-2xl flex flex-col items-center p-5 z-20 shadow-[2px_7px_20px_4px_#e2e8f0]">
         <div className="flex flex-col items-center justify-center w-full mt-5 mb-5">
           <div
