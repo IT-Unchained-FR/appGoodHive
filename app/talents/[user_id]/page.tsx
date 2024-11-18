@@ -1,5 +1,7 @@
-import Image from "next/image";
+"use client";
 
+import { useState, useEffect } from "react";
+import Image from "next/image";
 import { TalentSocialMedia } from "@/app/components/talents/profile-social-media";
 import { TalentContactBtn } from "@/app/components/talents/talent-contact-btn";
 import { getProfileData } from "@/lib/fetch-profile-data";
@@ -8,25 +10,51 @@ import { generateAvailabilityStatus } from "./utils";
 import ProfileAboutWork from "@/app/components/talents/ProfileAboutWork";
 import TalentsCVSection from "@/app/components/talents/TalentsCVSection";
 
-export const revalidate = 0;
-
 type MyProfilePageProps = {
   params: {
     user_id: string;
   };
-  searchParams: {
-    vkey: string;
-    ref: string;
-  };
+  vkey?: string;
+  ref?: string;
 };
 
-export default async function MyProfilePage(context: MyProfilePageProps) {
-  const { user_id } = context.params;
+export default function MyProfilePage({
+  params,
+  vkey,
+  ref,
+}: MyProfilePageProps) {
+  const [profileData, setProfileData] = useState<TalentProfileData | null>(
+    null,
+  );
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const { vkey, ref } = context.searchParams;
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        const data = await fetch(
+          `/api/talents/my-profile?user_id=${params.user_id}`,
+        );
+        const userProfileData = await data.json();
+        setProfileData(userProfileData);
+        setIsLoading(false);
+      } catch (err) {
+        console.error("Error fetching profile data:", err);
+        setError("Failed to load profile data.");
+        setIsLoading(false);
+      }
+    };
 
-  const isValidVkey = vkey === process.env.NEXT_PUBLIC_ADMIN_VERIFICATION_KEY;
-  const profileData = (await getProfileData(user_id)) as TalentProfileData;
+    fetchProfileData();
+  }, [params.user_id]);
+
+  if (error) {
+    return <p className="text-red-500">{error}</p>;
+  }
+
+  if (!profileData) {
+    return <p>No data found.</p>;
+  }
 
   const {
     skills,
@@ -38,8 +66,6 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
     cv_url,
     description,
     email,
-    // phone_number,
-    // phone_country_code,
     city,
     rate,
     country,
@@ -54,7 +80,6 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
     mentor_status,
     recruiter_status,
     twitter,
-    // hide_contact_details,
   } = profileData;
 
   const availabilityStatus = generateAvailabilityStatus(
@@ -62,8 +87,13 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
     remote_only,
   );
 
-  if (ref === "admin" && isValidVkey === false) return;
-  if (ref !== "admin" && talent_status === "pending")
+  if (
+    ref === "admin" &&
+    vkey !== process.env.NEXT_PUBLIC_ADMIN_VERIFICATION_KEY
+  ) {
+    return null; // Don't render for invalid keys
+  }
+  if (ref !== "admin" && talent_status === "pending") {
     return (
       <div>
         <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
@@ -71,6 +101,7 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
         </p>
       </div>
     );
+  }
 
   return (
     <main className="relative pt-16">
@@ -126,33 +157,13 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
         )}
         <div className="flex w-full justify-center gap-5 mb-12">
           <TalentContactBtn toEmail={email} toUserName={first_name} />
-          {/* <Button text="Hire me" type="primary" size="medium"></Button> */}
         </div>
         <div className="flex flex-col w-1/2">
           <h3 className="text-[#4E4E4E] text-lg font-bold mb-5">Bio:</h3>
           <p className="w-full max-h-52 mb-10 text-ellipsis overflow-hidden">
             {description}
           </p>
-
-          {(talent_status === "approved" ||
-            mentor_status === "approved" ||
-            recruiter_status === "approved") && (
-            <>
-              <h3 className="text-[#4E4E4E] text-lg font-bold mb-5">
-                I Can Help You As:
-              </h3>
-              <p className="w-full max-h-52 mb-10 text-ellipsis overflow-hidden">
-                {`${talent_status === "approved" ? "Talent " : ""}${
-                  mentor_status === "approved" ? "Mentor " : ""
-                }${recruiter_status === "approved" ? "Recruiter" : ""}`}
-              </p>
-            </>
-          )}
-          <h3 className="text-[#4E4E4E] text-lg font-bold mb-5">
-            About my work:
-          </h3>
           <ProfileAboutWork about_work={about_work} />
-
           <TalentSocialMedia
             twitter={twitter}
             linkedin={linkedin}
@@ -161,14 +172,12 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
             stackoverflow={stackoverflow}
             portfolio={portfolio}
           />
-
           <h3 className="text-[#4E4E4E] text-lg font-bold mb-5">
             Specialization and Skills
           </h3>
-
           <div className="flex flex-wrap gap-2 mb-10">
             {!!skills.length &&
-              skills.split(",").map((skill: string) => (
+              skills.split(",").map((skill) => (
                 <div
                   key={skill}
                   className="border-[#FFC905] flex items-center bg-gray-200 rounded-full px-4 py-1 text-sm m-1"
@@ -178,29 +187,6 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
               ))}
           </div>
           <TalentsCVSection cv_url={cv_url} talent_status={talent_status} />
-          {/* {!hide_contact_details && (
-            <div>
-              <h3 className="text-[#4E4E4E] text-lg font-bold mb-5">
-                Contact info
-              </h3>
-              <div className="flex w-full justify-between mb-8">
-                <h4 className="text-[#4E4E4E] text-base font-bold">Email</h4>
-                <p className="text-[#4E4E4E] text-base">{email}</p>
-              </div>
-              <div className="flex w-full justify-between mb-8">
-                <h4 className="text-[#4E4E4E] text-base font-bold">Phone</h4>
-                <p className="text-[#4E4E4E] text-base">
-                  +{`${phone_country_code} ${phone_number}`}
-                </p>
-              </div>
-              <div className="flex w-full justify-between mb-8">
-                <h4 className="text-[#4E4E4E] text-base font-bold">Address</h4>
-                <p className="text-[#4E4E4E] text-base">
-                  {city}, {country}
-                </p>
-              </div>
-            </div>
-          )} */}
         </div>
       </div>
     </main>

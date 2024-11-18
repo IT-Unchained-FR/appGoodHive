@@ -134,9 +134,10 @@ export async function GET(request: NextRequest) {
 
   try {
     const user = await sql`
-      SELECT *
-      FROM goodhive.talents
-      WHERE user_id = ${user_id}
+      SELECT t.*, u.talent_status, u.mentor_status, u.recruiter_status, u.userid
+      FROM goodhive.talents t
+      JOIN goodhive.users u ON t.user_id = u.userid
+      WHERE t.user_id = ${user_id}
     `;
 
     if (user.length === 0) {
