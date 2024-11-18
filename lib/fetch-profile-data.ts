@@ -29,7 +29,7 @@ export async function getProfileData(userId: string) {
       WHERE userid = ${userId};
     `;
 
-    if (talent.length === 0) {
+    if (user.length === 0) {
       return {};
     }
 
@@ -41,6 +41,10 @@ export async function getProfileData(userId: string) {
 
     const talentData = {
       ...talent[0],
+      description: Buffer.from(talent[0].description, "base64").toString(
+        "utf-8",
+      ),
+      about_work: Buffer.from(talent[0].about_work, "base64").toString("utf-8"),
       talent_status: getStatus(profileUser.talent_status, talent[0].talent),
       mentor_status: getStatus(profileUser.mentor_status, talent[0].mentor),
       recruiter_status: getStatus(

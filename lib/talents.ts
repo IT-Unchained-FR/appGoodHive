@@ -57,7 +57,9 @@ export async function fetchTalents({
     const talents: any[] = talentsCursor.map((talent) => {
       return {
         title: talent.title,
-        description: talent.description,
+        description: Buffer.from(talent.description, "base64").toString(
+          "utf-8",
+        ),
         firstName: talent.first_name,
         lastName: talent.last_name,
         country: talent.country,
@@ -65,7 +67,7 @@ export async function fetchTalents({
         phoneCountryCode: talent.phone_country_code,
         skills: talent.skills?.split(",") || [],
         email: talent.email,
-        aboutWork: talent.about_work,
+        aboutWork: Buffer.from(talent.about_work, "base64").toString("utf-8"),
         telegram: talent.telegram,
         rate: talent.rate,
         currency: talent.currency,
