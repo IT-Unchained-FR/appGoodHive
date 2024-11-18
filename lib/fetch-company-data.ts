@@ -14,9 +14,10 @@ export async function getCompanyData(address: string | undefined) {
   try {
     const user = await sql`
         SELECT *
-        FROM goodhive.companies
+        FROM goodhive.talents
         WHERE wallet_address = ${address}
-      `;
+        `;
+    // FROM goodhive.companies
 
     if (user.length === 0) {
       return {};
