@@ -17,7 +17,9 @@ import { socialLinks } from "@/app/talents/my-profile/constant";
 import { uploadFileToBucket } from "@utils/upload-file-bucket";
 import { ReferralSection } from "@/app/components/referral/referral-section";
 import { countryCodes } from "@/app/constants/phoneNumberCountryCode";
+
 export default function MyProfile() {
+  const user_id = Cookies.get("user_id");
   const imageInputValue = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -58,7 +60,7 @@ export default function MyProfile() {
       setIsLoading(true);
 
       const profileResponse = await fetch(
-        `/api/companies/my-profile?walletAddress=${walletAddress}`,
+        `/api/companies/my-profile?userId=${user_id}`,
       );
 
       if (profileResponse.ok) {
@@ -71,8 +73,8 @@ export default function MyProfile() {
       setIsLoading(false);
     };
 
-    if (walletAddress) fetchProfile();
-  }, [walletAddress]);
+    if (user_id) fetchProfile();
+  }, [user_id]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -87,6 +89,7 @@ export default function MyProfile() {
 
     const dataForm = {
       headline: formData.get("headline"),
+      user_id,
       designation: formData.get("designation"),
       address: formData.get("address"),
       country: selectedCountry?.value,
@@ -105,6 +108,8 @@ export default function MyProfile() {
       status: profileData.status || "pending",
       referralCode: isAlreadyReferred ? null : referralCode,
     };
+
+    console.log(dataForm, "DataForm...");
 
     // TODO: POST formData to the server with fetch
     const profileResponse = await fetch("/api/companies/my-profile", {
@@ -146,11 +151,10 @@ export default function MyProfile() {
     setProfileData({ ...profileData, headline: value });
   };
 
-  if (!walletAddress) {
+  if (!user_id) {
     return (
       <h2 className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
-        🚀 To get started, please connect your wallet. This will enable you to
-        create or save your profile. Thanks!
+        🚀 To Get Started Please Login First
       </h2>
     );
   }
