@@ -1,9 +1,9 @@
 import postgres from "postgres";
-
 import type { NextRequest } from "next/server";
 
 export async function POST(request: Request) {
   const {
+    user_id,
     headline,
     designation,
     address,
@@ -30,35 +30,17 @@ export async function POST(request: Request) {
     },
   });
 
+  if (!user_id) {
+    return new Response(JSON.stringify({ message: "Unauthorized" }), {
+      status: 401,
+    });
+  }
+
   try {
-    let referrerWalletAddress = "";
-
-    if (referralCode) {
-      const user = await sql`
-      SELECT *
-      FROM goodhive.referrals
-      WHERE referral_code = ${referralCode}
-      `;
-
-      if (user.length) {
-        referrerWalletAddress = user[0].wallet_address;
-        const referralCompanies = user[0].companies;
-        await sql`
-        UPDATE goodhive.referrals
-        SET
-          companies = ${
-            referralCompanies
-              ? [...referralCompanies, walletAddress]
-              : [walletAddress]
-          }
-        WHERE wallet_address = ${referrerWalletAddress}
-        `;
-      }
-    }
-
     await sql`
       INSERT INTO goodhive.companies (
         headline,
+        user_id,
         designation,
         address,
         country,
@@ -74,10 +56,10 @@ export async function POST(request: Request) {
         twitter,
         portfolio,
         status,
-        referrer,
         wallet_address
       ) VALUES (
         ${headline},
+        ${user_id},
         ${designation},
         ${address},
         ${country},
@@ -93,27 +75,26 @@ export async function POST(request: Request) {
         ${twitter},
         ${portfolio},
         ${status},
-        ${referrerWalletAddress},
         ${walletAddress}
       )
-      ON CONFLICT (wallet_address) DO UPDATE
-      SET headline = ${headline},
-          designation = ${designation},
-          address = ${address},
-          country = ${country},
-          city = ${city},
-          phone_country_code = ${phoneCountryCode},
-          phone_number = ${phoneNumber},
-          email = ${email},
-          telegram = ${telegram},
-          image_url = ${imageUrl},
-          linkedin = ${linkedin},
-          github = ${github},
-          stackoverflow = ${stackoverflow},
-          twitter = ${twitter},
-          portfolio = ${portfolio},
-          status = ${status},
-          wallet_address = ${walletAddress};
+      ON CONFLICT (user_id) DO UPDATE
+      SET headline = EXCLUDED.headline,
+          designation = EXCLUDED.designation,
+          address = EXCLUDED.address,
+          country = EXCLUDED.country,
+          city = EXCLUDED.city,
+          phone_country_code = EXCLUDED.phone_country_code,
+          phone_number = EXCLUDED.phone_number,
+          email = EXCLUDED.email,
+          telegram = EXCLUDED.telegram,
+          image_url = EXCLUDED.image_url,
+          linkedin = EXCLUDED.linkedin,
+          github = EXCLUDED.github,
+          stackoverflow = EXCLUDED.stackoverflow,
+          twitter = EXCLUDED.twitter,
+          portfolio = EXCLUDED.portfolio,
+          status = EXCLUDED.status,
+          wallet_address = EXCLUDED.wallet_address;
     `;
 
     return new Response(
@@ -131,7 +112,7 @@ export async function GET(request: NextRequest) {
   const searchParamsEntries = request.nextUrl.searchParams.entries();
   const searchParams = Object.fromEntries(searchParamsEntries);
 
-  const { walletAddress } = searchParams;
+  const { userId } = searchParams;
 
   const sql = postgres(process.env.DATABASE_URL || "", {
     ssl: {
@@ -139,9 +120,9 @@ export async function GET(request: NextRequest) {
     },
   });
 
-  if (!walletAddress) {
+  if (!userId) {
     return new Response(
-      JSON.stringify({ message: "Missing address parameter" }),
+      JSON.stringify({ message: "Missing user id parameter" }),
       {
         status: 404,
       },
@@ -152,8 +133,10 @@ export async function GET(request: NextRequest) {
     const company = await sql`
         SELECT *
         FROM goodhive.companies
-        WHERE wallet_address = ${walletAddress}
+        WHERE user_id = ${userId}
       `;
+
+    console.log(company, "company..");
 
     if (company.length === 0) {
       return new Response(JSON.stringify({ message: "Company not found" }), {
