@@ -1,6 +1,7 @@
 import postgres from "postgres";
 
 import type { NextRequest } from "next/server";
+import { user } from "@nextui-org/theme";
 
 export async function GET(request: NextRequest) {
   const searchParamsEntries = request.nextUrl.searchParams.entries();
@@ -34,6 +35,7 @@ export async function GET(request: NextRequest) {
     }
     const singleJob = jobsQuery.map((item) => ({
       id: item.id,
+      user_id: item.user_id,
       title: item.title,
       companyName: item.company_name,
       typeEngagement: item.type_engagement,

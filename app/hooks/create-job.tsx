@@ -17,7 +17,7 @@ export const useCreateJob = (props: Props) => {
   const [web3, setWeb3] = useState<any>();
   const [contract, setContract] = useState<any>();
 
-  const handleUpdateEscrowAmount = async (id: number, amount: number) => {
+  const handleUpdateEscrowAmount = async (id: string, amount: number) => {
     await fetch(`/api/companies/update-escrow`, {
       method: "POST",
       headers: {
@@ -57,8 +57,8 @@ export const useCreateJob = (props: Props) => {
           amount.toString(),
           props.token === "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
             ? "mwei"
-            : "ether"
-        )
+            : "ether",
+        ),
       )
       .encodeABI();
     try {
@@ -83,13 +83,13 @@ export const useCreateJob = (props: Props) => {
     const web3 = new Web3(process.env.NEXT_PUBLIC_GOODHIVE_INFURA_API);
     const contract = new web3.eth.Contract(
       GoodhiveJobContract.abi,
-      GoodhiveContractAddress
+      GoodhiveContractAddress,
     );
     setWeb3(web3);
     setContract(contract);
   };
 
-  const createJobTx = async (jobId: number, amount: number) => {
+  const createJobTx = async (jobId: string, amount: number) => {
     try {
       const web3 = new Web3(process.env.NEXT_PUBLIC_GOODHIVE_INFURA_API);
       const balance = await checkBalanceTx(jobId);
@@ -105,7 +105,7 @@ export const useCreateJob = (props: Props) => {
       const contract: any = new web3.eth.Contract(
         GoodhiveJobContract.abi,
         GoodhiveContractAddress,
-        { from: accounts[0] }
+        { from: accounts[0] },
       );
       const tx = contract.methods
         .createJob(
@@ -114,9 +114,9 @@ export const useCreateJob = (props: Props) => {
             amount.toString(),
             props.token === "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
               ? "mwei"
-              : "ether"
+              : "ether",
           ),
-          props.token
+          props.token,
         )
         .encodeABI();
 
@@ -143,7 +143,7 @@ export const useCreateJob = (props: Props) => {
     }
   };
 
-  const checkBalanceTx = async (jobId: number) => {
+  const checkBalanceTx = async (jobId: string) => {
     try {
       const balance = await contract.methods.checkBalance(jobId).call();
 
@@ -159,7 +159,7 @@ export const useCreateJob = (props: Props) => {
     }
   };
 
-  const withdrawFundsTx = async (jobId: number, amount: number) => {
+  const withdrawFundsTx = async (jobId: string, amount: number) => {
     if (!window.ethereum) return "";
     const web3 = new Web3(process.env.NEXT_PUBLIC_GOODHIVE_INFURA_API);
     const accounts = await window.ethereum.request({ method: "eth_accounts" });
@@ -169,7 +169,7 @@ export const useCreateJob = (props: Props) => {
     const contract: any = new web3.eth.Contract(
       GoodhiveJobContract.abi,
       GoodhiveContractAddress,
-      { from: accounts[0] }
+      { from: accounts[0] },
     );
     const tx = contract.methods
       .withdrawFunds(
@@ -178,8 +178,8 @@ export const useCreateJob = (props: Props) => {
           amount.toString(),
           props.token === "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
             ? "mwei"
-            : "ether"
-        )
+            : "ether",
+        ),
       )
       .encodeABI();
     try {
@@ -203,7 +203,7 @@ export const useCreateJob = (props: Props) => {
     }
   };
 
-  const transferFundsTx = async (jobId: number, amount: number) => {
+  const transferFundsTx = async (jobId: string, amount: number) => {
     if (!window.ethereum) return "";
     const web3 = new Web3(process.env.NEXT_PUBLIC_GOODHIVE_INFURA_API);
     const accounts = await window.ethereum.request({ method: "eth_accounts" });
@@ -213,7 +213,7 @@ export const useCreateJob = (props: Props) => {
     const contract: any = new web3.eth.Contract(
       GoodhiveJobContract.abi,
       GoodhiveContractAddress,
-      { from: accounts[0] }
+      { from: accounts[0] },
     );
     const tx = contract.methods
       .sendTheFees(jobId, web3.utils.toWei(amount.toString(), "mwei"))
