@@ -6,15 +6,15 @@ const sql = postgres(process.env.DATABASE_URL || "", {
   },
 });
 
-export async function getCompanyJobs(walletAddress: string) {
-  if (!walletAddress) {
+export async function getCompanyJobs(userId: string) {
+  if (!userId) {
     return [];
   }
   try {
     const jobsQuery = await sql`
       SELECT *
       FROM goodhive.job_offers
-      WHERE wallet_address = ${walletAddress}
+      WHERE user_id = ${userId}
       `;
 
     const jobs = jobsQuery.map((item) => ({
@@ -76,6 +76,7 @@ export async function getSingleJob(id: number | undefined) {
       image_url: item.image_url,
       walletAddress: item.wallet_address,
       escrowAmount: item.escrow_amount,
+      user_id: item.user_id,
     }));
 
     return singleJob[0];

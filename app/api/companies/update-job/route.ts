@@ -7,7 +7,6 @@ export async function POST(request: Request) {
     typeEngagement,
     description,
     duration,
-    ratePerHour,
     budget,
     skills,
     chain,
@@ -44,7 +43,6 @@ export async function POST(request: Request) {
             type_engagement = ${typeEngagement},
             description = ${description},
             duration = ${duration},
-            rate_per_hour = ${ratePerHour},
             budget = ${budget},
             chain = ${chain},
             currency = ${currency},
@@ -63,10 +61,10 @@ export async function POST(request: Request) {
         `;
 
     return new Response(
-      JSON.stringify({ message: "Job updated successfully" })
+      JSON.stringify({ message: "Job updated successfully" }),
     );
   } catch (error) {
-    console.error("Error inserting data:", error);
+    console.error("Error inserting data::", error);
 
     return new Response(JSON.stringify({ message: "Error inserting data" }), {
       status: 500,

@@ -10,6 +10,7 @@ import { generateJobTypeEngage } from "@utils/generate-job-type-engage";
 import { FC, useContext, useState } from "react";
 import { Button } from "./button";
 import { AddressContext } from "./context";
+import Cookies from "js-cookie";
 
 interface Props {
   id: number;
@@ -31,6 +32,7 @@ interface Props {
   companyEmail?: string;
   escrowAmount?: string;
   walletAddress: string;
+  user_id?: string;
 }
 
 export const JobCard: FC<Props> = ({
@@ -51,8 +53,9 @@ export const JobCard: FC<Props> = ({
   budget,
   walletAddress,
   escrowAmount,
+  user_id,
 }) => {
-  console.log(countryFlag, "countryFlag");
+  const owner_userId = Cookies.get("user_id");
   const typeEngagementMsg = generateJobTypeEngage(typeEngagement);
   const jobTypeMsg = jobTypes.find((job) => job.value === jobType)?.label;
   const durationMsg = projectDuration.find(
@@ -62,7 +65,7 @@ export const JobCard: FC<Props> = ({
   const [isCoverLetterModal, setIsCoverLetterModal] = useState(false);
 
   const userWalletAddress = useContext(AddressContext);
-  const isOwner = walletAddress === userWalletAddress;
+  const isOwner = owner_userId === user_id;
   const jobBalance =
     Number(escrowAmount) > 0 ? `${escrowAmount} USDC` : "0 USDC";
 
