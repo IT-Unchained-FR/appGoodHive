@@ -1,5 +1,5 @@
 export type AddFundsModalProps = {
-  jobId: number;
+  jobId: string;
   open: boolean;
   type: string;
   onClose: VoidFunction;

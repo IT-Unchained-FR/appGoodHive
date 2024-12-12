@@ -2,6 +2,7 @@ import postgres from "postgres";
 
 export async function POST(request: Request) {
   const {
+    userId,
     title,
     typeEngagement,
     description,
@@ -34,11 +35,11 @@ export async function POST(request: Request) {
 
     await sql`
       INSERT INTO goodhive.job_offers (
+        user_id,
         title,
         type_engagement,
         description,
         duration,
-        rate_per_hour,
         budget,
         chain,
         currency,
@@ -55,11 +56,11 @@ export async function POST(request: Request) {
         wallet_address,
         posted_at
       ) VALUES (
+        ${userId},
         ${title},
         ${typeEngagement},
         ${description},
         ${duration},
-        ${ratePerHour},
         ${budget},
         ${chain},
         ${currency},
@@ -78,15 +79,16 @@ export async function POST(request: Request) {
       );
     `;
 
-    // now get the saved job id and return that
-    const savedJob = await sql`
+    // // now get the saved job id and return that
+    const latestJob = await sql`
       SELECT id
       FROM goodhive.job_offers
-      WHERE wallet_address = ${walletAddress}
-      ORDER BY id DESC
+      WHERE user_id = ${userId}
+      ORDER BY posted_at DESC
       LIMIT 1
     `;
-    const jobId = savedJob[0].id;
+
+    const jobId = latestJob[0]?.id;
 
     return new Response(JSON.stringify({ jobId }), {
       status: 200,

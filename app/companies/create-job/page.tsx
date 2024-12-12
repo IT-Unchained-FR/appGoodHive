@@ -2,7 +2,7 @@
 
 import { Tooltip } from "@nextui-org/tooltip";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useContext, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 import { useCreateJob } from "@/app/hooks/create-job";
@@ -25,12 +25,12 @@ import LabelOption from "@interfaces/label-option";
 import { calculateJobCreateFees } from "@utils/calculate-job-create-fees";
 
 import { AutoSuggestInput } from "@components/autosuggest-input";
-import { AddressContext } from "@components/context";
 import { Loader } from "@components/loader";
 import Modal from "@components/modal";
 import { SelectInput } from "@components/select-input";
 import { ToggleButton } from "@components/toggle-button";
 import { PopupModal } from "./PopupModal";
+import Cookies from "js-cookie";
 
 export default function CreateJob() {
   const [description, setDescription] = useState("");
@@ -61,22 +61,23 @@ export default function CreateJob() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const id = Number(searchParams.get("id"));
+  const id = searchParams.get("id");
   const addFunds = searchParams.get("addFunds");
-  const walletAddress = useContext(AddressContext);
+  const walletAddress = Cookies.get("wallet_address");
+  const userId = Cookies.get("user_id");
   const provisionalAmount =
     jobData && Number(jobData.escrowAmount) > 0 ? jobData.escrowAmount : 0;
 
   const { createJobTx, withdrawFundsTx, checkBalanceTx, transferFundsTx } =
     useCreateJob({
-      walletAddress,
+      walletAddress: walletAddress ? walletAddress : "",
       token: selectedCurrency?.value ?? "",
     });
 
   const onPopupModalSubmit = async (amount: number, type: string) => {
     switch (type) {
       case "addFunds":
-        const fundsRes = createJobTx(id, amount);
+        const fundsRes = createJobTx(id as string, amount);
         toast.promise(fundsRes, {
           loading: "Adding funds...",
           success: "Funds added successfully!",
@@ -85,7 +86,7 @@ export default function CreateJob() {
         handlePopupModalClose();
         break;
       case "withdraw":
-        const WithdrawRes = withdrawFundsTx(id, amount);
+        const WithdrawRes = withdrawFundsTx(id as string, amount);
         toast.promise(WithdrawRes, {
           loading: "Withdrawing funds...",
           success: "Funds withdrawn successfully!",
@@ -94,7 +95,7 @@ export default function CreateJob() {
         handlePopupModalClose();
         break;
       case "transfer":
-        const transferRes = transferFundsTx(id, amount);
+        const transferRes = transferFundsTx(id as string, amount);
         toast.promise(transferRes, {
           loading: "Transferring funds...",
           success: "Funds transferred successfully!",
@@ -106,7 +107,7 @@ export default function CreateJob() {
   };
 
   const handleCancelJob = async () => {
-    const balance = await checkBalanceTx(id);
+    const balance = await checkBalanceTx(id as string);
 
     if (Number(balance) > 0) {
       toast.error(`Please withdraw all funds before cancelling the job!`);
@@ -159,8 +160,8 @@ export default function CreateJob() {
   const totalFees = calculateJobCreateFees(projectType, budget, jobServices);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
     toast.loading("Saving...", { duration: 2000 });
+    e.preventDefault();
 
     const formData = new FormData(e.currentTarget);
 
@@ -168,16 +169,16 @@ export default function CreateJob() {
     const mentor = formData.get("mentor") === "on";
 
     const dataForm = {
+      userId,
       title: formData.get("title"),
       typeEngagement: typeEngagement ? typeEngagement.value : "",
       description: formData.get("description"),
       duration: duration ? duration?.value : "",
-      ratePerHour: "",
       budget: Number(budget),
       chain: selectedChain ? selectedChain.value : "",
       currency: selectedCurrency ? selectedCurrency.value : "",
       skills: selectedSkills,
-      walletAddress,
+      walletAddress: walletAddress ? walletAddress : "",
       city: companyData?.city,
       country: companyData?.country,
       companyName: companyData?.designation,
@@ -209,7 +210,7 @@ export default function CreateJob() {
     } else {
       if (id) {
         toast.success("Job Offer Saved!");
-        router.push(`/companies/${walletAddress}`);
+        router.push(`/companies/${userId}`);
       } else {
         toast.success("Job Offer Created! Now add some funds to it.");
         router.push(
@@ -230,7 +231,7 @@ export default function CreateJob() {
     try {
       setIsLoading(true);
       const response = await fetch(
-        `/api/companies/my-profile?walletAddress=${walletAddress}`,
+        `/api/companies/my-profile?userId=${userId}`,
       );
       const data = await response.json();
       setCompanyData(data);
@@ -242,6 +243,7 @@ export default function CreateJob() {
   };
 
   const fetchJobData = async () => {
+    console.log(`/api/companies/job-data?id=${id}`);
     try {
       setIsLoading(true);
       const response = await fetch(`/api/companies/job-data?id=${id}`);
@@ -282,12 +284,13 @@ export default function CreateJob() {
   };
 
   useEffect(() => {
-    if (walletAddress) {
+    if (userId) {
       fetchCompanyData();
     }
-  }, [walletAddress]);
+  }, [userId]);
 
   useEffect(() => {
+    console.log(id, "hello from id");
     if (id) {
       fetchJobData();
     }
@@ -301,33 +304,24 @@ export default function CreateJob() {
     setDescription(value);
   };
 
-  if (!walletAddress) {
-    return (
-      <h3 className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
-        🚀 To get started, please connect your wallet. This will enable you to
-        create your company profile and create jobs.
-      </h3>
-    );
-  }
+  // if (jobData.user_id !== userId) {
+  //   return (
+  //     <h3 className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+  //       🚀 You are not authorized to edit this job.
+  //     </h3>
+  //   );
+  // }
 
-  if (walletAddress && companyData && !companyData?.designation) {
-    return (
-      <h3 className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
-        🚀 Complete your company profile first before creating a job.
-      </h3>
-    );
-  }
+  // if (!walletAddress) {
+  //   return (
+  //     <h3 className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+  //       🚀 To get started, please connect your wallet. This will enable you to
+  //       create your company profile and create jobs.
+  //     </h3>
+  //   );
+  // }
 
-  if (companyData && companyData?.status === "pending") {
-    return (
-      <h3 className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
-        🚀 Your company profile is under review. You will be able to create jobs
-        once it is approved.
-      </h3>
-    );
-  }
-
-  if (id && jobData && jobData?.walletAddress !== walletAddress) {
+  if (jobData && jobData.user_id !== userId) {
     return (
       <h3 className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
         🚀 You are not authorized to edit this job.
@@ -705,7 +699,7 @@ export default function CreateJob() {
       <PopupModal
         open={isPopupModalOpen}
         onClose={handlePopupModalClose}
-        jobId={id}
+        jobId={id as string}
         type={popupModalType}
         onSubmit={onPopupModalSubmit}
         currencyToken={selectedCurrency?.value ?? ""}
