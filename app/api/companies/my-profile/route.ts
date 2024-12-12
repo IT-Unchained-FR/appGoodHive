@@ -136,8 +136,6 @@ export async function GET(request: NextRequest) {
         WHERE user_id = ${userId}
       `;
 
-    console.log(company, "company..");
-
     if (company.length === 0) {
       return new Response(JSON.stringify({ message: "Company not found" }), {
         status: 404,
