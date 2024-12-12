@@ -174,7 +174,7 @@ export default function CreateJob() {
       typeEngagement: typeEngagement ? typeEngagement.value : "",
       description: formData.get("description"),
       duration: duration ? duration?.value : "",
-      budget: Number(budget),
+      budget: budget,
       chain: selectedChain ? selectedChain.value : "",
       currency: selectedCurrency ? selectedCurrency.value : "",
       skills: selectedSkills,

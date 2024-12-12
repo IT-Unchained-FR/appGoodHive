@@ -19,7 +19,7 @@ import { ReferralSection } from "@/app/components/referral/referral-section";
 import { countryCodes } from "@/app/constants/phoneNumberCountryCode";
 
 export default function MyProfile() {
-  const user_id = Cookies.get("user_id");
+  const userId = Cookies.get("user_id");
   const imageInputValue = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -60,7 +60,7 @@ export default function MyProfile() {
       setIsLoading(true);
 
       const profileResponse = await fetch(
-        `/api/companies/my-profile?userId=${user_id}`,
+        `/api/companies/my-profile?userId=${userId}`,
       );
 
       if (profileResponse.ok) {
@@ -73,8 +73,8 @@ export default function MyProfile() {
       setIsLoading(false);
     };
 
-    if (user_id) fetchProfile();
-  }, [user_id]);
+    if (userId) fetchProfile();
+  }, [userId]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -89,7 +89,7 @@ export default function MyProfile() {
 
     const dataForm = {
       headline: formData.get("headline"),
-      user_id,
+      user_id: userId,
       designation: formData.get("designation"),
       address: formData.get("address"),
       country: selectedCountry?.value,
@@ -151,7 +151,7 @@ export default function MyProfile() {
     setProfileData({ ...profileData, headline: value });
   };
 
-  if (!user_id) {
+  if (!userId) {
     return (
       <h2 className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
         🚀 To Get Started Please Login First
@@ -199,7 +199,7 @@ export default function MyProfile() {
             )}
           </div>
           <div className="w-full flex justify-center mt-2">
-            <Link href={`/companies/${walletAddress}`}>
+            <Link href={`/companies/${userId}`}>
               <Button text="Public View" type="secondary" size="medium" />
             </Link>
           </div>
