@@ -6,17 +6,17 @@ const sql = postgres(process.env.DATABASE_URL || "", {
   },
 });
 
-export async function getCompanyData(address: string | undefined) {
-  if (!address) {
+export async function getCompanyData(userId: string | undefined) {
+  if (!userId) {
     return {};
   }
 
   try {
     const user = await sql`
-        SELECT *
-        FROM goodhive.talents
-        WHERE wallet_address = ${address}
-        `;
+      SELECT *
+      FROM goodhive.companies
+      WHERE user_id = ${userId}
+      `;
     // FROM goodhive.companies
 
     if (user.length === 0) {
