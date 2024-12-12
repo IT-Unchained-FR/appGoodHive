@@ -13,7 +13,7 @@ export const revalidate = 0;
 
 type CompanyProfilePageProps = {
   params: {
-    address: string;
+    userId: string;
   };
   searchParams: {
     id?: number;
@@ -23,10 +23,16 @@ type CompanyProfilePageProps = {
 export default async function CompanyProfilePage(
   context: CompanyProfilePageProps,
 ) {
-  const { address } = context.params;
+  const { userId } = context.params;
   const { id } = context.searchParams;
-  const profileData = await getCompanyData(address);
-  const jobs = await getCompanyJobs(address);
+  let profileData: any = {};
+  try {
+    profileData = await getCompanyData(userId);
+  } catch (error) {
+    console.error("Failed to fetch company data:", error);
+    profileData = {};
+  }
+  // const jobs = await getCompanyJobs(userId);
   const singleJob = await getSingleJob(id);
 
   const {
@@ -137,7 +143,7 @@ export default async function CompanyProfilePage(
           <h2 className="text-left w-full pl-5 mb-2 mt-5 text-2xl font-bold">
             Job listings:
           </h2>
-          <div className="grid w-full grid-cols-2 gap-4 lg:grid-cols-1 md:grid-cols-1 sm:grid-cols-1 ">
+          {/* <div className="grid w-full grid-cols-2 gap-4 lg:grid-cols-1 md:grid-cols-1 sm:grid-cols-1 ">
             {jobs.map((job) => {
               if (singleJob && singleJob.id === job.id) return null;
               const {
@@ -179,7 +185,7 @@ export default async function CompanyProfilePage(
                 />
               );
             })}
-          </div>
+          </div> */}
         </div>
       </div>
     </main>
