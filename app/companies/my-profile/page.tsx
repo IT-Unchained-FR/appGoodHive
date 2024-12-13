@@ -406,20 +406,37 @@ export default function MyProfile() {
 
             <div className="mt-10 text-right">
               {isLoading ? (
-                <button
-                  className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full opacity-50 cursor-not-allowed transition duration-150 ease-in-out"
-                  type="submit"
-                  disabled
-                >
-                  Loading...
-                </button>
+                <div className="flex gap-4 justify-end">
+                  <button
+                    className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full opacity-50 cursor-not-allowed transition duration-150 ease-in-out"
+                    type="submit"
+                    disabled
+                  >
+                    Loading...
+                  </button>
+                  <button
+                    className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full opacity-50 cursor-not-allowed transition duration-150 ease-in-out"
+                    type="submit"
+                    disabled
+                  >
+                    Loading...
+                  </button>
+                </div>
               ) : (
-                <button
-                  className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
-                  type="submit"
-                >
-                  Save
-                </button>
+                <div className="flex gap-4 justify-end">
+                  <button
+                    className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
+                    type="submit"
+                  >
+                    Save
+                  </button>
+                  <button
+                    className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
+                    type="submit"
+                  >
+                    Submit For Review
+                  </button>
+                </div>
               )}
             </div>
           </div>

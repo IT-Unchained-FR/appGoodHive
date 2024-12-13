@@ -77,14 +77,20 @@ export default function CreateJob() {
   const onPopupModalSubmit = async (amount: number, type: string) => {
     switch (type) {
       case "addFunds":
-        const fundsRes = createJobTx(id as string, amount);
-        toast.promise(fundsRes, {
-          loading: "Adding funds...",
-          success: "Funds added successfully!",
-          error: "Error adding funds!",
-        });
-        handlePopupModalClose();
+        try {
+          await createJobTx(id as string, amount);
+          toast.success("Funds added successfully!");
+        } catch (error) {
+          if (error instanceof Error) {
+            toast.error(error.message);
+          } else {
+            toast.error("Error adding funds!");
+          }
+        } finally {
+          handlePopupModalClose();
+        }
         break;
+
       case "withdraw":
         const WithdrawRes = withdrawFundsTx(id as string, amount);
         toast.promise(WithdrawRes, {

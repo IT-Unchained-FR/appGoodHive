@@ -45,7 +45,7 @@ export const useCreateJob = (props: Props) => {
     const web3 = new Web3(process.env.NEXT_PUBLIC_GOODHIVE_INFURA_API);
     const accounts = await window.ethereum.request({ method: "eth_accounts" });
     if (accounts.length === 0) {
-      return console.log("no accout found");
+      throw new Error("Please Connect Your Wallet");
     }
     const contract: any = new web3.eth.Contract(TokenAbi, props.token, {
       from: accounts[0],
@@ -100,7 +100,7 @@ export const useCreateJob = (props: Props) => {
       const EndingBalance = Number(balance) + Number(amount);
       await requestApproval(amount);
       if (accounts.length === 0) {
-        return console.log("no accout found");
+        throw new Error("Please Connect Your Wallet");
       }
       const contract: any = new web3.eth.Contract(
         GoodhiveJobContract.abi,
