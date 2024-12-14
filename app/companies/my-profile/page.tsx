@@ -40,7 +40,9 @@ export default function MyProfile() {
     portfolio: "",
     status: "",
     referrer: "",
+    approved: false,
   });
+  const unapprovedProfile = profileData && profileData.approved === false;
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
   const [isShowReferralSection, setIsShowReferralSection] = useState(false);
@@ -65,6 +67,7 @@ export default function MyProfile() {
 
       if (profileResponse.ok) {
         const profileData = await profileResponse.json();
+        console.log(profileData, "Profile Data...");
         setProfileData(profileData);
         setIsShowReferralSection(true);
       } else {
@@ -75,6 +78,8 @@ export default function MyProfile() {
 
     if (userId) fetchProfile();
   }, [userId]);
+
+  console.log(profileData, "Profile Data...");
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -161,7 +166,7 @@ export default function MyProfile() {
 
   return (
     <main className="container mx-auto">
-      {profileData && profileData.status === "pending" && (
+      {unapprovedProfile && (
         <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
           🚀 Your profile is pending approval. It will be live soon.
         </p>
@@ -204,9 +209,16 @@ export default function MyProfile() {
             </Link>
           </div>
           <div className="w-full flex justify-center mt-7">
-            <Link href={`/companies/create-job`}>
-              <Button text="Create Job" type="secondary" size="medium" />
-            </Link>
+            {unapprovedProfile ? (
+              <p>
+                You Can&apos;t Add Job Because Your Company Profile Is Not
+                Approved Yet!{" "}
+              </p>
+            ) : (
+              <Link href={`/companies/create-job`}>
+                <Button text="Create Job" type="secondary" size="medium" />
+              </Link>
+            )}
           </div>
           <div className="flex flex-col w-full mt-20">
             <div className="flex-1 mb-5">
