@@ -54,12 +54,14 @@ type ProfileData = {
   referrer?: string;
   availability?: boolean;
   wallet_address?: string;
+  approved: boolean;
 };
 
 export default function ProfilePage() {
   const [profileData, setProfileData] = useState<ProfileData>(
     {} as ProfileData,
   );
+  const unapprovedProfile = profileData && profileData.approved === false;
   const imageInputValue = useRef(null);
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [cvFile, setCvFile] = useState<File | null>(null);
@@ -247,6 +249,11 @@ export default function ProfilePage() {
 
   return (
     <div className="container mx-auto px-4 py-8 ">
+      {unapprovedProfile && (
+        <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+          🚀 Your profile is pending approval. It will be live soon.
+        </p>
+      )}
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
         {/* // TODO: Add image upload functionality */}
         <div className="flex flex-col items-center justify-center w-full mt-10">
