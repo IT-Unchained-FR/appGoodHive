@@ -30,7 +30,9 @@ const Login = () => {
 
     if (response.ok) {
       setIsLoading(false);
+      console.log(responseBody, "responseBody...login");
       Cookies.set("user_id", responseBody.user_id);
+      Cookies.set("loggedIn_user", JSON.stringify(responseBody.user));
 
       window.location.href = "/talents/my-profile";
     } else {
