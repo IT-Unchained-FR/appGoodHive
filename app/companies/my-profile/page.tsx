@@ -17,11 +17,13 @@ import { socialLinks } from "@/app/talents/my-profile/constant";
 import { uploadFileToBucket } from "@utils/upload-file-bucket";
 import { ReferralSection } from "@/app/components/referral/referral-section";
 import { countryCodes } from "@/app/constants/phoneNumberCountryCode";
+import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/honey-bee-spinner";
 
 export default function MyProfile() {
   const userId = Cookies.get("user_id");
   const imageInputValue = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [profileData, setProfileData] = useState({
     headline: "",
     designation: "",
@@ -83,7 +85,7 @@ export default function MyProfile() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsSaving(true);
 
     const isNewUser = !profileData.designation;
     const referralCode = Cookies.get("referralCode");
@@ -114,8 +116,6 @@ export default function MyProfile() {
       referralCode: isAlreadyReferred ? null : referralCode,
     };
 
-    console.log(dataForm, "DataForm...");
-
     // TODO: POST formData to the server with fetch
     const profileResponse = await fetch("/api/companies/my-profile", {
       method: "POST",
@@ -125,7 +125,7 @@ export default function MyProfile() {
       body: JSON.stringify(dataForm),
     });
 
-    setIsLoading(false);
+    setIsSaving(false);
 
     if (!profileResponse.ok) {
       toast.error("Something went wrong!");
@@ -162,6 +162,15 @@ export default function MyProfile() {
         🚀 To Get Started Please Login First
       </h2>
     );
+  }
+
+  if (isLoading) {
+    window.scrollTo(0, 0);
+    return <HoneybeeSpinner message={"Loading Your Profile, Please Wait"} />;
+  }
+  if (isSaving) {
+    window.scrollTo(0, 0);
+    return <HoneybeeSpinner message={"Saving Your Profile..."} />;
   }
 
   return (
