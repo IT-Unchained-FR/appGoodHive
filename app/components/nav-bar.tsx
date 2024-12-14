@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Cookies from "js-cookie";
 import { useAccount, useDisconnect } from "wagmi";
+import toast from "react-hot-toast";
 
 const commonLinks = [
   { href: "/talents/job-search", label: "Find a Job" },
@@ -51,17 +52,53 @@ export const NavBar = () => {
     Cookies.remove("user_email");
     Cookies.remove("user_id");
     Cookies.remove("wallet_address");
+    Cookies.remove("loggedIn_user");
     disconnect();
 
     window.location.href = "/";
   };
 
-  useEffect(() => {
-    // Set the wallet address in the cookies
-    if (isConnected && address) {
-      Cookies.set("wallet_address", address);
-    }
+  const loggedInUserCookie = Cookies.get("loggedIn_user");
+  const loggedIn_user = loggedInUserCookie
+    ? JSON.parse(loggedInUserCookie)
+    : null;
 
+  useEffect(() => {
+    if (isConnected && address && !loggedIn_user?.wallet_address) {
+      fetch("/api/auth/set-wallet-address", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          walletAddress: address,
+          userId: loggedIn_user_id,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            console.log(data.user, "data.user");
+            Cookies.set("loggedIn_user", JSON.stringify(data.user));
+            toast.success(data.message);
+          } else {
+            toast.error(data.message);
+            disconnect();
+          }
+        })
+        .catch((error) => {
+          console.error("Error wallet address saving:", error);
+        });
+    }
+  }, [
+    address,
+    isConnected,
+    loggedIn_user_id,
+    loggedIn_user?.wallet_address,
+    disconnect,
+  ]);
+
+  useEffect(() => {
     // Checking if there is a user id in the cookies
     if (!loggedIn_user_id && isConnected && address) {
       // Check if the user exists in the database

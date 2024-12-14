@@ -54,6 +54,7 @@ export async function POST(req: Request) {
           message: "Login Successful",
           email: user.email,
           user_id: user.userid,
+          user,
         }),
         {
           status: 200,
