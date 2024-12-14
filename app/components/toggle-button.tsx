@@ -32,7 +32,6 @@ export const ToggleButton: FC<ToggleButtonProps> = (props) => {
         type="checkbox"
         name={name}
         checked={isChecked}
-        defaultChecked={checked}
         onChange={handleChange}
         className="sr-only peer"
       />
