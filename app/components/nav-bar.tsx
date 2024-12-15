@@ -64,7 +64,13 @@ export const NavBar = () => {
     : null;
 
   useEffect(() => {
-    if (isConnected && address && !loggedIn_user?.wallet_address) {
+    if (
+      isConnected &&
+      address &&
+      !loggedIn_user?.wallet_address &&
+      loggedIn_user_id
+    ) {
+      if (!loggedIn_user?.email) return;
       fetch("/api/auth/set-wallet-address", {
         method: "POST",
         headers: {
@@ -96,6 +102,7 @@ export const NavBar = () => {
     loggedIn_user_id,
     loggedIn_user?.wallet_address,
     disconnect,
+    loggedIn_user?.email,
   ]);
 
   useEffect(() => {
