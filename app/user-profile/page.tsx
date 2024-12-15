@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Mail,
   User,
@@ -9,41 +9,66 @@ import {
   Users,
   Wallet,
   Link,
-  ArrowRight,
   CircleUserRound,
 } from "lucide-react";
-
-interface UserProfileProps {
-  email: string;
-  userId: string;
-  talentStatus: "Active" | "Inactive";
-  mentorStatus: "Available" | "Unavailable";
-  recruiterStatus: "Active" | "Inactive";
-  walletAddress: string;
-}
+import Cookies from "js-cookie";
+import { HoneybeeSpinner } from "../components/spinners/honey-bee-spinner/honey-bee-spinner";
 
 export default function UserProfilePage() {
-  const email = "example@goodhive.com";
-  const userId = "USR12345678";
-  const talentStatus = "Active" as const;
-  const mentorStatus = "Available" as const;
-  const recruiterStatus = "Inactive" as const;
-  const walletAddress = "0x1234...5678";
-
   const [isConnecting, setIsConnecting] = useState(false);
+  interface UserProfile {
+    id: number;
+    userid: string;
+    email: string | null;
+    talent_status: "pending" | "approved";
+    mentor_status: "pending" | "approved";
+    recruiter_status: "pending" | "approved";
+    wallet_address?: string;
+  }
+
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  const user_id = Cookies.get("user_id");
+
+  const fetchUserProfile = useCallback(async () => {
+    setIsConnecting(true);
+    try {
+      const response = await fetch(`/api/profile?user_id=${user_id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to connect");
+      }
+
+      const data = await response.json();
+      setUserProfile(data.user);
+      setIsConnecting(false);
+    } catch (error) {
+      setIsConnecting(false);
+      alert("Connection failed. Please try again.");
+      console.error("Error:", error);
+    }
+  }, [user_id]);
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, [fetchUserProfile]);
 
   const handleConnect = () => {
-    setIsConnecting(true);
-    // Simulating an API call
-    setTimeout(() => {
-      setIsConnecting(false);
-      alert("Connected successfully!");
-    }, 2000);
+    console.log("Connecting...");
   };
+
+  if (!userProfile) {
+    return <HoneybeeSpinner message={"Loading Your User Profile..."} />;
+  }
 
   return (
     <div className="bg-white flex items-center justify-center p-4 py-14">
-      <div className="w-full max-w-3xl bg-white shadow-xl rounded-xl overflow-hidden border border-gray-200 animate-fade-in-up">
+      <div className="w-full max-w-4xl bg-white shadow-xl rounded-xl overflow-hidden border border-gray-200 animate-fade-in-up">
         <div className="bg-[#FFC905] p-6 flex gap-4 items-center justify-center">
           <CircleUserRound
             className="
@@ -57,27 +82,42 @@ export default function UserProfilePage() {
         </div>
         <div className="p-6">
           <div className="grid grid-cols-2 gap-6">
-            <ProfileItem icon={Mail} label="Email" value={email} />
-            <ProfileItem icon={User} label="User ID" value={userId} />
+            <ProfileItem
+              icon={Mail}
+              label="Email"
+              value={<StatusBadge status={"No Email Connected"} />}
+            />
+            <ProfileItem
+              icon={User}
+              label="User ID"
+              value={userProfile?.userid}
+            />
             <ProfileItem
               icon={Briefcase}
               label="Talent Status"
-              value={<StatusBadge status={talentStatus} />}
+              value={
+                <StatusBadge status={userProfile?.talent_status as string} />
+              }
             />
             <ProfileItem
               icon={GraduationCap}
               label="Mentor Status"
-              value={<StatusBadge status={mentorStatus} />}
+              value={
+                <StatusBadge status={userProfile?.mentor_status as string} />
+              }
             />
             <ProfileItem
               icon={Users}
               label="Recruiter Status"
-              value={<StatusBadge status={recruiterStatus} />}
+              value={
+                <StatusBadge status={userProfile?.recruiter_status as string} />
+              }
             />
             <ProfileItem
               icon={Wallet}
               label="Wallet Address"
-              value={walletAddress}
+              value={userProfile?.wallet_address || "Not Connected"}
+              cropped
             />
           </div>
           <div className="mt-8 flex justify-center">
@@ -130,32 +170,59 @@ interface ProfileItemProps {
   icon: React.ElementType;
   label: string;
   value: React.ReactNode;
+  cropped?: boolean;
 }
 
-function ProfileItem({ icon: Icon, label, value }: ProfileItemProps) {
+function ProfileItem({ icon: Icon, label, value, cropped }: ProfileItemProps) {
+  const handleCopy = () => {
+    if (typeof value === "string") {
+      navigator.clipboard
+        .writeText(value)
+        .then(() => alert("Copied to clipboard!"))
+        .catch((err) => console.error("Failed to copy:", err));
+    }
+  };
+
   return (
     <div className="flex items-center space-x-4 bg-gray-50 p-4 rounded-lg shadow-sm transition-all duration-200 hover:scale-105">
       <Icon className="w-6 h-6 text-yellow-500" />
-      <div>
+      <div className="flex-grow">
         <p className="text-sm font-medium text-gray-500">{label}</p>
-        <div className="text-lg font-semibold text-gray-800">{value}</div>
+        <div className="text-sm mt-2 font-semibold text-gray-800">
+          {cropped && typeof value === "string" && value.length > 20
+            ? `${value.slice(0, 10)}...${value.slice(-20)}`
+            : value}
+        </div>
       </div>
+      {typeof value === "string" && (
+        <button
+          onClick={handleCopy}
+          className="p-2 hover:bg-gray-200 rounded-full"
+          title="Copy to clipboard"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 text-gray-500"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+            <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }
 
-function StatusBadge({
-  status,
-}: {
-  status: "Active" | "Inactive" | "Available" | "Unavailable";
-}) {
+function StatusBadge({ status }: { status: "pending" | "approved" | string }) {
   const color =
-    status === "Active" || status === "Available"
+    status === "pending" || status === "approved"
       ? "bg-green-100 text-green-800"
-      : "bg-gray-100 text-gray-800";
+      : "bg-gray-100 text-yellow-800";
   return (
     <span className={`${color} text-sm font-medium px-2 py-1 rounded-full`}>
-      {status}
+      {status?.charAt(0).toUpperCase() + status?.slice(1)}
     </span>
   );
 }
