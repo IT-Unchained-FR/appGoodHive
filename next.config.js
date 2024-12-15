@@ -5,6 +5,7 @@ const nextConfig = {
     typedRoutes: true,
     serverActions: true,
     missingSuspenseWithCSRBailout: false,
+    reactStrictMode: false,
   },
   images: {
     domains: [

@@ -40,7 +40,7 @@ const { chains, publicClient, webSocketPublicClient } = configureChains(
         http: GoodhiveInfuraApi,
       }),
     }),
-  ]
+  ],
 );
 
 const projectId = "c1de7de6d9dac11ced03c7516792c20c";
