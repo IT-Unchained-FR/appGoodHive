@@ -47,6 +47,7 @@ export default function MyProfile() {
   const unapprovedProfile = profileData && profileData.approved === false;
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
+  const [noProfileFound, setNoProfileFound] = useState<boolean>(false);
   const [isShowReferralSection, setIsShowReferralSection] = useState(false);
 
   const [selectedCountry, setSelectedCountry] = useState<LabelOption | null>(
@@ -60,6 +61,7 @@ export default function MyProfile() {
   };
 
   useEffect(() => {
+    setNoProfileFound(false);
     const fetchProfile = async () => {
       setIsLoading(true);
 
@@ -73,7 +75,7 @@ export default function MyProfile() {
         setProfileData(profileData);
         setIsShowReferralSection(true);
       } else {
-        console.error(profileResponse.statusText);
+        setNoProfileFound(true);
       }
       setIsLoading(false);
     };
@@ -175,11 +177,16 @@ export default function MyProfile() {
 
   return (
     <main className="container mx-auto">
-      {unapprovedProfile && (
+      {noProfileFound ? (
         <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
-          🚀 Your profile is pending approval. It will be live soon.
+          🚀 Please Create a Profile To Continue
         </p>
-      )}
+      ) : unapprovedProfile ? (
+        <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+          🚀 Your Profile Is Pending Approval. It Will Be Live Soon After
+          Review.
+        </p>
+      ) : null}
       <h1 className="my-5 text-2xl border-b-[1px] border-slate-300 pb-2">
         My Profile
       </h1>
@@ -218,7 +225,9 @@ export default function MyProfile() {
             </Link>
           </div>
           <div className="w-full flex justify-center mt-7">
-            {unapprovedProfile ? (
+            {noProfileFound ? (
+              <p>Please create a profile before posting jobs!</p>
+            ) : unapprovedProfile ? (
               <p>
                 You Can&apos;t Add Job Because Your Company Profile Is Not
                 Approved Yet!{" "}
