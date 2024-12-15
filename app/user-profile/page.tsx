@@ -13,20 +13,22 @@ import {
 } from "lucide-react";
 import Cookies from "js-cookie";
 import { HoneybeeSpinner } from "../components/spinners/honey-bee-spinner/honey-bee-spinner";
+import { ConnectEmailPopup } from "../components/popups";
+
+export interface UserProfile {
+  id: number;
+  userid: string;
+  email: string | null;
+  talent_status: "pending" | "approved";
+  mentor_status: "pending" | "approved";
+  recruiter_status: "pending" | "approved";
+  wallet_address?: string;
+}
 
 export default function UserProfilePage() {
   const [isConnecting, setIsConnecting] = useState(false);
-  interface UserProfile {
-    id: number;
-    userid: string;
-    email: string | null;
-    talent_status: "pending" | "approved";
-    mentor_status: "pending" | "approved";
-    recruiter_status: "pending" | "approved";
-    wallet_address?: string;
-  }
-
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [showConnectEmailPopup, setShowConnectEmailPopup] = useState(false);
 
   const user_id = Cookies.get("user_id");
 
@@ -59,7 +61,7 @@ export default function UserProfilePage() {
   }, [fetchUserProfile]);
 
   const handleConnect = () => {
-    console.log("Connecting...");
+    setShowConnectEmailPopup(true);
   };
 
   if (!userProfile) {
@@ -67,7 +69,17 @@ export default function UserProfilePage() {
   }
 
   return (
-    <div className="bg-white flex items-center justify-center p-4 py-14">
+    <div
+      className="bg-white flex items-center justify-center p-4 py-14"
+      style={{
+        minHeight: "calc(100vh - 4rem)",
+      }}
+    >
+      <ConnectEmailPopup
+        isOpen={showConnectEmailPopup}
+        onClose={() => setShowConnectEmailPopup(false)}
+        setUserProfile={setUserProfile}
+      />
       <div className="w-full max-w-4xl bg-white shadow-xl rounded-xl overflow-hidden border border-gray-200 animate-fade-in-up">
         <div className="bg-[#FFC905] p-6 flex gap-4 items-center justify-center">
           <CircleUserRound
@@ -87,6 +99,7 @@ export default function UserProfilePage() {
               label="Email"
               value={
                 <StatusBadge
+                  firstCaseLower
                   color="green"
                   status={userProfile.email || "No Email Connected"}
                 />
@@ -223,9 +236,11 @@ function ProfileItem({ icon: Icon, label, value, cropped }: ProfileItemProps) {
 }
 
 function StatusBadge({
+  firstCaseLower,
   status,
   color,
 }: {
+  firstCaseLower?: boolean;
   status: "pending" | "approved" | string;
   color?: "green" | "yellow" | "none";
 }) {
@@ -241,7 +256,9 @@ function StatusBadge({
     <span
       className={`${badgeThemeColor} text-sm font-medium px-2 py-1 rounded-full`}
     >
-      {status?.charAt(0).toUpperCase() + status?.slice(1)}
+      {firstCaseLower
+        ? status
+        : status?.charAt(0).toUpperCase() + status?.slice(1)}
     </span>
   );
 }
