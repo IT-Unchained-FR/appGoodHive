@@ -2,7 +2,7 @@ export const TRANSLATIONS = {
   jobSearchTitle: "Looking for Job",
   talentSearchTitle: "Looking for Talent",
   searchPlaceholder: "Try Developer Solidity, Rust, C++...",
-  locationPlaceholder: "Location Paris, Lodon, Remote...",
+  locationPlaceholder: "Location Paris, London, Remote...",
   searchByDeveloperName: "Search by Developer Name",
   searchByCompanyName: "Search by Company Name",
   openToRecruiter: "Open to Recruiter",

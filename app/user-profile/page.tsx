@@ -14,6 +14,7 @@ import {
 import Cookies from "js-cookie";
 import { HoneybeeSpinner } from "../components/spinners/honey-bee-spinner/honey-bee-spinner";
 import { ConnectEmailPopup } from "../components/popups";
+import toast from "react-hot-toast";
 
 export interface UserProfile {
   id: number;
@@ -198,7 +199,11 @@ function ProfileItem({ icon: Icon, label, value, cropped }: ProfileItemProps) {
     if (typeof value === "string") {
       navigator.clipboard
         .writeText(value)
-        .then(() => alert("Copied to clipboard!"))
+        .then(() =>
+          toast.success("Copied to clipboard!", {
+            icon: "📋",
+          }),
+        )
         .catch((err) => console.error("Failed to copy:", err));
     }
   };
