@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { CircleUserRound } from "lucide-react";
 
 import { useEffect, useState } from "react";
 
@@ -168,7 +169,7 @@ export const NavBar = () => {
             </ul>
           </nav>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-5">
             {loggedIn_user_id ? (
               <button
                 className="my-2 text-base font-semibold bg-[#FFC905] h-10 w-40 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
@@ -188,6 +189,19 @@ export const NavBar = () => {
             )}
             <div className="flex gap-4">
               <ConnectButton />
+            </div>
+            <div>
+              {loggedIn_user_id &&
+                loggedIn_user &&
+                (loggedIn_user.email || loggedIn_user.wallet_address) && (
+                  <Link href="/user-profile">
+                    <CircleUserRound
+                      size={36}
+                      color="white"
+                      className="cursor-pointer"
+                    />
+                  </Link>
+                )}
             </div>
 
             <button
