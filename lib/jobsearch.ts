@@ -37,11 +37,11 @@ export async function fetchJobs({
         FROM goodhive.job_offers
         WHERE
           (LOWER(title) LIKE ${contains(
-            search
+            search,
           )} OR LOWER(skills) LIKE ${contains(search)})
             AND 
             (LOWER(city) LIKE ${contains(
-              location
+              location,
             )} OR LOWER(country) LIKE ${contains(location)})
             AND
             (LOWER(company_name) LIKE ${contains(name)})
@@ -59,12 +59,12 @@ export async function fetchJobs({
       FROM goodhive.job_offers
       WHERE
       (LOWER(title) LIKE ${contains(search)} OR LOWER(skills) LIKE ${contains(
-      search
-    )})
+        search,
+      )})
       AND
       (LOWER(city) LIKE ${contains(location)} OR LOWER(country) LIKE ${contains(
-      location
-    )})
+        location,
+      )})
       AND
       (LOWER(company_name) LIKE ${contains(name)})
       ${recruiter === "true" ? sql`AND recruiter = 'true'` : sql``}
@@ -74,6 +74,7 @@ export async function fetchJobs({
 
     const jobs = jobsQuery.map((item) => ({
       id: item.id,
+      user_id: item.user_id,
       title: item.title,
       companyName: item.company_name,
       typeEngagement: item.type_engagement,
@@ -93,7 +94,7 @@ export async function fetchJobs({
     }));
 
     const sortedJobs = jobs.sort(
-      (a, b) => Number(b.escrowAmount) - Number(a.escrowAmount)
+      (a, b) => Number(b.escrowAmount) - Number(a.escrowAmount),
     );
     const paginatedJobs = sortedJobs.slice(offset, offset + limit);
 

@@ -59,6 +59,24 @@ export default function UserProfilePage() {
 
   useEffect(() => {
     fetchUserProfile();
+    fetch("/api/migration", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Migration failed");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log("Migration successful:", data);
+      })
+      .catch((error) => {
+        console.error("Error during migration:", error);
+      });
   }, [fetchUserProfile]);
 
   const handleConnect = () => {
