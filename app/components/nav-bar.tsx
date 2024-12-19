@@ -132,6 +132,7 @@ export const NavBar = () => {
     }
   }, [isConnected, address, loggedIn_user_id]);
 
+  console.log(loggedIn_user, "loggedIn_user");
   return (
     <header aria-label="Site Header" className="bg-black ">
       <div className="flex items-center h-16 gap-8 px-8 mx-auto sm:px-6">
@@ -191,17 +192,15 @@ export const NavBar = () => {
               <ConnectButton />
             </div>
             <div>
-              {loggedIn_user_id &&
-                loggedIn_user &&
-                (loggedIn_user.email || loggedIn_user.wallet_address) && (
-                  <Link href="/user-profile">
-                    <CircleUserRound
-                      size={36}
-                      color="white"
-                      className="cursor-pointer"
-                    />
-                  </Link>
-                )}
+              {loggedIn_user_id && (
+                <Link href="/user-profile">
+                  <CircleUserRound
+                    size={36}
+                    color="white"
+                    className="cursor-pointer"
+                  />
+                </Link>
+              )}
             </div>
 
             <button
