@@ -93,6 +93,7 @@ export default function ProfilePage() {
         if (data.country) {
           setSelectedCountry({ value: data.country, label: data.country });
         }
+        console.log(data, "data of profile page...");
         if (data.skills) {
           setSelectedSkills(
             data.skills.split(", ").map((skill: string) => skill.trim()),
@@ -251,7 +252,8 @@ export default function ProfilePage() {
     <div className="container mx-auto px-4 py-8 ">
       {unapprovedProfile && (
         <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
-          🚀 Your profile is pending approval. It will be live soon.
+          🚀 Your profile is pending approval. Check your email to schedule your
+          interview.
         </p>
       )}
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
@@ -524,7 +526,7 @@ export default function ProfilePage() {
             >
               CV*
             </label>
-            {isUploadedCvLink ? (
+            {isUploadedCvLink || profileData.cv_url ? (
               <div className="flex items-center gap-3 p-3">
                 <Link
                   href={{ pathname: profileData.cv_url }}
