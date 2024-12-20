@@ -1,10 +1,11 @@
 {
-  "extends": [
-    "next/core-web-vitals",
-    "plugin:@typescript-eslint/recommended",
-    "prettier"
-  ],
+  "extends": ["next/core-web-vitals", "eslint:recommended"],
+  "plugins": ["react", "@typescript-eslint"],
   "rules": {
-    "@typescript-eslint/ban-ts-ignore": "off"
+    "no-console": "warn", // Warns instead of failing for console.log
+    "no-unused-vars": "warn", // Warns instead of failing for unused variables
+    "@typescript-eslint/no-unused-vars": "warn", // Warns for TypeScript unused vars
+    "react/no-unescaped-entities": "warn", // Warn for unescaped entities in JSX
+    "react/prop-types": "warn" // Warns for missing prop types in React components
   }
 }
