@@ -78,7 +78,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
       <div className="relative pt-12 space-y-6 w-6/12 sm:w-full md:w-full">
         <div className="absolute w-full top-0 left-0">
           <AutoSuggestInput
-            classes={InputClasses}
+            classes={InputClasses.join(" ")}
             placeholder={TRANSLATIONS.searchPlaceholder}
             inputs={skills}
             selectedInputs={[query.search]}
