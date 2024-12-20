@@ -50,6 +50,7 @@ export async function fetchTalents({
       AND (${onlyTalent} = '' OR freelance_only = true)
       AND (${onlyMentor} = '' OR remote_only = true)
       AND (${onlyRecruiter} = '' OR availability = true)
+      AND approved = true
       LIMIT ${limit}
       OFFSET ${offset}
     `;
