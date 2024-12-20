@@ -2,7 +2,10 @@
 
 import clsx from "clsx";
 import { FC, useState } from "react";
-import Autosuggest from "react-autosuggest";
+import Autosuggest, {
+  SuggestionsFetchRequestedParams,
+  SuggestionSelectedEventData,
+} from "react-autosuggest";
 import { AutosuggestInputProps } from "./autosuggest-input.types";
 
 export const AutoSuggestInput: FC<AutosuggestInputProps> = (props) => {
@@ -24,13 +27,13 @@ export const AutoSuggestInput: FC<AutosuggestInputProps> = (props) => {
     return inputLength === 0
       ? []
       : inputs.filter(
-          (inputs) => inputs.toLowerCase().slice(0, inputLength) === inputValue
+          (input) => input.toLowerCase().slice(0, inputLength) === inputValue,
         );
   };
 
   const onSuggestionSelected = (
     event: React.FormEvent<HTMLInputElement>,
-    { suggestion }: Autosuggest.SuggestionSelectedEventData<string>
+    { suggestion }: SuggestionSelectedEventData<string>,
   ) => {
     if (isSingleInput) {
       setSelectedInputs([suggestion]);
@@ -58,7 +61,7 @@ export const AutoSuggestInput: FC<AutosuggestInputProps> = (props) => {
     value: inputValue,
     onChange(
       event: React.FormEvent<HTMLElement>,
-      { newValue }: { newValue: string }
+      { newValue }: { newValue: string },
     ) {
       setInputValue(newValue);
     },
@@ -80,9 +83,11 @@ export const AutoSuggestInput: FC<AutosuggestInputProps> = (props) => {
   return (
     <Autosuggest
       suggestions={getSuggestions(inputValue)}
-      onSuggestionsFetchRequested={() => ""}
-      onSuggestionsClearRequested={() => ""}
-      getSuggestionValue={(skill) => skill}
+      onSuggestionsFetchRequested={({
+        value,
+      }: SuggestionsFetchRequestedParams) => setInputValue(value)}
+      onSuggestionsClearRequested={() => setInputValue("")}
+      getSuggestionValue={(suggestion) => suggestion}
       onSuggestionSelected={onSuggestionSelected}
       renderSuggestion={renderSuggestion}
       inputProps={inputProps}
