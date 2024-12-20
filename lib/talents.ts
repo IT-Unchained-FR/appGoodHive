@@ -30,6 +30,26 @@ export async function fetchTalents({
   onlyMentor?: string;
   onlyRecruiter?: string;
 }) {
+  console.log(
+    "🔍",
+    "search:",
+    search,
+    "location:",
+    location,
+    "name:",
+    name,
+    "items:",
+    items,
+    "page:",
+    page,
+    "onlyTalent:",
+    onlyTalent,
+    "onlyMentor:",
+    onlyMentor,
+    "onlyRecruiter:",
+    onlyRecruiter,
+    "Juhan was here",
+  );
   try {
     const countCursor = await sql`
     SELECT COUNT(*)
@@ -44,12 +64,12 @@ export async function fetchTalents({
     const talentsCursor = await sql`
       SELECT *
       FROM goodhive.talents
-      WHERE (${search} = '' OR LOWER(title) LIKE ${contains(search)})
-      AND (${location} = '' OR LOWER(country) LIKE ${contains(location)} OR LOWER(city) LIKE ${contains(location)})
+      WHERE (${search} = '' OR LOWER(skills) LIKE ${contains(search)})
       AND (${name} = '' OR LOWER(first_name) LIKE ${contains(name)} OR LOWER(last_name) LIKE ${contains(name)})
-      AND (${onlyTalent} = '' OR freelance_only = true)
-      AND (${onlyMentor} = '' OR remote_only = true)
-      AND (${onlyRecruiter} = '' OR availability = true)
+      AND (${location} = '' OR LOWER(city) LIKE ${contains(location)})
+      AND (${onlyTalent} != 'true' OR talent = true)
+      AND (${onlyRecruiter} != 'true' OR recruiter = true)
+      AND (${onlyMentor} != 'true' OR mentor = true)
       AND approved = true
       LIMIT ${limit}
       OFFSET ${offset}
