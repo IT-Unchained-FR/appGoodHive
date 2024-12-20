@@ -1,96 +1,119 @@
 "use client";
 
-import clsx from "clsx";
 import { FC, useState } from "react";
-import Autosuggest, {
-  SuggestionsFetchRequestedParams,
-  SuggestionSelectedEventData,
-} from "react-autosuggest";
-import { AutosuggestInputProps } from "./autosuggest-input.types";
+import { useCombobox } from "downshift";
+import clsx from "clsx";
 
-export const AutoSuggestInput: FC<AutosuggestInputProps> = (props) => {
-  const [inputValue, setInputValue] = useState("");
+interface AutoSuggestInputProps {
+  inputs: string[];
+  classes?: string;
+  placeholder?: string;
+  selectedInputs: string[];
+  setSelectedInputs: (inputs: string[]) => void;
+  isSingleInput?: boolean;
+}
 
+export const AutoSuggestInput: FC<AutoSuggestInputProps> = (props) => {
   const {
     inputs,
     classes,
-    placeholder,
+    placeholder = "JavaScript, NextJS,...",
     selectedInputs,
     setSelectedInputs,
     isSingleInput = false,
   } = props;
 
-  const getSuggestions = (value: string) => {
-    const inputValue = value.trim().toLowerCase();
-    const inputLength = inputValue.length;
+  const [inputValue, setInputValue] = useState("");
 
-    return inputLength === 0
-      ? []
-      : inputs.filter(
-          (input) => input.toLowerCase().slice(0, inputLength) === inputValue,
-        );
-  };
-
-  const onSuggestionSelected = (
-    event: React.FormEvent<HTMLInputElement>,
-    { suggestion }: SuggestionSelectedEventData<string>,
-  ) => {
-    if (isSingleInput) {
-      setSelectedInputs([suggestion]);
-      return;
-    }
-    if (!selectedInputs.includes(suggestion)) {
-      setSelectedInputs([...selectedInputs, suggestion]);
-    }
-  };
-
-  const renderSuggestion = (suggestion: string) => (
-    <div className="mx-1 px-2 py-2 z-10 hover:text-[#FF8C05] bg-white shadow-md max-h-48 overflow-y-auto border-gray-400 border-b-[0.5px] border-solid">
-      {suggestion}
-    </div>
+  const filteredInputs = inputs.filter(
+    (input) =>
+      input.toLowerCase().includes(inputValue.toLowerCase()) &&
+      !selectedInputs.includes(input),
   );
 
-  const inputProps = {
-    className: classes
-      ? clsx(classes)
-      : "relative rounded-lg block w-full px-4 py-2 text-base font-normal text-gray-600 bg-clip-padding transition ease-in-out focus:text-black bg-gray-100 focus:outline-none focus:ring-0",
-    placeholder: placeholder || "JavaScript, NextJS,...",
-    type: "text",
-    maxLength: 255,
-    name: "skills",
-    value: inputValue,
-    onChange(
-      event: React.FormEvent<HTMLElement>,
-      { newValue }: { newValue: string },
-    ) {
-      setInputValue(newValue);
-    },
-    onKeyDown(event: React.KeyboardEvent<HTMLElement>) {
-      if (event.key === "Enter") {
-        event.preventDefault();
+  const {
+    isOpen,
+    getMenuProps,
+    getInputProps,
+    getItemProps,
+    highlightedIndex,
+  } = useCombobox({
+    items: filteredInputs,
+    inputValue,
+    onInputValueChange: ({ inputValue }) => setInputValue(inputValue || ""),
+    onSelectedItemChange: ({ selectedItem }) => {
+      if (selectedItem) {
         if (isSingleInput) {
-          setSelectedInputs([inputValue]);
-          return;
-        }
-        if (!selectedInputs.includes(inputValue)) {
-          setSelectedInputs([...selectedInputs, inputValue]);
+          setSelectedInputs([selectedItem]);
+        } else if (!selectedInputs.includes(selectedItem)) {
+          setSelectedInputs([...selectedInputs, selectedItem]);
         }
         setInputValue("");
       }
     },
-  };
+  });
 
   return (
-    <Autosuggest
-      suggestions={getSuggestions(inputValue)}
-      onSuggestionsFetchRequested={({
-        value,
-      }: SuggestionsFetchRequestedParams) => setInputValue(value)}
-      onSuggestionsClearRequested={() => setInputValue("")}
-      getSuggestionValue={(suggestion) => suggestion}
-      onSuggestionSelected={onSuggestionSelected}
-      renderSuggestion={renderSuggestion}
-      inputProps={inputProps}
-    />
+    <div className="relative">
+      <input
+        {...getInputProps()}
+        className={clsx(
+          "relative rounded-lg block w-full px-4 py-2 text-base font-normal text-gray-600 bg-gray-100 focus:outline-none focus:ring-0",
+          classes,
+        )}
+        placeholder={placeholder}
+      />
+      <ul
+        {...getMenuProps()}
+        className={clsx(
+          "absolute z-10 w-full bg-white shadow-md max-h-48 overflow-y-auto border border-gray-300 rounded-md mt-1",
+          { hidden: !isOpen },
+        )}
+      >
+        {isOpen &&
+          filteredInputs.map((item, index) => (
+            <li
+              key={item}
+              {...getItemProps({ item, index })}
+              className={clsx(
+                "px-4 py-2 cursor-pointer",
+                highlightedIndex === index
+                  ? "bg-gray-200"
+                  : "bg-white hover:bg-gray-100",
+              )}
+            >
+              {item}
+            </li>
+          ))}
+        {isOpen && filteredInputs.length === 0 && (
+          <li className="px-4 py-2 text-gray-500">No suggestions found</li>
+        )}
+      </ul>
+
+      {/* Selected Items */}
+      {/* <div className="mt-2 flex flex-wrap gap-2">
+        {selectedInputs.map((input, index) => (
+          <span
+            key={index}
+            className="flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
+          >
+            {input}
+            {!isSingleInput && (
+              <button
+                type="button"
+                className="ml-2 text-blue-500 hover:text-blue-700"
+                onClick={() =>
+                  setSelectedInputs(
+                    selectedInputs.filter((selected) => selected !== input),
+                  )
+                }
+              >
+                ×
+              </button>
+            )}
+          </span>
+        ))}
+      </div> */}
+    </div>
   );
 };
