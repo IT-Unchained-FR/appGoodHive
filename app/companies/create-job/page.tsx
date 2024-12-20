@@ -129,7 +129,7 @@ export default function CreateJob() {
     });
     if (response.ok) {
       toast.success("Job cancelled!");
-      router.push(`/companies/${walletAddress}`);
+      router.push(`/companies/my-profile`);
     } else {
       toast.error("Something went wrong!");
       window.location.reload();
