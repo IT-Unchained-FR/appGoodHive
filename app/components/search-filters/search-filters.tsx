@@ -29,6 +29,12 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
     onlyRecruiter: false,
   });
 
+  const [toggleValues, setToggleValues] = useState({
+    onlyTalent: false,
+    onlyMentor: false,
+    onlyRecruiter: false,
+  });
+
   const { isSearchTalent = false } = props;
 
   const title = isSearchTalent
@@ -36,7 +42,6 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
     : TRANSLATIONS.jobSearchTitle;
 
   const handleSearchChange = (skills: string[]) => {
-    console.log("skills search >>>", skills);
     setQuery((q) => ({ ...q, search: skills[0] }));
   };
 
@@ -49,37 +54,26 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
   };
 
   const handleOpenToRecruiterChange = (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setQuery((q) => ({ ...q, recruiter: event.target.checked }));
   };
 
   const handleOpenToMentorChange = (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setQuery((q) => ({ ...q, mentor: event.target.checked }));
   };
 
-  const handleOnlyTalentChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setQuery((q) => ({ ...q, onlyTalent: event.target.checked }));
-  };
-
-  const handleOnlyMentorChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setQuery((q) => ({ ...q, onlyMentor: event.target.checked }));
-  };
-
-  const handleOnlyRecruiterChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setQuery((q) => ({ ...q, onlyRecruiter: event.target.checked }));
-  };
-
   return (
     <div>
+      <p
+        onClick={() => {
+          console.log(query, "query");
+        }}
+      >
+        query
+      </p>
       <h1 className="my-5 font-bold text-2xl">{title}</h1>
       <div className="relative pt-12 space-y-6 w-6/12 sm:w-full md:w-full">
         <div className="absolute w-full top-0 left-0">
@@ -115,20 +109,35 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
             <ToggleButton
               label={TRANSLATIONS.onlyTalent}
               name="onlyTalent"
-              checked={query.onlyTalent}
-              onChange={handleOnlyTalentChange}
+              checked={toggleValues.onlyTalent}
+              setValue={(name, value) => {
+                setToggleValues((prev) => ({
+                  ...prev,
+                  [name]: value,
+                }));
+              }}
             />
             <ToggleButton
               label={TRANSLATIONS.onlyMentor}
               name="onlyMentor"
-              checked={query.onlyMentor}
-              onChange={handleOnlyMentorChange}
+              checked={toggleValues.onlyMentor}
+              setValue={(name, value) => {
+                setToggleValues((prev) => ({
+                  ...prev,
+                  [name]: value,
+                }));
+              }}
             />
             <ToggleButton
               label={TRANSLATIONS.onlyRecruiter}
               name="onlyRecruiter"
-              checked={query.onlyRecruiter}
-              onChange={handleOnlyRecruiterChange}
+              checked={toggleValues.onlyRecruiter}
+              setValue={(name, value) => {
+                setToggleValues((prev) => ({
+                  ...prev,
+                  [name]: value,
+                }));
+              }}
             />
           </div>
         ) : (
@@ -151,10 +160,10 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
         <div className="flex justify-between gap-3">
           <LinkButton
             href={{
-              href: isSearchTalent
+              pathname: isSearchTalent
                 ? "/companies/search-talents"
                 : "/talents/job-search",
-              query,
+              query: { ...query, ...toggleValues },
             }}
             icon={searchIcon}
             iconSize="large"
