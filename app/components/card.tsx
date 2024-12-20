@@ -115,11 +115,7 @@ export const Card: FC<Props> = ({
               {croppedTitle}
             </p>
             <Link
-              href={
-                jobId
-                  ? `/companies/${walletAddress}`
-                  : `/talents/${walletAddress}`
-              }
+              href={jobId ? `/companies/${uniqueId}` : `/talents/${uniqueId}`}
             >
               <p className="text-base text-gray-600 sm:text-xs sm:mb-1">
                 {postedBy}
