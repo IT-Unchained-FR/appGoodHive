@@ -56,6 +56,8 @@ export async function GET(request: NextRequest) {
       mentor: item.mentor,
       escrowAmount: item.escrow_amount,
       walletAddress: item.wallet_address,
+      createdAt: item.posted_at,
+      job_id: item.job_id,
     }));
 
     return new Response(JSON.stringify(singleJob[0]));
