@@ -12,6 +12,9 @@
     "no-empty": "off",
     "no-constant-condition": "off",
     "no-dupe-keys": "off",
-    "no-irregular-whitespace": "off"
+    "no-irregular-whitespace": "off",
+    "no-case-declarations": "off",
+    "no-useless-catch": "off",
+    "no-async-promise-executor": "off"
   }
 }
