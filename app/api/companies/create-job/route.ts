@@ -79,7 +79,7 @@ export async function POST(request: Request) {
       );
     `;
 
-    // // now get the saved job id and return that
+    // now get the saved job id and return that
     const latestJob = await sql`
       SELECT id
       FROM goodhive.job_offers
