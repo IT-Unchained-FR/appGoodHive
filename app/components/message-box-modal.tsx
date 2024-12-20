@@ -1,6 +1,6 @@
 import React, { FC, useState } from "react";
 import { Button } from "./button";
-import ReCAPTCHA from "react-google-recaptcha";
+// import ReCAPTCHA from "react-google-recaptcha";
 
 interface Props {
   title: string;
@@ -15,14 +15,14 @@ export const MessageBoxModal: FC<Props> = (props) => {
   const [isCaptchaValid, setIsCaptchaValid] = useState(false);
 
   const googleSiteKey = process.env.NEXT_PUBLIC_GOOGLE_RECAPTCHA_SITE_KEY || "";
-  
+
   const onChange = (value: any) => {
     if (value) {
       setIsCaptchaValid(true);
     } else {
       setIsCaptchaValid(false);
     }
-  }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
@@ -32,7 +32,7 @@ export const MessageBoxModal: FC<Props> = (props) => {
     if (message.length < messageLengthLimit) {
       alert(`Must be at least ${messageLengthLimit} characters!`);
       return;
-    } else if (!isCaptchaValid) { 
+    } else if (!isCaptchaValid) {
       alert(`Please complete the captcha!`);
       return;
     }
@@ -70,7 +70,7 @@ export const MessageBoxModal: FC<Props> = (props) => {
               <p className="text-left mt-2 text-sm text-gray-500">{`minimum ${messageLengthLimit} characters *`}</p>
             </div>
           </div>
-          <ReCAPTCHA sitekey={googleSiteKey} onChange={onChange} />
+          {/* <ReCAPTCHA sitekey={googleSiteKey} onChange={onChange} /> */}
           <div className="w-full flex justify-end px-4 py-2 mb-4 sm:px-6 sm:flex sm:flex-row-reverse">
             <Button
               text="Submit"
