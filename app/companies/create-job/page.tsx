@@ -78,7 +78,7 @@ export default function CreateJob() {
     switch (type) {
       case "addFunds":
         try {
-          await createJobTx(id as string, amount);
+          await createJobTx(jobData?.job_id, amount);
           toast.success("Funds added successfully!");
         } catch (error) {
           if (error instanceof Error) {
@@ -92,7 +92,7 @@ export default function CreateJob() {
         break;
 
       case "withdraw":
-        const WithdrawRes = withdrawFundsTx(id as string, amount);
+        const WithdrawRes = withdrawFundsTx(jobData?.job_id, amount);
         toast.promise(WithdrawRes, {
           loading: "Withdrawing funds...",
           success: "Funds withdrawn successfully!",
@@ -101,7 +101,7 @@ export default function CreateJob() {
         handlePopupModalClose();
         break;
       case "transfer":
-        const transferRes = transferFundsTx(id as string, amount);
+        const transferRes = transferFundsTx(jobData?.job_id, amount);
         toast.promise(transferRes, {
           loading: "Transferring funds...",
           success: "Funds transferred successfully!",
@@ -113,7 +113,7 @@ export default function CreateJob() {
   };
 
   const handleCancelJob = async () => {
-    const balance = await checkBalanceTx(id as string);
+    const balance = await checkBalanceTx(jobData?.job_id);
 
     if (Number(balance) > 0) {
       toast.error(`Please withdraw all funds before cancelling the job!`);
@@ -254,7 +254,7 @@ export default function CreateJob() {
       setIsLoading(true);
       const response = await fetch(`/api/companies/job-data?id=${id}`);
       const data = await response.json();
-      setJobData(data);
+      setJobData({ ...data, job_id: String(data.job_id) });
       setJobServices({
         talent: true,
         recruiter: data.recruiter === "true" || false,

@@ -90,7 +90,6 @@ export const useCreateJob = (props: Props) => {
   };
 
   const createJobTx = async (jobId: string, amount: number) => {
-    console.log("jobId", jobId, "amount", amount);
     try {
       const web3 = new Web3(process.env.NEXT_PUBLIC_GOODHIVE_INFURA_API);
       const balance = await checkBalanceTx(jobId);
@@ -145,8 +144,16 @@ export const useCreateJob = (props: Props) => {
   };
 
   const checkBalanceTx = async (jobId: string) => {
+    const web3 = new Web3(process.env.NEXT_PUBLIC_GOODHIVE_INFURA_API);
+    const contract = new web3.eth.Contract(
+      GoodhiveJobContract.abi,
+      GoodhiveContractAddress,
+    );
+
     try {
       const balance = await contract.methods.checkBalance(jobId).call();
+
+      console.log(balance, "balance");
 
       const balanceInEther =
         Number(balance) /
