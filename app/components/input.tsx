@@ -1,46 +1,46 @@
 import clsx from "clsx";
+import React from "react";
 
 type Props = React.InputHTMLAttributes<HTMLInputElement> & {
   labelText?: string;
+  classes?: string;
 };
 
-export function Input({ labelText, ...props }: Props) {
+export function Input({ labelText, classes, ...props }: Props) {
   const baseClasses = [
-    "form-control",
+    "relative",
     "block",
     "w-full",
     "px-4",
     "py-2",
     "text-base",
-    "bg-white",
-    "bg-clip-padding",
-    "border",
-    "border-solid",
-    "rounded-full",
+    "font-normal",
+    "text-gray-600",
+    "bg-gray-100",
+    "rounded-lg",
+    "focus:outline-none",
+    "focus:ring-0",
   ];
 
-  const comlementaryClasses = props.disabled
-    ? ["font-light", "text-gray-200", "border-[#FFF2CE] "]
+  const stateClasses = props.disabled
+    ? ["font-light", "text-gray-200", "bg-gray-50", "cursor-not-allowed"]
     : [
-        "font-normal",
-        "text-gray-600",
-        "border-[#FFC905]",
-        "hover:shadow-lg",
-        "transition",
+        "hover:bg-gray-50",
+        "transition-colors",
+        "duration-200",
         "ease-in-out",
-        "m-0",
         "focus:text-black",
         "focus:bg-white",
-        "focus:border-[#FF8C05]",
-        "focus:outline-none",
       ];
 
   return (
-    <div>
-      <label className="inline-block ml-3 text-base text-black form-label">
-        {labelText}
-      </label>
-      <input className={clsx(baseClasses, comlementaryClasses)} {...props} />
+    <div className="relative">
+      {labelText && (
+        <label className="block mb-1 ml-1 text-sm text-gray-600">
+          {labelText}
+        </label>
+      )}
+      <input className={clsx(baseClasses, stateClasses, classes)} {...props} />
     </div>
   );
 }

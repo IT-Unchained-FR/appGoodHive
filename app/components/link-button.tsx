@@ -33,7 +33,7 @@ export function LinkButton({
   ];
 
   const sizes = {
-    medium: ["h-12", "w-44"],
+    medium: ["h-12", "w-44", "text-sm", "font-semibold"],
     large: ["font-semibold", "h-14", "w-56"],
   };
 
