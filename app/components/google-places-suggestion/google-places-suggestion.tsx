@@ -28,14 +28,14 @@ function loadAsyncScript(src: string): Promise<HTMLScriptElement> {
 }
 
 export const GooglePlaceSuggestion: FC<GooglePlaceSuggestionProps> = (
-  props
+  props,
 ) => {
   const { handleLocationChange, label, classes } = props;
   const searchInput = useRef<HTMLInputElement | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    handleLocationChange(value);
+    // handleLocationChange(value);
   };
 
   const initMapScript = () => {
@@ -50,7 +50,7 @@ export const GooglePlaceSuggestion: FC<GooglePlaceSuggestionProps> = (
     const address_component = autocomplete.getPlace().address_components;
     const city = address_component.filter(
       (f: any) =>
-        JSON.stringify(f.types) === JSON.stringify(["locality", "political"])
+        JSON.stringify(f.types) === JSON.stringify(["locality", "political"]),
     )[0].short_name;
 
     handleLocationChange(city);
@@ -60,12 +60,12 @@ export const GooglePlaceSuggestion: FC<GooglePlaceSuggestionProps> = (
     if (!searchInput.current) return;
 
     const autocomplete = new window.google.maps.places.Autocomplete(
-      searchInput.current
+      searchInput.current,
     );
 
     autocomplete.setFields(["address_component", "geometry"]);
     autocomplete.addListener("place_changed", () =>
-      onChangeAddress(autocomplete)
+      onChangeAddress(autocomplete),
     );
   };
 
