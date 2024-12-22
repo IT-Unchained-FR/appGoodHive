@@ -21,7 +21,7 @@ import DragAndDropFile from "@/app/components/drag-and-drop-file";
 import Cookies from "js-cookie";
 import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/honey-bee-spinner";
 
-type ProfileData = {
+export type ProfileData = {
   first_name: string;
   last_name: string;
   image_url?: string;
