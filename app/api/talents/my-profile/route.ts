@@ -140,6 +140,8 @@ export async function GET(request: NextRequest) {
       WHERE t.user_id = ${user_id}
     `;
 
+    console.log(user, "user");
+
     if (user.length === 0) {
       return new Response(JSON.stringify({ message: "User not found" }), {
         status: 404,
