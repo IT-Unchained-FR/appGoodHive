@@ -245,7 +245,11 @@ export default function ProfilePage() {
       });
 
       if (profileResponse.ok) {
-        toast.success("Profile saved successfully");
+        toast.success(
+          !validate
+            ? "Profile sent to review by the core team!"
+            : "Profile saved successfully",
+        );
         fetchProfile();
       } else {
         toast.error("Something went wrong while saving your profile");
