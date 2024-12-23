@@ -82,13 +82,6 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
     remote_only,
   );
 
-  // if (
-  //   ref === "admin" &&
-  //   vkey !== process.env.NEXT_PUBLIC_ADMIN_VERIFICATION_KEY
-  // ) {
-  //   return null; // Don't render for invalid keys
-  // }
-
   if (talent_status === "pending") {
     return (
       <div>
