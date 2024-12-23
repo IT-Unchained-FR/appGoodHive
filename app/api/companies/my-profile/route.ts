@@ -9,8 +9,8 @@ export async function POST(request: Request) {
     address,
     country,
     city,
-    phoneCountryCode,
-    phoneNumber,
+    phone_country_code,
+    phone_number,
     email,
     telegram,
     imageUrl,
@@ -22,6 +22,7 @@ export async function POST(request: Request) {
     portfolio,
     status,
     referralCode,
+    validate,
   } = await request.json();
 
   const sql = postgres(process.env.DATABASE_URL || "", {
@@ -30,73 +31,56 @@ export async function POST(request: Request) {
     },
   });
 
+  const fields = {
+    headline,
+    user_id,
+    designation,
+    address,
+    country,
+    city,
+    phone_country_code,
+    phone_number,
+    email,
+    telegram,
+    image_url: imageUrl,
+    linkedin,
+    github,
+    stackoverflow,
+    twitter,
+    portfolio,
+    status,
+    wallet_address: walletAddress,
+  };
+
   if (!user_id) {
     return new Response(JSON.stringify({ message: "Unauthorized" }), {
       status: 401,
     });
   }
 
-  try {
-    await sql`
-      INSERT INTO goodhive.companies (
-        headline,
-        user_id,
-        designation,
-        address,
-        country,
-        city,
-        phone_country_code,
-        phone_number,
-        email,
-        telegram,
-        image_url,
-        linkedin,
-        github,
-        stackoverflow,
-        twitter,
-        portfolio,
-        status,
-        wallet_address
-      ) VALUES (
-        ${headline},
-        ${user_id},
-        ${designation},
-        ${address},
-        ${country},
-        ${city},
-        ${phoneCountryCode},
-        ${phoneNumber},
-        ${email},
-        ${telegram},
-        ${imageUrl},
-        ${linkedin},
-        ${github},
-        ${stackoverflow},
-        ${twitter},
-        ${portfolio},
-        ${status},
-        ${walletAddress}
-      )
-      ON CONFLICT (user_id) DO UPDATE
-      SET headline = EXCLUDED.headline,
-          designation = EXCLUDED.designation,
-          address = EXCLUDED.address,
-          country = EXCLUDED.country,
-          city = EXCLUDED.city,
-          phone_country_code = EXCLUDED.phone_country_code,
-          phone_number = EXCLUDED.phone_number,
-          email = EXCLUDED.email,
-          telegram = EXCLUDED.telegram,
-          image_url = EXCLUDED.image_url,
-          linkedin = EXCLUDED.linkedin,
-          github = EXCLUDED.github,
-          stackoverflow = EXCLUDED.stackoverflow,
-          twitter = EXCLUDED.twitter,
-          portfolio = EXCLUDED.portfolio,
-          status = EXCLUDED.status,
-          wallet_address = EXCLUDED.wallet_address;
-    `;
+  const filteredFields = Object.entries(fields).filter(
+    ([, value]) => value !== undefined && value !== null,
+  );
 
+  const columns = filteredFields.map(([key]) => key).join(", ");
+  const values = filteredFields.map(([, value]) => value);
+  const placeholders = filteredFields
+    .map((_, index) => `$${index + 1}`)
+    .join(", ");
+
+  const updateSet = filteredFields
+    .map(([key], index) => `${key} = $${index + 1}`)
+    .join(", ");
+
+  const query = `
+    INSERT INTO goodhive.companies (${columns})
+    VALUES (${placeholders})
+    ON CONFLICT (user_id)
+    DO UPDATE SET ${updateSet}
+  `;
+
+  try {
+    await sql.unsafe(query, values);
     return new Response(
       JSON.stringify({ message: "Data inserted successfully" }),
     );

@@ -75,7 +75,6 @@ export default function ProfilePage() {
   const [walletAddress, setWalletAddress] = useState("");
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
   const [isProfileDataFetching, setIsProfileDataFetching] = useState(false);
-  console.log(unapprovedProfile, "unapprovedProfile of profile page...");
   const {
     register,
     handleSubmit,
@@ -737,7 +736,6 @@ export default function ProfilePage() {
                       socialLink.name as keyof typeof profileData
                     ] as string
                   }
-                  isRequired={socialLink.isRequired}
                   setValue={setValue as any}
                   errorMessage={
                     errors[socialLink.name as keyof typeof errors]
