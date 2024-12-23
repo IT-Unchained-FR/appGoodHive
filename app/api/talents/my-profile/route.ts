@@ -34,74 +34,78 @@ export async function POST(request: Request) {
     mentor,
     recruiter,
     hide_contact_details,
-    // referralCode,
     availability,
     user_id,
+    validate,
   } = await request.json();
 
   const sql = postgres(process.env.DATABASE_URL || "", {
     ssl: {
-      rejectUnauthorized: false, // This allows connecting to a database with a self-signed certificate
+      rejectUnauthorized: false,
     },
   });
 
   try {
+    // Filter out undefined fields
     const fields = {
       title,
-      description: Buffer.from(description, "utf-8").toString("base64"),
-      first_name: first_name,
-      last_name: last_name,
+      description: description
+        ? Buffer.from(description, "utf-8").toString("base64")
+        : null,
+      first_name,
+      last_name,
       country,
       city,
-      phone_country_code: phone_country_code,
-      phone_number: phone_number,
+      phone_country_code,
+      phone_number,
       email,
-      about_work: Buffer.from(about_work, "utf-8").toString("base64"),
+      about_work: about_work
+        ? Buffer.from(about_work, "utf-8").toString("base64")
+        : null,
       rate,
       skills,
-      image_url: image_url,
-      cv_url: cv_url,
+      image_url,
+      cv_url,
       telegram,
       linkedin,
       github,
       stackoverflow,
       twitter,
       portfolio,
-      freelance_only: freelance_only,
-      remote_only: remote_only,
+      freelance_only,
+      remote_only,
       talent,
       mentor,
       recruiter,
-      hide_contact_details: hide_contact_details,
+      hide_contact_details,
       availability,
-      wallet_address: wallet_address,
+      wallet_address,
       user_id,
+      inReview: validate === true ? true : false,
     };
 
-    // spell-checker: disable
+    const filteredFields = Object.entries(fields).filter(
+      ([, value]) => value !== undefined && value !== null,
+    );
+
+    const columns = filteredFields.map(([key]) => key).join(", ");
+    const values = filteredFields.map(([, value]) => value);
+    const placeholders = filteredFields
+      .map((_, index) => `$${index + 1}`)
+      .join(", ");
+
+    const updateSet = filteredFields
+      .map(([key], index) => `${key} = $${index + 1}`)
+      .join(", ");
+
     const query = `
-      INSERT INTO goodhive.talents (
-      ${Object.entries(fields)
-        .filter(([, value]) => value !== undefined && value !== "")
-        .map(([key]) => key)
-        .join(", ")}
-      ) VALUES (
-      ${Object.entries(fields)
-        .filter(([, value]) => value !== undefined && value !== "")
-        .map(([, value]) => (typeof value === "string" ? `'${value}'` : value))
-        .join(", ")}
-      )
-      ON CONFLICT (user_id) 
-      DO UPDATE SET
-      ${Object.entries(fields)
-        .filter(([, value]) => value !== undefined && value !== "")
-        .map(([key]) => `${key} = EXCLUDED.${key}`)
-        .join(", ")}
+      INSERT INTO goodhive.talents (${columns})
+      VALUES (${placeholders})
+      ON CONFLICT (user_id)
+      DO UPDATE SET ${updateSet}
     `;
 
-    const formattedQuery = query.replace(/\s+/g, " ").trim();
-
-    await sql.unsafe(formattedQuery);
+    await sql.unsafe(query, values);
 
     return new Response(
       JSON.stringify({ message: "Data inserted or updated successfully" }),
@@ -111,9 +115,7 @@ export async function POST(request: Request) {
 
     return new Response(
       JSON.stringify({ message: "Error inserting or updating data" }),
-      {
-        status: 500,
-      },
+      { status: 500 },
     );
   }
 }
@@ -150,8 +152,12 @@ export async function GET(request: NextRequest) {
 
     const userProfile = {
       ...user[0],
-      description: Buffer.from(user[0].description, "base64").toString("utf-8"),
-      about_work: Buffer.from(user[0].about_work, "base64").toString("utf-8"),
+      description: user[0].description
+        ? Buffer.from(user[0].description, "base64").toString("utf-8")
+        : null,
+      about_work: user[0].about_work
+        ? Buffer.from(user[0].about_work, "base64").toString("utf-8")
+        : null,
     };
 
     return new Response(JSON.stringify(userProfile));
