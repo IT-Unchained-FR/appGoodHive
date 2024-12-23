@@ -108,7 +108,7 @@ export default function MyProfile() {
   }, [userId]);
 
   const handleFormSubmit = async (data: any, validate: boolean) => {
-    // setIsSaving(true);
+    setIsSaving(true);
 
     const isNewUser = !profileData.designation;
     const referralCode = Cookies.get("referralCode");
@@ -191,10 +191,10 @@ export default function MyProfile() {
           }),
         });
       }
-      if (profileData.status === "approved") {
+      if (validate === false) {
         toast.success("Profile Saved!");
       } else {
-        toast.success("Profile saved but still under review by the core team!");
+        toast.success("Profile sent to review by the core team!");
       }
     }
   };
