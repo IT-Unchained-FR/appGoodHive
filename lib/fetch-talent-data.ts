@@ -11,7 +11,7 @@ export async function getPendingTalents() {
     const users = await sql`
       SELECT *
       FROM goodhive.talents
-      WHERE approved = false
+      WHERE inReview = true
       `;
     return users;
   } catch (error) {
