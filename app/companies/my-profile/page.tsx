@@ -18,6 +18,8 @@ import { uploadFileToBucket } from "@utils/upload-file-bucket";
 import { ReferralSection } from "@/app/components/referral/referral-section";
 import { countryCodes } from "@/app/constants/phoneNumberCountryCode";
 import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/honey-bee-spinner";
+import { useForm } from "react-hook-form";
+import { companyProfileValidation } from "./validation-schema";
 
 export default function MyProfile() {
   const userId = Cookies.get("user_id");
@@ -55,10 +57,23 @@ export default function MyProfile() {
   );
 
   const walletAddress = useContext(AddressContext);
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    setError,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm();
+
+  console.log(errors, "Errors...");
 
   const handleImageClick = () => {
     setProfileData({ ...profileData, image_url: "" });
   };
+
+  console.log(profileData, "Profile Data...");
 
   useEffect(() => {
     setNoProfileFound(false);
@@ -71,8 +86,17 @@ export default function MyProfile() {
 
       if (profileResponse.ok) {
         const profileData = await profileResponse.json();
-        console.log(profileData, "Profile Data...");
+
         setProfileData(profileData);
+        reset(profileData);
+
+        if (profileData.country) {
+          const countryOption = countries.find(
+            (country) => country.value === profileData.country,
+          );
+          setSelectedCountry(countryOption || null);
+        }
+
         setIsShowReferralSection(true);
       } else {
         setNoProfileFound(true);
@@ -83,40 +107,62 @@ export default function MyProfile() {
     if (userId) fetchProfile();
   }, [userId]);
 
-  console.log(profileData, "Profile Data...");
-
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsSaving(true);
+  const handleFormSubmit = async (data: any, validate: boolean) => {
+    // setIsSaving(true);
 
     const isNewUser = !profileData.designation;
     const referralCode = Cookies.get("referralCode");
-    const formData = new FormData(e.currentTarget);
     const imageUrl = await uploadFileToBucket(profileImage);
 
     const isAlreadyReferred = profileData.referrer ? true : false;
 
+    if (validate) {
+      try {
+        // Perform validation using the validate method
+        await companyProfileValidation.validate(data, { abortEarly: false });
+      } catch (err: any) {
+        // Set errors for each field that failed validation
+        err.inner.forEach((error: any) => {
+          setError(error.path, {
+            type: "manual",
+            message: error.message,
+          });
+        });
+
+        console.log("Validation failed! Errors:", err.errors);
+        toast.error("Please fill in all required fields");
+        setIsSaving(false);
+        return;
+      }
+    }
+
     const dataForm = {
-      headline: formData.get("headline"),
+      headline: data.headline,
       user_id: userId,
-      designation: formData.get("designation"),
-      address: formData.get("address"),
+      designation: data.designation,
+      address: data.address,
       country: selectedCountry?.value,
-      city: formData.get("city"),
-      phoneCountryCode: formData.get("phone-country-code"),
-      phoneNumber: formData.get("phone-number"),
-      email: formData.get("email"),
-      telegram: formData.get("telegram"),
-      imageUrl: imageUrl || profileData.image_url,
-      walletAddress,
-      linkedin: formData.get("linkedin"),
-      github: formData.get("github"),
-      stackoverflow: formData.get("stackoverflow"),
-      twitter: formData.get("twitter"),
-      portfolio: formData.get("portfolio"),
+      city: data.city,
+      phone_country_code: data["phone_country_code"],
+      phone_number: data["phone_number"],
+      email: data.email,
+      telegram: data.telegram,
+      image_url: imageUrl || profileData.image_url,
+      wallet_address: walletAddress,
+      linkedin: data.linkedin,
+      github: data.github,
+      stackoverflow: data.stackoverflow,
+      twitter: data.twitter,
+      portfolio: data.portfolio,
       status: profileData.status || "pending",
-      referralCode: isAlreadyReferred ? null : referralCode,
+      referrer: isAlreadyReferred ? null : referralCode,
     };
+
+    const filteredData = Object.fromEntries(
+      Object.entries(dataForm).filter(
+        ([, value]) => value !== undefined && value !== null && value !== "",
+      ),
+    );
 
     // TODO: POST formData to the server with fetch
     const profileResponse = await fetch("/api/companies/my-profile", {
@@ -124,7 +170,7 @@ export default function MyProfile() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(dataForm),
+      body: JSON.stringify(filteredData),
     });
 
     setIsSaving(false);
@@ -153,9 +199,12 @@ export default function MyProfile() {
     }
   };
 
-  const handleHeadlineChange = (e: FormEvent<HTMLTextAreaElement>) => {
-    const { value } = e.currentTarget;
-    setProfileData({ ...profileData, headline: value });
+  const handleFormSaving = (data: any) => {
+    handleFormSubmit(data, false);
+  };
+
+  const handleFormReview = (data: any) => {
+    handleFormSubmit(data, true);
   };
 
   if (!userId) {
@@ -191,7 +240,7 @@ export default function MyProfile() {
         My Profile
       </h1>
       <section>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(handleFormReview)}>
           <div className="flex flex-col items-center justify-center w-full mt-10">
             {profileData.image_url ? (
               <div
@@ -249,12 +298,18 @@ export default function MyProfile() {
               <input
                 className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                 placeholder="Company Name"
-                name="designation"
                 type="text"
-                required
                 maxLength={100}
                 defaultValue={profileData.designation}
+                {...register("designation", {
+                  required: "Company Name is required",
+                })}
               />
+              {errors.designation && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.designation.message as string}
+                </p>
+              )}
             </div>
 
             <div>
@@ -267,20 +322,23 @@ export default function MyProfile() {
             </div>
             <div>
               <textarea
-                name="headline"
                 className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                 placeholder="Describe your company in a few words?"
-                required
                 maxLength={5000}
                 rows={8}
                 defaultValue={profileData.headline}
-                onChange={handleHeadlineChange}
+                {...register("headline", { required: "Headline is required" })}
               />
+              {errors.headline && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.headline.message as string}
+                </p>
+              )}
               <p
                 className="text-[13px] mt-2 text-right w-full"
                 style={{ color: "#FFC905" }}
               >
-                {profileData.headline.length}/5000
+                {profileData.headline?.length}/5000
               </p>
             </div>
 
@@ -296,11 +354,15 @@ export default function MyProfile() {
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="Email"
                   type="email"
-                  required
                   maxLength={255}
-                  name="email"
-                  defaultValue={profileData.email}
+                  defaultValue={profileData.email || "sadsdad@gmail.com"}
+                  {...register("email", { required: "Email is required" })}
                 />
+                {errors.email && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.email.message as string}
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex gap-4 mt-4 sm:flex-col">
@@ -314,12 +376,16 @@ export default function MyProfile() {
                 <input
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="Address"
-                  name="address"
                   type="text"
-                  required
                   maxLength={100}
                   defaultValue={profileData.address}
+                  {...register("address", { required: "Address is required" })}
                 />
+                {errors.address && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.address.message as string}
+                  </p>
+                )}
               </div>
               <div className="flex-1">
                 <label
@@ -332,36 +398,49 @@ export default function MyProfile() {
                   className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                   placeholder="City"
                   type="text"
-                  name="city"
-                  required
                   pattern="[a-zA-Z \-]+"
                   maxLength={100}
                   defaultValue={profileData.city}
+                  {...register("city", { required: "City is required" })}
                 />
+                {errors.city && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.city?.message as string}
+                  </p>
+                )}
               </div>
               <div className="flex-1">
                 <SelectInput
+                  required={false}
                   labelText="Country"
                   name="country"
-                  required={true}
-                  disabled={false}
                   inputValue={selectedCountry}
-                  setInputValue={setSelectedCountry}
+                  setInputValue={(country: any) => {
+                    setValue("country", country.value);
+                    setSelectedCountry(country);
+                  }}
                   options={countries}
                   defaultValue={
                     countries[
                       countries.findIndex(
-                        (country) => country.value === profileData?.country,
+                        (country) =>
+                          country.value === profileData?.country ||
+                          countries[0],
                       )
                     ]
                   }
                 />
+                {errors.country && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.country.message as string}
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex gap-4 mt-4 sm:flex-col">
               <div className="">
                 <label
-                  htmlFor="phone-country-code"
+                  htmlFor="phone_country_code"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
                   Phone Country Code*
@@ -369,9 +448,11 @@ export default function MyProfile() {
                 <div className="relative">
                   <select
                     className="form-control block px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                    name="phone-country-code"
                     id=""
                     defaultValue={profileData.phone_country_code}
+                    {...register("phone_country_code", {
+                      required: "Phone Country Code is required",
+                    })}
                   >
                     {countryCodes.map((countryCode) => (
                       <option
@@ -386,11 +467,16 @@ export default function MyProfile() {
                       </option>
                     ))}
                   </select>
+                  {errors.phone_country_code && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.phone_country_code.message as string}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex-1">
                 <label
-                  htmlFor="phone-number"
+                  htmlFor="phone_number"
                   className="inline-block ml-3 text-base text-black form-label"
                 >
                   Phone Number*
@@ -400,11 +486,17 @@ export default function MyProfile() {
                   placeholder="Phone Number"
                   type="text"
                   pattern="[0-9]+"
-                  required
                   maxLength={20}
-                  name="phone-number"
                   defaultValue={profileData.phone_number}
+                  {...register("phone_number", {
+                    required: "Phone Number is required",
+                  })}
                 />
+                {errors.phone_number && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.phone_number.message as string}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -424,10 +516,11 @@ export default function MyProfile() {
                       socialLink.name as keyof typeof profileData
                     ] as string
                   }
-                  isRequired={socialLink.isRequired}
-                  setValue={(value) => {
-                    console.log("Social link value changed:", value);
-                  }}
+                  setValue={setValue as any}
+                  errorMessage={
+                    errors[socialLink.name as keyof typeof errors]
+                      ?.message as string
+                  }
                 />
               ))}
             </div>
@@ -456,7 +549,7 @@ export default function MyProfile() {
                 <div className="flex gap-4 justify-end">
                   <button
                     className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
-                    type="submit"
+                    onClick={handleSubmit(handleFormSaving)}
                   >
                     Save
                   </button>
