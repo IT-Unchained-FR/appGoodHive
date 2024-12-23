@@ -9,6 +9,7 @@ type SocialLinkProps = {
   value: string;
   isRequired?: boolean;
   setValue: UseFormSetValue<FieldValues>;
+  errorMessage?: string;
 };
 
 export const SocialLink: FC<SocialLinkProps> = (props) => {
@@ -19,6 +20,7 @@ export const SocialLink: FC<SocialLinkProps> = (props) => {
     value,
     isRequired = false,
     setValue,
+    errorMessage,
   } = props;
 
   useEffect(() => {
