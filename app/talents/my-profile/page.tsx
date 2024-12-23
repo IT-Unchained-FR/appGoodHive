@@ -20,6 +20,8 @@ import { SocialLink } from "./social-link";
 import DragAndDropFile from "@/app/components/drag-and-drop-file";
 import Cookies from "js-cookie";
 import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/honey-bee-spinner";
+import { talentProfileValidation } from "./validation-schema";
+import { yupResolver } from "@hookform/resolvers/yup";
 
 export type ProfileData = {
   first_name: string;
@@ -73,8 +75,16 @@ export default function ProfilePage() {
   const [walletAddress, setWalletAddress] = useState("");
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
   const [isProfileDataFetching, setIsProfileDataFetching] = useState(false);
+  console.log(unapprovedProfile, "unapprovedProfile of profile page...");
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm();
 
-  const { register, handleSubmit, setValue, reset, watch } = useForm();
   const router = useRouter();
 
   const user_id = Cookies.get("user_id");
@@ -137,7 +147,7 @@ export default function ProfilePage() {
     fetchProfile();
   }, [reset, user_id]);
 
-  const handleFormSubmit = async (data: any) => {
+  const handleFormSubmit = async (data: any, validate: boolean) => {
     try {
       let imageUrl = profileData.image_url;
       let cvUrl = profileData.cv_url;
@@ -152,21 +162,44 @@ export default function ProfilePage() {
         cvUrl = (await uploadFileToBucket(cvFile)) as string;
       }
 
+      setValue("cv_url", cvUrl);
+      data.cv_url = cvUrl;
+      console.log(data, "data of handleFormSubmit...");
+
+      // validate here
+      if (validate) {
+        try {
+          // Perform validation using the validate method
+          await talentProfileValidation.validate(data, { abortEarly: false }); // `abortEarly: false` ensures we get all errors, not just the first one
+        } catch (err: any) {
+          // Handle and log errors
+          if (err) {
+            console.log("Validation failed! Errors:", err.errors);
+            console.log("Detailed validation errors:", err.inner);
+            // err.inner is an array of error details per field
+          }
+          toast.error("Please fill in all required fields");
+          setSaveProfileLoading(false);
+          setReviewProfileLoading(false);
+          return;
+        }
+      }
+
       const formData = {
         title: data.title,
         description: data.description,
-        first_name: data["first-name"],
-        last_name: data["last-name"],
+        first_name: data["first_name"],
+        last_name: data["last_name"],
         country: selectedCountry?.value,
         city: data.city,
-        phone_country_code: data["phone-country-code"],
-        phone_number: data["phone-number"],
+        phone_country_code: data["phone_country_code"],
+        phone_number: data["phone_number"],
         email: data.email,
-        about_work: data["about-work"],
+        about_work: data["about_work"],
         rate: data.rate,
         freelance_only: data["freelance-only"],
         remote_only: data["remote-only"],
-        skills: selectedSkills,
+        skills: data.skills,
         image_url: imageUrl,
         cv_url: cvUrl,
         wallet_address: walletAddress,
@@ -209,7 +242,7 @@ export default function ProfilePage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(filteredData),
+        body: JSON.stringify({ ...filteredData, validate }),
       });
 
       if (profileResponse.ok) {
@@ -225,6 +258,14 @@ export default function ProfilePage() {
       setSaveProfileLoading(false);
       setReviewProfileLoading(false);
     }
+  };
+
+  const handleSaveProfile = (data: any) => {
+    handleFormSubmit(data, false);
+  };
+
+  const handleSendForReview = (data: any) => {
+    handleFormSubmit(data, true);
   };
 
   const onCvInputChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -256,7 +297,7 @@ export default function ProfilePage() {
           interview.
         </p>
       )}
-      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(handleSendForReview)} className="space-y-6">
         {/* // TODO: Add image upload functionality */}
         <div className="flex flex-col items-center justify-center w-full mt-10">
           {profileData.image_url ? (
@@ -289,7 +330,7 @@ export default function ProfilePage() {
             text="Public View"
             type="secondary"
             size="medium"
-            onClickHandler={() => router.push(`/talents/${walletAddress}`)}
+            onClickHandler={() => router.push(`/talents/${user_id}`)}
           />
         </div>
         <div className="flex w-full justify-center mt-5">
@@ -304,7 +345,8 @@ export default function ProfilePage() {
             name="availability"
             tooltip="If Seeking Jobs"
             checked={profileData.availability}
-            setValue={setValue}
+            setValue={setValue as any}
+            errorMessage={errors.availability?.message as string}
           />
         </div>
         <div className="flex flex-col w-full mt-10">
@@ -343,7 +385,7 @@ export default function ProfilePage() {
           <div className="flex gap-4 mt-4 sm:flex-col">
             <div className="flex-1">
               <label
-                htmlFor="first-name"
+                htmlFor="first_name"
                 className="inline-block ml-3 text-base text-black form-label"
               >
                 First Name*
@@ -355,12 +397,17 @@ export default function ProfilePage() {
                 pattern="[a-zA-Z -]+"
                 maxLength={100}
                 defaultValue={profileData?.first_name}
-                {...register("first-name")}
+                {...register("first_name")}
               />
+              {errors.first_name && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.first_name.message as string}
+                </p>
+              )}
             </div>
             <div className="flex-1">
               <label
-                htmlFor="last-name"
+                htmlFor="last_name"
                 className="inline-block ml-3 text-base text-black form-label"
               >
                 Last Name*
@@ -372,8 +419,13 @@ export default function ProfilePage() {
                 pattern="[a-zA-Z -]+"
                 maxLength={100}
                 defaultValue={profileData?.last_name}
-                {...register("last-name")}
+                {...register("last_name")}
               />
+              {errors.last_name && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.last_name.message as string}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex sm:flex-col gap-4 mt-4">
@@ -383,7 +435,10 @@ export default function ProfilePage() {
                 labelText="Country"
                 name="country"
                 inputValue={selectedCountry}
-                setInputValue={setSelectedCountry}
+                setInputValue={(country: any) => {
+                  setValue("country", country.value);
+                  setSelectedCountry(country);
+                }}
                 options={countries}
                 defaultValue={
                   countries[
@@ -410,12 +465,17 @@ export default function ProfilePage() {
                 defaultValue={profileData?.city}
                 {...register("city")}
               />
+              {errors.city && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.city.message as string}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex sm:flex-col gap-4 mt-4">
             <div className="flex-1">
               <label
-                htmlFor="phone-country-code"
+                htmlFor="phone_country_code"
                 className="inline-block ml-3 text-base text-black form-label"
               >
                 Phone Country Code*
@@ -434,13 +494,18 @@ export default function ProfilePage() {
                     ]?.phoneCode
                   }
                   readOnly
-                  {...register("phone-country-code")}
+                  {...register("phone_country_code")}
                 />
               </div>
+              {errors.phone_country_code && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.phone_country_code.message as string}
+                </p>
+              )}
             </div>
             <div className="flex-1">
               <label
-                htmlFor="phone-number"
+                htmlFor="phone_number"
                 className="inline-block ml-3 text-base text-black form-label"
               >
                 Phone Number*
@@ -451,8 +516,13 @@ export default function ProfilePage() {
                 type="number"
                 maxLength={20}
                 defaultValue={profileData?.phone_number}
-                {...register("phone-number")}
+                {...register("phone_number")}
               />
+              {errors.phone_number && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.phone_number.message as string}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex sm:flex-col gap-4 mt-4">
@@ -471,6 +541,11 @@ export default function ProfilePage() {
                 defaultValue={profileData?.email}
                 {...register("email")}
               />
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.email.message as string}
+                </p>
+              )}
             </div>
             <div className="flex-1">
               <label
@@ -494,12 +569,12 @@ export default function ProfilePage() {
               label="Hide my contact details"
               name="hide-contact-details"
               checked={profileData?.hide_contact_details ?? false}
-              setValue={setValue}
+              setValue={setValue as any}
             />
           </div>
           <div className="mt-4">
             <label
-              htmlFor="about-work"
+              htmlFor="about_work"
               className="inline-block ml-3 text-base text-black form-label"
             >
               About your Work*
@@ -510,13 +585,18 @@ export default function ProfilePage() {
               rows={8}
               maxLength={5000}
               defaultValue={profileData?.about_work}
-              {...register("about-work")}
+              {...register("about_work")}
             />
+            {errors.about_work && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.about_work.message as string}
+              </p>
+            )}
             <p
               className="text-[13px] mt-2 text-right w-full"
               style={{ color: "#FFC905" }}
             >
-              {watch("about-work")?.length}/5000
+              {watch("about_work")?.length}/5000
             </p>
           </div>
           <div className="mt-4">
@@ -560,13 +640,13 @@ export default function ProfilePage() {
               label="Freelance Only"
               name="freelance-only"
               checked={profileData?.freelance_only ?? false}
-              setValue={setValue}
+              setValue={setValue as any}
             />
             <ToggleButton
               label="Remote Only"
               name="remote-only"
               checked={profileData?.remote_only ?? false}
-              setValue={setValue}
+              setValue={setValue as any}
             />
           </div>
 
@@ -582,8 +662,16 @@ export default function ProfilePage() {
                 <AutoSuggestInput
                   inputs={skills}
                   selectedInputs={selectedSkills}
-                  setSelectedInputs={setSelectedSkills}
+                  setSelectedInputs={(skills) => {
+                    setSelectedSkills(skills);
+                    setValue("skills", skills.join(", "));
+                  }}
                 />
+                {errors.skills && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.skills.message as string}
+                  </p>
+                )}
               </div>
               <div className="pt-10">
                 {!!selectedSkills && selectedSkills?.length > 0 && (
@@ -600,6 +688,7 @@ export default function ProfilePage() {
                             setSelectedSkills(
                               selectedSkills.filter((_, i) => i !== index),
                             );
+                            setValue("skills", "");
                           }}
                           className="w-6 text-black bg-gray-400 rounded-full"
                         >
@@ -624,7 +713,7 @@ export default function ProfilePage() {
                     label={label}
                     name={value}
                     checked={isChecked ?? false}
-                    setValue={setValue}
+                    setValue={setValue as any}
                   />
                 );
               })}
@@ -636,21 +725,27 @@ export default function ProfilePage() {
             <h3 className="inline-block mt-7 mb-2 ml-1 text-base font-medium text-black form-label">
               Social Media Links:
             </h3>
-            {socialLinks.map((socialLink) => (
-              <SocialLink
-                key={socialLink.name}
-                name={socialLink.name}
-                icon={socialLink.icon}
-                placeholder={socialLink.placeholder}
-                value={
-                  profileData[
-                    socialLink.name as keyof typeof profileData
-                  ] as string
-                }
-                isRequired={socialLink.isRequired}
-                setValue={setValue}
-              />
-            ))}
+            {socialLinks.map((socialLink) => {
+              return (
+                <SocialLink
+                  key={socialLink.name}
+                  name={socialLink.name}
+                  icon={socialLink.icon}
+                  placeholder={socialLink.placeholder}
+                  value={
+                    profileData[
+                      socialLink.name as keyof typeof profileData
+                    ] as string
+                  }
+                  isRequired={socialLink.isRequired}
+                  setValue={setValue as any}
+                  errorMessage={
+                    errors[socialLink.name as keyof typeof errors]
+                      ?.message as string
+                  }
+                />
+              );
+            })}
           </div>
 
           {/* {isShowReferralSection && <ReferralSection />} */}
@@ -659,8 +754,9 @@ export default function ProfilePage() {
             <>
               <button
                 className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
-                type="submit"
+                type="button"
                 name="save-talent-only"
+                onClick={handleSubmit(handleSaveProfile)}
                 disabled={saveProfileLoading}
               >
                 {saveProfileLoading ? "Saving Profile..." : "Save Profile"}

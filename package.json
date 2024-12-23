@@ -15,6 +15,7 @@
     "@aws-sdk/signature-v4-crt": "^3.310.0",
     "@emotion/react": "^11.11.4",
     "@formspree/react": "^2.5.1",
+    "@hookform/resolvers": "^3.9.1",
     "@nextui-org/theme": "^2.2.9",
     "@nextui-org/tooltip": "^2.0.29",
     "@portabletext/react": "^3.1.0",
@@ -76,7 +77,8 @@
     "utf-8-validate": "^6.0.4",
     "uuid": "^9.0.0",
     "wagmi": "^1.0.9",
-    "web3": "^4.3.0"
+    "web3": "^4.3.0",
+    "yup": "^1.6.1"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

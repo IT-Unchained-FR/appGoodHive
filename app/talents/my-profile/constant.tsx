@@ -27,7 +27,7 @@ export const socialLinks = [
     name: "telegram",
     icon: "/icons/telegram.svg",
     placeholder: "Telegram*",
-    isRequired: false,
+    isRequired: true,
   },
   {
     name: "portfolio",
