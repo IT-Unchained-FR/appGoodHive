@@ -42,7 +42,7 @@ export default function AdminPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 p-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-4xl font-bold mb-8 text-gray-800 text-center">
-          User Join Requests
+          Talents Join Requests
         </h1>
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
           <div className="flex items-center mb-4">

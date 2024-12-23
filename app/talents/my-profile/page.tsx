@@ -57,6 +57,7 @@ export type ProfileData = {
   availability?: boolean;
   wallet_address?: string;
   approved: boolean;
+  user_id?: string;
 };
 
 export default function ProfilePage() {
