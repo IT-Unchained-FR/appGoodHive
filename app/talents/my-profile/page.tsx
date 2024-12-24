@@ -143,6 +143,12 @@ export default function ProfilePage() {
           }
         });
 
+        if (!data.talent && !data.mentor && !data.recruiter) {
+          newErrors.role = "Select at least one role";
+          setErrors(newErrors);
+          return toast.error("Select at least one role");
+        }
+
         if (Object.keys(newErrors).length > 0) {
           setErrors(newErrors);
           console.log(errors, "errors...");
@@ -747,6 +753,9 @@ export default function ProfilePage() {
                 );
               })}
             </div>
+            {errors.role && (
+              <p className="text-red-500 text-sm mt-1">{errors.role}</p>
+            )}
           </div>
 
           {/* Social media links: Linkedin, github, stackoverflow, telegram, portfolio */}
