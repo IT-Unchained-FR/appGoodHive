@@ -126,7 +126,6 @@ export default function ProfilePage() {
         email: "Email",
         about_work: "About work",
         telegram: "Telegram",
-        rate: "Rate",
       };
 
       if (validate) {
