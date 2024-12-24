@@ -46,8 +46,16 @@ export default function MyProfile() {
     status: "",
     referrer: "",
     approved: false,
+    inreview: null,
   });
-  const unapprovedProfile = profileData && profileData.approved === false;
+
+  console.log(profileData, "Profile Data...");
+  const unapprovedProfile =
+    profileData?.approved === false && profileData.inreview === true;
+
+  const savedProfile =
+    profileData?.approved === false && profileData.inreview === false;
+
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [isRenderedPage, setIsRenderedPage] = useState<boolean>(true);
   const [noProfileFound, setNoProfileFound] = useState<boolean>(false);
@@ -157,6 +165,7 @@ export default function MyProfile() {
       portfolio: data.portfolio,
       status: profileData.status || "pending",
       referrer: isAlreadyReferred ? null : referralCode,
+      inreview: validate,
     };
 
     const filteredData = Object.fromEntries(
@@ -227,16 +236,23 @@ export default function MyProfile() {
 
   return (
     <main className="container mx-auto">
-      {noProfileFound ? (
+      {noProfileFound && (
         <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
           🚀 Please Create a Profile To Continue
         </p>
-      ) : unapprovedProfile ? (
+      )}
+      {unapprovedProfile && (
         <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
           🚀 Your Profile Is Pending Approval. It Will Be Live Soon After
           Review.
         </p>
-      ) : null}
+      )}
+      {savedProfile && (
+        <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+          🚀 Your profile is saved complete the mandatory fields and submit for
+          review when ready.
+        </p>
+      )}
       <h1 className="my-5 text-2xl border-b-[1px] border-slate-300 pb-2">
         My Profile
       </h1>
