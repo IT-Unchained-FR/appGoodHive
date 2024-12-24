@@ -46,7 +46,7 @@ export async function POST(request: Request) {
   });
 
   try {
-    // Filter out undefined fields
+    // Filter out undefined, null, and empty string fields
     const fields = {
       title,
       description: description
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
     };
 
     const filteredFields = Object.entries(fields).filter(
-      ([, value]) => value !== undefined && value !== null,
+      ([, value]) => value !== undefined && value !== null && value !== "",
     );
 
     const columns = filteredFields.map(([key]) => key).join(", ");
