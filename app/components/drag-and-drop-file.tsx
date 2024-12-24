@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-
+import Image from "next/image";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
@@ -30,7 +30,7 @@ const DragAndDropFile = ({
   type AssetData = string;
 
   const showAssetInCanvas = (assetData: AssetData): void => {
-    const img: HTMLImageElement = new Image();
+    const img: HTMLImageElement = new window.Image();
     img.src = assetData;
 
     img.onload = (): void => {
@@ -70,7 +70,7 @@ const DragAndDropFile = ({
       Number(`${process.env.NEXT_PUBLIC_UPLOAD_PROFILE_IMAGE_SIZE_LIMIT_MB}`)
     ) {
       alert(
-        `File size exceeded the limit of ${process.env.NEXT_PUBLIC_UPLOAD_PG_SIZE_LIMIT_MB}MB`
+        `File size exceeded the limit of ${process.env.NEXT_PUBLIC_UPLOAD_PG_SIZE_LIMIT_MB}MB`,
       );
 
       return false;
@@ -120,11 +120,16 @@ const DragAndDropFile = ({
         clipPath: "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)",
       }}
     >
+      <label htmlFor="file-upload" className="sr-only">
+        Choose a file
+      </label>
       <input
         accept={validTypes.toString()}
         id="file-upload"
         name="file-upload"
         type="file"
+        aria-label="File upload"
+        title="Choose a file to upload"
         className="absolute top-0 bottom-0 left-0 right-0 w-full h-full opacity-0 cursor-pointer"
         ref={imageInputValue}
         onChange={changeHandler}
@@ -135,7 +140,16 @@ const DragAndDropFile = ({
           onDragOver={(e: React.DragEvent<HTMLDivElement>) => onDragOver(e)}
           className="flex"
         >
-          {imagePreview && <img className="object-cover" src={imagePreview} />}
+          {imagePreview && (
+            <Image
+              className="object-cover"
+              src={imagePreview}
+              alt="Uploaded preview"
+              title="Preview of uploaded image"
+              width={230}
+              height={230}
+            />
+          )}
         </div>
       ) : (
         <div

@@ -6,7 +6,7 @@ type SocialLinkProps = {
   name: string;
   icon: string;
   placeholder: string;
-  value: string;
+  defaultValue: string;
   isRequired?: boolean;
   setValue: UseFormSetValue<FieldValues>;
   errorMessage?: string;
@@ -17,19 +17,16 @@ export const SocialLink: FC<SocialLinkProps> = (props) => {
     name,
     icon,
     placeholder,
-    value,
+    defaultValue,
     isRequired = false,
     setValue,
     errorMessage,
   } = props;
 
-  useEffect(() => {
-    setValue(name, value);
-  }, [value, name, setValue]);
-
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setValue(name, event.target.value);
   };
+
   return (
     <div className="flex w-full mt-9">
       <div className="relative flex items-center justify-center w-10 h-10 rounded-full overflow-hidden">
@@ -42,7 +39,7 @@ export const SocialLink: FC<SocialLinkProps> = (props) => {
           type="text"
           name={name}
           maxLength={255}
-          defaultValue={value}
+          defaultValue={defaultValue}
           required={isRequired}
           onChange={handleChange}
         />
