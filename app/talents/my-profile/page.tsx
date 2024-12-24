@@ -119,7 +119,7 @@ export default function ProfilePage() {
       let imageUrl = profileData.image_url;
       let cvUrl = profileData.cv_url;
 
-      // setSaveProfileLoading(true);
+      setSaveProfileLoading(true);
       const requiredFields = {
         title: "Profile header",
         description: "Profile description",
