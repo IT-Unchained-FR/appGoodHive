@@ -21,8 +21,7 @@ export async function POST(request: Request) {
     twitter,
     portfolio,
     status,
-    referralCode,
-    validate,
+    inreview,
   } = await request.json();
 
   const sql = postgres(process.env.DATABASE_URL || "", {
@@ -50,6 +49,7 @@ export async function POST(request: Request) {
     portfolio,
     status,
     wallet_address: walletAddress,
+    inreview,
   };
 
   if (!user_id) {

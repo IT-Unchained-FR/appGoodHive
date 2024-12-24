@@ -55,6 +55,7 @@ export type ProfileData = {
   wallet_address?: string;
   approved: boolean;
   user_id?: string;
+  inreview?: boolean;
 };
 
 export default function ProfilePage() {
@@ -62,7 +63,12 @@ export default function ProfilePage() {
     {} as ProfileData,
   );
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const unapprovedProfile = profileData && profileData.approved === false;
+  const unapprovedProfile =
+    profileData?.approved === false && profileData.inreview === true;
+
+  const savedProfile =
+    profileData?.approved === false && profileData.inreview === false;
+
   const imageInputValue = useRef(null);
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [cvFile, setCvFile] = useState<File | null>(null);
@@ -261,6 +267,12 @@ export default function ProfilePage() {
         <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
           🚀 Your profile is pending approval. Check your email to schedule your
           interview.
+        </p>
+      )}
+      {savedProfile && (
+        <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+          🚀 Profile saved! Complete the mandatory fields and submit for review
+          when ready.
         </p>
       )}
       <form className="space-y-6">
