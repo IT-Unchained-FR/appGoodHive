@@ -23,6 +23,7 @@ import { companyProfileValidation } from "./validation-schema";
 
 export default function MyProfile() {
   const userId = Cookies.get("user_id");
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const imageInputValue = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -57,17 +58,6 @@ export default function MyProfile() {
   );
 
   const walletAddress = useContext(AddressContext);
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    setError,
-    reset,
-    watch,
-    formState: { errors },
-  } = useForm();
-
-  console.log(errors, "Errors...");
 
   const handleImageClick = () => {
     setProfileData({ ...profileData, image_url: "" });
@@ -88,7 +78,6 @@ export default function MyProfile() {
         const profileData = await profileResponse.json();
 
         setProfileData(profileData);
-        reset(profileData);
 
         if (profileData.country) {
           const countryOption = countries.find(
@@ -116,25 +105,37 @@ export default function MyProfile() {
 
     const isAlreadyReferred = profileData.referrer ? true : false;
 
-    if (validate) {
-      try {
-        // Perform validation using the validate method
-        await companyProfileValidation.validate(data, { abortEarly: false });
-      } catch (err: any) {
-        // Set errors for each field that failed validation
-        err.inner.forEach((error: any) => {
-          setError(error.path, {
-            type: "manual",
-            message: error.message,
-          });
-        });
+    const requiredFields = {
+      headline: "Profile header",
+      designation: "Profile description",
+      address: "First name",
+      email: "Last name",
+      country: "Country",
+      city: "City",
+      phone_country_code: "Phone country code",
+      phone_number: "Phone number",
+      telegram: "Telegram",
+    };
 
-        console.log("Validation failed! Errors:", err.errors);
+    if (validate) {
+      const newErrors: { [key: string]: string } = {};
+
+      Object.entries(requiredFields).forEach(([key, label]) => {
+        if (!data[key]) {
+          newErrors[key] = `${label} is required`;
+        }
+      });
+
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        console.log(errors, "errors...");
         toast.error("Please fill in all required fields");
         setIsSaving(false);
         return;
       }
     }
+
+    setErrors({}); // Clear errors if validation passes
 
     const dataForm = {
       headline: data.headline,
@@ -200,11 +201,11 @@ export default function MyProfile() {
   };
 
   const handleFormSaving = (data: any) => {
-    handleFormSubmit(data, false);
+    handleFormSubmit(profileData, false);
   };
 
   const handleFormReview = (data: any) => {
-    handleFormSubmit(data, true);
+    handleFormSubmit(profileData, true);
   };
 
   if (!userId) {
@@ -240,7 +241,7 @@ export default function MyProfile() {
         My Profile
       </h1>
       <section>
-        <form onSubmit={handleSubmit(handleFormReview)}>
+        <form>
           <div className="flex flex-col items-center justify-center w-full mt-10">
             {profileData.image_url ? (
               <div
@@ -301,13 +302,16 @@ export default function MyProfile() {
                 type="text"
                 maxLength={100}
                 defaultValue={profileData.designation}
-                {...register("designation", {
-                  required: "Company Name is required",
-                })}
+                onChange={(e) =>
+                  setProfileData({
+                    ...profileData,
+                    designation: e.target.value,
+                  })
+                }
               />
               {errors.designation && (
                 <p className="text-red-500 text-sm mt-1">
-                  {errors.designation.message as string}
+                  {errors.designation as string}
                 </p>
               )}
             </div>
@@ -327,11 +331,13 @@ export default function MyProfile() {
                 maxLength={5000}
                 rows={8}
                 defaultValue={profileData.headline}
-                {...register("headline", { required: "Headline is required" })}
+                onChange={(e) =>
+                  setProfileData({ ...profileData, headline: e.target.value })
+                }
               />
               {errors.headline && (
                 <p className="text-red-500 text-sm mt-1">
-                  {errors.headline.message as string}
+                  {errors.headline as string}
                 </p>
               )}
               <p
@@ -355,12 +361,14 @@ export default function MyProfile() {
                   placeholder="Email"
                   type="email"
                   maxLength={255}
-                  defaultValue={profileData.email || "sadsdad@gmail.com"}
-                  {...register("email", { required: "Email is required" })}
+                  defaultValue={profileData.email}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, email: e.target.value })
+                  }
                 />
                 {errors.email && (
                   <p className="text-red-500 text-sm mt-1">
-                    {errors.email.message as string}
+                    {errors.email as string}
                   </p>
                 )}
               </div>
@@ -379,11 +387,13 @@ export default function MyProfile() {
                   type="text"
                   maxLength={100}
                   defaultValue={profileData.address}
-                  {...register("address", { required: "Address is required" })}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, address: e.target.value })
+                  }
                 />
                 {errors.address && (
                   <p className="text-red-500 text-sm mt-1">
-                    {errors.address.message as string}
+                    {errors.address as string}
                   </p>
                 )}
               </div>
@@ -401,11 +411,13 @@ export default function MyProfile() {
                   pattern="[a-zA-Z \-]+"
                   maxLength={100}
                   defaultValue={profileData.city}
-                  {...register("city", { required: "City is required" })}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, city: e.target.value })
+                  }
                 />
                 {errors.city && (
                   <p className="text-red-500 text-sm mt-1">
-                    {errors.city?.message as string}
+                    {errors.city as string}
                   </p>
                 )}
               </div>
@@ -416,8 +428,8 @@ export default function MyProfile() {
                   name="country"
                   inputValue={selectedCountry}
                   setInputValue={(country: any) => {
-                    setValue("country", country.value);
                     setSelectedCountry(country);
+                    setProfileData({ ...profileData, country });
                   }}
                   options={countries}
                   defaultValue={
@@ -432,7 +444,7 @@ export default function MyProfile() {
                 />
                 {errors.country && (
                   <p className="text-red-500 text-sm mt-1">
-                    {errors.country.message as string}
+                    {errors.country as string}
                   </p>
                 )}
               </div>
@@ -448,11 +460,15 @@ export default function MyProfile() {
                 <div className="relative">
                   <select
                     className="form-control block px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                    id=""
+                    id="phone-country-code"
+                    aria-label="Phone country code selector"
                     defaultValue={profileData.phone_country_code}
-                    {...register("phone_country_code", {
-                      required: "Phone Country Code is required",
-                    })}
+                    onChange={(e) =>
+                      setProfileData({
+                        ...profileData,
+                        phone_country_code: e.target.value,
+                      })
+                    }
                   >
                     {countryCodes.map((countryCode) => (
                       <option
@@ -469,7 +485,7 @@ export default function MyProfile() {
                   </select>
                   {errors.phone_country_code && (
                     <p className="text-red-500 text-sm mt-1">
-                      {errors.phone_country_code.message as string}
+                      {errors.phone_country_code as string}
                     </p>
                   )}
                 </div>
@@ -488,13 +504,16 @@ export default function MyProfile() {
                   pattern="[0-9]+"
                   maxLength={20}
                   defaultValue={profileData.phone_number}
-                  {...register("phone_number", {
-                    required: "Phone Number is required",
-                  })}
+                  onChange={(e) =>
+                    setProfileData({
+                      ...profileData,
+                      phone_number: e.target.value,
+                    })
+                  }
                 />
                 {errors.phone_number && (
                   <p className="text-red-500 text-sm mt-1">
-                    {errors.phone_number.message as string}
+                    {errors.phone_number as string}
                   </p>
                 )}
               </div>
@@ -511,16 +530,18 @@ export default function MyProfile() {
                   name={socialLink.name}
                   icon={socialLink.icon}
                   placeholder={socialLink.placeholder}
-                  value={
+                  defaultValue={
                     profileData[
                       socialLink.name as keyof typeof profileData
-                    ] as string
+                    ]?.toString() || ""
                   }
-                  setValue={setValue as any}
-                  errorMessage={
-                    errors[socialLink.name as keyof typeof errors]
-                      ?.message as string
-                  }
+                  setValue={(name, value) => {
+                    setProfileData((prev) => ({
+                      ...prev,
+                      [name]: value,
+                    }));
+                  }}
+                  errorMessage={errors[socialLink.name as keyof typeof errors]}
                 />
               ))}
             </div>
@@ -549,13 +570,14 @@ export default function MyProfile() {
                 <div className="flex gap-4 justify-end">
                   <button
                     className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
-                    onClick={handleSubmit(handleFormSaving)}
+                    onClick={handleFormSaving}
                   >
                     Save
                   </button>
                   <button
                     className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
                     type="submit"
+                    onClick={handleFormReview}
                   >
                     Submit For Review
                   </button>
