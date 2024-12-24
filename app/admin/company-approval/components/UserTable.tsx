@@ -9,7 +9,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { approveTalent } from "@/lib/talent/approve-talent";
 import toast from "react-hot-toast";
 
 interface UserTableProps {

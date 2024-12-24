@@ -9,46 +9,28 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { approveTalent } from "@/lib/talent/approve-talent";
 import toast from "react-hot-toast";
+import ApprovalPopup from "./ApprovalPopup";
 
 interface UserTableProps {
   users: ProfileData[];
-  onProfileClick: (user: ProfileData) => void;
+  fetchData: () => void;
+  loading: boolean;
+  setLoading: (loading: boolean) => void;
 }
 
-export function UserTable({ users, onProfileClick }: UserTableProps) {
+export function UserTable({
+  users,
+  fetchData,
+  loading,
+  setLoading,
+}: UserTableProps) {
   const [showApprovePopup, setShowApprovePopup] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
-  const [loading, setLoading] = useState(false);
 
   const handleApproveClick = (user: ProfileData) => {
     setSelectedUser(user);
     setShowApprovePopup(true);
-  };
-
-  const handleConfirmApprove = async () => {
-    if (selectedUser?.user_id) {
-      setLoading(true);
-      try {
-        const response = await fetch("/api/admin/talents/pending", {
-          method: "POST",
-          body: JSON.stringify({ userId: selectedUser.user_id }),
-        });
-        const data = await response.json();
-        if (response.status !== 200) {
-          throw new Error(data.message);
-        }
-        toast.success("Talent approved successfully");
-        window.location.reload();
-      } catch (error) {
-        toast.error("Unable to approve the talent");
-      } finally {
-        setLoading(false);
-      }
-      setShowApprovePopup(false);
-      setSelectedUser(null);
-    }
   };
 
   const handleCancelApprove = () => {
@@ -107,29 +89,15 @@ export function UserTable({ users, onProfileClick }: UserTableProps) {
         </TableBody>
       </Table>
 
-      {showApprovePopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Confirm Approval</h2>
-            <p>
-              Are you sure you want to approve {selectedUser?.first_name}{" "}
-              {selectedUser?.last_name}?
-            </p>
-            <div className="mt-4 flex justify-end gap-2">
-              <Button onClick={handleCancelApprove} variant="outline" size="sm">
-                Cancel
-              </Button>
-              <Button
-                onClick={handleConfirmApprove}
-                variant="default"
-                size="sm"
-                disabled={loading}
-              >
-                Approve
-              </Button>
-            </div>
-          </div>
-        </div>
+      {selectedUser && (
+        <ApprovalPopup
+          open={showApprovePopup}
+          setOpen={setShowApprovePopup}
+          user={selectedUser as ProfileData}
+          fetchData={fetchData}
+          setLoading={setLoading}
+          loading={loading}
+        />
       )}
     </>
   );
