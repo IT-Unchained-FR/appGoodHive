@@ -322,7 +322,7 @@ export default function ProfilePage() {
             htmlFor="availability"
             className="inline-block ml-3 mr-5 text-base text-black form-label"
           >
-            Set Availability*
+            Set Availability
           </label>
           <ToggleButton
             label="Active"
