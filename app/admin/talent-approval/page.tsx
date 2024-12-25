@@ -45,7 +45,7 @@ export default function AdminPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 p-8">
+    <div className="min-h-screen w-full bg-gradient-to-br from-gray-100 to-gray-200 p-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-4xl font-bold mb-8 text-gray-800 text-center">
           Talents Join Requests
@@ -69,6 +69,11 @@ export default function AdminPage() {
               loading={loading}
               setLoading={setLoading}
             />
+          )}
+          {!loading && users.length === 0 && (
+            <div className="text-center text-gray-500 mt-6">
+              No pending requests found
+            </div>
           )}
         </div>
       </div>
