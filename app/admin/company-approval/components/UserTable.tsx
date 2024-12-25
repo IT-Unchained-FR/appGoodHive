@@ -15,13 +15,10 @@ interface UserTableProps {
   users: ProfileData[] | any[];
   onProfileClick: (user: ProfileData) => void;
   isCompany: boolean;
+  fetchData?: () => void;
 }
 
-export function UserTable({
-  users,
-  onProfileClick,
-  isCompany,
-}: UserTableProps) {
+export function UserTable({ users, isCompany, fetchData }: UserTableProps) {
   const [showApprovePopup, setShowApprovePopup] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -45,7 +42,7 @@ export function UserTable({
           throw new Error(data.message);
         }
         toast.success("Talent approved successfully");
-        window.location.reload();
+        fetchData && fetchData();
       } catch (error) {
         toast.error("Unable to approve the talent");
       } finally {
@@ -83,7 +80,7 @@ export function UserTable({
 
               <TableCell className="text-right">
                 <div className="flex gap-2 justify-end">
-                  <Button
+                  {/* <Button
                     onClick={() => {
                       window.open(
                         `/talents/admin-view/${user?.user_id}`,
@@ -94,7 +91,7 @@ export function UserTable({
                     size="sm"
                   >
                     View Profile
-                  </Button>
+                  </Button> */}
                   <Button
                     onClick={() => handleApproveClick(user)}
                     variant="default"
@@ -102,6 +99,13 @@ export function UserTable({
                   >
                     Approve
                   </Button>
+                  {/* <Button
+                    onClick={() => handleApproveClick(user)}
+                    variant="default"
+                    size="sm"
+                  >
+                    Approve
+                  </Button> */}
                 </div>
               </TableCell>
             </TableRow>
@@ -124,7 +128,7 @@ export function UserTable({
                 size="sm"
                 disabled={loading}
               >
-                Approve
+                {loading ? "Loading..." : "Approve"}
               </Button>
             </div>
           </div>
