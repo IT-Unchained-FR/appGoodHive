@@ -135,6 +135,7 @@ export default function ProfilePage() {
       };
 
       if (validate) {
+        console.log(data, "data...");
         const newErrors: { [key: string]: string } = {};
 
         Object.entries(requiredFields).forEach(([key, label]) => {
@@ -432,7 +433,11 @@ export default function ProfilePage() {
                 name="country"
                 inputValue={selectedCountry}
                 setInputValue={(country: any) => {
-                  setProfileData({ ...profileData, country: country?.value });
+                  setProfileData({
+                    ...profileData,
+                    country: country?.value,
+                    phone_country_code: country?.phoneCode,
+                  });
                   setSelectedCountry(country);
                 }}
                 options={countries}
@@ -496,7 +501,7 @@ export default function ProfilePage() {
                   onChange={(e) =>
                     setProfileData({
                       ...profileData,
-                      phone_country_code: e.target.value,
+                      phone_country_code: selectedCountry?.phoneCode,
                     })
                   }
                 />
