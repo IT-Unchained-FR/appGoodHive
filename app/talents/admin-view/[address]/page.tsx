@@ -128,7 +128,7 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
 
         <div className="border-t pt-4">
           <h2 className="text-xl font-semibold mb-2">Skills</h2>
-          <div className="flex flex-wrap gap-2">
+          {/* <div className="flex flex-wrap gap-2">
             {user.skills.split(",").map((skill: string, index: number) => (
               <span
                 key={index}
@@ -137,7 +137,7 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
                 {skill.trim()}
               </span>
             ))}
-          </div>
+          </div> */}
         </div>
 
         <div className="border-t pt-4 grid grid-cols-2 gap-4">
