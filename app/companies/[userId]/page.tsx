@@ -33,7 +33,7 @@ export default async function CompanyProfilePage(
     profileData = {};
   }
   const jobs = await getCompanyJobs(userId);
-  const singleJob = await getSingleJob(id);
+  const singleJob = await getSingleJob(userId as unknown as number);
 
   const {
     headline,
@@ -109,7 +109,7 @@ export default async function CompanyProfilePage(
           </div>
         </div>
         <div className="w-4/6 md:w-full sm:w-full bg-white relative rounded-2xl flex flex-col items-center p-5 shadow-[2px_7px_20px_4px_#e2e8f0] z-2">
-          {id && singleJob && (
+          {userId && singleJob && (
             <div className="w-full flex flex-col mb-5">
               <h2 className="text-left w-full pl-5 mb-2 mt-5 text-2xl font-bold">
                 Job Details:
@@ -146,7 +146,7 @@ export default async function CompanyProfilePage(
           </h2>
           <div className="grid w-full grid-cols-2 gap-4 lg:grid-cols-1 md:grid-cols-1 sm:grid-cols-1 ">
             {jobs.map((job) => {
-              if (singleJob && singleJob.id === job.id) return null;
+              // if (singleJob && singleJob.id === job.id) return null;
               const {
                 id,
                 title,

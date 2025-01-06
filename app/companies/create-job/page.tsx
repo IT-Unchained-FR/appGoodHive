@@ -327,13 +327,13 @@ export default function CreateJob() {
   //   );
   // }
 
-  if (jobData && jobData.user_id !== userId) {
-    return (
-      <h3 className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
-        🚀 You are not authorized to edit this job.
-      </h3>
-    );
-  }
+  // if (jobData && jobData.user_id !== userId) {
+  //   return (
+  //     <h3 className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+  //       🚀 You are not authorized to edit this job.
+  //     </h3>
+  //   );
+  // }
 
   if (isLoading) {
     return (
@@ -556,6 +556,8 @@ export default function CreateJob() {
                     value={budget}
                     maxLength={100}
                     defaultValue={jobData?.budget}
+                    title="Enter budget amount"
+                    placeholder="Enter amount"
                   />
                 </div>
               ) : null}

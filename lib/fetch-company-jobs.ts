@@ -53,7 +53,7 @@ export async function getSingleJob(id: number | undefined) {
     const jobsQuery = await sql`
       SELECT *
       FROM goodhive.job_offers
-      WHERE id = ${id}
+      WHERE user_id = ${id}
       `;
 
     if (jobsQuery.length === 0) {

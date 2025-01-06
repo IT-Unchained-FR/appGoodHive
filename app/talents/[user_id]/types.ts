@@ -25,4 +25,5 @@ export interface TalentProfileData {
   mentor_status: string;
   recruiter_status: string;
   twitter: string;
+  approved: boolean;
 }
