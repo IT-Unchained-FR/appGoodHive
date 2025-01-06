@@ -22,6 +22,7 @@ export async function POST(request: Request) {
     talent,
     recruiter,
     mentor,
+    in_saving_stage,
   } = await request.json();
 
   const sql = postgres(process.env.DATABASE_URL || "", {
@@ -54,7 +55,8 @@ export async function POST(request: Request) {
         recruiter,
         mentor,
         wallet_address,
-        posted_at
+        posted_at,
+        in_saving_stage
       ) VALUES (
         ${userId},
         ${title},
@@ -75,7 +77,8 @@ export async function POST(request: Request) {
         ${recruiter},
         ${mentor},
         ${walletAddress},
-        ${postedAt}
+        ${postedAt},
+        ${in_saving_stage}
       );
     `;
 

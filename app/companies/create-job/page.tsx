@@ -192,6 +192,7 @@ export default function CreateJob() {
       jobType: jobType ? jobType.value : "",
       projectType: projectType ? projectType.value : "",
       talent: true,
+      in_saving_stage: false,
       recruiter,
       mentor,
       id,
@@ -215,10 +216,10 @@ export default function CreateJob() {
       toast.error("Something went wrong!");
     } else {
       if (id) {
-        toast.success("Job Offer Saved!");
+        toast.success("Job Offer Published!");
         router.push(`/companies/${userId}`);
       } else {
-        toast.success("Job Offer Created! Now add some funds to it.");
+        toast.success("Job Offer Published! Now add some funds to it.");
         router.push(
           `/companies/create-job?id=${savedJobData.jobId}&addFunds=true`,
         );
@@ -310,6 +311,73 @@ export default function CreateJob() {
   const handleDescriptionChange = (e: FormEvent<HTMLTextAreaElement>) => {
     const { value } = e.currentTarget;
     setDescription(value);
+  };
+
+  const handleSaveJob = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    toast.loading("Saving...", { duration: 2000 });
+
+    // Get form values from state instead of FormData
+    const dataForm = {
+      userId,
+      title: document.querySelector<HTMLInputElement>('input[name="title"]')
+        ?.value,
+      typeEngagement: typeEngagement?.value || "",
+      description: document.querySelector<HTMLTextAreaElement>(
+        'textarea[name="description"]',
+      )?.value,
+      duration: duration?.value || "",
+      budget: budget,
+      chain: selectedChain?.value || "",
+      currency: selectedCurrency?.value || "",
+      skills: selectedSkills,
+      walletAddress: walletAddress || "",
+      city: companyData?.city,
+      country: companyData?.country,
+      companyName: companyData?.designation,
+      imageUrl: companyData?.image_url,
+      jobType: jobType?.value || "",
+      projectType: projectType?.value || "",
+      talent: true,
+      in_saving_stage: true,
+      recruiter:
+        document.querySelector<HTMLInputElement>('input[name="recruiter"]')
+          ?.checked || false,
+      mentor:
+        document.querySelector<HTMLInputElement>('input[name="mentor"]')
+          ?.checked || false,
+      id,
+    };
+
+    console.log("Dataform...", dataForm);
+
+    const jobSaveUrl = id
+      ? "/api/companies/update-job"
+      : "/api/companies/create-job";
+
+    const jobResponse = await fetch(jobSaveUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(dataForm),
+    });
+
+    const savedJobData = await jobResponse.json();
+
+    if (!jobResponse.ok) {
+      toast.error("Something went wrong!");
+    } else {
+      if (id) {
+        toast.success("Job Offer Saved!");
+        router.push(`/companies/${userId}`);
+      } else {
+        toast.success("Job Offer Saved! Now add some funds to it.");
+        router.push(
+          `/companies/create-job?id=${savedJobData.jobId}&addFunds=true`,
+        );
+      }
+    }
   };
 
   // if (jobData.user_id !== userId) {
@@ -649,12 +717,20 @@ export default function CreateJob() {
                   Saving...
                 </button>
               ) : (
-                <button
-                  className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
-                  type="submit"
-                >
-                  Save
-                </button>
+                <div className="flex gap-4">
+                  <button
+                    onClick={handleSaveJob}
+                    className="my-2 text-base font-semibold bg-transparent h-14 w-56 rounded-full border-2 border-[#FFC905] transition-all duration-300 hover:bg-[#FFC905]"
+                  >
+                    Save Job
+                  </button>
+                  <button
+                    className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full transition-all duration-300 hover:bg-transparent hover:border-2 hover:border-[#FFC905]"
+                    type="submit"
+                  >
+                    Publish Job
+                  </button>
+                </div>
               )}
             </div>
           </div>
