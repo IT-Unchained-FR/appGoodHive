@@ -1,6 +1,13 @@
 "use client";
 
-import { useRef, useState, FormEvent, useEffect, useContext } from "react";
+import {
+  useRef,
+  useState,
+  FormEvent,
+  useEffect,
+  useContext,
+  useCallback,
+} from "react";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 
@@ -71,38 +78,37 @@ export default function MyProfile() {
     setProfileData({ ...profileData, image_url: "" });
   };
 
-  console.log(profileData, "Profile Data...");
+  const fetchProfile = useCallback(async () => {
+    setIsLoading(true);
+
+    const profileResponse = await fetch(
+      `/api/companies/my-profile?userId=${userId}`,
+    );
+
+    if (profileResponse.ok) {
+      const profileData = await profileResponse.json();
+
+      setProfileData(profileData);
+
+      if (profileData.country) {
+        const countryOption = countries.find(
+          (country) => country.value === profileData.country,
+        );
+        setSelectedCountry(countryOption || null);
+      }
+
+      setIsShowReferralSection(true);
+    } else {
+      setNoProfileFound(true);
+    }
+    setIsLoading(false);
+  }, [userId]);
 
   useEffect(() => {
     setNoProfileFound(false);
-    const fetchProfile = async () => {
-      setIsLoading(true);
-
-      const profileResponse = await fetch(
-        `/api/companies/my-profile?userId=${userId}`,
-      );
-
-      if (profileResponse.ok) {
-        const profileData = await profileResponse.json();
-
-        setProfileData(profileData);
-
-        if (profileData.country) {
-          const countryOption = countries.find(
-            (country) => country.value === profileData.country,
-          );
-          setSelectedCountry(countryOption || null);
-        }
-
-        setIsShowReferralSection(true);
-      } else {
-        setNoProfileFound(true);
-      }
-      setIsLoading(false);
-    };
 
     if (userId) fetchProfile();
-  }, [userId]);
+  }, [userId, fetchProfile]);
 
   const handleFormSubmit = async (data: any, validate: boolean) => {
     setIsSaving(true);
@@ -203,17 +209,20 @@ export default function MyProfile() {
       }
       if (validate === false) {
         toast.success("Profile Saved!");
+        window.location.reload();
       } else {
         toast.success("Profile sent to review by the core team!");
       }
     }
   };
 
-  const handleFormSaving = (data: any) => {
+  const handleFormSaving = (e: any) => {
+    e.preventDefault();
     handleFormSubmit(profileData, false);
   };
 
-  const handleFormReview = (data: any) => {
+  const handleFormReview = (e: any) => {
+    e.preventDefault();
     handleFormSubmit(profileData, true);
   };
 
@@ -451,9 +460,7 @@ export default function MyProfile() {
                   defaultValue={
                     countries[
                       countries.findIndex(
-                        (country) =>
-                          country.value === profileData?.country ||
-                          countries[0],
+                        (country) => country.value === profileData?.country,
                       )
                     ]
                   }
