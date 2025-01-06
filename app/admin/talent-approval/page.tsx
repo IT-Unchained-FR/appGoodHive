@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { UserTable } from "./components/UserTable";
 import { UserProfileModal } from "./components/UserProfileModal";
 
-export default function AdminPage() {
+export default function AdminTalentApproval() {
   const [users, setUsers] = useState<any[]>([]);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
