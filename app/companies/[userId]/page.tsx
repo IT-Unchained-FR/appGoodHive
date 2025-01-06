@@ -161,7 +161,31 @@ export default async function CompanyProfilePage(
                 walletAddress,
                 country,
                 escrowAmount,
+                postedAt,
               } = job;
+              const getRelativeTime = (postedAt: string) => {
+                const now = new Date();
+                const posted = new Date(postedAt);
+                const diffMs = now.getTime() - posted.getTime();
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMins / 60);
+                const diffDays = Math.floor(diffHours / 24);
+                const diffMonths = Math.floor(diffDays / 30);
+                const diffYears = Math.floor(diffDays / 365);
+
+                if (diffYears > 0)
+                  return `Posted ${diffYears} ${diffYears === 1 ? "year" : "years"} ago`;
+                if (diffMonths > 0)
+                  return `Posted ${diffMonths} ${diffMonths === 1 ? "month" : "months"} ago`;
+                if (diffDays > 0)
+                  return `Posted ${diffDays} ${diffDays === 1 ? "day" : "days"} ago`;
+                if (diffHours > 0)
+                  return `Posted ${diffHours} ${diffHours === 1 ? "hour" : "hours"} ago`;
+                if (diffMins > 0)
+                  return `Posted ${diffMins} ${diffMins === 1 ? "minute" : "minutes"} ago`;
+                return "Posted just now";
+              };
+
               return (
                 <Card
                   uniqueId={userId}
@@ -172,7 +196,7 @@ export default async function CompanyProfilePage(
                   type="company"
                   title={title}
                   postedBy={companyName}
-                  postedOn="posted 2 days ago"
+                  postedOn={getRelativeTime(postedAt)}
                   image={image_url || "/img/company_img.png"}
                   country={country}
                   city={city}
