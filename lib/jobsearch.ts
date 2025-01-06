@@ -91,6 +91,7 @@ export async function fetchJobs({
       recruiter: item.recruiter === "true",
       escrowAmount: item.escrow_amount,
       posted_at: item.posted_at,
+      in_saving_stage: item.in_saving_stage,
     }));
 
     const sortedJobs = jobs.sort(
