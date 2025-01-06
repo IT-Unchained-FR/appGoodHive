@@ -17,6 +17,8 @@ export async function getCompanyJobs(userId: string) {
       WHERE user_id = ${userId}
       `;
 
+    console.log(jobsQuery, "jobsQuery...");
+
     const jobs = jobsQuery.map((item) => ({
       id: item.id,
       title: item.title,
@@ -36,6 +38,7 @@ export async function getCompanyJobs(userId: string) {
       escrowAmount: item.escrow_amount,
       mentor: item.mentor,
       recruiter: item.recruiter,
+      postedAt: item.posted_at,
     }));
 
     return jobs;
