@@ -17,6 +17,7 @@ type Props = {
   phone_country_code: string;
   phone_number: string;
   streetAddress: string;
+  user_id: string;
 };
 
 export const CompanySocialMediaAndContact: FC<Props> = (props) => {
@@ -31,34 +32,24 @@ export const CompanySocialMediaAndContact: FC<Props> = (props) => {
     phone_country_code,
     phone_number,
     streetAddress,
+    user_id,
   } = props;
   const [isShowDetails, setIsShowDetails] = useState(false);
 
-  const walletAddress = useContext(AddressContext);
-
-  const fetchCompanyData = async () => {
-    const userDataResponse = await fetch(
-      `/api/talents/my-profile?walletAddress=${walletAddress}`,
-    );
-
-    if (!userDataResponse.ok) {
-      setIsShowDetails(false);
-      return;
-    }
-
-    const userProfile = await userDataResponse.json();
-    if (userProfile.talent_status === "approved") {
-      setIsShowDetails(true);
-      return;
-    } else {
-      setIsShowDetails(false);
-    }
-  };
   useEffect(() => {
-    if (walletAddress) {
+    const fetchCompanyData = async () => {
+      const data = await fetch(`/api/talents/my-profile?user_id=${user_id}`);
+
+      const userProfileData = await data.json();
+      if (userProfileData.approved) {
+        setIsShowDetails(true);
+      }
+    };
+
+    if (user_id) {
       fetchCompanyData();
     }
-  }, [walletAddress]);
+  }, [user_id]);
 
   return (
     <>
