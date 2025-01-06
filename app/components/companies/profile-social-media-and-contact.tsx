@@ -5,6 +5,7 @@ import Image from "next/image";
 import React, { FC, useContext, useEffect, useState } from "react";
 
 import { AddressContext } from "@components/context";
+import Cookies from "js-cookie";
 
 type Props = {
   linkedin?: string;
@@ -17,7 +18,6 @@ type Props = {
   phone_country_code: string;
   phone_number: string;
   streetAddress: string;
-  user_id: string;
 };
 
 export const CompanySocialMediaAndContact: FC<Props> = (props) => {
@@ -32,9 +32,9 @@ export const CompanySocialMediaAndContact: FC<Props> = (props) => {
     phone_country_code,
     phone_number,
     streetAddress,
-    user_id,
   } = props;
   const [isShowDetails, setIsShowDetails] = useState(false);
+  const user_id = Cookies.get("user_id");
 
   useEffect(() => {
     const fetchCompanyData = async () => {
@@ -131,7 +131,7 @@ export const CompanySocialMediaAndContact: FC<Props> = (props) => {
           </div>
           <div className="flex w-full justify-between mb-8">
             <h4 className="text-[#4E4E4E] text-base font-bold">Phone</h4>
-            <p className="text-[#4E4E4E] text-base">{`+${phone_country_code} ${phone_number}`}</p>
+            <p className="text-[#4E4E4E] text-base">{`${phone_country_code ? "" : "+"}${phone_country_code} ${phone_number}`}</p>
           </div>
           <div className="flex w-full justify-between mb-8">
             <h4 className="text-[#4E4E4E] text-base font-bold">Address</h4>

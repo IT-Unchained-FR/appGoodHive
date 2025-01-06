@@ -104,7 +104,6 @@ export default async function CompanyProfilePage(
                   phone_country_code={phone_country_code}
                   phone_number={phone_number}
                   streetAddress={streetAddress}
-                  user_id={user_id}
                 />
               </div>
             </div>
