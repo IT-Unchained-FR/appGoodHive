@@ -21,7 +21,10 @@ export async function POST(request: Request) {
     talent,
     recruiter,
     mentor,
+    in_saving_stage,
   } = await request.json();
+
+  console.log(in_saving_stage, "in_saving_stage....");
 
   const sql = postgres(process.env.DATABASE_URL || "", {
     ssl: {
@@ -56,7 +59,8 @@ export async function POST(request: Request) {
             talent = ${talent},
             recruiter = ${recruiter},
             mentor = ${mentor},
-            wallet_address = ${walletAddress}
+            wallet_address = ${walletAddress},
+            in_saving_stage = ${in_saving_stage}
         WHERE id = ${id}
         `;
 
