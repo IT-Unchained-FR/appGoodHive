@@ -286,6 +286,8 @@ export default function CreateJob() {
       );
     } catch (error) {
       console.error(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
