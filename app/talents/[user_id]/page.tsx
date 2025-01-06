@@ -75,6 +75,7 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
     mentor_status,
     recruiter_status,
     twitter,
+    approved,
   } = profileData;
 
   const availabilityStatus = generateAvailabilityStatus(
@@ -82,7 +83,7 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
     remote_only,
   );
 
-  if (talent_status === "pending") {
+  if (!approved) {
     return (
       <div>
         <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
