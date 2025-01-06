@@ -19,5 +19,9 @@ export function middleware(req: NextRequest) {
 
 // Configure the routes where this middleware applies
 export const config = {
-  matcher: ["/talents/my-profile/:path*", "/talents/my-profile"], // Protect specific routes
+  matcher: [
+    "/talents/my-profile/:path*",
+    "/talents/my-profile",
+    "/companies/my-profile",
+  ], // Protect specific routes
 };
