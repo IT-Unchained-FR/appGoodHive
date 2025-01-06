@@ -107,7 +107,7 @@ export default function AdminAllUsers() {
       </div>
 
       <div className="mb-4">
-        <div className="relative">
+        <div className="relative bg-white rounded-lg">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by email, wallet address, or user ID"
