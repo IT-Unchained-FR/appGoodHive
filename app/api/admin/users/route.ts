@@ -8,7 +8,6 @@ const sql = postgres(process.env.DATABASE_URL || "", {
 });
 
 export async function GET(req: NextRequest) {
-  console.log("Getting Talents...");
   try {
     const users = await sql`
       SELECT *

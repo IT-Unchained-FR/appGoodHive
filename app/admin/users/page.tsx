@@ -206,7 +206,7 @@ export default function AdminManageUsers() {
             {/* Add empty rows to maintain consistent table length */}
             {loading && (
               <TableRow>
-                <TableCell colSpan={4} className="h-full">
+                <TableCell colSpan={4} className="h-[52px]">
                   <Spinner />
                 </TableCell>
               </TableRow>
