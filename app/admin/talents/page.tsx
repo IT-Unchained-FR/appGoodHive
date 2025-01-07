@@ -36,7 +36,7 @@ interface User {
   last_active: string;
 }
 
-export default function AdminManageUsers() {
+export default function AdminManageTalents() {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
