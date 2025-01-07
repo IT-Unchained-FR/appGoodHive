@@ -1,5 +1,5 @@
 import React from "react";
-import { Users, Building2, UserCheck, Layout } from "lucide-react";
+import { Users, Building2, UserCheck, Layout, Network } from "lucide-react";
 import Link from "next/link";
 
 interface RootLayoutProps {
@@ -34,6 +34,13 @@ const RootLayout: React.FC<RootLayoutProps> = ({ children }) => {
               >
                 <Building2 className="w-5 h-5 mr-3" />
                 Approve Companies
+              </Link>
+              <Link
+                href="/admin/talents"
+                className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-blue-600"
+              >
+                <Network className="w-5 h-5 mr-3" />
+                All Talents
               </Link>
               <Link
                 href="/admin/users"
