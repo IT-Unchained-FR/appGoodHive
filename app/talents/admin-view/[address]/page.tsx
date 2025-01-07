@@ -188,11 +188,21 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
           </div>
           <div className="flex items-center space-x-2 text-gray-600">
             <span className="font-bold">Mentor Status:</span>
-            <span>{user.mentor_status || "N/A"}</span>
+            <span>
+              {(user.mentor_status &&
+                user.mentor_status.charAt(0).toUpperCase() +
+                  user.mentor_status.slice(1)) ||
+                "N/A"}
+            </span>
           </div>
           <div className="flex items-center space-x-2 text-gray-600">
             <span className="font-bold">Recruiter Status:</span>
-            <span>{user.recruiter_status || "N/A"}</span>
+            <span>
+              {(user.recruiter_status &&
+                user.recruiter_status.charAt(0).toUpperCase() +
+                  user.recruiter_status.slice(1)) ||
+                "N/A"}
+            </span>
           </div>
         </div>
 
