@@ -91,7 +91,7 @@ export default function AdminManageUsers() {
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-6">
+    <div className="w-full mx-auto p-6">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h2 className="text-xl font-semibold mb-1">
@@ -121,6 +121,7 @@ export default function AdminManageUsers() {
             <TableRow>
               <TableHead className="w-[250px]">Email</TableHead>
               <TableHead>Wallet Address</TableHead>
+              <TableHead>User ID</TableHead>
               <TableHead>Approved Roles</TableHead>
               {/* <TableHead className="w-[100px]"></TableHead> */}
             </TableRow>
@@ -158,6 +159,27 @@ export default function AdminManageUsers() {
                         onClick={() => {
                           toast.success("Wallet Address copied to clipboard");
                           navigator.clipboard.writeText(user.wallet_address);
+                        }}
+                      >
+                        <Copy className="h-4 w-4 text-gray-500" />
+                      </Button>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <span>
+                      {/* {user.wallet_address?.slice(0, 12)}...
+                      {user.wallet_address?.slice(-8)} */}
+                      {user.userid}
+                    </span>
+                    {user.userid && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          toast.success("User ID copied to clipboard");
+                          navigator.clipboard.writeText(user.userid);
                         }}
                       >
                         <Copy className="h-4 w-4 text-gray-500" />
