@@ -350,7 +350,7 @@ export default function AdminManageTalents() {
                         className="whitespace-nowrap"
                         onClick={() => {
                           window.open(
-                            `/talents/admin-view/${talent.user_id}`,
+                            `/admin/talent/${talent.user_id}`,
                             "_blank",
                           );
                         }}
