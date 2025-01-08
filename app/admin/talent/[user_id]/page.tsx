@@ -26,7 +26,7 @@ type MyProfilePageProps = {
 
 export const revalidate = 0;
 
-export async function MyProfilePage(context: MyProfilePageProps) {
+export default async function Page(context: MyProfilePageProps) {
   const { user_id } = context.params;
 
   const user: any = await getProfileData(user_id);
