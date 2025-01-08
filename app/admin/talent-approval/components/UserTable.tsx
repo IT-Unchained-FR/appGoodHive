@@ -65,10 +65,7 @@ export function UserTable({
                 <div className="flex gap-2 justify-end">
                   <Button
                     onClick={() => {
-                      window.open(
-                        `/talents/admin-view/${user?.user_id}`,
-                        "_blank",
-                      );
+                      window.open(`/admin/talent/${user?.user_id}`, "_blank");
                     }}
                     variant="outline"
                     size="sm"
