@@ -17,7 +17,6 @@ export async function getCompanyData(userId: string | undefined) {
       FROM goodhive.companies
       WHERE user_id = ${userId}
       `;
-    // FROM goodhive.companies
 
     if (user.length === 0) {
       return {};
