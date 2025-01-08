@@ -83,7 +83,7 @@ export function UserTable({ users, isCompany, fetchData }: UserTableProps) {
                   {/* <Button
                     onClick={() => {
                       window.open(
-                        `/talents/admin-view/${user?.user_id}`,
+                        `/admin/talent/${user?.user_id}`,
                         "_blank",
                       );
                     }}

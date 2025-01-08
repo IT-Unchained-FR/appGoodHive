@@ -91,12 +91,14 @@ export const PopupModal: FC<AddFundsModalProps> = (props) => {
                   <input
                     className="form-checkbox h-5 w-5 text-gray-600"
                     type="checkbox"
+                    id="fullAmount"
                     name="amount"
+                    title="Full Amount"
                     onChange={() => setIsFullAmount(!isFullAmount)}
                   />
                   <label
                     className="ml-2 text-base font-normal text-gray-600"
-                    htmlFor="amount"
+                    htmlFor="fullAmount"
                   >
                     Full Amount
                   </label>
