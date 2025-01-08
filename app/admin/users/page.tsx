@@ -131,7 +131,7 @@ export default function AdminManageUsers() {
               <TableRow key={user.id}>
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <Avatar>
+                    <Avatar className="h-10 w-10">
                       <AvatarFallback>
                         {user.email?.charAt(0) ||
                           user.wallet_address?.charAt(2)}
