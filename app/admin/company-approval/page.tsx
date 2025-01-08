@@ -69,6 +69,7 @@ export default function AdminPage() {
               onProfileClick={handleProfileClick}
               isCompany
               fetchData={fetchPendingUsers}
+              company
             />
           )}
 
