@@ -26,6 +26,7 @@ type ApprovalPopupProps = {
   fetchData: () => void;
   loading: boolean;
   setLoading: (loading: boolean) => void;
+  superView?: boolean;
 };
 
 export default function ApprovalPopup({
@@ -35,6 +36,7 @@ export default function ApprovalPopup({
   fetchData,
   setLoading,
   loading,
+  superView,
 }: ApprovalPopupProps) {
   const [approvalTypes, setApprovalTypes] = useState<ApprovalTypes>({
     mentor: false,
@@ -79,12 +81,13 @@ export default function ApprovalPopup({
   };
 
   useEffect(() => {
-    if (user)
+    if (user) {
       setApprovalTypes({
         mentor: user.mentor ? true : false,
         talent: user.talent ? true : false,
         recruiter: user.recruiter ? true : false,
       });
+    }
   }, [user]);
 
   return (
@@ -99,7 +102,8 @@ export default function ApprovalPopup({
               <Label htmlFor="mentor" className="flex flex-col">
                 <span className="text-base">Mentor</span>
                 <span className="text-sm text-muted-foreground">
-                  Approve as a mentor {user.mentor ? " (Applied For)" : ""}
+                  Approve as a mentor{" "}
+                  {user.mentor && !superView ? " (Applied For)" : ""}
                 </span>
               </Label>
               <Switch
@@ -112,7 +116,8 @@ export default function ApprovalPopup({
               <Label htmlFor="talent" className="flex flex-col">
                 <span className="text-base">Talent</span>
                 <span className="text-sm text-muted-foreground">
-                  Approve as a talent {user.talent ? " (Applied For)" : ""}
+                  Approve as a talent{" "}
+                  {user.talent && !superView ? " (Applied For)" : ""}
                 </span>
               </Label>
               <Switch
@@ -126,7 +131,8 @@ export default function ApprovalPopup({
             <Label htmlFor="recruiter" className="flex flex-col">
               <span className="text-base">Recruiter</span>
               <span className="text-sm text-muted-foreground">
-                Approve as a recruiter {user.recruiter ? " (Applied For)" : ""}
+                Approve as a recruiter{" "}
+                {user.recruiter && !superView ? " (Applied For)" : ""}
               </span>
             </Label>
             <Switch

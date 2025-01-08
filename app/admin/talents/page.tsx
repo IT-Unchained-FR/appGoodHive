@@ -29,6 +29,8 @@ import toast from "react-hot-toast";
 import Spinner from "@/app/components/Spinner/Spinner";
 import { ProfileData } from "@/app/talents/my-profile/page";
 import Image from "next/image";
+import ApprovalPopup from "../talent-approval/components/ApprovalPopup";
+import { ConfirmationPopup } from "@/app/components/ConfirmationPopup/ConfirmationPopup";
 
 export default function AdminManageTalents() {
   const [talents, setTalents] = useState<ProfileData[]>([]);
@@ -37,6 +39,13 @@ export default function AdminManageTalents() {
   const [itemsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+
+  // Approval popup state
+  const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
+  const [showApprovePopup, setShowApprovePopup] = useState(false);
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
 
   const fetchAllTalents = async () => {
     try {
@@ -89,8 +98,50 @@ export default function AdminManageTalents() {
     setCurrentPage((prev) => Math.max(prev - 1, 1));
   };
 
+  const handleDeleteTalent = async (userId: string) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/admin/talents/${userId}`, {
+        method: "DELETE",
+        body: JSON.stringify({ userId }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete talent");
+      }
+
+      toast.success("Talent deleted successfully");
+      setShowDeleteConfirm(false);
+      await fetchAllTalents();
+    } catch (error) {
+      console.error("Error deleting talent:", error);
+      toast.error("Failed to delete talent");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="w-full mx-auto p-6">
+      <ConfirmationPopup
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        onConfirm={() => userToDelete && handleDeleteTalent(userToDelete)}
+        title="Delete Talent"
+        description="Are you sure you want to delete this talent? This action cannot be undone."
+        loading={loading}
+      />
+      {selectedUser && (
+        <ApprovalPopup
+          open={showApprovePopup}
+          setOpen={setShowApprovePopup}
+          user={selectedUser as ProfileData}
+          fetchData={fetchAllTalents}
+          setLoading={setLoading}
+          loading={loading}
+          superView
+        />
+      )}
       <div className="flex items-center justify-between mb-8">
         <div>
           <h2 className="text-xl font-semibold mb-1">
@@ -147,13 +198,14 @@ export default function AdminManageTalents() {
                 <TableRow key={talent.user_id}>
                   <TableCell className="w-[15%]">
                     <div className="flex items-center gap-2">
-                      <Avatar>
+                      <Avatar className="h-12 w-12">
                         {talent.image_url ? (
                           <Image
                             src={talent.image_url}
                             alt={`${talent.first_name} ${talent.last_name}`}
-                            width={32}
-                            height={32}
+                            width={46}
+                            height={46}
+                            className="h-12 w-12"
                           />
                         ) : (
                           <AvatarFallback>
@@ -176,19 +228,24 @@ export default function AdminManageTalents() {
                     <div className="flex items-center gap-2">
                       <span className="truncate]">
                         {talent.user_id
-                          ? `${talent.user_id.slice(0, 8)}.......${talent.user_id.slice(-8)}`
+                          ? `${talent.user_id.slice(0, 5)}.......${talent.user_id.slice(-5)}`
                           : ""}
                       </span>
-                      <button
-                        title="Copy user ID"
-                        onClick={() => {
-                          navigator.clipboard.writeText(talent.user_id || "");
-                          toast.success("User ID copied!");
-                        }}
-                        className="hover:text-gray-700"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </button>
+                      <div className="relative group">
+                        <button
+                          title="Copy user ID"
+                          onClick={() => {
+                            navigator.clipboard.writeText(talent.user_id || "");
+                            toast.success("User ID copied!");
+                          }}
+                          className="hover:text-gray-700"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </button>
+                        <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block bg-black text-white text-xs rounded p-2 whitespace-nowrap">
+                          {talent.user_id}
+                        </div>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell className="w-[15%]">{talent.email}</TableCell>
@@ -267,6 +324,10 @@ export default function AdminManageTalents() {
                         size="icon"
                         className="h-8 w-8"
                         title="Edit talent"
+                        onClick={() => {
+                          setSelectedUser(talent);
+                          setShowApprovePopup(true);
+                        }}
                       >
                         <PenSquare className="h-4 w-4" />
                       </Button>
@@ -276,14 +337,10 @@ export default function AdminManageTalents() {
                         className="h-8 w-8"
                         title="Delete talent"
                         onClick={() => {
-                          if (
-                            confirm(
-                              "Are you sure you want to delete this talent?",
-                            )
-                          ) {
-                            // Add delete API call
-                          }
+                          setUserToDelete(talent.user_id || "");
+                          setShowDeleteConfirm(true);
                         }}
+                        disabled={loading}
                       >
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
@@ -298,7 +355,7 @@ export default function AdminManageTalents() {
                           );
                         }}
                       >
-                        Visit Profile
+                        Talent Profile
                       </Button>
                     </div>
                   </TableCell>
