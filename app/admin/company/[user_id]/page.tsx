@@ -41,9 +41,7 @@ export default function CompaniesPage({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        Loading...
-      </div>
+      <div className="flex items-center justify-center min-h-screen"></div>
     );
   }
 
