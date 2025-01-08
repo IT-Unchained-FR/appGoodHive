@@ -16,6 +16,7 @@ interface UserTableProps {
   onProfileClick: (user: ProfileData) => void;
   isCompany: boolean;
   fetchData?: () => void;
+  company?: boolean;
 }
 
 export function UserTable({ users, isCompany, fetchData }: UserTableProps) {
@@ -80,18 +81,15 @@ export function UserTable({ users, isCompany, fetchData }: UserTableProps) {
 
               <TableCell className="text-right">
                 <div className="flex gap-2 justify-end">
-                  {/* <Button
+                  <Button
                     onClick={() => {
-                      window.open(
-                        `/admin/talent/${user?.user_id}`,
-                        "_blank",
-                      );
+                      window.open(`/admin/company/${user?.user_id}`, "_blank");
                     }}
                     variant="outline"
                     size="sm"
                   >
-                    View Profile
-                  </Button> */}
+                    Company Profile
+                  </Button>
                   <Button
                     onClick={() => handleApproveClick(user)}
                     variant="default"
@@ -99,13 +97,6 @@ export function UserTable({ users, isCompany, fetchData }: UserTableProps) {
                   >
                     Approve
                   </Button>
-                  {/* <Button
-                    onClick={() => handleApproveClick(user)}
-                    variant="default"
-                    size="sm"
-                  >
-                    Approve
-                  </Button> */}
                 </div>
               </TableCell>
             </TableRow>
