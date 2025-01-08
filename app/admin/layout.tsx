@@ -43,6 +43,13 @@ const RootLayout: React.FC<RootLayoutProps> = ({ children }) => {
                 All Talents
               </Link>
               <Link
+                href="/admin/companies"
+                className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-blue-600"
+              >
+                <Building2 className="w-5 h-5 mr-3" />
+                All Companies
+              </Link>
+              <Link
                 href="/admin/users"
                 className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-blue-600"
               >
