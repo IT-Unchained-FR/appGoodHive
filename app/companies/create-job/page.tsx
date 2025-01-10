@@ -31,6 +31,7 @@ import { SelectInput } from "@components/select-input";
 import { ToggleButton } from "@components/toggle-button";
 import { PopupModal } from "./PopupModal";
 import Cookies from "js-cookie";
+import { AuthLayout } from "@/app/components/AuthLayout/AuthLayout";
 
 export default function CreateJob() {
   const [description, setDescription] = useState("");
@@ -73,6 +74,12 @@ export default function CreateJob() {
       walletAddress: walletAddress ? walletAddress : "",
       token: selectedCurrency?.value ?? "",
     });
+
+  useEffect(() => {
+    if (!userId) {
+      router.push("/auth/login");
+    }
+  }, [userId, router]);
 
   const onPopupModalSubmit = async (amount: number, type: string) => {
     switch (type) {
@@ -414,383 +421,387 @@ export default function CreateJob() {
   }
 
   return (
-    <main className="container mx-auto">
-      <h1 className="my-2 text-2xl border-b-[1px] border-slate-300 ">
-        Create Job
-      </h1>
-      {!!id && jobData && (
-        <div className="w-full mb-1 flex justify-end">
-          <h3 className="font-bold">
-            Provision Amount: {provisionalAmount} USDC
-          </h3>
-        </div>
-      )}
-      <section>
-        <form onSubmit={handleSubmit}>
-          <div className="flex flex-col w-full">
-            <div className="flex flex-col gap-4 mt-10">
-              <div className="flex-1">
-                <label
-                  htmlFor="title"
-                  className="inline-block ml-3 text-base text-black form-label"
-                >
-                  Job Header*
-                </label>
-                <input
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Job Header..."
-                  name="title"
-                  type="text"
-                  required
-                  maxLength={100}
-                  defaultValue={jobData?.title}
-                />
-              </div>
-              <div className="w-full flex gap-5 justify-between sm:flex-col">
-                <SelectInput
-                  labelText="Type of engagement"
-                  name="type-engagement"
-                  required={true}
-                  disabled={false}
-                  inputValue={typeEngagement}
-                  setInputValue={setTypeEngagement}
-                  options={typeEngagements}
-                  defaultValue={
-                    typeEngagements[
-                      typeEngagements.findIndex(
-                        (type) => type.value === jobData?.typeEngagement,
-                      )
-                    ]
-                  }
-                />
-
-                <SelectInput
-                  labelText="Job Type"
-                  name="job-type"
-                  required={true}
-                  disabled={false}
-                  inputValue={jobType}
-                  setInputValue={setJobType}
-                  options={jobTypes}
-                  defaultValue={
-                    jobTypes[
-                      jobTypes.findIndex(
-                        (type) => type.value === jobData?.jobType,
-                      )
-                    ]
-                  }
-                />
-              </div>
-            </div>
-            <div>
-              <label
-                htmlFor="description"
-                className="inline-block mt-4 ml-3 text-base text-black form-label"
-              ></label>
-            </div>
-            <div>
-              <textarea
-                name="description"
-                className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                placeholder="Project Description"
-                maxLength={5000}
-                rows={5}
-                defaultValue={jobData?.description}
-                onChange={handleDescriptionChange}
-              />
-              <p
-                className="text-[13px] mt-2 text-right w-full"
-                style={{ color: "#FFC905" }}
-              >
-                {description.length}/5000
-              </p>
-            </div>
-            <div className="relative flex flex-col gap-4 mt-12 mb-10 sm:flex-row">
-              <div className="flex-1">
-                <label
-                  htmlFor="skills"
-                  className="inline-block ml-3 text-base font-bold text-black form-label"
-                >
-                  Mandatory Skills*
-                </label>
-                <div className="absolute w-full pt-1 pr-10 text-base font-normal text-gray-600 bg-white form-control ">
-                  <AutoSuggestInput
-                    inputs={skills}
-                    selectedInputs={selectedSkills}
-                    setSelectedInputs={setSelectedSkills}
-                  />
-                </div>
-                <div className="pt-10">
-                  {!!selectedSkills && selectedSkills.length > 0 && (
-                    <div className="flex flex-wrap mt-4 ">
-                      {selectedSkills.map((skill, index) => (
-                        <div
-                          key={index}
-                          className="border border-[#FFC905] flex items-center bg-gray-200 rounded-full py-1 px-3 m-1"
-                        >
-                          <span className="mr-2">{skill}</span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedSkills(
-                                selectedSkills.filter((_, i) => i !== index),
-                              );
-                            }}
-                            className="w-6 text-black bg-gray-400 rounded-full"
-                          >
-                            &#10005;
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Add three checkbox here which are Talent, Recruiter and Mentor and aslo match up the styles we are having here. And add a i circular button in the right side of every checkbox lebel and if hover over it should show text just like tooltip */}
-            <div className="w-1/2 sm:w-full mb-5 px-3 flex justify-between sm:flex-wrap sm:gap-5">
-              {createJobServices.map((service) => {
-                const { label, value, tooltip } = service;
-                const isChecked =
-                  jobData?.[value] === "true" || value === "talent" || false;
-                const isTalent = value === "talent";
-                return (
-                  <ToggleButton
-                    key={value}
-                    label={label}
-                    name={value}
-                    checked={isChecked}
-                    tooltip={tooltip}
-                    onChange={onJobServicesChange}
-                    disabled={isTalent}
-                  />
-                );
-              })}
-            </div>
-
-            <div className="flex gap-4 mt-4 sm:flex-col">
-              <div className="flex-1">
-                <SelectInput
-                  labelText="Project Duration"
-                  name="duration"
-                  required={true}
-                  disabled={false}
-                  inputValue={duration}
-                  setInputValue={setDuration}
-                  options={projectDuration}
-                  defaultValue={
-                    projectDuration[
-                      projectDuration.findIndex(
-                        (type) => type.value === jobData?.duration,
-                      )
-                    ]
-                  }
-                />
-              </div>
-
-              <div className="flex-1">
-                <SelectInput
-                  labelText="Project Type"
-                  name="projectType"
-                  required={true}
-                  disabled={false}
-                  inputValue={projectType}
-                  setInputValue={setProjectType}
-                  options={projectTypes}
-                  defaultValue={
-                    projectTypes[
-                      projectTypes.findIndex(
-                        (type) => type.value === jobData?.projectType,
-                      )
-                    ]
-                  }
-                />
-              </div>
-              {projectType || jobData?.projectType ? (
+    <AuthLayout>
+      <main className="container mx-auto">
+        <h1 className="my-2 text-2xl border-b-[1px] border-slate-300 ">
+          Create Job
+        </h1>
+        {!!id && jobData && (
+          <div className="w-full mb-1 flex justify-end">
+            <h3 className="font-bold">
+              Provision Amount: {provisionalAmount} USDC
+            </h3>
+          </div>
+        )}
+        <section>
+          <form onSubmit={handleSubmit}>
+            <div className="flex flex-col w-full">
+              <div className="flex flex-col gap-4 mt-10">
                 <div className="flex-1">
                   <label
-                    htmlFor="budget"
+                    htmlFor="title"
                     className="inline-block ml-3 text-base text-black form-label"
                   >
-                    {projectType && projectType.value === "fixed"
-                      ? "Budget*"
-                      : "Expected Hourly Rate*"}
+                    Job Header*
                   </label>
                   <input
                     className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                    type="number"
-                    name="budget"
-                    onChange={onBudgetChange}
+                    placeholder="Job Header..."
+                    name="title"
+                    type="text"
                     required
-                    value={budget}
                     maxLength={100}
-                    defaultValue={jobData?.budget}
-                    title="Enter budget amount"
-                    placeholder="Enter amount"
+                    defaultValue={jobData?.title}
                   />
                 </div>
-              ) : null}
-            </div>
-            {jobData?.budget || budget ? (
-              <p className="mt-2 text-right">
-                {projectType && projectType.value === "hourly"
-                  ? "Total fees per hour:"
-                  : "Total fees:"}{" "}
-                {totalFees} USD
-              </p>
-            ) : null}
-            <div className="flex gap-4 mt-3"></div>
-            <div className="flex gap-4 mt-4 sm:flex-col">
-              <div className="flex-1">
-                <SelectInput
-                  labelText="Chain"
-                  name="chain"
-                  required={true}
-                  disabled={true}
-                  inputValue={selectedChain}
-                  setInputValue={setSelectedChain}
-                  options={chains}
-                  defaultValue={
-                    chains[
-                      chains.findIndex((type) => type.value === jobData?.chain)
-                    ] || chains[0]
-                  }
-                />
-              </div>
-              <div className="flex-1">
-                <SelectInput
-                  labelText="Currency"
-                  name="currency"
-                  required={true}
-                  disabled={!selectedChain}
-                  inputValue={selectedCurrency}
-                  setInputValue={setSelectedCurrency}
-                  options={
-                    selectedChain?.value === "ethereum"
-                      ? ethereumTokens
-                      : selectedChain?.value === "polygon"
-                        ? polygonMainnetTokens
-                        : selectedChain?.value === "gnosis-chain"
-                          ? gnosisChainTokens
-                          : []
-                  }
-                  defaultValue={
-                    polygonMainnetTokens[
-                      polygonMainnetTokens.findIndex(
-                        (token) => token.value === jobData?.currency,
-                      )
-                    ]
-                  }
-                />
-              </div>
-            </div>
+                <div className="w-full flex gap-5 justify-between sm:flex-col">
+                  <SelectInput
+                    labelText="Type of engagement"
+                    name="type-engagement"
+                    required={true}
+                    disabled={false}
+                    inputValue={typeEngagement}
+                    setInputValue={setTypeEngagement}
+                    options={typeEngagements}
+                    defaultValue={
+                      typeEngagements[
+                        typeEngagements.findIndex(
+                          (type) => type.value === jobData?.typeEngagement,
+                        )
+                      ]
+                    }
+                  />
 
-            <div className="mt-12 mb-8 w-full flex justify-end gap-4 text-right">
-              {!!id && (
-                <Tooltip content="Provisioning funds boost swift community response to your job offer.">
+                  <SelectInput
+                    labelText="Job Type"
+                    name="job-type"
+                    required={true}
+                    disabled={false}
+                    inputValue={jobType}
+                    setInputValue={setJobType}
+                    options={jobTypes}
+                    defaultValue={
+                      jobTypes[
+                        jobTypes.findIndex(
+                          (type) => type.value === jobData?.jobType,
+                        )
+                      ]
+                    }
+                  />
+                </div>
+              </div>
+              <div>
+                <label
+                  htmlFor="description"
+                  className="inline-block mt-4 ml-3 text-base text-black form-label"
+                ></label>
+              </div>
+              <div>
+                <textarea
+                  name="description"
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  placeholder="Project Description"
+                  maxLength={5000}
+                  rows={5}
+                  defaultValue={jobData?.description}
+                  onChange={handleDescriptionChange}
+                />
+                <p
+                  className="text-[13px] mt-2 text-right w-full"
+                  style={{ color: "#FFC905" }}
+                >
+                  {description.length}/5000
+                </p>
+              </div>
+              <div className="relative flex flex-col gap-4 mt-12 mb-10 sm:flex-row">
+                <div className="flex-1">
+                  <label
+                    htmlFor="skills"
+                    className="inline-block ml-3 text-base font-bold text-black form-label"
+                  >
+                    Mandatory Skills*
+                  </label>
+                  <div className="absolute w-full pt-1 pr-10 text-base font-normal text-gray-600 bg-white form-control ">
+                    <AutoSuggestInput
+                      inputs={skills}
+                      selectedInputs={selectedSkills}
+                      setSelectedInputs={setSelectedSkills}
+                    />
+                  </div>
+                  <div className="pt-10">
+                    {!!selectedSkills && selectedSkills.length > 0 && (
+                      <div className="flex flex-wrap mt-4 ">
+                        {selectedSkills.map((skill, index) => (
+                          <div
+                            key={index}
+                            className="border border-[#FFC905] flex items-center bg-gray-200 rounded-full py-1 px-3 m-1"
+                          >
+                            <span className="mr-2">{skill}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedSkills(
+                                  selectedSkills.filter((_, i) => i !== index),
+                                );
+                              }}
+                              className="w-6 text-black bg-gray-400 rounded-full"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Add three checkbox here which are Talent, Recruiter and Mentor and aslo match up the styles we are having here. And add a i circular button in the right side of every checkbox lebel and if hover over it should show text just like tooltip */}
+              <div className="w-1/2 sm:w-full mb-5 px-3 flex justify-between sm:flex-wrap sm:gap-5">
+                {createJobServices.map((service) => {
+                  const { label, value, tooltip } = service;
+                  const isChecked =
+                    jobData?.[value] === "true" || value === "talent" || false;
+                  const isTalent = value === "talent";
+                  return (
+                    <ToggleButton
+                      key={value}
+                      label={label}
+                      name={value}
+                      checked={isChecked}
+                      tooltip={tooltip}
+                      onChange={onJobServicesChange}
+                      disabled={isTalent}
+                    />
+                  );
+                })}
+              </div>
+
+              <div className="flex gap-4 mt-4 sm:flex-col">
+                <div className="flex-1">
+                  <SelectInput
+                    labelText="Project Duration"
+                    name="duration"
+                    required={true}
+                    disabled={false}
+                    inputValue={duration}
+                    setInputValue={setDuration}
+                    options={projectDuration}
+                    defaultValue={
+                      projectDuration[
+                        projectDuration.findIndex(
+                          (type) => type.value === jobData?.duration,
+                        )
+                      ]
+                    }
+                  />
+                </div>
+
+                <div className="flex-1">
+                  <SelectInput
+                    labelText="Project Type"
+                    name="projectType"
+                    required={true}
+                    disabled={false}
+                    inputValue={projectType}
+                    setInputValue={setProjectType}
+                    options={projectTypes}
+                    defaultValue={
+                      projectTypes[
+                        projectTypes.findIndex(
+                          (type) => type.value === jobData?.projectType,
+                        )
+                      ]
+                    }
+                  />
+                </div>
+                {projectType || jobData?.projectType ? (
+                  <div className="flex-1">
+                    <label
+                      htmlFor="budget"
+                      className="inline-block ml-3 text-base text-black form-label"
+                    >
+                      {projectType && projectType.value === "fixed"
+                        ? "Budget*"
+                        : "Expected Hourly Rate*"}
+                    </label>
+                    <input
+                      className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                      type="number"
+                      name="budget"
+                      onChange={onBudgetChange}
+                      required
+                      value={budget}
+                      maxLength={100}
+                      defaultValue={jobData?.budget}
+                      title="Enter budget amount"
+                      placeholder="Enter amount"
+                    />
+                  </div>
+                ) : null}
+              </div>
+              {jobData?.budget || budget ? (
+                <p className="mt-2 text-right">
+                  {projectType && projectType.value === "hourly"
+                    ? "Total fees per hour:"
+                    : "Total fees:"}{" "}
+                  {totalFees} USD
+                </p>
+              ) : null}
+              <div className="flex gap-4 mt-3"></div>
+              <div className="flex gap-4 mt-4 sm:flex-col">
+                <div className="flex-1">
+                  <SelectInput
+                    labelText="Chain"
+                    name="chain"
+                    required={true}
+                    disabled={true}
+                    inputValue={selectedChain}
+                    setInputValue={setSelectedChain}
+                    options={chains}
+                    defaultValue={
+                      chains[
+                        chains.findIndex(
+                          (type) => type.value === jobData?.chain,
+                        )
+                      ] || chains[0]
+                    }
+                  />
+                </div>
+                <div className="flex-1">
+                  <SelectInput
+                    labelText="Currency"
+                    name="currency"
+                    required={true}
+                    disabled={!selectedChain}
+                    inputValue={selectedCurrency}
+                    setInputValue={setSelectedCurrency}
+                    options={
+                      selectedChain?.value === "ethereum"
+                        ? ethereumTokens
+                        : selectedChain?.value === "polygon"
+                          ? polygonMainnetTokens
+                          : selectedChain?.value === "gnosis-chain"
+                            ? gnosisChainTokens
+                            : []
+                    }
+                    defaultValue={
+                      polygonMainnetTokens[
+                        polygonMainnetTokens.findIndex(
+                          (token) => token.value === jobData?.currency,
+                        )
+                      ]
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="mt-12 mb-8 w-full flex justify-end gap-4 text-right">
+                {!!id && (
+                  <Tooltip content="Provisioning funds boost swift community response to your job offer.">
+                    <button
+                      className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
+                      type="button"
+                      onClick={onManageFundsClick}
+                    >
+                      Manage Funds
+                    </button>
+                  </Tooltip>
+                )}
+                {!!id && (
                   <button
                     className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
                     type="button"
-                    onClick={onManageFundsClick}
+                    onClick={handleCancelJob}
                   >
-                    Manage Funds
+                    Cancel Job
                   </button>
-                </Tooltip>
-              )}
-              {!!id && (
-                <button
-                  className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
-                  type="button"
-                  onClick={handleCancelJob}
-                >
-                  Cancel Job
-                </button>
-              )}
+                )}
 
-              {isLoading ? (
-                <button
-                  className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full opacity-50 cursor-not-allowed transition duration-150 ease-in-out"
-                  type="submit"
-                  disabled
-                >
-                  Saving...
-                </button>
-              ) : (
-                <div className="flex gap-4">
+                {isLoading ? (
                   <button
-                    onClick={handleSaveJob}
-                    className="my-2 text-base font-semibold bg-transparent h-14 w-56 rounded-full border-2 border-[#FFC905] transition-all duration-300 hover:bg-[#FFC905]"
-                  >
-                    Save Job
-                  </button>
-                  <button
-                    className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full transition-all duration-300 hover:bg-transparent hover:border-2 hover:border-[#FFC905]"
+                    className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full opacity-50 cursor-not-allowed transition duration-150 ease-in-out"
                     type="submit"
+                    disabled
                   >
-                    Publish Job
+                    Saving...
                   </button>
-                </div>
-              )}
+                ) : (
+                  <div className="flex gap-4">
+                    <button
+                      onClick={handleSaveJob}
+                      className="my-2 text-base font-semibold bg-transparent h-14 w-56 rounded-full border-2 border-[#FFC905] transition-all duration-300 hover:bg-[#FFC905]"
+                    >
+                      Save Job
+                    </button>
+                    <button
+                      className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full transition-all duration-300 hover:bg-transparent hover:border-2 hover:border-[#FFC905]"
+                      type="submit"
+                    >
+                      Publish Job
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
+          </form>
+        </section>
+        <Modal
+          open={isManageFundsModalOpen}
+          onClose={handleManageFundsModalClose}
+        >
+          <div className="flex justify-between p-5 min-w-[300px]">
+            <h3 className="text-2xl font-semibold text-black">Manage Funds:</h3>
+            <button
+              type="button"
+              onClick={handleManageFundsModalClose}
+              className="w-6 h-6 text-black bg-gray-400 rounded-full"
+            >
+              &#10005;
+            </button>
           </div>
-        </form>
-      </section>
-      <Modal
-        open={isManageFundsModalOpen}
-        onClose={handleManageFundsModalClose}
-      >
-        <div className="flex justify-between p-5 min-w-[300px]">
-          <h3 className="text-2xl font-semibold text-black">Manage Funds:</h3>
-          <button
-            type="button"
-            onClick={handleManageFundsModalClose}
-            className="w-6 h-6 text-black bg-gray-400 rounded-full"
-          >
-            &#10005;
-          </button>
-        </div>
-        <p className="px-5 mt-2 mb-3 font-base">{`Funds will primarily be allocated to cover the Protocol's Fees.`}</p>
-        <div className="flex flex-col p-5 justify-center items-center">
-          {!!id && (
-            <button
-              className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
-              type="button"
-              onClick={() => handlePopupModal("addFunds")}
-            >
-              Provision Funds
-            </button>
-          )}
-          {!!id && !!jobData?.escrowAmount && (
-            <button
-              className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
-              type="button"
-              onClick={() => handlePopupModal("withdraw")}
-            >
-              Withdraw Funds
-            </button>
-          )}
+          <p className="px-5 mt-2 mb-3 font-base">{`Funds will primarily be allocated to cover the Protocol's Fees.`}</p>
+          <div className="flex flex-col p-5 justify-center items-center">
+            {!!id && (
+              <button
+                className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
+                type="button"
+                onClick={() => handlePopupModal("addFunds")}
+              >
+                Provision Funds
+              </button>
+            )}
+            {!!id && !!jobData?.escrowAmount && (
+              <button
+                className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
+                type="button"
+                onClick={() => handlePopupModal("withdraw")}
+              >
+                Withdraw Funds
+              </button>
+            )}
 
-          {!!id && !!jobData?.escrowAmount && (
-            <button
-              className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
-              type="button"
-              onClick={() => handlePopupModal("transfer")}
-            >
-              Pay Now
-            </button>
-          )}
-        </div>
-      </Modal>
-      <PopupModal
-        open={isPopupModalOpen}
-        onClose={handlePopupModalClose}
-        jobId={id as string}
-        type={popupModalType}
-        onSubmit={onPopupModalSubmit}
-        currencyToken={selectedCurrency?.value ?? ""}
-        currencyLabel={selectedCurrency?.label ?? ""}
-      />
-    </main>
+            {!!id && !!jobData?.escrowAmount && (
+              <button
+                className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
+                type="button"
+                onClick={() => handlePopupModal("transfer")}
+              >
+                Pay Now
+              </button>
+            )}
+          </div>
+        </Modal>
+        <PopupModal
+          open={isPopupModalOpen}
+          onClose={handlePopupModalClose}
+          jobId={id as string}
+          type={popupModalType}
+          onSubmit={onPopupModalSubmit}
+          currencyToken={selectedCurrency?.value ?? ""}
+          currencyLabel={selectedCurrency?.label ?? ""}
+        />
+      </main>
+    </AuthLayout>
   );
 }
