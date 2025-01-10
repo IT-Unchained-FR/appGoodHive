@@ -1,3 +1,5 @@
+export const revalidate = 0; // Disable ISR completely
+
 import { getAdminTalents } from "@/lib/fetch-admin-talents";
 import type { NextRequest } from "next/server";
 
