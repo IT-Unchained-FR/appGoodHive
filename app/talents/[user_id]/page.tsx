@@ -43,6 +43,7 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
     fetchProfileData();
   }, [params.user_id]);
 
+  console.log("profileData", profileData);
   if (error) {
     return <p className="text-red-500">{error}</p>;
   }
@@ -164,8 +165,8 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
           <h3 className="text-[#4E4E4E] text-lg font-bold mb-5">
             Specialization and Skills
           </h3>
-          {/* <div className="flex flex-wrap gap-2 mb-10">
-            {!!skills.length &&
+          <div className="flex flex-wrap gap-2 mb-10">
+            {/* {!!skills.length &&
               skills.split(",").map((skill) => (
                 <div
                   key={skill}
@@ -173,8 +174,8 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
                 >
                   <p>{skill}</p>
                 </div>
-              ))}
-          </div> */}
+              ))} */}
+          </div>
           <TalentsCVSection cv_url={cv_url} talent_status={talent_status} />
         </div>
       </div>

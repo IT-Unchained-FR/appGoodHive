@@ -5,6 +5,7 @@ import Image from "next/image";
 import React, { FC, useContext, useEffect, useState } from "react";
 
 import { AddressContext } from "@components/context";
+import Cookies from "js-cookie";
 
 type Props = {
   linkedin?: string;
@@ -20,11 +21,11 @@ export const TalentSocialMedia: FC<Props> = (props) => {
     props;
   const [isShowDetails, setIsShowDetails] = useState(false);
 
-  const walletAddress = useContext(AddressContext);
+  const user_id = Cookies.get("user_id");
 
   const fetchCompanyData = async () => {
     const userDataResponse = await fetch(
-      `/api/companies/my-profile?walletAddress=${walletAddress}`,
+      `/api/companies/my-profile?userId=${user_id}`,
     );
 
     if (!userDataResponse.ok) {
@@ -33,7 +34,7 @@ export const TalentSocialMedia: FC<Props> = (props) => {
     }
 
     const userProfile = await userDataResponse.json();
-    if (userProfile.status === "approved") {
+    if (userProfile.approved) {
       setIsShowDetails(true);
       return;
     } else {
@@ -41,11 +42,11 @@ export const TalentSocialMedia: FC<Props> = (props) => {
     }
   };
   useEffect(() => {
-    if (walletAddress) {
+    if (user_id) {
       fetchCompanyData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [walletAddress]);
+  }, [user_id]);
 
   return (
     <div className="flex flex-col mb-10">
