@@ -17,13 +17,21 @@ export async function GET(req: NextRequest) {
       LEFT JOIN goodhive.users u ON t.user_id = u.userid
     `;
 
-    console.log(`Retrieved ${talents.length} talents`);
     return new Response(
       JSON.stringify({
         message: "Successfully Retrieved All Talents.",
         talents,
       }),
-      { status: 200 },
+      {
+        status: 200,
+        headers: {
+          "Cache-Control":
+            "no-store, no-cache, must-revalidate, proxy-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+          "Surrogate-Control": "no-store",
+        },
+      },
     );
   } catch (error) {
     console.log(error, "error..");
