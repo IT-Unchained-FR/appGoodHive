@@ -1,4 +1,3 @@
-import {} from "@/lib/fetch-company-data";
 import { getPendingTalents } from "@/lib/fetch-talent-data";
 import type { NextRequest } from "next/server";
 
@@ -14,7 +13,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.log(error, "error..");
     return new Response(
-      JSON.stringify({ message: "Error fetching company data" }),
+      JSON.stringify({ message: "Error fetching users data" }),
       {
         status: 500,
       },
