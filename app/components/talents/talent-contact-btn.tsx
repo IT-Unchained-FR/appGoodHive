@@ -5,6 +5,7 @@ import React, { useState, useContext } from "react";
 import toast from "react-hot-toast";
 import { AddressContext } from "@components/context";
 import { MessageBoxModal } from "@components/message-box-modal";
+import Cookies from "js-cookie";
 
 interface Props {
   toEmail: string;
@@ -14,25 +15,25 @@ interface Props {
 export const TalentContactBtn = ({ toEmail, toUserName }: Props) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isPopupModal, setIsPopupModal] = useState(false);
-  const userWalletAddress = useContext(AddressContext);
-
+  const user_id = Cookies.get("user_id");
   const onContactMeBtnClickHandler = async () => {
     setIsLoading(true);
-    const userDataResponse = await fetch(
-      `/api/companies/my-profile?walletAddress=${userWalletAddress}`
+    const companyData = await fetch(
+      `/api/companies/my-profile?userId=${user_id}`,
     );
 
-    if (!userDataResponse.ok) {
+    if (!companyData.ok) {
       toast.error("You don't have a company profile yet! Please create one.");
       setIsLoading(false);
       return;
     }
 
-    const userProfile = await userDataResponse.json();
-    if (userProfile.status !== "approved") {
+    const userProfile = await companyData.json();
+    console.log(userProfile, "userProfile");
+    if (!userProfile.approved) {
       setIsLoading(false);
       toast.error(
-        "Only verified company can contact talent! Please wait for your company to be verified."
+        "Only verified company can contact talent! Please wait for your company to be verified.",
       );
       return;
     }
@@ -49,25 +50,25 @@ export const TalentContactBtn = ({ toEmail, toUserName }: Props) => {
       toast.error("Please complete the form!");
       return;
     }
-    if (!userWalletAddress) {
+    if (!user_id) {
       toast.error("Please connect your wallet first!");
       return;
     }
     try {
       setIsPopupModal(false);
-      const userDataResponse = await fetch(
-        `/api/companies/my-profile?walletAddress=${userWalletAddress}`
+      const companyData = await fetch(
+        `/api/companies/my-profile?userId=${user_id}`,
       );
 
-      if (!userDataResponse.ok) {
+      if (!companyData.ok) {
         toast.error("You don't have a company profile yet! Please create one.");
         return;
       }
 
-      const userProfile = await userDataResponse.json();
-      if (userProfile.status !== "approved") {
+      const userProfile = await companyData.json();
+      if (!userProfile.approved) {
         toast.error(
-          "Only verified company can contact talent! Please wait for your company to be verified."
+          "Only verified company can contact talent! Please wait for your company to be verified.",
         );
         return;
       }
@@ -81,7 +82,7 @@ export const TalentContactBtn = ({ toEmail, toUserName }: Props) => {
           subject: `Goodhive - ${userProfile?.designation} interested in your profile`,
           userEmail: userProfile?.email,
           message,
-          userProfile: `${window.location.origin}/companies/${userWalletAddress}`,
+          userProfile: `${window.location.origin}/companies/${user_id}`,
         }),
         headers: {
           "Content-Type": "application/json",

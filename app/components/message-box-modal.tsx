@@ -12,7 +12,7 @@ interface Props {
 export const MessageBoxModal: FC<Props> = (props) => {
   const { title, messageLengthLimit, onClose, onSubmit } = props;
   const [message, setMessage] = useState("");
-  const [isCaptchaValid, setIsCaptchaValid] = useState(false);
+  const [isCaptchaValid, setIsCaptchaValid] = useState(true);
 
   const googleSiteKey = process.env.NEXT_PUBLIC_GOOGLE_RECAPTCHA_SITE_KEY || "";
 
