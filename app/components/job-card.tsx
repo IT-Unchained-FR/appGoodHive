@@ -56,6 +56,7 @@ export const JobCard: FC<Props> = ({
   user_id,
 }) => {
   const owner_userId = Cookies.get("user_id");
+  const logged_in_user_id = Cookies.get("user_id");
   const typeEngagementMsg = generateJobTypeEngage(typeEngagement);
   const jobTypeMsg = jobTypes.find((job) => job.value === jobType)?.label;
   const durationMsg = projectDuration.find(
@@ -64,7 +65,6 @@ export const JobCard: FC<Props> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isCoverLetterModal, setIsCoverLetterModal] = useState(false);
 
-  const userWalletAddress = useContext(AddressContext);
   const isOwner = owner_userId === user_id;
   const jobBalance =
     Number(escrowAmount) > 0 ? `${escrowAmount} USDC` : "0 USDC";
@@ -74,15 +74,15 @@ export const JobCard: FC<Props> = ({
       toast.error("Please enter your cover letter!");
       return;
     }
-    if (!userWalletAddress) {
-      toast.error("Please connect your wallet first!");
+    if (!logged_in_user_id) {
+      toast.error("Please login to your account first!");
       return;
     }
     try {
       setIsLoading(true);
       setIsCoverLetterModal(false);
       const userDataResponse = await fetch(
-        `/api/talents/my-profile?walletAddress=${userWalletAddress}`,
+        `/api/talents/my-profile?user_id=${logged_in_user_id}`,
       );
 
       if (!userDataResponse.ok) {
@@ -100,7 +100,7 @@ export const JobCard: FC<Props> = ({
           subject: `Goodhive - ${userProfile?.first_name} applied for "${title}"`,
           userEmail: userProfile?.email,
           message: coverLetter,
-          userProfile: `${window.location.origin}/talents/${userWalletAddress}`,
+          userProfile: `${window.location.origin}/talents/${logged_in_user_id}`,
           jobLink: `${window.location.origin}/companies/${walletAddress}?id=${id}`,
         }),
         headers: {
@@ -121,7 +121,7 @@ export const JobCard: FC<Props> = ({
 
   const onApplyClickHandler = async () => {
     const userDataResponse = await fetch(
-      `/api/talents/my-profile?walletAddress=${userWalletAddress}`,
+      `/api/talents/my-profile?user_id=${logged_in_user_id}`,
     );
 
     if (!userDataResponse.ok) {
@@ -129,7 +129,7 @@ export const JobCard: FC<Props> = ({
     }
 
     const userProfile = await userDataResponse.json();
-    if (userProfile.talent_status !== "approved") {
+    if (!userProfile.approved) {
       toast.error(
         "Only verified talent can apply for job! Please wait for your talent to be verified.",
       );
