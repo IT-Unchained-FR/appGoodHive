@@ -124,9 +124,10 @@ export async function GET(request: NextRequest) {
   const searchParamsEntries = request.nextUrl.searchParams.entries();
   const searchParams = Object.fromEntries(searchParamsEntries);
 
-  console.log(searchParams, "searchParams");
   // FIXME: use snake_case instead of camelCase
   const { user_id } = searchParams;
+
+  console.log(user_id, "user_id");
 
   const sql = postgres(process.env.DATABASE_URL || "", {
     ssl: {
@@ -159,6 +160,8 @@ export async function GET(request: NextRequest) {
         ? Buffer.from(user[0].about_work, "base64").toString("utf-8")
         : null,
     };
+
+    console.log(userProfile, "userProfile");
 
     return new Response(JSON.stringify(userProfile));
   } catch (error) {
