@@ -5,6 +5,7 @@ import React, { useState, useContext } from "react";
 import toast from "react-hot-toast";
 import { AddressContext } from "@components/context";
 import { MessageBoxModal } from "@components/message-box-modal";
+import Cookies from "js-cookie";
 
 interface Props {
   toEmail: string;
@@ -14,12 +15,12 @@ interface Props {
 export const CompanyContactBtn = ({ toEmail, toUserName }: Props) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isPopupModal, setIsPopupModal] = useState(false);
-  const userWalletAddress = useContext(AddressContext);
+  const user_id = Cookies.get("user_id");
 
   const onContactMeBtnClickHandler = async () => {
     setIsLoading(true);
     const userDataResponse = await fetch(
-      `/api/talents/my-profile?walletAddress=${userWalletAddress}`
+      `/api/talents/my-profile?user_id=${user_id}`,
     );
 
     if (!userDataResponse.ok) {
@@ -28,10 +29,10 @@ export const CompanyContactBtn = ({ toEmail, toUserName }: Props) => {
     }
 
     const userProfile = await userDataResponse.json();
-    if (userProfile.talent_status !== "approved") {
+    if (!userProfile.approved) {
       setIsLoading(false);
       toast.error(
-        "Only verified talent can contact company! Please wait for your profile to be verified."
+        "Only verified talent can contact company! Please wait for your profile to be verified.",
       );
       return;
     } else {
@@ -49,14 +50,14 @@ export const CompanyContactBtn = ({ toEmail, toUserName }: Props) => {
       toast.error("Please complete the form!");
       return;
     }
-    if (!userWalletAddress) {
-      toast.error("Please connect your wallet first!");
+    if (!user_id) {
+      toast.error("Please login to your account first!");
       return;
     }
     try {
       setIsPopupModal(false);
       const userDataResponse = await fetch(
-        `/api/talents/my-profile?walletAddress=${userWalletAddress}`
+        `/api/talents/my-profile?user_id=${user_id}`,
       );
 
       if (!userDataResponse.ok) {
@@ -74,7 +75,7 @@ export const CompanyContactBtn = ({ toEmail, toUserName }: Props) => {
           subject: `Goodhive - ${userProfile?.first_name} send you a message`,
           userEmail: userProfile?.email,
           message,
-          userProfile: `${window.location.origin}/talents/${userWalletAddress}`,
+          userProfile: `${window.location.origin}/talents/${user_id}`,
         }),
         headers: {
           "Content-Type": "application/json",
