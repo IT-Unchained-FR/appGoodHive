@@ -8,6 +8,7 @@ import { JobCard } from "@components/job-card";
 import { CompanySocialMediaAndContact } from "@/app/components/companies/profile-social-media-and-contact";
 import { CompanyBio } from "@/app/components/companies/company-bio-section";
 import { generateCountryFlag } from "@/app/utils/generate-country-flag";
+import { join } from "path";
 
 export const revalidate = 0;
 
@@ -34,8 +35,6 @@ export default async function CompanyProfilePage(
   }
   const jobs = await getCompanyJobs(userId);
   const singleJob = await getSingleJob(jobId as unknown as number);
-
-  console.log("singleJob", singleJob);
 
   const {
     headline,
@@ -149,7 +148,7 @@ export default async function CompanyProfilePage(
           </h2>
           <div className="grid w-full grid-cols-2 gap-4 lg:grid-cols-1 md:grid-cols-1 sm:grid-cols-1 ">
             {jobs.map((job) => {
-              // if (singleJob && singleJob.id === job.id) return null;
+              if (job.id === singleJob?.id) return null;
               const {
                 id,
                 title,
