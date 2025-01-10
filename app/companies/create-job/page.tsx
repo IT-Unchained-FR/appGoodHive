@@ -425,16 +425,18 @@ export default function CreateJob() {
   return (
     <AuthLayout>
       <main className="container mx-auto">
-        {!companyData && (
+        {companyData?.message === "Company not found" && (
           <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
             🚀 Please make a company profile to create a job!
           </p>
         )}
-        {!companyData?.approved && (
-          <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
-            🚀 Your company profile is not yet approved, you can't create a job!
-          </p>
-        )}
+        {!companyData?.approved &&
+          companyData?.message !== "Company not found" && (
+            <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+              🚀 Your company profile is not yet approved, you can't create a
+              job!
+            </p>
+          )}
         <h1 className="my-2 text-2xl border-b-[1px] border-slate-300 ">
           Create Job
         </h1>

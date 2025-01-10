@@ -74,9 +74,9 @@ export default function AdminManageCompanies() {
     try {
       setLoading(true);
       const response = await fetch("/api/admin/companies");
-      const { companies } = await response.json();
-      setCompanies(companies);
-      setFilteredCompanies(companies);
+      const company_data = await response.json();
+      setCompanies(company_data);
+      setFilteredCompanies(company_data);
     } catch (error) {
       console.log("💥", error);
     } finally {
