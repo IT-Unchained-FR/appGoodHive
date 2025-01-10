@@ -60,7 +60,7 @@ export const Button: FC<Props> = (props) => {
       disabled={loading}
       {...rest}
     >
-      {loading ? <Loader color="#ffffff" /> : text}
+      {loading ? <Loader color="#ffc905" /> : text}
     </button>
   );
 };
