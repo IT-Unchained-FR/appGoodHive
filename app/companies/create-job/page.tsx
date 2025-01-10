@@ -420,9 +420,21 @@ export default function CreateJob() {
     );
   }
 
+  console.log(companyData, "companyData");
+
   return (
     <AuthLayout>
       <main className="container mx-auto">
+        {!companyData && (
+          <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+            🚀 Please make a company profile to create a job!
+          </p>
+        )}
+        {!companyData?.approved && (
+          <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+            🚀 Your company profile is not yet approved, you can't create a job!
+          </p>
+        )}
         <h1 className="my-2 text-2xl border-b-[1px] border-slate-300 ">
           Create Job
         </h1>
@@ -703,6 +715,7 @@ export default function CreateJob() {
                       className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
                       type="button"
                       onClick={onManageFundsClick}
+                      disabled={isLoading || !companyData?.approved}
                     >
                       Manage Funds
                     </button>
@@ -713,6 +726,7 @@ export default function CreateJob() {
                     className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
                     type="button"
                     onClick={handleCancelJob}
+                    disabled={isLoading || !companyData?.approved}
                   >
                     Cancel Job
                   </button>
@@ -731,12 +745,14 @@ export default function CreateJob() {
                     <button
                       onClick={handleSaveJob}
                       className="my-2 text-base font-semibold bg-transparent h-14 w-56 rounded-full border-2 border-[#FFC905] transition-all duration-300 hover:bg-[#FFC905]"
+                      disabled={isLoading || !companyData?.approved}
                     >
                       Save Job
                     </button>
                     <button
                       className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full transition-all duration-300 hover:bg-transparent hover:border-2 hover:border-[#FFC905]"
                       type="submit"
+                      disabled={isLoading || !companyData?.approved}
                     >
                       Publish Job
                     </button>

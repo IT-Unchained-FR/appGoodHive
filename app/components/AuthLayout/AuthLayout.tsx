@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import Spinner from "../Spinner/Spinner";
+import { Loader } from "../loader";
 
 export const AuthLayout = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
@@ -14,7 +15,11 @@ export const AuthLayout = ({ children }: { children: React.ReactNode }) => {
   }, [userId, router]);
 
   if (!userId) {
-    return <Spinner />;
+    return (
+      <div className="flex w-full items-center justify-center h-screen">
+        <Loader />
+      </div>
+    );
   }
 
   return <>{children}</>;
