@@ -51,7 +51,8 @@ export default function AdminManageTalents() {
     try {
       setLoading(true);
       const response = await fetch("/api/admin/talents");
-      const { talents } = await response.json();
+      const talents = await response.json();
+
       setTalents(talents);
       setFilteredTalents(talents);
     } catch (error) {
