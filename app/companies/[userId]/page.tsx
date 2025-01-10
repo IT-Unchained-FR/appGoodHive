@@ -24,7 +24,7 @@ export default async function CompanyProfilePage(
   context: CompanyProfilePageProps,
 ) {
   const { userId } = context.params;
-  const { id } = context.searchParams;
+  const { id: jobId } = context.searchParams;
   let profileData: any = {};
   try {
     profileData = await getCompanyData(userId);
@@ -33,7 +33,9 @@ export default async function CompanyProfilePage(
     profileData = {};
   }
   const jobs = await getCompanyJobs(userId);
-  const singleJob = await getSingleJob(userId as unknown as number);
+  const singleJob = await getSingleJob(jobId as unknown as number);
+
+  console.log("singleJob", singleJob);
 
   const {
     headline,
