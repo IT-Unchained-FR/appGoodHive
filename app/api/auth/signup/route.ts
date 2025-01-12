@@ -8,7 +8,7 @@ const sql = postgres(process.env.DATABASE_URL || "", {
 
 export async function POST(req: Request) {
   if (req.method === "POST") {
-    const { email, password } = await req.json();
+    const { email, password, referred_by } = await req.json();
 
     if (!email || !password) {
       return new Response(
@@ -41,10 +41,12 @@ export async function POST(req: Request) {
       await sql`
         INSERT INTO goodhive.users (
           email,
-          passwordHash
+          passwordHash,
+          referred_by
         ) VALUES (
           ${email},
-          ${hashedPassword}
+          ${hashedPassword},
+          ${referred_by}
         );
       `;
 

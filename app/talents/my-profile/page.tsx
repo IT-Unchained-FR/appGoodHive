@@ -19,6 +19,7 @@ import { SocialLink } from "./social-link";
 import DragAndDropFile from "@/app/components/drag-and-drop-file";
 import Cookies from "js-cookie";
 import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/honey-bee-spinner";
+import { ReferralSection } from "@/app/components/referral/referral-section";
 
 export type ProfileData = {
   first_name: string;
@@ -62,6 +63,7 @@ export default function ProfilePage() {
   const [profileData, setProfileData] = useState<ProfileData>(
     {} as ProfileData,
   );
+  const [user, setUser] = useState<any>();
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const unapprovedProfile =
     profileData?.approved === false && profileData.inreview === true;
@@ -113,6 +115,25 @@ export default function ProfilePage() {
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
+
+  const fetchUser = useCallback(async () => {
+    try {
+      setSaveProfileLoading(true);
+      const response = await fetch(`/api/profile?user_id=${user_id}`);
+      if (response.ok) {
+        const { user } = await response.json();
+        setUser(user);
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+    } finally {
+      setSaveProfileLoading(false);
+    }
+  }, [user_id]);
+
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
 
   const handleFormSubmit = async (data: any, validate: boolean) => {
     try {
@@ -178,7 +199,7 @@ export default function ProfilePage() {
         });
       }
 
-      const formData = {
+      const formData: { [key: string]: any } = {
         title: data.title,
         description: data.description,
         first_name: data["first_name"],
@@ -209,6 +230,10 @@ export default function ProfilePage() {
         availability: data.availability,
         user_id: user_id,
       };
+
+      if (validate) {
+        formData.referred_by = user.referred_by;
+      }
 
       const profileResponse = await fetch("/api/talents/my-profile", {
         method: "POST",
@@ -792,7 +817,7 @@ export default function ProfilePage() {
             })}
           </div>
 
-          {/* {isShowReferralSection && <ReferralSection />} */}
+          {profileData?.approved && <ReferralSection />}
 
           <div className="mt-10 mb-16 text-center flex gap-4 justify-center">
             <>
