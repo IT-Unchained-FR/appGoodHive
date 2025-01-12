@@ -2,9 +2,11 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 
 const Signup = () => {
   const router = useRouter();
+  const referralCode = Cookies.get("referralCode");
 
   const [isLoading, setIsLoading] = React.useState(false);
 
@@ -32,6 +34,7 @@ const Signup = () => {
       body: JSON.stringify({
         email: data.email,
         password: data.password,
+        referred_by: referralCode,
       }),
     });
 

@@ -1,8 +1,9 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import Image from "next/image";
 import { AddressContext } from "../context";
 import { toast } from "react-hot-toast";
 import { Tooltip } from "@nextui-org/tooltip";
+import Cookies from "js-cookie";
 
 type referralObject = {
   wallet_address: string;
@@ -18,7 +19,7 @@ export const ReferralSection = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isMyStats, setIsMyStats] = useState(false);
 
-  const walletAddress = useContext(AddressContext);
+  const user_id = Cookies.get("user_id");
 
   const totalTalentsReferred = referral?.talents
     ? referral?.talents?.length
@@ -34,44 +35,42 @@ export const ReferralSection = () => {
     ? referral?.approved_companies?.length
     : 0;
 
-  const getReferralCode = async () => {
+  const getReferralCode = useCallback(async () => {
     setIsLoading(true);
     const response = await fetch(
-      `/api/referrals/get-referral?walletAddress=${walletAddress}`
+      `/api/referrals/get-referral?user_id=${user_id}`,
     );
-
-    if (!response.ok) {
-      setIsLoading(false);
-      toast.error("Error geting referral code");
-      return;
-    }
 
     const referralUser = await response.json();
     if (referralUser && referralUser?.referral_code) {
       setReferral(referralUser);
     }
     setIsLoading(false);
-  };
+  }, [user_id]);
 
   const handleClaimReferralCode = async () => {
+    setIsLoading(true);
     try {
-      const response = fetch(
-        `/api/referrals/create-referral?walletAddress=${walletAddress}`
-      );
-
-      toast.promise(response, {
-        loading: "Creating referral...",
-        success: "Referral code created successfully!",
-        error: "Error creating referral code!",
+      await fetch(`/api/referrals/create-referral`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id,
+        }),
       });
+
+      getReferralCode();
     } catch (error) {
-      console.error("Error creating referral code");
+      console.error("Error claiming referral code");
+      setIsLoading(false);
     }
   };
 
   const refLinkCopyToClipboard = () => {
     navigator.clipboard.writeText(
-      `https://goodhive.io/?ref=${referral?.referral_code}`
+      `${window.location.origin}/?ref=${referral?.referral_code}`,
     );
     toast.success("Referral link copied to clipboard");
   };
@@ -81,21 +80,22 @@ export const ReferralSection = () => {
   };
 
   useEffect(() => {
-    if (walletAddress) {
+    if (user_id) {
       getReferralCode();
     }
-  }, [walletAddress]);
+  }, [user_id, getReferralCode]);
 
   return (
     <div>
       <h1 className="text-xl mb-5">Referral Section:</h1>
-      {!referral && !isLoading ? (
+      {!referral ? (
         <button
           type="button"
           className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded"
           onClick={handleClaimReferralCode}
+          disabled={isLoading}
         >
-          Claim Your Referral Code
+          {isLoading ? "Loading" : "Claim Your Referral Code"}
         </button>
       ) : !isMyStats ? (
         <button
@@ -110,7 +110,7 @@ export const ReferralSection = () => {
         <div>
           <p className="text-base mb-2 flex gap-2 items-center">
             <strong>Your referral link:</strong>{" "}
-            {`https://goodhive.io/?ref=${referral?.referral_code}`}
+            {`${window.location.origin}/?ref=${referral?.referral_code}`}
             <Image
               src="/icons/copy.svg"
               alt="copy-icon"

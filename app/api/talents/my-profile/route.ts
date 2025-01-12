@@ -37,6 +37,7 @@ export async function POST(request: Request) {
     availability,
     user_id,
     validate,
+    referred_by,
   } = await request.json();
 
   const sql = postgres(process.env.DATABASE_URL || "", {
@@ -106,6 +107,15 @@ export async function POST(request: Request) {
     `;
 
     await sql.unsafe(query, values);
+
+    if (referred_by) {
+      console.log("Referred By Performed");
+      await sql`
+      UPDATE goodhive.referrals 
+      SET talents = ARRAY_APPEND(COALESCE(talents, ARRAY[]::text[]), ${user_id}::text)
+      WHERE referral_code = ${referred_by}
+      `;
+    }
 
     return new Response(
       JSON.stringify({ message: "Data inserted or updated successfully" }),
