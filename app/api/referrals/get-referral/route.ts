@@ -1,51 +1,57 @@
 import postgres from "postgres";
-
-import type { NextRequest } from "next/server";
+import { NextRequest } from "next/server";
 
 // Force the browser to always fetch the latest data from the server
 export const fetchCache = "force-no-store";
 export const revalidate = 0;
 
+const sql = postgres(process.env.DATABASE_URL || "", {
+  ssl: {
+    rejectUnauthorized: false,
+  },
+});
+
 export async function GET(request: NextRequest) {
-  const searchParamsEntries = request.nextUrl.searchParams.entries();
-  const searchParams = Object.fromEntries(searchParamsEntries);
+  const { searchParams } = new URL(request.url);
+  const user_id = searchParams.get("user_id");
 
-  // FIXME: use snake_case instead of camelCase
-  const { walletAddress } = searchParams;
+  console.log("user_id", user_id);
 
-  const sql = postgres(process.env.DATABASE_URL || "", {
-    ssl: {
-      rejectUnauthorized: false, // This allows connecting to a database with a self-signed certificate
-    },
-  });
-
-  if (!walletAddress) {
+  if (!user_id) {
     return new Response(
-      JSON.stringify({ message: "Missing walletAddress parameter" }),
+      JSON.stringify({ message: "Missing user_id parameter" }),
       {
-        status: 404,
-      }
+        status: 400,
+      },
     );
   }
 
   try {
-    const user = await sql`
+    const referral = await sql`
       SELECT *
       FROM goodhive.referrals
-      WHERE wallet_address = ${walletAddress}
+      WHERE user_id = ${user_id}
     `;
 
-    if (user.length === 0) {
-      return new Response(JSON.stringify({ referralCode: null}));
+    if (referral.length === 0) {
+      return new Response(
+        JSON.stringify({ message: "No referral found for this user" }),
+        {
+          status: 404,
+        },
+      );
     }
 
-    return new Response(JSON.stringify(user[0]));
-
-  } catch (error) {
-    console.error("Error mara referral:", error);
-
-    return new Response(JSON.stringify({ message: "Error retrieving data" }), {
-      status: 500,
+    return new Response(JSON.stringify(referral[0]), {
+      status: 200,
     });
+  } catch (error) {
+    console.error("Error fetching referral:", error);
+    return new Response(
+      JSON.stringify({ message: "Error retrieving referral data" }),
+      {
+        status: 500,
+      },
+    );
   }
 }

@@ -7,56 +7,62 @@ import { generateReferralCode } from "@/app/utils/generate-referral-code";
 export const fetchCache = "force-no-store";
 export const revalidate = 0;
 
-export async function GET(request: NextRequest) {
+const sql = postgres(process.env.DATABASE_URL || "", {
+  ssl: {
+    rejectUnauthorized: false, // This allows connecting to a database with a self-signed certificate
+  },
+});
+
+export async function POST(request: NextRequest) {
   const searchParamsEntries = request.nextUrl.searchParams.entries();
   const searchParams = Object.fromEntries(searchParamsEntries);
 
   // FIXME: use snake_case instead of camelCase
-  const { walletAddress } = searchParams;
+  const { user_id } = await request.json();
 
-  const sql = postgres(process.env.DATABASE_URL || "", {
-    ssl: {
-      rejectUnauthorized: false, // This allows connecting to a database with a self-signed certificate
-    },
-  });
-
-  if (!walletAddress) {
+  if (!user_id) {
     return new Response(
-      JSON.stringify({ message: "Missing walletAddress parameter" }),
+      JSON.stringify({ message: "Missing user_id parameter" }),
       {
         status: 404,
-      }
+      },
     );
   }
 
   try {
-    const user = await sql`
+    const existing_referral = await sql`
       SELECT *
       FROM goodhive.referrals
-      WHERE wallet_address = ${walletAddress}
+      WHERE user_id = ${user_id}
     `;
 
-    if (user.length === 0) {
-      const referralCode = generateReferralCode(6);
-
-      await sql`
-        INSERT INTO goodhive.referrals (wallet_address, referral_code)
-        VALUES (
-          ${walletAddress},
-          ${referralCode}
-        )
-      `;
-      return new Response(JSON.stringify({ message: "Referral code created successfully!" }), {
-        status: 200,
-      });
-    } else {
+    if (existing_referral.length > 0) {
       return new Response(
         JSON.stringify({ message: "Referral code already exists." }),
         {
           status: 500,
-        }
+        },
       );
     }
+
+    const referral_code = generateReferralCode(6);
+
+    const created_referral = await sql`
+      INSERT INTO goodhive.referrals (
+        user_id,
+        referral_code
+      ) VALUES (
+        ${user_id},
+        ${referral_code}
+      )
+      RETURNING *
+    `;
+
+    console.log(created_referral, "created_referral");
+
+    return new Response(JSON.stringify(created_referral[0]), {
+      status: 200,
+    });
   } catch (error) {
     console.error("Error creating referral:", error);
 
