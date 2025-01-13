@@ -192,7 +192,6 @@ export default function ProfilePage() {
       }
 
       data.cv_url = cvUrl;
-      console.log(data, "data...");
 
       if (validate && !data.cv_url) {
         setErrors({

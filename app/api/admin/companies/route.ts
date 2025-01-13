@@ -13,8 +13,6 @@ export async function GET(req: NextRequest) {
 
   try {
     const companies = await getAdminCompanies();
-    console.log(companies, "Admin Companies");
-    console.log(companies.length, "Admin Companies");
     return new Response(JSON.stringify(companies), { status: 200 });
   } catch (error) {
     return new Response(
