@@ -1,7 +1,7 @@
 import postgres from "postgres";
 
 export async function POST(request: Request) {
-  const { userId, approvalTypes } = await request.json();
+  const { userId, approvalTypes, referral_code } = await request.json();
 
   const sql = postgres(process.env.DATABASE_URL || "", {
     ssl: {
@@ -40,6 +40,12 @@ export async function POST(request: Request) {
         ELSE recruiter_status
       END
       WHERE userid = ${userId}  -- Assuming this matches your schema
+    `;
+    if (referral_code)
+      await sql`
+      UPDATE goodhive.referrals
+      SET approved_talents = array_append(approved_talents, ${userId})
+      WHERE referral_code = ${referral_code};
     `;
 
     return new Response(

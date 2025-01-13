@@ -9,10 +9,18 @@ const sql = postgres(process.env.DATABASE_URL || "", {
 export async function getPendingTalents() {
   try {
     const users = await sql`
-      SELECT *
-      FROM goodhive.talents
-      WHERE inReview = true
-      `;
+      SELECT 
+          talents.*, 
+          users.referred_by 
+      FROM 
+          goodhive.talents AS talents
+      JOIN 
+          goodhive.users AS users
+      ON 
+          talents.user_id = users.userid
+      WHERE 
+          talents.inReview = true;
+        `;
     return users;
   } catch (error) {
     console.log("Error retrieving data:", error);
