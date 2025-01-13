@@ -29,8 +29,6 @@ export async function getAllPosts() {
       }
     }`);
 
-    console.log("Fetched posts:", JSON.stringify(posts, null, 2));
-    console.log("Number of posts:", posts.length);
     return posts;
   } catch (error) {
     console.error("Error fetching posts:", error);
