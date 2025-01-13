@@ -61,6 +61,7 @@ export default function ApprovalPopup({
         },
         body: JSON.stringify({
           userId: user.user_id,
+          referral_code: user.referred_by,
           approvalTypes,
         }),
       });
@@ -81,6 +82,7 @@ export default function ApprovalPopup({
   };
 
   useEffect(() => {
+    console.log(user, "user");
     if (user) {
       setApprovalTypes({
         mentor: user.mentor ? true : false,
