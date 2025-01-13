@@ -43,7 +43,6 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
     fetchProfileData();
   }, [params.user_id]);
 
-  console.log("profileData", profileData);
   if (error) {
     return <p className="text-red-500">{error}</p>;
   }

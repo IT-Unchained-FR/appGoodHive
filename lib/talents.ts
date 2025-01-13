@@ -30,26 +30,6 @@ export async function fetchTalents({
   onlyMentor?: string;
   onlyRecruiter?: string;
 }) {
-  console.log(
-    "🔍",
-    "search:",
-    search,
-    "location:",
-    location,
-    "name:",
-    name,
-    "items:",
-    items,
-    "page:",
-    page,
-    "onlyTalent:",
-    onlyTalent,
-    "onlyMentor:",
-    onlyMentor,
-    "onlyRecruiter:",
-    onlyRecruiter,
-    "Juhan was here",
-  );
   try {
     const countCursor = await sql`
     SELECT COUNT(*)
