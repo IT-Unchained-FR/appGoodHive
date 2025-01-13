@@ -31,7 +31,6 @@ import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
 import ReferralCodeHandler from "./components/referralCodeHandler/ReferralCodeHandler";
 import LastActiveHandler from "./components/lastActiveHandler/LastActiveHandler";
-import Cookies from "js-cookie";
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
   [polygon],
@@ -74,14 +73,45 @@ export default function RootLayout({
   const [authStatus, setAuthStatus] = useState<AuthenticationStatus>("loading");
   const [walletAddress, setWalletAddress] = useState<string>("");
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const refCode = urlParams.get("ref");
+  // FIXED BUT KEP FOR REFERENCE - ADDRESS CONTEXT WRAPPER
+  // useEffect(() => {
+  //   const fetchStatus = async () => {
+  //     if (fetchingStatusRef.current || verifyingRef.current) {
+  //       return;
+  //     }
 
-  if (refCode) {
-    Cookies.set("referralCode", refCode, { expires: 1 / 24 });
-  }
+  //     fetchingStatusRef.current = true;
 
-  console.log(Cookies.get("referralCode"), "Referral Code");
+  //     try {
+  //       const checkAuthResponse = await fetch("/api/auth/me");
+
+  //       const authResponse = await checkAuthResponse.json();
+
+  //       const authenticated = Boolean(authResponse?.ok === true);
+
+  //       if (authenticated) {
+  //         setAuthStatus("authenticated");
+  //         Cookies.set("walletAddress", authResponse?.address);
+  //         setWalletAddress(authResponse?.address);
+  //       } else {
+  //         setAuthStatus("unauthenticated");
+  //       }
+  //     } catch (error) {
+  //       console.error(error);
+
+  //       setAuthStatus("unauthenticated");
+  //     } finally {
+  //       fetchingStatusRef.current = false;
+  //     }
+  //   };
+
+  //   if (!walletAddressCookie) fetchStatus();
+
+  //   window.addEventListener("focus", fetchStatus);
+
+  //   return () => window.removeEventListener("focus", fetchStatus);
+  // }, [walletAddressCookie]);
+
   const authAdapter = useMemo(() => {
     return createAuthenticationAdapter({
       getNonce: async () => {

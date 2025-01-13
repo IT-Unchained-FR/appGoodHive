@@ -35,8 +35,6 @@ export async function getProfileData(userId: string) {
 
     const profileUser = user[0];
 
-    console.log(profileUser, "Profile User....");
-
     const getStatus = (status: string, isActive: boolean) => {
       return isActive ? status : "pending";
     };
