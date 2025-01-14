@@ -22,6 +22,9 @@ export interface TalentProfileData {
   remote_only: boolean;
   talent_status: string;
   talent_approved: boolean;
+  talent: boolean;
+  recruiter: boolean;
+  mentor: boolean;
   mentor_status: string;
   recruiter_status: string;
   twitter: string;

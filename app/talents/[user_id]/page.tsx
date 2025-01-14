@@ -75,9 +75,13 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
     mentor_status,
     recruiter_status,
     twitter,
+    talent,
+    recruiter,
+    mentor,
     approved,
   } = profileData;
 
+  console.log(talent, recruiter, mentor, "Status...");
   const availabilityStatus = generateAvailabilityStatus(
     freelance_only,
     remote_only,
@@ -131,17 +135,20 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
             {availabilityStatus}
           </h4>
         )}
-        {talent_status === "approved" && (
+
+        {talent && (
           <h4 className="text-[#4E4E4E] text-base font-medium mb-7">
             • I can help you as a talent
           </h4>
         )}
-        {mentor_status === "approved" && (
+
+        {mentor && (
           <h4 className="text-[#4E4E4E] text-base font-medium mb-7">
             • I can help you as a mentor
           </h4>
         )}
-        {recruiter_status === "approved" && (
+
+        {recruiter && (
           <h4 className="text-[#4E4E4E] text-base font-medium mb-7">
             • I can help you as a recruiter
           </h4>
