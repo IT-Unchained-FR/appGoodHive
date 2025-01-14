@@ -83,6 +83,8 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
     remote_only,
   );
 
+  console.log(skills, "skills...");
+
   if (!approved) {
     return (
       <div>
@@ -165,7 +167,7 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
             Specialization and Skills
           </h3>
           <div className="flex flex-wrap gap-2 mb-10">
-            {/* {!!skills.length &&
+            {skills &&
               skills.split(",").map((skill) => (
                 <div
                   key={skill}
@@ -173,7 +175,7 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
                 >
                   <p>{skill}</p>
                 </div>
-              ))} */}
+              ))}
           </div>
           <TalentsCVSection cv_url={cv_url} talent_status={talent_status} />
         </div>

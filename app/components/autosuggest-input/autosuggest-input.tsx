@@ -40,15 +40,16 @@ export const AutoSuggestInput: FC<AutoSuggestInputProps> = (props) => {
   } = useCombobox({
     items: filteredInputs,
     inputValue,
+
     onInputValueChange: ({ inputValue }) => setInputValue(inputValue || ""),
     onSelectedItemChange: ({ selectedItem }) => {
+      setInputValue("");
       if (selectedItem) {
         if (isSingleInput) {
           setSelectedInputs([selectedItem]);
         } else if (!selectedInputs.includes(selectedItem)) {
           setSelectedInputs([...selectedInputs, selectedItem]);
         }
-        setInputValue("");
       }
     },
   });
@@ -73,7 +74,7 @@ export const AutoSuggestInput: FC<AutoSuggestInputProps> = (props) => {
         {isOpen &&
           filteredInputs.map((item, index) => (
             <li
-              key={item}
+              key={index}
               {...getItemProps({ item, index })}
               className={clsx(
                 "px-4 py-2 cursor-pointer",
