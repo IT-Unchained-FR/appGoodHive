@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
       // Insert the new user into the database
 
-      if (referred_by)
+      if (referred_by) {
         await sql`
         INSERT INTO goodhive.users (
           email,
@@ -51,8 +51,8 @@ export async function POST(req: Request) {
           ${referred_by}
         );
       `;
-
-      await sql`
+      } else {
+        await sql`
         INSERT INTO goodhive.users (
           email,
           passwordHash
@@ -61,6 +61,7 @@ export async function POST(req: Request) {
           ${hashedPassword}
         );
       `;
+      }
 
       return new Response(
         JSON.stringify({ message: "User Created Successfully" }),
