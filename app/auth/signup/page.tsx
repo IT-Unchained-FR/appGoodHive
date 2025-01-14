@@ -42,6 +42,7 @@ const Signup = () => {
 
     if (response.ok) {
       setIsLoading(false);
+      Cookies.remove("referralCode");
       router.push("/auth/login"); // Redirect to the login page after successful signup
     } else {
       setIsLoading(false);
