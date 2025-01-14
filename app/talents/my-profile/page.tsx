@@ -79,6 +79,7 @@ export default function ProfilePage() {
   const [reviewProfileLoading, setReviewProfileLoading] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+
   const [isUploadedCvLink, setIsUploadedCvLink] = useState(false);
   const [walletAddress, setWalletAddress] = useState("");
   const [isProfileDataFetching, setIsProfileDataFetching] = useState(false);
@@ -101,9 +102,7 @@ export default function ProfilePage() {
           setSelectedCountry({ value: data.country, label: data.country });
         }
         if (data.skills) {
-          setSelectedSkills(
-            data.skills.split(", ").map((skill: string) => skill.trim()),
-          );
+          setSelectedSkills(data.skills.split(","));
         }
       }
     } catch (error) {
@@ -136,6 +135,7 @@ export default function ProfilePage() {
     fetchUser();
   }, [fetchUser]);
 
+  console.log(selectedSkills, "Selected Skills");
   const handleFormSubmit = async (data: any, validate: boolean) => {
     try {
       let imageUrl = profileData.image_url;
@@ -192,6 +192,7 @@ export default function ProfilePage() {
       }
 
       data.cv_url = cvUrl;
+      console.log(data, "data...");
 
       if (validate && !data.cv_url) {
         setErrors({
@@ -213,7 +214,7 @@ export default function ProfilePage() {
         rate: data.rate,
         freelance_only: data["freelance_only"],
         remote_only: data["remote_only"],
-        skills: data.skills,
+        skills: selectedSkills.join(","),
         image_url: imageUrl,
         cv_url: cvUrl,
         wallet_address: walletAddress,
@@ -740,25 +741,28 @@ export default function ProfilePage() {
               <div className="pt-10">
                 {!!selectedSkills && selectedSkills?.length > 0 && (
                   <div className="flex flex-wrap mt-4 ">
-                    {selectedSkills.map((skill, index) => (
-                      <div
-                        key={index}
-                        className="border border-[#FFC905] flex items-center bg-gray-200 rounded-full py-1 px-3 m-1"
-                      >
-                        <span className="mr-2">{skill}</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedSkills(
-                              selectedSkills.filter((_, i) => i !== index),
-                            );
-                          }}
-                          className="w-6 text-black bg-gray-400 rounded-full"
+                    {selectedSkills.map((skill, index) => {
+                      console.log(skill, "Skill....");
+                      return (
+                        <div
+                          key={index}
+                          className="border border-[#FFC905] flex items-center bg-gray-200 rounded-full py-1 px-3 m-1"
                         >
-                          &#10005;
-                        </button>
-                      </div>
-                    ))}
+                          <span className="mr-2">{skill}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedSkills(
+                                selectedSkills.filter((_, i) => i !== index),
+                              );
+                            }}
+                            className="w-6 text-black bg-gray-400 rounded-full"
+                          >
+                            &#10005;
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -817,7 +821,7 @@ export default function ProfilePage() {
             })}
           </div>
 
-          {profileData?.approved && <ReferralSection />}
+          <ReferralSection />
 
           <div className="mt-10 mb-16 text-center flex gap-4 justify-center">
             <>

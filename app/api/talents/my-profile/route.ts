@@ -5,6 +5,13 @@ import type { NextRequest } from "next/server";
 // Force the browser to always fetch the latest data from the server
 export const fetchCache = "force-no-store";
 export const revalidate = 0;
+
+const sql = postgres(process.env.DATABASE_URL || "", {
+  ssl: {
+    rejectUnauthorized: false, // This allows connecting to a database with a self-signed certificate
+  },
+});
+
 export async function POST(request: Request) {
   const {
     title,
@@ -39,12 +46,6 @@ export async function POST(request: Request) {
     validate,
     referred_by,
   } = await request.json();
-
-  const sql = postgres(process.env.DATABASE_URL || "", {
-    ssl: {
-      rejectUnauthorized: false,
-    },
-  });
 
   try {
     // Filter out undefined, null, and empty string fields
@@ -139,12 +140,6 @@ export async function GET(request: NextRequest) {
 
   console.log(user_id, "user_id");
 
-  const sql = postgres(process.env.DATABASE_URL || "", {
-    ssl: {
-      rejectUnauthorized: false, // This allows connecting to a database with a self-signed certificate
-    },
-  });
-
   try {
     const user = await sql`
       SELECT t.*, u.talent_status, u.mentor_status, u.recruiter_status, u.userid
@@ -170,8 +165,6 @@ export async function GET(request: NextRequest) {
         ? Buffer.from(user[0].about_work, "base64").toString("utf-8")
         : null,
     };
-
-    console.log(userProfile, "userProfile");
 
     return new Response(JSON.stringify(userProfile));
   } catch (error) {
