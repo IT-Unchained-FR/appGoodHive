@@ -38,7 +38,9 @@ export async function POST(req: Request) {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       // Insert the new user into the database
-      await sql`
+
+      if (referred_by)
+        await sql`
         INSERT INTO goodhive.users (
           email,
           passwordHash,
@@ -47,6 +49,16 @@ export async function POST(req: Request) {
           ${email},
           ${hashedPassword},
           ${referred_by}
+        );
+      `;
+
+      await sql`
+        INSERT INTO goodhive.users (
+          email,
+          passwordHash
+        ) VALUES (
+          ${email},
+          ${hashedPassword}
         );
       `;
 
