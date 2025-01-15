@@ -38,7 +38,6 @@ export function UserTable({
     setShowApprovePopup(false);
     setSelectedUser(null);
   };
-  console.log(users[0]);
 
   return (
     <>
