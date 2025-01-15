@@ -48,6 +48,7 @@ export default function UserProfilePage() {
       }
 
       const data = await response.json();
+      console.log(data, "User Data...");
       setUserProfile(data.user);
       setIsConnecting(false);
     } catch (error) {

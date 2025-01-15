@@ -29,4 +29,5 @@ export interface TalentProfileData {
   recruiter_status: string;
   twitter: string;
   approved: boolean;
+  approved_roles: object[] | null;
 }
