@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const user = await sql`
-      SELECT t.*, u.talent_status, u.mentor_status, u.recruiter_status, u.userid
+      SELECT t.*, u.talent_status, u.mentor_status, u.recruiter_status, u.userid, u.approved_roles
       FROM goodhive.talents t
       JOIN goodhive.users u ON t.user_id = u.userid
       WHERE t.user_id = ${user_id}

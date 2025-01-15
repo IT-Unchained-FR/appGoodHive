@@ -79,15 +79,13 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
     recruiter,
     mentor,
     approved,
+    approved_roles,
   } = profileData;
 
-  console.log(talent, recruiter, mentor, "Status...");
   const availabilityStatus = generateAvailabilityStatus(
     freelance_only,
     remote_only,
   );
-
-  console.log(skills, "skills...");
 
   if (!approved) {
     return (
@@ -136,23 +134,26 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
           </h4>
         )}
 
-        {talent && (
-          <h4 className="text-[#4E4E4E] text-base font-medium mb-7">
-            • I can help you as a talent
-          </h4>
-        )}
+        {talent &&
+          approved_roles?.some((role: any) => role.role === "talent") && (
+            <h4 className="text-[#4E4E4E] text-base font-medium mb-7">
+              • I can help you as a talent
+            </h4>
+          )}
 
-        {mentor && (
-          <h4 className="text-[#4E4E4E] text-base font-medium mb-7">
-            • I can help you as a mentor
-          </h4>
-        )}
+        {mentor &&
+          approved_roles?.some((role: any) => role.role === "mentor") && (
+            <h4 className="text-[#4E4E4E] text-base font-medium mb-7">
+              • I can help you as a mentor
+            </h4>
+          )}
 
-        {recruiter && (
-          <h4 className="text-[#4E4E4E] text-base font-medium mb-7">
-            • I can help you as a recruiter
-          </h4>
-        )}
+        {recruiter &&
+          approved_roles?.some((role: any) => role.role === "recruiter") && (
+            <h4 className="text-[#4E4E4E] text-base font-medium mb-7">
+              • I can help you as a recruiter
+            </h4>
+          )}
         <div className="flex w-full justify-center gap-5 mb-12">
           <TalentContactBtn toEmail={email} toUserName={first_name} />
         </div>
