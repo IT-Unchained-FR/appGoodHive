@@ -10,16 +10,17 @@ export async function getPendingTalents() {
   try {
     const users = await sql`
       SELECT 
-          t.*,
-          u.approved_roles
+          talents.*, 
+          users.referred_by,
+          users.approved_roles
       FROM 
-          goodhive.talents t
-      LEFT JOIN 
-          goodhive.users u
+          goodhive.talents AS talents
+      JOIN 
+          goodhive.users AS users
       ON 
-          t.user_id = u.userid
+          talents.user_id = users.userid
       WHERE 
-          t.inReview = true;
+          talents.inReview = true;
         `;
     return users;
   } catch (error) {
