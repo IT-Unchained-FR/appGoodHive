@@ -8,7 +8,7 @@ const sql = postgres(process.env.DATABASE_URL || "", {
 
 export async function POST(req: Request) {
   if (req.method === "POST") {
-    const { wallet_address } = await req.json();
+    const { wallet_address, referralCode } = await req.json();
 
     if (!wallet_address) {
       return new Response(
@@ -30,10 +30,19 @@ export async function POST(req: Request) {
 
       if (!user) {
         // Create a new user if not found
-        const newUser = await sql`
-          INSERT INTO goodhive.users (wallet_address)
-          VALUES (${wallet_address})
-          RETURNING *`;
+        let insertQuery;
+        if (referralCode) {
+          insertQuery = sql`
+            INSERT INTO goodhive.users (wallet_address, referred_by)
+            VALUES (${wallet_address}, ${referralCode})
+            RETURNING *`;
+        } else {
+          insertQuery = sql`
+            INSERT INTO goodhive.users (wallet_address)
+            VALUES (${wallet_address})
+            RETURNING *`;
+        }
+        const newUser = await insertQuery;
 
         return new Response(
           JSON.stringify({
