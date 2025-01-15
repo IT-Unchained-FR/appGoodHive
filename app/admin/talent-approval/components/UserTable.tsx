@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import toast from "react-hot-toast";
 import ApprovalPopup from "./ApprovalPopup";
+import moment from "moment";
 
 interface UserTableProps {
   users: ProfileData[];
@@ -37,6 +38,7 @@ export function UserTable({
     setShowApprovePopup(false);
     setSelectedUser(null);
   };
+  console.log(users[0]);
 
   return (
     <>
@@ -48,6 +50,7 @@ export function UserTable({
             <TableHead>Talent</TableHead>
             <TableHead>Mentor</TableHead>
             <TableHead>Recruiter</TableHead>
+            <TableHead>Approved Roles</TableHead>
             <TableHead className="text-right">Action</TableHead>
           </TableRow>
         </TableHeader>
@@ -61,6 +64,17 @@ export function UserTable({
               <TableCell>{user.talent ? "Yes" : "No"}</TableCell>
               <TableCell>{user.mentor ? "Yes" : "No"}</TableCell>
               <TableCell>{user.recruiter ? "Yes" : "No"}</TableCell>
+              <TableCell>
+                {user.approved_roles?.map((role: any, index) => {
+                  return (
+                    <div key={index}>
+                      {role.role.charAt(0).toUpperCase() + role.role.slice(1)} (
+                      {moment(role.approved_at).format("DD MMM YYYY")})
+                    </div>
+                  );
+                })}
+              </TableCell>
+
               <TableCell className="text-right">
                 <div className="flex gap-2 justify-end">
                   <Button

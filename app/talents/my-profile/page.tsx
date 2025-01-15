@@ -58,6 +58,7 @@ export type ProfileData = {
   user_id?: string;
   inreview?: boolean;
   referred_by?: string;
+  approved_roles?: object[];
 };
 
 export default function ProfilePage() {
