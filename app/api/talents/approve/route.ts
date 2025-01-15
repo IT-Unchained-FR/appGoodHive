@@ -21,26 +21,44 @@ export async function POST(request: Request) {
       WHERE user_id = ${userId}
     `;
 
-    await sql`
+    const updatedUser = await sql`
       UPDATE goodhive.users
       SET 
       talent_status = CASE 
-        WHEN ${approvalTypes.talent} IS TRUE THEN 'approved'
-        WHEN ${approvalTypes.talent} IS FALSE THEN 'pending'
-        ELSE talent_status  -- Preserve existing status if not explicitly set
+      WHEN ${approvalTypes.talent} IS TRUE THEN 'approved'
+      WHEN ${approvalTypes.talent} IS FALSE THEN 'pending'
+      ELSE talent_status  -- Preserve existing status if not explicitly set
       END,
       mentor_status = CASE 
-        WHEN ${approvalTypes.mentor} IS TRUE THEN 'approved'
-        WHEN ${approvalTypes.mentor} IS FALSE THEN 'pending'
-        ELSE mentor_status
+      WHEN ${approvalTypes.mentor} IS TRUE THEN 'approved'
+      WHEN ${approvalTypes.mentor} IS FALSE THEN 'pending'
+      ELSE mentor_status
       END,
       recruiter_status = CASE 
-        WHEN ${approvalTypes.recruiter} IS TRUE THEN 'approved'
-        WHEN ${approvalTypes.recruiter} IS FALSE THEN 'pending'
-        ELSE recruiter_status
+      WHEN ${approvalTypes.recruiter} IS TRUE THEN 'approved'
+      WHEN ${approvalTypes.recruiter} IS FALSE THEN 'pending'
+      ELSE recruiter_status
       END
-      WHERE userid = ${userId}  -- Assuming this matches your schema
+      WHERE userid = ${userId}
+      RETURNING *;
     `;
+
+    // Handle adding roles to approved_roles array dynamically
+    const roles = ["talent", "mentor", "recruiter"];
+    for (const role of roles) {
+      if (
+        approvalTypes[role] &&
+        !updatedUser[0]?.approved_roles?.some((r: any) => r.role === role)
+      ) {
+        await sql`
+        UPDATE goodhive.users
+        SET approved_roles = array_append(approved_roles, jsonb_build_object('role', ${role}::TEXT, 'approval_time', CURRENT_TIMESTAMP))
+        WHERE userid = ${userId};
+      `;
+      }
+    }
+
+    // Update referral table to add the approved talent
     if (referral_code)
       await sql`
       UPDATE goodhive.referrals
