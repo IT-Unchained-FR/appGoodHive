@@ -60,6 +60,7 @@ export const NavBar = () => {
   };
 
   const loggedInUserCookie = Cookies.get("loggedIn_user");
+  const referralCode = Cookies.get("referralCode");
   const loggedIn_user = loggedInUserCookie
     ? JSON.parse(loggedInUserCookie)
     : null;
@@ -80,6 +81,7 @@ export const NavBar = () => {
         body: JSON.stringify({
           walletAddress: address,
           userId: loggedIn_user_id,
+          referralCode,
         }),
       })
         .then((response) => response.json())
@@ -104,6 +106,7 @@ export const NavBar = () => {
     loggedIn_user?.wallet_address,
     disconnect,
     loggedIn_user?.email,
+    referralCode,
   ]);
 
   useEffect(() => {
