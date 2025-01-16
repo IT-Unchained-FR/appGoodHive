@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { S3, PutObjectCommand, ObjectCannedACL } from "@aws-sdk/client-s3";
+import {
+  S3,
+  PutObjectCommand,
+  ObjectCannedACL,
+  ChecksumAlgorithm,
+} from "@aws-sdk/client-s3";
 import { generateFileKeyName } from "@/app/utils/generate-file-key-name";
 
 const s3 = new S3({
@@ -35,6 +40,7 @@ export async function POST(request: NextRequest) {
       Body: buffer,
       ACL: ObjectCannedACL.public_read,
       ContentType: fileType,
+      ChecksumAlgorithm: undefined,
     };
 
     // Upload the file to the S3 bucket
