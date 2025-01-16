@@ -196,9 +196,7 @@ export default function ProfilePage() {
       console.log(data, "data...");
 
       if (validate && !data.cv_url) {
-        setErrors({
-          cv_url: "Please Upload Your CV",
-        });
+        return toast.error("Please upload your CV");
       }
 
       const formData: { [key: string]: any } = {
@@ -253,7 +251,8 @@ export default function ProfilePage() {
         );
         fetchProfile();
       } else {
-        toast.error("Something went wrong while saving your profile");
+        const profileSavingErrorData = await profileResponse.json();
+        toast.error(profileSavingErrorData.message);
       }
     } catch (error) {
       console.error(error);
