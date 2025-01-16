@@ -1,38 +1,37 @@
-export const uploadFileToBucket = async (file: File | null) => {
-    return new Promise(async (resolve, reject) => {
-      if (!file) return resolve(null);
+import toast from "react-hot-toast";
 
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
+export const uploadFileToBucket = async (file: File) => {
+  return new Promise(async (resolve, reject) => {
+    if (!file) return resolve(null);
 
-      reader.onload = async () => {
-        const base64File = reader.result;
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = async () => {
+      const base64File = reader.result;
+      try {
+        const response = await fetch("/api/upload-file", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            file: base64File,
+            fileType: file.type,
+          }),
+        });
 
-        try {
-          const response = await fetch("/api/upload-file", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ file: base64File, fileType: file.type }),
-          });
-
-          if (response.ok) {
-            const { fileUrl } = await response.json();
-            resolve(fileUrl);
-          } else {
-            console.error(response.statusText);
-            resolve(null);
-          }
-        } catch (error) {
-          console.error(error);
-          resolve(null);
+        if (response.ok) {
+          const { fileUrl } = await response.json();
+          resolve(fileUrl);
+        } else {
+          toast.error("Failed to upload file");
+          console.error(response.statusText);
+          reject(new Error("Failed to upload file"));
         }
-      };
-
-      reader.onerror = (error) => {
-        console.error("File reading failed:", error);
+      } catch (error) {
+        console.error("Error uploading file:", error);
         reject(error);
-      };
-    });
-  };
+      }
+    };
+  });
+};
