@@ -115,7 +115,9 @@ export default function MyProfile() {
 
     const isNewUser = !profileData.designation;
     const referralCode = Cookies.get("referralCode");
-    const imageUrl = await uploadFileToBucket(profileImage);
+    const imageUrl = profileImage
+      ? await uploadFileToBucket(profileImage)
+      : null;
 
     const isAlreadyReferred = profileData.referrer ? true : false;
 
