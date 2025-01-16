@@ -121,8 +121,16 @@ export async function POST(request: Request) {
     return new Response(
       JSON.stringify({ message: "Data inserted or updated successfully" }),
     );
-  } catch (error) {
-    console.error("Error inserting or updating data:", error);
+  } catch (error: any) {
+    if (
+      error.code === "23505" &&
+      error.constraint_name === "talents_email_key"
+    ) {
+      return new Response(
+        JSON.stringify({ message: "This email address is already registered" }),
+        { status: 400 },
+      );
+    }
 
     return new Response(
       JSON.stringify({ message: "Error inserting or updating data" }),
