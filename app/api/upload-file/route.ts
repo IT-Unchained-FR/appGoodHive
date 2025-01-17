@@ -25,7 +25,14 @@ s3.middlewareStack.add(
       const requestWithHeaders = args.request as {
         headers: Record<string, string>;
       };
+      console.log(requestWithHeaders, "S3 Request With Header...");
+
       delete requestWithHeaders.headers["x-amz-checksum-crc32"];
+
+      console.log(
+        requestWithHeaders,
+        "S3 Request With Header After Deleting...",
+      );
     }
     return next(args);
   },
