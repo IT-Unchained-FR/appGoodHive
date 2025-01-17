@@ -1,12 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-
-import {
-  S3,
-  PutObjectCommand,
-  ObjectCannedACL,
-  ChecksumAlgorithm,
-} from "@aws-sdk/client-s3";
+import { S3, PutObjectCommand } from "@aws-sdk/client-s3";
 import { generateFileKeyName } from "@/app/utils/generate-file-key-name";
+import { NextRequest, NextResponse } from "next/server";
 
 const s3 = new S3({
   credentials: {
@@ -15,11 +9,34 @@ const s3 = new S3({
   },
   endpoint: process.env.B2_ENDPOINT || "",
   region: process.env.B2_REGION || "",
+  forcePathStyle: true, // For S3-compatible services
 });
+
+// Add middleware to intercept requests and remove the 'x-amz-checksum-crc32' header
+s3.middlewareStack.add(
+  (next) => async (args) => {
+    console.log(args.request, "S3 Middleware ARG Request...");
+    // Narrow the type of args.request
+    if (
+      typeof args.request === "object" &&
+      args.request !== null &&
+      "headers" in args.request
+    ) {
+      const requestWithHeaders = args.request as {
+        headers: Record<string, string>;
+      };
+      delete requestWithHeaders.headers["x-amz-checksum-crc32"];
+    }
+    return next(args);
+  },
+  {
+    step: "build",
+    priority: "low",
+  },
+);
 
 export async function POST(request: NextRequest) {
   try {
-    // Extract the file from the FormData payload
     const formData = await request.formData();
     const file = formData.get("file") as File;
 
@@ -38,12 +55,12 @@ export async function POST(request: NextRequest) {
       Bucket: bucketName,
       Key: keyName,
       Body: buffer,
-      ACL: ObjectCannedACL.public_read,
+      ACL: "public-read" as const,
       ContentType: fileType,
-      ChecksumAlgorithm: undefined,
     };
 
-    // Upload the file to the S3 bucket
+    console.log("PutObject Params:", putObjectParams);
+
     await s3.send(new PutObjectCommand(putObjectParams));
 
     const hostB2 = process.env.B2_HOST || "";
