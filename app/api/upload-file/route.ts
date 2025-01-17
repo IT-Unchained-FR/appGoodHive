@@ -28,6 +28,7 @@ s3.middlewareStack.add(
       console.log(requestWithHeaders, "S3 Request With Header...");
 
       delete requestWithHeaders.headers["x-amz-checksum-crc32"];
+      delete requestWithHeaders.headers["x-amz-sdk-checksum-algorithm"];
 
       console.log(
         requestWithHeaders,
