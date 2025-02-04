@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verify } from "jsonwebtoken";
+import { jwtVerify } from "jose";
 
-const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || "admin-jwt-secret-key";
+const ADMIN_JWT_SECRET = new TextEncoder().encode(
+  process.env.ADMIN_JWT_SECRET || "admin-jwt-secret-key",
+);
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   // Check if the request is for an admin route
   if (req.nextUrl.pathname.startsWith("/admin")) {
     // Skip middleware for admin login page
@@ -13,7 +15,7 @@ export function middleware(req: NextRequest) {
     }
 
     const adminToken = req.cookies.get("admin_token")?.value;
-
+    console.log("adminToken", adminToken);
     // Define the login URL for admin
     const adminLoginUrl = new URL("/admin/login", req.url);
 
@@ -24,9 +26,11 @@ export function middleware(req: NextRequest) {
 
     try {
       // Verify the admin token
-      verify(adminToken, ADMIN_JWT_SECRET);
+      const { payload } = await jwtVerify(adminToken, ADMIN_JWT_SECRET);
+      console.log("user", payload);
       return NextResponse.next();
     } catch (error) {
+      console.log("error", error);
       // If token is invalid, redirect to admin login
       return NextResponse.redirect(adminLoginUrl);
     }
