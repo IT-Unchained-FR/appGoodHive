@@ -11,6 +11,7 @@ const AddressContextWrapper = ({
   children: React.ReactNode;
   setAuthStatus: Dispatch<SetStateAction<AuthenticationStatus>>;
 }) => {
+  const user_id = Cookies.get("user_id");
   const { address } = useAccount();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
@@ -18,14 +19,15 @@ const AddressContextWrapper = ({
   useEffect(() => {
     const user_email = Cookies.get("user_email");
     const sendLastActiveTime = async () => {
+      if (!user_id) return;
       try {
         const lastActiveTimeResponse = await fetch(
           "/api/auth/last-active-time",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ walletAddress, email: user_email }),
-          }
+            body: JSON.stringify({ walletAddress, user_id }),
+          },
         );
 
         console.log(lastActiveRequestSentTime, "lastActiveRequestSentTime");
@@ -33,7 +35,7 @@ const AddressContextWrapper = ({
         if (lastActiveTimeResponse.ok) {
           Cookies.set(
             "last_active_request_sent_time",
-            new Date().toISOString()
+            new Date().toISOString(),
           );
         }
       } catch (error) {
@@ -44,7 +46,7 @@ const AddressContextWrapper = ({
 
     // Send the last active time if it has been more than 5 minutes since the last request
     const lastActiveRequestSentTime = Cookies.get(
-      "last_active_request_sent_time"
+      "last_active_request_sent_time",
     );
 
     console.log(lastActiveRequestSentTime, "lastActiveRequestSentTime");
@@ -69,7 +71,7 @@ const AddressContextWrapper = ({
     const fetchStatus = async () => {
       try {
         const checkAuthResponse = await fetch(
-          `/api/auth/me?walletAddress=${address}`
+          `/api/auth/me?walletAddress=${address}`,
         );
 
         const authResponse = await checkAuthResponse.json();
