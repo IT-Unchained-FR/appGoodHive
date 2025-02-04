@@ -30,7 +30,7 @@ import AddressContextWrapper from "./components/addressContextWrapper/AddressCon
 import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
 import ReferralCodeHandler from "./components/referralCodeHandler/ReferralCodeHandler";
-import LastActiveHandler from "./components/lastActiveHandler/LastActiveHandler";
+import LastActiveHandler from "./components/LastActiveHandler";
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
   [polygon],
@@ -212,6 +212,7 @@ export default function RootLayout({
                   <ReferralCodeHandler />
                   <div className="flex-grow">
                     <AddressContextWrapper setAuthStatus={setAuthStatus}>
+                      <LastActiveHandler />
                       {children}
                     </AddressContextWrapper>
                   </div>
