@@ -30,4 +30,5 @@ export interface TalentProfileData {
   twitter: string;
   approved: boolean;
   approved_roles: object[] | null;
+  last_active?: string | Date;
 }
