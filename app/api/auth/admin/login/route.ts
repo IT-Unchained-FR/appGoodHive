@@ -58,7 +58,6 @@ export async function POST(req: Request) {
       const token = sign(
         { email: admin.email, role: admin.role },
         ADMIN_JWT_SECRET,
-        { expiresIn: "24h" },
       );
 
       return new Response(
