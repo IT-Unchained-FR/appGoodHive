@@ -9,6 +9,7 @@ import { generateAvailabilityStatus } from "./utils";
 import ProfileAboutWork from "@/app/components/talents/ProfileAboutWork";
 import TalentsCVSection from "@/app/components/talents/TalentsCVSection";
 import GoodHiveSpinner from "@/app/components/spinners/hoodhive-spinner/goodhive-spinner";
+import LastActiveStatus from "@/app/components/LastActiveStatus";
 
 interface MyProfilePageProps {
   params: {
@@ -123,6 +124,11 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
         <h4 className="text-[#4E4E4E] text-base mb-4">
           {city}, {country}
         </h4>
+        <div className="mb-4">
+          {profileData.last_active && (
+            <LastActiveStatus lastActiveTime={profileData.last_active} />
+          )}
+        </div>
         {rate && (
           <h4 className="text-[#4E4E4E] text-base font-medium mb-7">
             {rate} USD/hr
