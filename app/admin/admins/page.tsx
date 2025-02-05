@@ -82,6 +82,8 @@ export default function AdminsPage() {
     setLoading(true);
     setError("");
 
+    console.log("formData", formData);
+
     try {
       const headers = getAuthHeaders();
       if (!headers) return;
@@ -178,7 +180,7 @@ export default function AdminsPage() {
                 <div>
                   <label
                     htmlFor="name"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-gray-700 mb-1"
                   >
                     Name
                   </label>
@@ -189,7 +191,7 @@ export default function AdminsPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FFC905] focus:border-transparent"
                     required
                   />
                 </div>
@@ -197,7 +199,7 @@ export default function AdminsPage() {
                 <div>
                   <label
                     htmlFor="email"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-gray-700 mb-1"
                   >
                     Email
                   </label>
@@ -208,7 +210,7 @@ export default function AdminsPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
                     }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FFC905] focus:border-transparent"
                     required
                   />
                 </div>
@@ -216,7 +218,7 @@ export default function AdminsPage() {
                 <div>
                   <label
                     htmlFor="password"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-gray-700 mb-1"
                   >
                     Password
                   </label>
@@ -227,7 +229,7 @@ export default function AdminsPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, password: e.target.value })
                     }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FFC905] focus:border-transparent"
                     required
                   />
                 </div>
@@ -246,6 +248,7 @@ export default function AdminsPage() {
                     type="primary"
                     size="medium"
                     disabled={loading}
+                    onClickHandler={handleSubmit}
                   />
                 </div>
               </div>
