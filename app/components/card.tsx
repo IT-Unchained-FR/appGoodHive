@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { FC } from "react";
 import { Button } from "@components/button";
 import { generateCountryFlag } from "@utils/generate-country-flag";
+import LastActiveStatus from "./LastActiveStatus";
 
 interface Props {
   jobId?: number;
@@ -65,7 +66,7 @@ export const Card: FC<Props> = ({
 
   // Title and description
   const croppedTitle =
-    title.length > 28 ? title.substring(0, 28) + "..." : title;
+    title.length > 28 ? title.substring(0, 20) + "..." : title;
   const croppedDescription =
     description.length > 100
       ? description.substring(0, 100) + "..."
@@ -121,9 +122,14 @@ export const Card: FC<Props> = ({
                 {postedBy}
               </p>
             </Link>
-            <p className="mb-3 mt-1 text-xs font-bold text-gray-600 sm:text-xs">
-              {postedOn}
-            </p>
+            {type === "talent" && (
+              <LastActiveStatus lastActiveTime={postedOn} />
+            )}
+            {type === "company" && (
+              <p className="mb-3 mt-1 text-xs font-bold text-gray-600 sm:text-xs">
+                {postedOn}
+              </p>
+            )}
           </div>
           <div className="flex flex-col items-end pt-2 grow">
             <div className="flex mb-1">
@@ -143,9 +149,11 @@ export const Card: FC<Props> = ({
             </p>
             <div className="flex flex-col items-end gap-1">
               <div className="text-xs font-bold mt-1">{rate}</div>
-              {!jobId && availability && <p className="text-xs">🟢 Active</p>}
-              {!jobId && !availability && (
-                <p className="text-xs">🔴 Inactive</p>
+              {type === "talent" && availability && (
+                <p className="text-xs">🟢 Available</p>
+              )}
+              {type === "talent" && !availability && (
+                <p className="text-xs">🔴 Not Available</p>
               )}
             </div>
           </div>

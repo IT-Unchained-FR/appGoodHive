@@ -60,24 +60,6 @@ export default function UserProfilePage() {
 
   useEffect(() => {
     fetchUserProfile();
-    fetch("/api/migration", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Migration failed");
-        }
-        return response.json();
-      })
-      .then((data) => {
-        console.log("Migration successful:", data);
-      })
-      .catch((error) => {
-        console.error("Error during migration:", error);
-      });
   }, [fetchUserProfile]);
 
   const handleConnect = () => {
@@ -89,12 +71,7 @@ export default function UserProfilePage() {
   }
 
   return (
-    <div
-      className="bg-white flex items-center justify-center p-4 py-14"
-      style={{
-        minHeight: "calc(100vh - 4rem)",
-      }}
-    >
+    <div className="bg-white flex items-center justify-center p-4 py-14 min-h-[calc(100vh-4rem)]">
       <ConnectEmailPopup
         isOpen={showConnectEmailPopup}
         onClose={() => setShowConnectEmailPopup(false)}
