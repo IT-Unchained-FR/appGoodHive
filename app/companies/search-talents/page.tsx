@@ -36,7 +36,7 @@ export default async function SearchTalentsPage({
             type="talent"
             title={talent.title}
             postedBy={`${talent.firstName} ${talent.lastName}`}
-            postedOn="Active 2 days ago" // TODO: use real data instead when available
+            postedOn={talent.last_active} // TODO: use real data instead when available
             image={talent.imageUrl}
             country={talent.country} // TODO: create flag table
             city={talent.city}
