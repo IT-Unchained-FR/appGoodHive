@@ -7,23 +7,27 @@ export const calculateJobCreateFees = (
     talent: boolean;
     recruiter: boolean;
     mentor: boolean;
-  }
+  },
 ) => {
-  let totalFees = 0;
-  if (!projectType) {
+  // If no project type or budget is selected, return empty string
+  if (!projectType || !budget || Number(budget) <= 0) {
     return "";
   }
 
+  let totalFees = 0;
+  const budgetNumber = Number(budget);
+
+  // Calculate fees based on selected services
   if (services.talent) {
-    totalFees += Number(budget) * 0.1;
+    totalFees += budgetNumber * 0.1; // 10% for talent
   }
 
   if (services.recruiter) {
-    totalFees += Number(budget) * 0.08;
+    totalFees += budgetNumber * 0.08; // 8% for recruiter
   }
 
   if (services.mentor) {
-    totalFees += Number(budget) * 0.12;
+    totalFees += budgetNumber * 0.12; // 12% for mentor
   }
 
   return totalFees.toFixed(2);
