@@ -55,6 +55,7 @@ type createJobServicesType = {
   label: string;
   value: "talent" | "recruiter" | "mentor";
   tooltip: string;
+  feePercentage: number; // Added fee percentage
 };
 
 export const createJobServices: createJobServicesType[] = [
@@ -62,18 +63,21 @@ export const createJobServices: createJobServicesType[] = [
     label: "Talent",
     value: "talent",
     tooltip: "I'm selecting my talent all by myself - 10% Fee",
+    feePercentage: 10, // Added fee percentage
   },
   {
     label: "Recruiter",
     value: "recruiter",
     tooltip:
       "I want a recruiter to introduce me to a shortlist of talents - 8% Fee",
+    feePercentage: 8, // Added fee percentage
   },
   {
     label: "Mentor",
     value: "mentor",
     tooltip:
       "I want a tech mentor to assess technical skills of my talent before the mission starts and will mentor the talent all along the mission - 12% Fee",
+    feePercentage: 12, // Added fee percentage
   },
 ];
 

@@ -2,7 +2,7 @@
 
 import { Tooltip } from "@nextui-org/tooltip";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState, useMemo } from "react";
 import toast from "react-hot-toast";
 
 import { useCreateJob } from "@/app/hooks/create-job";
@@ -68,6 +68,11 @@ export default function CreateJob() {
   const userId = Cookies.get("user_id");
   const provisionalAmount =
     jobData && Number(jobData.escrowAmount) > 0 ? jobData.escrowAmount : 0;
+
+  // Calculate fees whenever budget, projectType, or jobServices change
+  const totalFees = useMemo(() => {
+    return calculateJobCreateFees(projectType, budget, jobServices);
+  }, [projectType, budget, jobServices]);
 
   const { createJobTx, withdrawFundsTx, checkBalanceTx, transferFundsTx } =
     useCreateJob({
@@ -170,8 +175,6 @@ export default function CreateJob() {
     setBudget(event.target.value);
   };
 
-  const totalFees = calculateJobCreateFees(projectType, budget, jobServices);
-
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     toast.loading("Saving...", { duration: 2000 });
     e.preventDefault();
@@ -235,10 +238,12 @@ export default function CreateJob() {
   };
 
   const onJobServicesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setJobServices({
+    const updatedServices = {
       ...jobServices,
       [event.target.name]: event.target.checked,
-    });
+    };
+
+    setJobServices(updatedServices);
   };
 
   const fetchCompanyData = async () => {
@@ -575,7 +580,7 @@ export default function CreateJob() {
                 {createJobServices.map((service) => {
                   const { label, value, tooltip } = service;
                   const isChecked =
-                    jobData?.[value] === "true" || value === "talent" || false;
+                    jobServices[value as keyof typeof jobServices];
                   const isTalent = value === "talent";
                   return (
                     <ToggleButton
@@ -654,7 +659,7 @@ export default function CreateJob() {
                   </div>
                 ) : null}
               </div>
-              {jobData?.budget || budget ? (
+              {budget ? (
                 <p className="mt-2 text-right">
                   {projectType && projectType.value === "hourly"
                     ? "Total fees per hour:"
