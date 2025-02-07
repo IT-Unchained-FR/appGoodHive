@@ -28,7 +28,7 @@ export const AutoSuggestInput: FC<AutoSuggestInputProps> = (props) => {
   const filteredInputs = inputs.filter(
     (input) =>
       input.toLowerCase().includes(inputValue.toLowerCase()) &&
-      !selectedInputs.includes(input),
+      !selectedInputs?.includes(input),
   );
 
   const {
