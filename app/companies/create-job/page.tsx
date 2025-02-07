@@ -53,6 +53,7 @@ export default function CreateJob() {
   const [isPopupModalOpen, setIsPopupModalOpen] = useState(false);
   const [popupModalType, setPopupModalType] = useState("");
   const [isManageFundsModalOpen, setIsManageFundsModalOpen] = useState(false);
+  const [blockchainBalance, setBlockchainBalance] = useState<number>(0);
 
   const [jobServices, setJobServices] = useState({
     talent: true,
@@ -74,11 +75,10 @@ export default function CreateJob() {
     return calculateJobCreateFees(projectType, budget, jobServices);
   }, [projectType, budget, jobServices]);
 
-  const { createJobTx, withdrawFundsTx, checkBalanceTx, transferFundsTx } =
-    useCreateJob({
-      walletAddress: walletAddress ? walletAddress : "",
-      token: selectedCurrency?.value ?? "",
-    });
+  const { createJobTx, checkBalanceTx } = useCreateJob({
+    walletAddress: walletAddress ? walletAddress : "",
+    token: selectedCurrency?.value ?? "",
+  });
 
   useEffect(() => {
     if (!userId) {
@@ -86,11 +86,19 @@ export default function CreateJob() {
     }
   }, [userId, router]);
 
+  const updateBlockchainBalance = async () => {
+    if (id && jobData?.job_id) {
+      const balance = await checkBalanceTx(jobData.job_id);
+      setBlockchainBalance(balance);
+    }
+  };
+
   const onPopupModalSubmit = async (amount: number, type: string) => {
     switch (type) {
       case "addFunds":
         try {
           await createJobTx(jobData?.job_id, amount);
+          await updateBlockchainBalance();
           toast.success("Funds added successfully!");
         } catch (error) {
           if (error instanceof Error) {
@@ -104,21 +112,21 @@ export default function CreateJob() {
         break;
 
       case "withdraw":
-        const WithdrawRes = withdrawFundsTx(jobData?.job_id, amount);
-        toast.promise(WithdrawRes, {
-          loading: "Withdrawing funds...",
-          success: "Funds withdrawn successfully!",
-          error: "Error withdrawing funds!",
-        });
-        handlePopupModalClose();
+        // const WithdrawRes = withdrawFundsTx(jobData?.job_id, amount);
+        // toast.promise(WithdrawRes, {
+        //   loading: "Withdrawing funds...",
+        //   success: "Funds withdrawn successfully!",
+        //   error: "Error withdrawing funds!",
+        // });
+        // handlePopupModalClose();
         break;
       case "transfer":
-        const transferRes = transferFundsTx(jobData?.job_id, amount);
-        toast.promise(transferRes, {
-          loading: "Transferring funds...",
-          success: "Funds transferred successfully!",
-          error: "Error transferring funds!",
-        });
+        // const transferRes = transferFundsTx(jobData?.job_id, amount);
+        // toast.promise(transferRes, {
+        //   loading: "Transferring funds...",
+        //   success: "Funds transferred successfully!",
+        //   error: "Error transferring funds!",
+        // });
         handlePopupModalClose();
         break;
     }
@@ -257,12 +265,10 @@ export default function CreateJob() {
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
-      console.error(error);
     }
   };
 
   const fetchJobData = async () => {
-    console.log(`/api/companies/job-data?id=${id}`);
     try {
       setIsLoading(true);
       const response = await fetch(`/api/companies/job-data?id=${id}`);
@@ -298,7 +304,6 @@ export default function CreateJob() {
               : null,
       );
     } catch (error) {
-      console.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -311,9 +316,9 @@ export default function CreateJob() {
   }, [userId]);
 
   useEffect(() => {
-    console.log(id, "hello from id");
     if (id) {
       fetchJobData();
+      updateBlockchainBalance();
     }
     if (id && addFunds === "true") {
       handlePopupModal("addFunds");
@@ -361,8 +366,6 @@ export default function CreateJob() {
       id,
     };
 
-    console.log("Dataform...", dataForm);
-
     const jobSaveUrl = id
       ? "/api/companies/update-job"
       : "/api/companies/create-job";
@@ -392,31 +395,6 @@ export default function CreateJob() {
     }
   };
 
-  // if (jobData.user_id !== userId) {
-  //   return (
-  //     <h3 className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
-  //       🚀 You are not authorized to edit this job.
-  //     </h3>
-  //   );
-  // }
-
-  // if (!walletAddress) {
-  //   return (
-  //     <h3 className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
-  //       🚀 To get started, please connect your wallet. This will enable you to
-  //       create your company profile and create jobs.
-  //     </h3>
-  //   );
-  // }
-
-  // if (jobData && jobData.user_id !== userId) {
-  //   return (
-  //     <h3 className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
-  //       🚀 You are not authorized to edit this job.
-  //     </h3>
-  //   );
-  // }
-
   if (isLoading) {
     return (
       <div className="flex w-full items-center justify-center h-screen">
@@ -424,8 +402,6 @@ export default function CreateJob() {
       </div>
     );
   }
-
-  console.log(companyData, "companyData");
 
   return (
     <AuthLayout>
@@ -446,10 +422,21 @@ export default function CreateJob() {
           Create Job
         </h1>
         {!!id && jobData && (
-          <div className="w-full mb-1 flex justify-end">
+          <div className="w-full mb-1 flex justify-end gap-4">
             <h3 className="font-bold">
-              Provision Amount: {provisionalAmount} USDC
+              Database Amount: {provisionalAmount}{" "}
+              {selectedCurrency?.label || "USDC"}
             </h3>
+            <h3 className="font-bold">
+              Blockchain Balance: {blockchainBalance}{" "}
+              {selectedCurrency?.label || "USDC"}
+            </h3>
+            {provisionalAmount !== blockchainBalance && (
+              <p className="text-yellow-600 text-sm">
+                * Balance mismatch detected. This may be due to pending
+                transactions.
+              </p>
+            )}
           </div>
         )}
         <section>
@@ -769,6 +756,7 @@ export default function CreateJob() {
             </div>
           </form>
         </section>
+        {/* Manage Funds Modal */}
         <Modal
           open={isManageFundsModalOpen}
           onClose={handleManageFundsModalClose}
