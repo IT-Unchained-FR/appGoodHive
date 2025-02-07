@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Search,
+  Filter,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -28,12 +29,15 @@ import Spinner from "@/app/components/Spinner/Spinner";
 interface User {
   id: number;
   email: string;
+  first_name: string;
+  last_name: string;
   userid: string;
   talent_status: "approved" | "pending";
   mentor_status: "approved" | "pending";
   recruiter_status: "approved" | "pending";
-  wallet_address: string;
+  wallet_address?: string;
   last_active: string;
+  has_talent_profile: boolean;
 }
 
 export default function AdminManageUsers() {
@@ -43,6 +47,9 @@ export default function AdminManageUsers() {
   const [itemsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [profileFilter, setProfileFilter] = useState<
+    "all" | "with_profile" | "without_profile"
+  >("all");
 
   const fetchAllUsers = async () => {
     try {
@@ -63,24 +70,29 @@ export default function AdminManageUsers() {
   }, []);
 
   useEffect(() => {
-    const filtered = users?.filter(
+    const filtered = users.filter(
       (user) =>
-        user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.wallet_address
-          ?.toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        user.userid?.toLowerCase().includes(searchQuery.toLowerCase()),
+        (user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          user.wallet_address
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          user.userid?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          user.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          user.last_name?.toLowerCase().includes(searchQuery.toLowerCase())) &&
+        (profileFilter === "all" ||
+          (profileFilter === "with_profile" && user.has_talent_profile) ||
+          (profileFilter === "without_profile" && !user.has_talent_profile)),
     );
     setFilteredUsers(filtered);
     setCurrentPage(1);
-  }, [searchQuery, users]);
+  }, [searchQuery, users, profileFilter]);
 
   // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
+  const currentUsers = filteredUsers?.slice(indexOfFirstItem, indexOfLastItem);
 
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredUsers?.length / itemsPerPage);
 
   const nextPage = () => {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
@@ -98,32 +110,74 @@ export default function AdminManageUsers() {
             All Users Under GoodHive's System
           </h2>
           <p className="text-sm text-muted-foreground">
-            {filteredUsers.length} users
+            {filteredUsers?.length} users
           </p>
         </div>
       </div>
 
-      <div className="mb-4">
-        <div className="relative bg-white rounded-lg">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by email, wallet address, or user ID"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8"
-          />
+      <div className="flex flex-col gap-4 mb-6">
+        {/* Search and Filter Container */}
+        <div className="flex gap-4 flex-col">
+          {/* Filter Buttons */}
+          <div className="flex gap-2 items-center bg-white p-2 rounded-lg border border-gray-200 w-fit">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <button
+              onClick={() => setProfileFilter("all")}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                profileFilter === "all"
+                  ? "bg-[#FFC905] text-black"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              All Users
+            </button>
+            <button
+              onClick={() => setProfileFilter("with_profile")}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                profileFilter === "with_profile"
+                  ? "bg-[#FFC905] text-black"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              With Profile
+            </button>
+            <button
+              onClick={() => setProfileFilter("without_profile")}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                profileFilter === "without_profile"
+                  ? "bg-[#FFC905] text-black"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              Without Profile
+            </button>
+          </div>
+
+          {/* Search Input */}
+          <div className="relative flex-grow bg-white rounded-lg h-12">
+            <div className="relative flex-grow bg-white rounded-lg h-12">
+              <Search className="h-5 w-5 text-muted-foreground bg-white absolute left-2 top-1/2 transform -translate-y-1/2" />
+              <Input
+                placeholder="Search by email, wallet address, user ID, first name, or last name"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 h-12"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="border rounded-lg">
-        <Table className="bg-white rounded-lg">
+      <div className="border rounded-lg overflow-x-auto">
+        <Table className="bg-white rounded-lg min-w-full">
           <TableHeader className="divide-y">
             <TableRow>
-              <TableHead className="w-[250px]">Email</TableHead>
+              <TableHead className="">Email</TableHead>
+              <TableHead>Name</TableHead>
               <TableHead>Wallet Address</TableHead>
               <TableHead>User ID</TableHead>
               <TableHead>Approved Roles</TableHead>
-              {/* <TableHead className="w-[100px]"></TableHead> */}
+              <TableHead>Talent Profile</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -148,9 +202,16 @@ export default function AdminManageUsers() {
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <span>
-                      {/* {user.wallet_address?.slice(0, 12)}...
-                      {user.wallet_address?.slice(-8)} */}
-                      {user.wallet_address}
+                      {user.first_name} {user.last_name}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <span>
+                      {user.wallet_address && user.wallet_address.length > 10
+                        ? `${user.wallet_address.slice(0, 10)}...${user.wallet_address.slice(-10)}`
+                        : user.wallet_address}
                     </span>
                     {user.wallet_address && (
                       <Button
@@ -158,7 +219,9 @@ export default function AdminManageUsers() {
                         size="icon"
                         onClick={() => {
                           toast.success("Wallet Address copied to clipboard");
-                          navigator.clipboard.writeText(user.wallet_address);
+                          navigator.clipboard.writeText(
+                            user.wallet_address || "",
+                          );
                         }}
                       >
                         <Copy className="h-4 w-4 text-gray-500" />
@@ -169,10 +232,10 @@ export default function AdminManageUsers() {
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <span>
-                      {/* {user.wallet_address?.slice(0, 12)}...
-                      {user.wallet_address?.slice(-8)} */}
-                      {user.userid}
-                    </span>
+                      {user.userid.length > 10
+                        ? `${user.userid.slice(0, 10)}...${user.userid.slice(-10)}`
+                        : user.userid}
+                    </span>{" "}
                     {user.userid && (
                       <Button
                         variant="ghost"
@@ -213,22 +276,29 @@ export default function AdminManageUsers() {
                       )}
                   </div>
                 </TableCell>
-                {/* <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon">
-                      <Copy className="h-4 w-4 text-gray-500" />
+                <TableCell>
+                  {user.has_talent_profile ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="whitespace-nowrap w-full max-w-[150px] text-white bg-[#FFC905] border border-transparent rounded-md hover:bg-[#FFC905]/80 transition duration-200 ease-in-out" // Modern design with rounded corners and transition effects
+                      onClick={() => {
+                        window.open(`/admin/talent/${user.userid}`, "_blank");
+                      }}
+                    >
+                      Talent Profile
                     </Button>
-                    <Button variant="ghost" size="icon">
-                      <PenSquare className="h-4 w-4 text-gray-500" />
-                    </Button>
-                  </div>
-                </TableCell> */}
+                  ) : (
+                    <Badge className="bg-gray-600 text-gray-200 hover:bg-gray-500 w-[150px] text-center align-middle justify-center">
+                      No Talent Profile
+                    </Badge>
+                  )}
+                </TableCell>
               </TableRow>
             ))}
-            {/* Add empty rows to maintain consistent table length */}
             {loading && (
               <TableRow>
-                <TableCell colSpan={4} className="h-[52px]">
+                <TableCell colSpan={6} className="h-[52px]">
                   <Spinner />
                 </TableCell>
               </TableRow>

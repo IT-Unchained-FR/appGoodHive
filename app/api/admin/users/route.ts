@@ -10,8 +10,16 @@ const sql = postgres(process.env.DATABASE_URL || "", {
 export async function GET(req: NextRequest) {
   try {
     const users = await sql`
-      SELECT *
-      FROM goodhive.users
+      SELECT u.*, 
+        t.first_name, 
+        t.last_name,
+        EXISTS (
+          SELECT 1 
+          FROM goodhive.talents t 
+          WHERE t.user_id = u.userid
+        ) as has_talent_profile
+      FROM goodhive.users u
+      LEFT JOIN goodhive.talents t ON t.user_id = u.userid
       `;
 
     return new Response(
