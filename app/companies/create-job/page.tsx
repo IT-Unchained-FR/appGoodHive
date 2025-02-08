@@ -80,25 +80,27 @@ export default function CreateJob() {
     token: selectedCurrency?.value ?? "",
   });
 
+  const updateBlockchainBalance = async () => {
+    const balance = await checkBalanceTx("15");
+    console.log("balance", balance);
+    setBlockchainBalance(balance);
+  };
+
   useEffect(() => {
     if (!userId) {
       router.push("/auth/login");
     }
-  }, [userId, router]);
+    updateBlockchainBalance();
+  }, [userId, router, updateBlockchainBalance]);
 
-  const updateBlockchainBalance = async () => {
-    if (id && jobData?.job_id) {
-      const balance = await checkBalanceTx(jobData.job_id);
-      setBlockchainBalance(balance);
-    }
-  };
+  console.log("jobData", jobData);
 
   const onPopupModalSubmit = async (amount: number, type: string) => {
     switch (type) {
       case "addFunds":
         try {
           await createJobTx(jobData?.job_id, amount);
-          await updateBlockchainBalance();
+          // await updateBlockchainBalance();
           toast.success("Funds added successfully!");
         } catch (error) {
           if (error instanceof Error) {

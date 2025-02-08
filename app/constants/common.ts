@@ -86,4 +86,4 @@ export const GoodHiveContractEmail = "contact@goodhive.io";
 export const GoodhiveQuestLink = "https://zealy.io/cw/goodhive";
 
 export const GoodHiveWalletAddress =
-  "0x92ED8F6A9211F9eb0F16c83A052E75099B7bf4A5";
+  "0xFE3CC6c61919cc858281eDBD6A8A541210678755";
