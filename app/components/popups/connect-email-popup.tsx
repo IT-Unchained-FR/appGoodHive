@@ -87,6 +87,7 @@ export function ConnectEmailPopup({
           </h2>
           <button
             onClick={onClose}
+            aria-label="Close popup"
             className="p-2 rounded-full hover:bg-gray-100 transition-colors"
           >
             <X className="w-5 h-5 text-gray-500" />
