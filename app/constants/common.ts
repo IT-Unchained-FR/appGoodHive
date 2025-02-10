@@ -13,7 +13,7 @@ export const jobTypes = [
 ];
 
 export const GoodhiveContractAddress = process.env
-  .NEXT_PUBLIC_GOODHIVE_POLYGON_MUMBAI_CONTRACT_ADDRESS as string;
+  .NEXT_PUBLIC_GOODHIVE_POLYGON_MAINNET_DEPLOYED_CONTRACT_ADDRESS as string;
 
 export const GoodhiveInfuraApi = process.env
   .NEXT_PUBLIC_GOODHIVE_INFURA_API as string;
