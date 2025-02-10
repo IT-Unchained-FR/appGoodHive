@@ -2,7 +2,7 @@
 
 import { Tooltip } from "@nextui-org/tooltip";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useEffect, useState, useMemo } from "react";
+import { FormEvent, useEffect, useState, useMemo, useCallback } from "react";
 import toast from "react-hot-toast";
 
 import { useCreateJob } from "@/app/hooks/create-job";
@@ -80,18 +80,23 @@ export default function CreateJob() {
     token: selectedCurrency?.value ?? "",
   });
 
-  const updateBlockchainBalance = async () => {
-    const balance = await checkBalanceTx("15");
-    console.log("balance", balance);
-    setBlockchainBalance(balance);
-  };
+  const updateBlockchainBalance = useCallback(async () => {
+    if (jobData?.job_id) {
+      const balance = await checkBalanceTx(jobData.job_id);
+      console.log("balance", balance);
+      setBlockchainBalance(balance);
+    } else {
+      console.error("Job ID is not available");
+    }
+  }, [checkBalanceTx, jobData]);
 
   useEffect(() => {
     if (!userId) {
       router.push("/auth/login");
+    } else {
+      updateBlockchainBalance();
     }
-    updateBlockchainBalance();
-  }, [userId, router, updateBlockchainBalance]);
+  }, [userId, router, jobData, updateBlockchainBalance]);
 
   console.log("jobData", jobData);
 
@@ -100,7 +105,7 @@ export default function CreateJob() {
       case "addFunds":
         try {
           await createJobTx(jobData?.job_id, amount);
-          // await updateBlockchainBalance();
+          await updateBlockchainBalance();
           toast.success("Funds added successfully!");
         } catch (error) {
           if (error instanceof Error) {
