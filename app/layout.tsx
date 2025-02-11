@@ -23,7 +23,7 @@ import { SiweMessage } from "siwe";
 import { SwitchWalletCheck } from "@components/switch-wallet-check";
 import { NavBar } from "@components/nav-bar";
 import { Footer } from "@components/footer/footer";
-import { GoodhiveInfuraApi } from "./constants/common";
+import { GoodhiveInfuraAPILink } from "./constants/common";
 
 import AddressContextWrapper from "./components/addressContextWrapper/AddressContextWrapper";
 
@@ -37,7 +37,7 @@ const { chains, publicClient, webSocketPublicClient } = configureChains(
   [
     jsonRpcProvider({
       rpc: () => ({
-        http: GoodhiveInfuraApi,
+        http: GoodhiveInfuraAPILink,
       }),
     }),
   ],
