@@ -1,10 +1,13 @@
 "use client";
 
+// Core dependencies
 import { Tooltip } from "@nextui-org/tooltip";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useState, useMemo, useCallback } from "react";
 import toast from "react-hot-toast";
+import Cookies from "js-cookie";
 
+// Local imports
 import { useCreateJob } from "@/app/hooks/create-job";
 import { chains } from "@constants/chains";
 import {
@@ -20,17 +23,14 @@ import {
   gnosisChainTokens,
 } from "@constants/token-list/index.js";
 import { polygonMainnetTokens } from "@constants/token-list/polygon";
-
 import LabelOption from "@interfaces/label-option";
 import { calculateJobCreateFees } from "@utils/calculate-job-create-fees";
-
 import { AutoSuggestInput } from "@components/autosuggest-input";
 import { Loader } from "@components/loader";
 import Modal from "@components/modal";
 import { SelectInput } from "@components/select-input";
 import { ToggleButton } from "@components/toggle-button";
 import { PopupModal } from "./PopupModal";
-import Cookies from "js-cookie";
 import { AuthLayout } from "@/app/components/AuthLayout/AuthLayout";
 
 export default function CreateJob() {
@@ -83,10 +83,7 @@ export default function CreateJob() {
   const updateBlockchainBalance = useCallback(async () => {
     if (jobData?.job_id) {
       const balance = await checkBalanceTx(jobData.job_id);
-      console.log("balance", balance);
       setBlockchainBalance(balance);
-    } else {
-      console.error("Job ID is not available");
     }
   }, [checkBalanceTx, jobData]);
 
@@ -97,8 +94,6 @@ export default function CreateJob() {
       updateBlockchainBalance();
     }
   }, [userId, router, jobData, updateBlockchainBalance]);
-
-  console.log("jobData", jobData);
 
   const onPopupModalSubmit = async (amount: number, type: string) => {
     switch (type) {
@@ -119,21 +114,10 @@ export default function CreateJob() {
         break;
 
       case "withdraw":
-        // const WithdrawRes = withdrawFundsTx(jobData?.job_id, amount);
-        // toast.promise(WithdrawRes, {
-        //   loading: "Withdrawing funds...",
-        //   success: "Funds withdrawn successfully!",
-        //   error: "Error withdrawing funds!",
-        // });
-        // handlePopupModalClose();
+        // Handle withdraw logic here
         break;
       case "transfer":
-        // const transferRes = transferFundsTx(jobData?.job_id, amount);
-        // toast.promise(transferRes, {
-        //   loading: "Transferring funds...",
-        //   success: "Funds transferred successfully!",
-        //   error: "Error transferring funds!",
-        // });
+        // Handle transfer logic here
         handlePopupModalClose();
         break;
     }
@@ -429,21 +413,17 @@ export default function CreateJob() {
           Create Job
         </h1>
         {!!id && jobData && (
-          <div className="w-full mb-1 flex justify-end gap-4">
+          <div className="w-full mb-1 flex justify-end">
             <h3 className="font-bold">
-              Database Amount: {provisionalAmount}{" "}
-              {selectedCurrency?.label || "USDC"}
+              {isNaN(blockchainBalance) ? (
+                <Loader />
+              ) : (
+                <>
+                  Balance: {blockchainBalance}{" "}
+                  {selectedCurrency?.label || "USDC"}
+                </>
+              )}
             </h3>
-            <h3 className="font-bold">
-              Blockchain Balance: {blockchainBalance}{" "}
-              {selectedCurrency?.label || "USDC"}
-            </h3>
-            {provisionalAmount !== blockchainBalance && (
-              <p className="text-yellow-600 text-sm">
-                * Balance mismatch detected. This may be due to pending
-                transactions.
-              </p>
-            )}
           </div>
         )}
         <section>
@@ -569,7 +549,6 @@ export default function CreateJob() {
                 </div>
               </div>
 
-              {/* Add three checkbox here which are Talent, Recruiter and Mentor and aslo match up the styles we are having here. And add a i circular button in the right side of every checkbox lebel and if hover over it should show text just like tooltip */}
               <div className="w-1/2 sm:w-full mb-5 px-3 flex justify-between sm:flex-wrap sm:gap-5">
                 {createJobServices.map((service) => {
                   const { label, value, tooltip } = service;
