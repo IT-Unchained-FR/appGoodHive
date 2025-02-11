@@ -1,9 +1,10 @@
 /* simple react hook template */
 import Web3 from "web3";
 import { useEffect, useState } from "react";
-import GoodhiveJobContract from "@/contracts/GoodhiveJobContract.json";
+import GoodHiveContractABI from "@/contracts/GoodhiveJobContract.json";
 import { GoodhiveContractAddress } from "@constants/common";
 import TokenAbi from "@/contracts/TokenAbi.json";
+
 interface Props {
   walletAddress: string;
   token: string;
@@ -23,21 +24,21 @@ export const useCreateJob = (props: Props) => {
       body: JSON.stringify({ id, escrowAmount: amount }),
     });
   };
+
   const waitForTransactionReceipt = async (txHash: `0x${string}`) => {
-    console.log("txHash", txHash);
     if (!window.ethereum) return;
     while (true) {
       const receipt = await window.ethereum.request({
         method: "eth_getTransactionReceipt",
-        params: [txHash], // Fix: Pass txHash as a single string
+        params: [txHash],
       });
-      console.log("receipt", receipt);
       if (receipt) {
         return receipt;
       }
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   };
+
   const requestApproval = async (amount: number) => {
     const usdcTokenAddress =
       process.env.NEXT_PUBLIC_GOODHIVE_USDC_TOKEN_POLYGON;
@@ -45,13 +46,12 @@ export const useCreateJob = (props: Props) => {
     const web3 = new Web3(process.env.NEXT_PUBLIC_GOODHIVE_INFURA_API);
     const accounts = await window.ethereum.request({ method: "eth_accounts" });
     if (accounts.length === 0) {
-      return console.log("no account found");
+      return;
     }
     const contract: any = new web3.eth.Contract(TokenAbi, usdcTokenAddress, {
       from: accounts[0],
     });
     const amountInWei = web3.utils.toWei(amount.toString(), "mwei");
-    console.log("Requesting approval for amount (Wei):", amountInWei);
 
     const tx = contract.methods
       .approve(GoodhiveContractAddress, amountInWei)
@@ -59,31 +59,26 @@ export const useCreateJob = (props: Props) => {
     try {
       const receipt = {
         from: accounts[0],
-        gas: "0x7A120", // 500,000 gas units
-        gasPrice: "0x2E90EDD000", // 200 Gwei
+        gas: "21000",
         to: usdcTokenAddress,
         data: tx,
       };
-      console.log("Sending approval transaction with params:", receipt);
 
       const txHash = await window.ethereum.request({
         method: "eth_sendTransaction",
         params: [receipt as any],
       });
-      console.log("Approval transaction hash:", txHash);
 
       const txReceipt = await waitForTransactionReceipt(
         txHash as `0x${string}`,
       );
-      console.log("Approval transaction receipt:", txReceipt);
 
       if (txReceipt && txReceipt.status === "0x1") {
-        console.log("Approval successful");
+        return true;
       } else {
         throw new Error("Approval failed");
       }
     } catch (error) {
-      console.error("Error approving token transfer:", error);
       throw error;
     }
   };
@@ -91,13 +86,14 @@ export const useCreateJob = (props: Props) => {
   const createContract = async () => {
     try {
       if (!window.ethereum) {
-        console.error("No ethereum provider found");
         return;
       }
 
-      const web3Instance = new Web3(window.ethereum);
+      const web3Instance = new Web3(
+        process.env.NEXT_PUBLIC_GOODHIVE_INFURA_API,
+      );
       const contractInstance = new web3Instance.eth.Contract(
-        GoodhiveJobContract.abi,
+        GoodHiveContractABI,
         GoodhiveContractAddress,
       );
 
@@ -109,7 +105,6 @@ export const useCreateJob = (props: Props) => {
   };
 
   const checkBalanceTx = async (jobId: number) => {
-    console.log("jobId:::", jobId);
     try {
       // Ensure contract is initialized
       if (!contract) {
@@ -119,12 +114,10 @@ export const useCreateJob = (props: Props) => {
       const balance = await contract?.methods
         .checkBalance(Number(jobId))
         .call();
-      console.log("Raw balance from contract:", balance);
 
       const balanceInEther = Number(balance) / 1000000;
       return balanceInEther;
     } catch (error) {
-      console.error("Error checking balance:", error);
       return 0;
     }
   };
@@ -137,16 +130,13 @@ export const useCreateJob = (props: Props) => {
       }
 
       const initialBalance = await checkBalanceTx(jobId);
-      console.log("Initial balance:", initialBalance);
 
       if (!window.ethereum) return "";
       const accounts = await window.ethereum.request({
         method: "eth_accounts",
       });
-      console.log("Connected account:", accounts[0]);
 
       const EndingBalance = Number(initialBalance) + Number(amount);
-      console.log("Expected ending balance:", EndingBalance);
 
       // Use the USDC token address from env
       const usdcTokenAddress =
@@ -154,60 +144,40 @@ export const useCreateJob = (props: Props) => {
 
       // First do the approval
       await requestApproval(amount);
-      console.log("Approval completed for amount:", amount);
 
       // Create job transaction
       const amountInWei = web3?.utils.toWei(amount.toString(), "mwei");
-      console.log("Amount in Wei:", amountInWei);
-      console.log("USDC Token address:", usdcTokenAddress);
-      console.log("Job ID:", jobId);
+
+      // Convert jobId to uint128 as expected by the contract
+      const jobIdBigInt = BigInt(jobId);
 
       const tx = contract.methods
-        .createJob(jobId, amountInWei, usdcTokenAddress)
+        .createJob(jobIdBigInt, amountInWei, usdcTokenAddress)
         .encodeABI();
-
-      console.log("Encoded transaction data:", {
-        jobId,
-        amountInWei,
-        token: usdcTokenAddress,
-        encodedData: tx,
-      });
 
       const receipt = {
         from: accounts[0],
         to: GoodhiveContractAddress,
         data: tx,
-        gas: "0x7A120", // 500,000 in hex
-        gasPrice: "0x2E90EDD000", // 200 Gwei in hex
-        value: "0x0",
+        gas: "210000",
       };
-
-      console.log("Sending transaction with params:", receipt);
 
       const txHash = await window.ethereum.request({
         method: "eth_sendTransaction",
         params: [receipt as any],
       });
 
-      console.log("Transaction hash:", txHash);
       const txReceipt = await waitForTransactionReceipt(
         txHash as `0x${string}`,
       );
-      console.log("Transaction receipt:", txReceipt);
 
       if (txReceipt && txReceipt.status === "0x1") {
         await handleUpdateEscrowAmount(jobId, EndingBalance);
         return true;
       } else {
-        console.error("Transaction failed. Receipt:", txReceipt);
         throw new Error("Transaction failed - check contract interaction");
       }
     } catch (error: any) {
-      console.error("Detailed error in transaction:", {
-        message: error.message,
-        code: error.code,
-        data: error.data,
-      });
       throw error;
     }
   };
@@ -232,8 +202,7 @@ export const useCreateJob = (props: Props) => {
 
       const receipt = {
         from: accounts[0],
-        gas: "0x7A120", // 500,000 gas units
-        gasPrice: "0x2E90EDD000", // 200 Gwei
+        gas: "21000",
         to: GoodhiveContractAddress,
         data: tx,
       };
@@ -250,7 +219,6 @@ export const useCreateJob = (props: Props) => {
 
       return txHash;
     } catch (error) {
-      console.error("Error in withdrawFundsTx:", error);
       throw error;
     }
   };
@@ -275,8 +243,7 @@ export const useCreateJob = (props: Props) => {
 
       const receipt = {
         from: accounts[0],
-        gas: "0x7A120", // 500,000 gas units
-        gasPrice: "0x2E90EDD000", // 200 Gwei
+        gas: "21000",
         to: GoodhiveContractAddress,
         data: tx,
       };
@@ -293,7 +260,6 @@ export const useCreateJob = (props: Props) => {
 
       return txHash;
     } catch (error) {
-      console.error("Error in transferFundsTx:", error);
       throw error;
     }
   };
