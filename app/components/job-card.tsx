@@ -151,9 +151,24 @@ export const JobCard: FC<Props> = ({
         >
           <p className="text-base mb-2">• {jobTypeMsg}</p>
           <div className="flex gap-2">
-            <p className="text-sm">{jobBalance}</p>
-            <div className="relative mt-1 h-3 w-5 mb-4">
-              <Image src={countryFlag} alt="country" fill />
+            {id && (
+              <div className="relative w-5 h-5">
+                <Image
+                  alt="balance"
+                  src={
+                    Number(escrowAmount) > 0
+                      ? "/icons/money.svg"
+                      : "/icons/no-money.svg"
+                  }
+                  fill
+                />
+              </div>
+            )}
+            <div className="flex gap-4">
+              <p className="text-sm">{jobBalance}</p>
+              <div className="relative mt-1 h-3 w-5 mb-4">
+                <Image src={countryFlag} alt="country" fill />
+              </div>
             </div>
           </div>
         </div>
