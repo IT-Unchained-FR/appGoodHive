@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import GoodHiveContractABI from "@/contracts/GoodhiveJobContract.json";
 import { GoodhiveContractAddress } from "@constants/common";
 import TokenAbi from "@/contracts/TokenAbi.json";
+import { updateEscrowAmount } from "@/app/utils/escrow";
 
 interface Props {
   walletAddress: string;
@@ -14,16 +15,6 @@ export const useCreateJob = (props: Props) => {
   const { walletAddress } = props;
   const [web3, setWeb3] = useState<Web3>();
   const [contract, setContract] = useState<any>();
-
-  const handleUpdateEscrowAmount = async (id: number, amount: number) => {
-    await fetch(`/api/companies/update-escrow`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ id, escrowAmount: amount }),
-    });
-  };
 
   const waitForTransactionReceipt = async (txHash: `0x${string}`) => {
     if (!window.ethereum) return;
@@ -172,7 +163,7 @@ export const useCreateJob = (props: Props) => {
       );
 
       if (txReceipt && txReceipt.status === "0x1") {
-        await handleUpdateEscrowAmount(jobId, EndingBalance);
+        await updateEscrowAmount(jobId.toString(), EndingBalance);
         return true;
       } else {
         throw new Error("Transaction failed - check contract interaction");
@@ -189,6 +180,8 @@ export const useCreateJob = (props: Props) => {
         await createContract();
       }
 
+      const initialBalance = await checkBalanceTx(jobId);
+
       if (!window.ethereum) return "";
       const accounts = await window.ethereum.request({
         method: "eth_accounts",
@@ -197,14 +190,17 @@ export const useCreateJob = (props: Props) => {
         throw new Error("No account found");
       }
 
+      const EndingBalance = Number(initialBalance) - Number(amount);
+
+      // Convert amount to wei
       const amountInWei = web3?.utils.toWei(amount.toString(), "mwei");
       const tx = contract.methods.withdrawFunds(jobId, amountInWei).encodeABI();
 
       const receipt = {
         from: accounts[0],
-        gas: "21000",
         to: GoodhiveContractAddress,
         data: tx,
+        gas: "210000", // Increased gas limit to match createJob
       };
 
       const txHash = await window.ethereum.request({
@@ -212,13 +208,17 @@ export const useCreateJob = (props: Props) => {
         params: [receipt as any],
       });
 
-      await waitForTransactionReceipt(txHash as `0x${string}`);
-      const balance = await checkBalanceTx(jobId);
-      const EndingBalance = Number(balance) - Number(amount);
-      await handleUpdateEscrowAmount(jobId, EndingBalance);
+      const txReceipt = await waitForTransactionReceipt(
+        txHash as `0x${string}`,
+      );
 
-      return txHash;
-    } catch (error) {
+      if (txReceipt && txReceipt.status === "0x1") {
+        await updateEscrowAmount(jobId.toString(), EndingBalance);
+        return true;
+      } else {
+        throw new Error("Transaction failed - check contract interaction");
+      }
+    } catch (error: any) {
       throw error;
     }
   };
@@ -230,6 +230,8 @@ export const useCreateJob = (props: Props) => {
         await createContract();
       }
 
+      const initialBalance = await checkBalanceTx(jobId);
+
       if (!window.ethereum) return "";
       const accounts = await window.ethereum.request({
         method: "eth_accounts",
@@ -238,14 +240,16 @@ export const useCreateJob = (props: Props) => {
         throw new Error("No account found");
       }
 
+      const EndingBalance = Number(initialBalance) - Number(amount);
+
       const amountInWei = web3?.utils.toWei(amount.toString(), "mwei");
       const tx = contract.methods.sendTheFees(jobId, amountInWei).encodeABI();
 
       const receipt = {
         from: accounts[0],
-        gas: "21000",
         to: GoodhiveContractAddress,
         data: tx,
+        gas: "210000", // Increased gas limit to match createJob
       };
 
       const txHash = await window.ethereum.request({
@@ -253,13 +257,17 @@ export const useCreateJob = (props: Props) => {
         params: [receipt as any],
       });
 
-      await waitForTransactionReceipt(txHash as `0x${string}`);
-      const balance = await checkBalanceTx(jobId);
-      const EndingBalance = Number(balance) - Number(amount);
-      await handleUpdateEscrowAmount(jobId, EndingBalance);
+      const txReceipt = await waitForTransactionReceipt(
+        txHash as `0x${string}`,
+      );
 
-      return txHash;
-    } catch (error) {
+      if (txReceipt && txReceipt.status === "0x1") {
+        await updateEscrowAmount(jobId.toString(), EndingBalance);
+        return true;
+      } else {
+        throw new Error("Transaction failed - check contract interaction");
+      }
+    } catch (error: any) {
       throw error;
     }
   };
