@@ -9,14 +9,22 @@ export async function POST(request: Request) {
     },
   });
 
+  console.log(typeof id, typeof escrowAmount);
+  console.log(id, escrowAmount);
+
   // Input Validation
-  if (!id || typeof id !== 'number') { // Assuming 'id' is a numeric value
-    return new Response(JSON.stringify({ message: "Invalid or missing job id" }), {
-      status: 400,
-    });
+  if (!id || typeof id !== "number") {
+    // Assuming 'id' is a numeric value
+    return new Response(
+      JSON.stringify({ message: "Invalid or missing job id" }),
+      {
+        status: 400,
+      },
+    );
   }
 
-  if (typeof escrowAmount !== 'number') { // Validate escrowAmount as a number
+  if (typeof escrowAmount !== "number") {
+    // Validate escrowAmount as a number
     return new Response(JSON.stringify({ message: "Invalid escrow amount" }), {
       status: 400,
     });
@@ -27,11 +35,11 @@ export async function POST(request: Request) {
         UPDATE goodhive.job_offers
         SET
             escrow_amount = ${escrowAmount}
-        WHERE id = ${id}
+        WHERE job_id = ${id}
         `;
 
     return new Response(
-      JSON.stringify({ message: "Job updated successfully" })
+      JSON.stringify({ message: "Job updated successfully" }),
     );
   } catch (error) {
     console.error("Error inserting data:", error);
