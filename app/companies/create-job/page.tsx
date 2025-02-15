@@ -32,6 +32,7 @@ import { SelectInput } from "@components/select-input";
 import { ToggleButton } from "@components/toggle-button";
 import { PopupModal } from "./PopupModal";
 import { AuthLayout } from "@/app/components/AuthLayout/AuthLayout";
+import { updateEscrowAmount } from "@/app/utils/escrow";
 
 export default function CreateJob() {
   const [description, setDescription] = useState("");
@@ -75,15 +76,23 @@ export default function CreateJob() {
     return calculateJobCreateFees(projectType, budget, jobServices);
   }, [projectType, budget, jobServices]);
 
-  const { createJobTx, checkBalanceTx } = useCreateJob({
-    walletAddress: walletAddress ? walletAddress : "",
-    token: selectedCurrency?.value ?? "",
-  });
+  const { createJobTx, checkBalanceTx, withdrawFundsTx, transferFundsTx } =
+    useCreateJob({
+      walletAddress: walletAddress ? walletAddress : "",
+      token: selectedCurrency?.value ?? "",
+    });
 
   const updateBlockchainBalance = useCallback(async () => {
     if (jobData?.job_id) {
       const balance = await checkBalanceTx(jobData.job_id);
       setBlockchainBalance(balance);
+      if (
+        balance &&
+        jobData?.escrowAmount &&
+        balance !== jobData?.escrowAmount
+      ) {
+        updateEscrowAmount(jobData?.job_id, Number(balance)); // Ensure balance is treated as a number
+      }
     }
   }, [checkBalanceTx, jobData]);
 
@@ -114,11 +123,35 @@ export default function CreateJob() {
         break;
 
       case "withdraw":
-        // Handle withdraw logic here
+        try {
+          await withdrawFundsTx(jobData?.job_id, amount);
+          await updateBlockchainBalance();
+          toast.success("Funds withdrawn successfully!");
+        } catch (error) {
+          if (error instanceof Error) {
+            toast.error(error.message);
+          } else {
+            toast.error("Error withdrawing funds!");
+          }
+        } finally {
+          handlePopupModalClose();
+        }
         break;
+
       case "transfer":
-        // Handle transfer logic here
-        handlePopupModalClose();
+        try {
+          await transferFundsTx(jobData?.job_id, amount);
+          await updateBlockchainBalance();
+          toast.success("Payment sent successfully!");
+        } catch (error) {
+          if (error instanceof Error) {
+            toast.error(error.message);
+          } else {
+            toast.error("Error sending payment!");
+          }
+        } finally {
+          handlePopupModalClose();
+        }
         break;
     }
   };
@@ -308,8 +341,8 @@ export default function CreateJob() {
 
   useEffect(() => {
     if (id) {
-      fetchJobData();
       updateBlockchainBalance();
+      fetchJobData();
     }
     if (id && addFunds === "true") {
       handlePopupModal("addFunds");
@@ -792,7 +825,7 @@ export default function CreateJob() {
         <PopupModal
           open={isPopupModalOpen}
           onClose={handlePopupModalClose}
-          jobId={id as string}
+          jobId={jobData?.job_id}
           type={popupModalType}
           onSubmit={onPopupModalSubmit}
           currencyToken={selectedCurrency?.value ?? ""}
