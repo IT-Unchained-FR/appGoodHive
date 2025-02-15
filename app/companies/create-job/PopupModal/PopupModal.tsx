@@ -43,6 +43,7 @@ export const PopupModal: FC<AddFundsModalProps> = (props) => {
 
     if (type === "withdraw" || type === "transfer") {
       const contractBalance = await checkBalanceTx(Number(jobId));
+      console.log(contractBalance, "contractBalance");
       if (isFullAmount) onSubmit(contractBalance, type);
       else if (contractBalance < amount) {
         toast.error("Insufficient funds!");
