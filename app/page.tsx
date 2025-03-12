@@ -17,6 +17,7 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
+    // Page Starts From Here
     <div className="home-page overflow-hidden">
       <GoogleAnalytics />
       <Hero />
