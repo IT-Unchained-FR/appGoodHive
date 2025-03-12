@@ -138,7 +138,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
               label={TRANSLATIONS.onlyTalent}
               name="onlyTalent"
               checked={toggleValues.onlyTalent}
-              setValue={(name, value) => {
+              setValue={(name: string, value: boolean) => {
                 setToggleValues((prev) => ({
                   ...prev,
                   [name]: value,
@@ -149,7 +149,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
               label={TRANSLATIONS.onlyMentor}
               name="onlyMentor"
               checked={toggleValues.onlyMentor}
-              setValue={(name, value) => {
+              setValue={(name: string, value: boolean) => {
                 setToggleValues((prev) => ({
                   ...prev,
                   [name]: value,
@@ -160,7 +160,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
               label={TRANSLATIONS.onlyRecruiter}
               name="onlyRecruiter"
               checked={toggleValues.onlyRecruiter}
-              setValue={(name, value) => {
+              setValue={(name: string, value: boolean) => {
                 setToggleValues((prev) => ({
                   ...prev,
                   [name]: value,
