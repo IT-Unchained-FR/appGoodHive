@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useState } from "react";
+import { FC, useState, useEffect } from "react";
 import { useCombobox } from "downshift";
 import clsx from "clsx";
 
@@ -37,19 +37,25 @@ export const AutoSuggestInput: FC<AutoSuggestInputProps> = (props) => {
     getInputProps,
     getItemProps,
     highlightedIndex,
+    reset,
   } = useCombobox({
     items: filteredInputs,
     inputValue,
-
     onInputValueChange: ({ inputValue }) => setInputValue(inputValue || ""),
     onSelectedItemChange: ({ selectedItem }) => {
-      setInputValue("");
       if (selectedItem) {
         if (isSingleInput) {
           setSelectedInputs([selectedItem]);
         } else if (!selectedInputs.includes(selectedItem)) {
           setSelectedInputs([...selectedInputs, selectedItem]);
         }
+
+        // Clear input immediately after selection
+        setInputValue("");
+        // Force reset the combobox state
+        setTimeout(() => {
+          reset();
+        }, 0);
       }
     },
   });
@@ -58,6 +64,8 @@ export const AutoSuggestInput: FC<AutoSuggestInputProps> = (props) => {
     <div className="relative">
       <input
         {...getInputProps()}
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
         className={clsx(
           "relative rounded-lg block w-full px-4 py-2 text-base font-normal text-gray-600 bg-gray-100 focus:outline-none focus:ring-0",
           classes,
