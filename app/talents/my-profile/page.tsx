@@ -20,6 +20,7 @@ import DragAndDropFile from "@/app/components/drag-and-drop-file";
 import Cookies from "js-cookie";
 import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/honey-bee-spinner";
 import { ReferralSection } from "@/app/components/referral/referral-section";
+import { SearchableSelectInput } from "@/app/components/searchable-select-input";
 
 export type ProfileData = {
   first_name: string;
@@ -463,7 +464,7 @@ export default function ProfilePage() {
           </div>
           <div className="flex sm:flex-col gap-4 mt-4">
             <div className="flex-1">
-              <SelectInput
+              <SearchableSelectInput
                 required={false}
                 labelText="Country"
                 name="country"
@@ -477,6 +478,7 @@ export default function ProfilePage() {
                   setSelectedCountry(country);
                 }}
                 options={countries}
+                placeholder="Search for a country..."
                 defaultValue={
                   countries[
                     countries.findIndex(
