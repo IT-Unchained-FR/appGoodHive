@@ -167,6 +167,11 @@ export default function ProfilePage() {
           }
         });
 
+        // Make skills mandatory for review submission
+        if (!selectedSkills.length) {
+          newErrors.skills = "Skills are required";
+        }
+
         if (!data.talent && !data.mentor && !data.recruiter) {
           newErrors.role = "Select at least one role";
           setErrors(newErrors);
@@ -727,7 +732,9 @@ export default function ProfilePage() {
               >
                 Skills*
               </label>
-              <div className="absolute w-full pt-1 pr-10 text-base font-normal text-gray-600 bg-white form-control ">
+              <div
+                className={`absolute w-full pt-1 pr-10 text-base font-normal text-gray-600 bg-white form-control ${errors.skills ? "border border-red-500 rounded-lg" : ""}`}
+              >
                 <AutoSuggestInput
                   inputs={skills}
                   selectedInputs={selectedSkills}
@@ -735,12 +742,21 @@ export default function ProfilePage() {
                     setSelectedSkills(skills);
                     setProfileData({
                       ...profileData,
-                      skills: selectedSkills.join(", "),
+                      skills: skills.join(","),
                     });
+
+                    // Clear the skills error if at least one skill is added
+                    if (skills.length > 0 && errors.skills) {
+                      const updatedErrors = { ...errors };
+                      delete updatedErrors.skills;
+                      setErrors(updatedErrors);
+                    }
                   }}
                 />
                 {errors.skills && (
-                  <p className="text-red-500 text-sm mt-1">{errors.skills}</p>
+                  <p className="text-red-500 text-sm mt-1 ml-3">
+                    {errors.skills}
+                  </p>
                 )}
               </div>
               <div className="pt-10">
