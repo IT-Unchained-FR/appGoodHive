@@ -285,6 +285,11 @@ export default function ProfilePage() {
     setCvFile(cvFile);
   };
 
+  // Add effect to log profile data changes
+  useEffect(() => {
+    console.log("Profile data updated:", profileData);
+  }, [profileData]);
+
   if (isProfileDataFetching) {
     window.scrollTo(0, 0);
     return <HoneybeeSpinner message={"Loading Your Profile..."} />;
@@ -352,11 +357,11 @@ export default function ProfilePage() {
             Set Availability
           </label>
           <ToggleButton
-            label="Active"
+            label="Set Availability"
             name="availability"
             tooltip="If Seeking Jobs"
             checked={profileData.availability}
-            setValue={(name, checked) => {
+            setValue={(name: string, checked: boolean) => {
               setProfileData({ ...profileData, [name]: checked });
             }}
             errorMessage={errors.availability}
@@ -617,7 +622,7 @@ export default function ProfilePage() {
               label="Hide my contact details"
               name="hide-contact-details"
               checked={profileData?.hide_contact_details ?? false}
-              setValue={(name, checked) => {
+              setValue={(name: string, checked: boolean) => {
                 setProfileData({ ...profileData, [name]: checked });
               }}
             />
@@ -700,7 +705,7 @@ export default function ProfilePage() {
               label="Freelance Only"
               name="freelance_only"
               checked={profileData?.freelance_only ?? false}
-              setValue={(name, checked) => {
+              setValue={(name: string, checked: boolean) => {
                 setProfileData({ ...profileData, [name]: checked });
               }}
             />
@@ -708,7 +713,7 @@ export default function ProfilePage() {
               label="Remote Only"
               name="remote_only"
               checked={profileData?.remote_only ?? false}
-              setValue={(name, checked) => {
+              setValue={(name: string, checked: boolean) => {
                 setProfileData({ ...profileData, [name]: checked });
               }}
             />
@@ -774,13 +779,15 @@ export default function ProfilePage() {
               {createJobServices.map((service) => {
                 const { label, value } = service;
                 const isChecked = profileData[value];
+                console.log(`Role toggle state for ${value}:`, isChecked);
                 return (
                   <ToggleButton
                     key={value}
                     label={label}
                     name={value}
                     checked={isChecked ?? false}
-                    setValue={(name, checked) => {
+                    setValue={(name: string, checked: boolean) => {
+                      console.log(`Setting ${name} to ${checked}`);
                       setProfileData({ ...profileData, [name]: checked });
                     }}
                   />
