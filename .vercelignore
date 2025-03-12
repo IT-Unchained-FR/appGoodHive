@@ -1,0 +1,22 @@
+# dependencies
+node_modules
+
+# next.js builds (Vercel handles this)
+.next
+out
+build
+
+# misc
+README.md
+.git
+.github
+.vscode
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# tests
+__tests__
+coverage 
