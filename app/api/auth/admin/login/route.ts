@@ -1,5 +1,5 @@
 import postgres from "postgres";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { sign } from "jsonwebtoken";
 
 const sql = postgres(process.env.DATABASE_URL || "", {

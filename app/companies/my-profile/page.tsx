@@ -80,6 +80,7 @@ export default function MyProfile() {
 
   const fetchProfile = useCallback(async () => {
     setIsLoading(true);
+    console.log("Fetching profile for userId:", userId);
 
     const profileResponse = await fetch(
       `/api/companies/my-profile?userId=${userId}`,
@@ -87,6 +88,7 @@ export default function MyProfile() {
 
     if (profileResponse.ok) {
       const profileData = await profileResponse.json();
+      console.log("Fetched profile data:", profileData);
 
       setProfileData(profileData);
 
@@ -99,6 +101,7 @@ export default function MyProfile() {
 
       setIsShowReferralSection(true);
     } else {
+      console.log("No profile found or error:", profileResponse.status);
       setNoProfileFound(true);
     }
     setIsLoading(false);
@@ -117,7 +120,7 @@ export default function MyProfile() {
     const referralCode = Cookies.get("referralCode");
     const imageUrl = profileImage
       ? await uploadFileToBucket(profileImage)
-      : null;
+      : profileData.image_url;
 
     const isAlreadyReferred = profileData.referrer ? true : false;
 
@@ -164,7 +167,7 @@ export default function MyProfile() {
       phone_number: data["phone_number"],
       email: data.email,
       telegram: data.telegram,
-      image_url: imageUrl || profileData.image_url,
+      image_url: imageUrl,
       wallet_address: walletAddress,
       linkedin: data.linkedin,
       github: data.github,
@@ -178,7 +181,7 @@ export default function MyProfile() {
 
     const filteredData = Object.fromEntries(
       Object.entries(dataForm).filter(
-        ([, value]) => value !== undefined && value !== null && value !== "",
+        ([, value]) => value != null && value !== "",
       ),
     );
 
