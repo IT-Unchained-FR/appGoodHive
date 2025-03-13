@@ -1,5 +1,5 @@
 import postgres from "postgres";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 const sql = postgres(process.env.DATABASE_URL || "", {
   ssl: {
     rejectUnauthorized: false,
