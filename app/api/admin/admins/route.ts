@@ -1,5 +1,5 @@
 import postgres from "postgres";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 

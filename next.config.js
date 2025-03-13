@@ -27,6 +27,13 @@ const nextConfig = {
   poweredByHeader: false,
   swcMinify: true,
   transpilePackages: ['ethers', 'siwe'],
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'ethers': require.resolve('ethers')
+    };
+    return config;
+  }
 };
 
 module.exports = nextConfig;
