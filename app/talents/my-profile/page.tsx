@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, ChangeEvent, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { toast } from "react-hot-toast";
 import { uploadFileToBucket } from "@/app/utils/upload-file-bucket";
 import Image from "next/image";
@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 import { ToggleButton } from "@/app/components/toggle-button";
 import Link from "next/link";
 import { resumeUploadSizeLimit } from "./constants";
-import { SelectInput } from "@/app/components/select-input";
 import { countries } from "@/app/constants/countries";
 import { AutoSuggestInput } from "@/app/components/autosuggest-input";
 import { skills } from "@/app/constants/skills";
@@ -62,35 +61,70 @@ export type ProfileData = {
   approved_roles?: object[];
 };
 
-export default function ProfilePage() {
-  const [profileData, setProfileData] = useState<ProfileData>(
-    {} as ProfileData,
-  );
-  const [user, setUser] = useState<any>();
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+// Component to display profile status
+const ProfileStatus = ({ profileData }: { profileData: ProfileData }) => {
   const unapprovedProfile =
     profileData?.approved === false && profileData.inreview === true;
-
   const savedProfile =
     profileData?.approved === false && profileData.inreview === false;
 
-  const imageInputValue = useRef(null);
-  const [profileImage, setProfileImage] = useState<File | null>(null);
-  const [cvFile, setCvFile] = useState<File | null>(null);
-  const [saveProfileLoading, setSaveProfileLoading] = useState(false);
-  const [reviewProfileLoading, setReviewProfileLoading] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState<any>(null);
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  if (!unapprovedProfile && !savedProfile) return null;
 
-  const [isUploadedCvLink, setIsUploadedCvLink] = useState(false);
-  const [walletAddress, setWalletAddress] = useState("");
-  const [isProfileDataFetching, setIsProfileDataFetching] = useState(false);
+  return (
+    <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
+      {unapprovedProfile
+        ? "🚀 Your profile is pending approval. Check your email to schedule your interview."
+        : "🚀 Profile saved! Complete the mandatory fields and submit for review when ready."}
+    </p>
+  );
+};
 
+export default function ProfilePage() {
+  // Static references
+  const imageInputRef = useRef(null);
+  const isInitialMount = useRef(true);
+
+  // Router
   const router = useRouter();
 
-  const user_id = Cookies.get("user_id");
+  // User identifiers
+  const user_id = useMemo(() => Cookies.get("user_id"), []);
 
+  // Primary state
+  const [profileData, setProfileData] = useState<ProfileData>(
+    {} as ProfileData,
+  );
+  const [user, setUser] = useState<any>(null);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  // UI state
+  const [isProfileDataFetching, setIsProfileDataFetching] = useState(false);
+  const [saveProfileLoading, setSaveProfileLoading] = useState(false);
+  const [reviewProfileLoading, setReviewProfileLoading] = useState(false);
+
+  // Form state
+  const [selectedCountry, setSelectedCountry] = useState<any>(null);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [cvFile, setCvFile] = useState<File | null>(null);
+  const [isUploadedCvLink, setIsUploadedCvLink] = useState(false);
+  const [walletAddress, setWalletAddress] = useState("");
+
+  // Derived state
+  const unapprovedProfile = useMemo(
+    () => profileData?.approved === false && profileData.inreview === true,
+    [profileData?.approved, profileData.inreview],
+  );
+
+  const savedProfile = useMemo(
+    () => profileData?.approved === false && profileData.inreview === false,
+    [profileData?.approved, profileData.inreview],
+  );
+
+  // API calls
   const fetchProfile = useCallback(async () => {
+    if (!user_id) return;
+
     try {
       setIsProfileDataFetching(true);
       const response = await fetch(
@@ -100,11 +134,16 @@ export default function ProfilePage() {
       if (response.ok) {
         const data = await response.json();
         setProfileData(data);
-        if (data.country) {
-          setSelectedCountry({ value: data.country, label: data.country });
-        }
-        if (data.skills) {
-          setSelectedSkills(data.skills.split(","));
+
+        // Only set these on initial mount
+        if (isInitialMount.current) {
+          if (data.country) {
+            setSelectedCountry({ value: data.country, label: data.country });
+          }
+          if (data.skills) {
+            setSelectedSkills(data.skills.split(","));
+          }
+          isInitialMount.current = false;
         }
       }
     } catch (error) {
@@ -114,13 +153,10 @@ export default function ProfilePage() {
     }
   }, [user_id]);
 
-  useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
-
   const fetchUser = useCallback(async () => {
+    if (!user_id) return;
+
     try {
-      setSaveProfileLoading(true);
       const response = await fetch(`/api/profile?user_id=${user_id}`);
       if (response.ok) {
         const { user } = await response.json();
@@ -128,22 +164,25 @@ export default function ProfilePage() {
       }
     } catch (error) {
       console.error("Error fetching user:", error);
-    } finally {
-      setSaveProfileLoading(false);
     }
   }, [user_id]);
 
+  // Initial data load
   useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
+    if (!user_id) return;
 
-  console.log(selectedSkills, "Selected Skills");
-  const handleFormSubmit = async (data: any, validate: boolean) => {
-    try {
-      let imageUrl = profileData.image_url;
-      let cvUrl = profileData.cv_url;
+    const initializeData = async () => {
+      await Promise.all([fetchProfile(), fetchUser()]);
+    };
 
-      setSaveProfileLoading(true);
+    initializeData();
+  }, [user_id, fetchProfile, fetchUser]);
+
+  // Form validation
+  const validateForm = useCallback(
+    (data: ProfileData, requireAll: boolean): boolean => {
+      if (!requireAll) return true;
+
       const requiredFields = {
         title: "Profile header",
         description: "Profile description",
@@ -158,169 +197,228 @@ export default function ProfilePage() {
         telegram: "Telegram",
       };
 
-      if (validate) {
-        console.log(data, "data...");
-        const newErrors: { [key: string]: string } = {};
+      const newErrors: { [key: string]: string } = {};
 
-        Object.entries(requiredFields).forEach(([key, label]) => {
-          if (!data[key]) {
-            newErrors[key] = `${label} is required`;
-          }
-        });
-
-        // Make skills mandatory for review submission
-        if (!selectedSkills.length) {
-          newErrors.skills = "Skills are required";
+      Object.entries(requiredFields).forEach(([key, label]) => {
+        if (!data[key as keyof ProfileData]) {
+          newErrors[key] = `${label} is required`;
         }
-
-        if (!data.talent && !data.mentor && !data.recruiter) {
-          newErrors.role = "Select at least one role";
-          setErrors(newErrors);
-          return toast.error("Select at least one role");
-        }
-
-        if (Object.keys(newErrors).length > 0) {
-          setErrors(newErrors);
-          console.log(errors, "errors...");
-          toast.error("Please fill in all required fields");
-          setSaveProfileLoading(false);
-          return;
-        }
-      }
-
-      setErrors({}); // Clear errors if validation passes
-
-      if (profileImage) {
-        imageUrl = (await uploadFileToBucket(profileImage)) as string;
-      }
-
-      if (cvFile) {
-        cvUrl = (await uploadFileToBucket(cvFile)) as string;
-      }
-
-      data.cv_url = cvUrl;
-      console.log(data, "data...");
-
-      if (validate && !data.cv_url) {
-        return toast.error("Please upload your CV");
-      }
-
-      const formData: { [key: string]: any } = {
-        title: data.title,
-        description: data.description,
-        first_name: data["first_name"],
-        last_name: data["last_name"],
-        country: selectedCountry?.value,
-        city: data.city,
-        phone_country_code: data["phone_country_code"],
-        phone_number: data["phone_number"],
-        email: data.email,
-        about_work: data["about_work"],
-        rate: data.rate,
-        freelance_only: data["freelance_only"],
-        remote_only: data["remote_only"],
-        skills: selectedSkills.join(","),
-        image_url: imageUrl,
-        cv_url: cvUrl,
-        wallet_address: walletAddress,
-        linkedin: data.linkedin,
-        github: data.github,
-        twitter: data.twitter,
-        stackoverflow: data.stackoverflow,
-        portfolio: data.portfolio,
-        telegram: data.telegram,
-        talent: data.talent,
-        mentor: data.mentor,
-        recruiter: data.recruiter,
-        hide_contact_details: data["hide-contact-details"],
-        availability: data.availability,
-        user_id: user_id,
-      };
-
-      if (validate) {
-        formData.referred_by = user.referred_by;
-      }
-
-      const profileResponse = await fetch("/api/talents/my-profile", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ...formData, validate }),
       });
 
-      if (profileResponse.ok) {
-        toast.success(
-          validate
-            ? "Profile sent to review by the core team!"
-            : "Profile saved successfully",
-        );
-        fetchProfile();
-      } else {
-        const profileSavingErrorData = await profileResponse.json();
-        toast.error(profileSavingErrorData.message);
+      // Make skills mandatory for review submission
+      if (!selectedSkills.length) {
+        newErrors.skills = "Skills are required";
       }
-    } catch (error) {
-      console.error(error);
-      toast.error("Something went wrong while saving your profile");
-    } finally {
-      setSaveProfileLoading(false);
-      setReviewProfileLoading(false);
-    }
-  };
 
-  const handleSaveProfile = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    handleFormSubmit(profileData, false);
-  };
+      if (!data.talent && !data.mentor && !data.recruiter) {
+        newErrors.role = "Select at least one role";
+        setErrors(newErrors);
+        toast.error("Select at least one role");
+        return false;
+      }
 
-  const handleSendForReview = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    handleFormSubmit(profileData, true);
-  };
+      if (requireAll && !data.cv_url && !cvFile) {
+        newErrors.cv_url = "Please upload your CV";
+      }
 
-  const onCvInputChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    if (!event.target.files) return;
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        toast.error("Please fill in all required fields");
+        return false;
+      }
 
-    const cvFile = event.target.files[0];
+      setErrors({});
+      return true;
+    },
+    [selectedSkills],
+  );
 
-    if (cvFile.size > 1024 * 1024 * Number(resumeUploadSizeLimit)) {
+  // Form submission
+  const handleFormSubmit = useCallback(
+    async (validate: boolean) => {
+      try {
+        if (validate) {
+          setReviewProfileLoading(true);
+        } else {
+          setSaveProfileLoading(true);
+        }
+
+        // Validate form
+        if (!validateForm(profileData, validate)) {
+          setSaveProfileLoading(false);
+          setReviewProfileLoading(false);
+          return;
+        }
+
+        // Upload files if necessary
+        let imageUrl = profileData.image_url;
+        let cvUrl = profileData.cv_url;
+
+        if (profileImage) {
+          imageUrl = (await uploadFileToBucket(profileImage)) as string;
+        }
+
+        if (cvFile) {
+          cvUrl = (await uploadFileToBucket(cvFile)) as string;
+        }
+
+        // Prepare form data
+        const formData = {
+          ...profileData,
+          country: selectedCountry?.value,
+          phone_country_code: selectedCountry?.phoneCode,
+          skills: selectedSkills.join(","),
+          image_url: imageUrl,
+          cv_url: cvUrl,
+          wallet_address: walletAddress,
+          user_id,
+        };
+
+        if (validate && user?.referred_by) {
+          formData.referred_by = user.referred_by;
+        }
+
+        // Submit form
+        const profileResponse = await fetch("/api/talents/my-profile", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ...formData, validate }),
+        });
+
+        if (profileResponse.ok) {
+          toast.success(
+            validate
+              ? "Profile sent to review by the core team!"
+              : "Profile saved successfully",
+          );
+          fetchProfile();
+        } else {
+          const profileSavingErrorData = await profileResponse.json();
+          toast.error(profileSavingErrorData.message);
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error("Something went wrong while saving your profile");
+      } finally {
+        setSaveProfileLoading(false);
+        setReviewProfileLoading(false);
+      }
+    },
+    [
+      profileData,
+      validateForm,
+      profileImage,
+      cvFile,
+      selectedCountry,
+      selectedSkills,
+      walletAddress,
+      user_id,
+      user,
+      fetchProfile,
+    ],
+  );
+
+  // Event handlers
+  const handleSaveProfile = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      handleFormSubmit(false);
+    },
+    [handleFormSubmit],
+  );
+
+  const handleSendForReview = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      handleFormSubmit(true);
+    },
+    [handleFormSubmit],
+  );
+
+  const handleCvFileChange = useCallback((file: File | null) => {
+    if (!file) return;
+
+    if (file.size > 1024 * 1024 * Number(resumeUploadSizeLimit)) {
       toast.error(`File size should be less than ${resumeUploadSizeLimit} MB`);
       return;
     }
-    setCvFile(cvFile);
-  };
 
-  // Add effect to log profile data changes
-  useEffect(() => {
-    console.log("Profile data updated:", profileData);
-  }, [profileData]);
+    setCvFile(file);
+  }, []);
 
+  const onCvInputChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (!event.target.files) return;
+      handleCvFileChange(event.target.files[0]);
+    },
+    [handleCvFileChange],
+  );
+
+  const handleCountryChange = useCallback((country: any) => {
+    if (!country) return;
+
+    setSelectedCountry(country);
+    setProfileData((prev) => ({
+      ...prev,
+      country: country?.value,
+      phone_country_code: country?.phoneCode,
+    }));
+  }, []);
+
+  const handleSkillsChange = useCallback(
+    (skills: string[]) => {
+      setSelectedSkills(skills);
+      setProfileData((prev) => ({
+        ...prev,
+        skills: skills.join(","),
+      }));
+
+      // Clear the skills error if at least one skill is added
+      if (skills.length > 0 && errors.skills) {
+        setErrors((prev) => {
+          const updated = { ...prev };
+          delete updated.skills;
+          return updated;
+        });
+      }
+    },
+    [errors.skills],
+  );
+
+  const handleInputChange = useCallback((name: string, value: any) => {
+    setProfileData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }, []);
+
+  const handleToggleChange = useCallback((name: string, checked: boolean) => {
+    setProfileData((prev) => ({
+      ...prev,
+      [name]: checked,
+    }));
+  }, []);
+
+  // Loading states
   if (isProfileDataFetching) {
     window.scrollTo(0, 0);
     return <HoneybeeSpinner message={"Loading Your Profile..."} />;
   }
+
   if (saveProfileLoading) {
     window.scrollTo(0, 0);
     return <HoneybeeSpinner message={"Saving Your Profile..."} />;
   }
 
+  // Render components
   return (
-    <div className="container mx-auto px-4 py-8 ">
-      {unapprovedProfile && (
-        <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
-          🚀 Your profile is pending approval. Check your email to schedule your
-          interview.
-        </p>
-      )}
-      {savedProfile && (
-        <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
-          🚀 Profile saved! Complete the mandatory fields and submit for review
-          when ready.
-        </p>
-      )}
+    <div className="container mx-auto px-4 py-8">
+      <ProfileStatus profileData={profileData} />
+
       <form className="space-y-6">
-        {/* // TODO: Add image upload functionality */}
+        {/* Profile Image */}
         <div className="flex flex-col items-center justify-center w-full mt-10">
           {profileData.image_url ? (
             <div
@@ -343,10 +441,12 @@ export default function ProfilePage() {
               setFile={setProfileImage}
               isRenderedPage={true}
               setIsRenderedPage={() => {}}
-              imageInputValue={imageInputValue}
+              imageInputValue={imageInputRef}
             />
           )}
         </div>
+
+        {/* Public View Button */}
         <div className="w-full flex justify-center mt-7">
           <Button
             text="Public View"
@@ -355,6 +455,8 @@ export default function ProfilePage() {
             onClickHandler={() => router.push(`/talents/${user_id}`)}
           />
         </div>
+
+        {/* Availability Toggle */}
         <div className="flex w-full justify-center mt-5">
           <label
             htmlFor="availability"
@@ -367,12 +469,12 @@ export default function ProfilePage() {
             name="availability"
             tooltip="If Seeking Jobs"
             checked={profileData.availability}
-            setValue={(name: string, checked: boolean) => {
-              setProfileData({ ...profileData, [name]: checked });
-            }}
+            setValue={handleToggleChange}
             errorMessage={errors.availability}
           />
         </div>
+
+        {/* Profile Header */}
         <div className="flex flex-col w-full mt-10">
           <div>
             <label
@@ -387,24 +489,22 @@ export default function ProfilePage() {
             placeholder="Title"
             type="text"
             maxLength={100}
-            defaultValue={profileData?.title}
-            onChange={(e) =>
-              setProfileData({ ...profileData, title: e.target.value })
-            }
+            value={profileData?.title || ""}
+            onChange={(e) => handleInputChange("title", e.target.value)}
           />
           {errors.title && (
             <p className="text-red-500 text-sm mt-1">{errors.title}</p>
           )}
+
+          {/* Description */}
           <div className="mt-5">
             <textarea
               className="form-control block w-full px-4 py-2 pb-4 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
               placeholder="Describe your skills and experience in a few words*"
               maxLength={5000}
               rows={8}
-              defaultValue={profileData?.description}
-              onChange={(e) =>
-                setProfileData({ ...profileData, description: e.target.value })
-              }
+              value={profileData?.description || ""}
+              onChange={(e) => handleInputChange("description", e.target.value)}
             />
             {errors.description && (
               <p className="text-red-500 text-sm mt-1">{errors.description}</p>
@@ -413,9 +513,11 @@ export default function ProfilePage() {
               className="text-[13px] mt-2 text-right w-full"
               style={{ color: "#FFC905" }}
             >
-              {profileData.description?.length}/5000
+              {profileData.description?.length || 0}/5000
             </p>
           </div>
+
+          {/* Name Fields */}
           <div className="flex gap-4 mt-4 sm:flex-col">
             <div className="flex-1">
               <label
@@ -430,9 +532,9 @@ export default function ProfilePage() {
                 type="text"
                 pattern="[a-zA-Z -]+"
                 maxLength={100}
-                defaultValue={profileData?.first_name}
+                value={profileData?.first_name || ""}
                 onChange={(e) =>
-                  setProfileData({ ...profileData, first_name: e.target.value })
+                  handleInputChange("first_name", e.target.value)
                 }
               />
               {errors.first_name && (
@@ -452,16 +554,16 @@ export default function ProfilePage() {
                 type="text"
                 pattern="[a-zA-Z -]+"
                 maxLength={100}
-                defaultValue={profileData?.last_name}
-                onChange={(e) =>
-                  setProfileData({ ...profileData, last_name: e.target.value })
-                }
+                value={profileData?.last_name || ""}
+                onChange={(e) => handleInputChange("last_name", e.target.value)}
               />
               {errors.last_name && (
                 <p className="text-red-500 text-sm mt-1">{errors.last_name}</p>
               )}
             </div>
           </div>
+
+          {/* Location Fields */}
           <div className="flex sm:flex-col gap-4 mt-4">
             <div className="flex-1">
               <SearchableSelectInput
@@ -469,14 +571,7 @@ export default function ProfilePage() {
                 labelText="Country"
                 name="country"
                 inputValue={selectedCountry}
-                setInputValue={(country: any) => {
-                  setProfileData({
-                    ...profileData,
-                    country: country?.value,
-                    phone_country_code: country?.phoneCode,
-                  });
-                  setSelectedCountry(country);
-                }}
+                setInputValue={handleCountryChange}
                 options={countries}
                 placeholder="Search for a country..."
                 defaultValue={
@@ -504,16 +599,16 @@ export default function ProfilePage() {
                 type="text"
                 pattern="[a-zA-Z -]+"
                 maxLength={100}
-                defaultValue={profileData?.city}
-                onChange={(e) =>
-                  setProfileData({ ...profileData, city: e.target.value })
-                }
+                value={profileData?.city || ""}
+                onChange={(e) => handleInputChange("city", e.target.value)}
               />
               {errors.city && (
                 <p className="text-red-500 text-sm mt-1">{errors.city}</p>
               )}
             </div>
           </div>
+
+          {/* Phone Fields */}
           <div className="flex sm:flex-col gap-4 mt-4">
             <div className="flex-1">
               <label
@@ -528,20 +623,7 @@ export default function ProfilePage() {
                   placeholder="Phone Country Code"
                   type="text"
                   value={selectedCountry?.phoneCode || "+1"}
-                  defaultValue={
-                    countries[
-                      countries.findIndex(
-                        (country) => country.value === profileData?.country,
-                      )
-                    ]?.phoneCode
-                  }
                   readOnly
-                  onChange={(e) =>
-                    setProfileData({
-                      ...profileData,
-                      phone_country_code: selectedCountry?.phoneCode,
-                    })
-                  }
                 />
               </div>
               {errors.phone_country_code && (
@@ -562,12 +644,9 @@ export default function ProfilePage() {
                 placeholder="Phone Number"
                 type="number"
                 maxLength={20}
-                defaultValue={profileData?.phone_number}
+                value={profileData?.phone_number || ""}
                 onChange={(e) =>
-                  setProfileData({
-                    ...profileData,
-                    phone_number: e.target.value,
-                  })
+                  handleInputChange("phone_number", e.target.value)
                 }
               />
               {errors.phone_number && (
@@ -577,6 +656,8 @@ export default function ProfilePage() {
               )}
             </div>
           </div>
+
+          {/* Email and Rate Fields */}
           <div className="flex sm:flex-col gap-4 mt-4">
             <div className="flex-1">
               <label
@@ -590,10 +671,8 @@ export default function ProfilePage() {
                 placeholder="Email"
                 type="email"
                 maxLength={255}
-                defaultValue={profileData?.email}
-                onChange={(e) =>
-                  setProfileData({ ...profileData, email: e.target.value })
-                }
+                value={profileData?.email || ""}
+                onChange={(e) => handleInputChange("email", e.target.value)}
               />
               {errors.email && (
                 <p className="text-red-500 text-sm mt-1">{errors.email}</p>
@@ -611,12 +690,9 @@ export default function ProfilePage() {
                 placeholder="Your rate per hour"
                 type="number"
                 maxLength={255}
-                defaultValue={profileData?.rate}
+                value={profileData?.rate || ""}
                 onChange={(e) =>
-                  setProfileData({
-                    ...profileData,
-                    rate: Number(e.target.value),
-                  })
+                  handleInputChange("rate", Number(e.target.value))
                 }
               />
               {errors.rate && (
@@ -624,21 +700,23 @@ export default function ProfilePage() {
               )}
             </div>
           </div>
+
+          {/* Hide Contact Details Toggle */}
           <div className="w-full mt-5 pl-2">
             <ToggleButton
               label="Hide my contact details"
-              name="hide-contact-details"
+              name="hide_contact_details"
               checked={profileData?.hide_contact_details ?? false}
-              setValue={(name: string, checked: boolean) => {
-                setProfileData({ ...profileData, [name]: checked });
-              }}
+              setValue={handleToggleChange}
             />
-            {errors["hide-contact-details"] && (
+            {errors.hide_contact_details && (
               <p className="text-red-500 text-sm mt-1">
-                {errors["hide-contact-details"]}
+                {errors.hide_contact_details}
               </p>
             )}
           </div>
+
+          {/* About Work */}
           <div className="mt-4">
             <label
               htmlFor="about_work"
@@ -651,10 +729,8 @@ export default function ProfilePage() {
               placeholder="What you are looking for?"
               rows={8}
               maxLength={5000}
-              defaultValue={profileData?.about_work}
-              onChange={(e) =>
-                setProfileData({ ...profileData, about_work: e.target.value })
-              }
+              value={profileData?.about_work || ""}
+              onChange={(e) => handleInputChange("about_work", e.target.value)}
             />
             {errors.about_work && (
               <p className="text-red-500 text-sm mt-1">{errors.about_work}</p>
@@ -663,9 +739,11 @@ export default function ProfilePage() {
               className="text-[13px] mt-2 text-right w-full"
               style={{ color: "#FFC905" }}
             >
-              {profileData.about_work?.length}/5000
+              {profileData.about_work?.length || 0}/5000
             </p>
           </div>
+
+          {/* CV Upload */}
           <div className="mt-4">
             <label
               htmlFor="cv"
@@ -707,25 +785,23 @@ export default function ProfilePage() {
             )}
           </div>
 
+          {/* Work Preference Toggles */}
           <div className="flex w-full justify-between mt-9 sm:flex-wrap sm:gap-3">
             <ToggleButton
               label="Freelance Only"
               name="freelance_only"
               checked={profileData?.freelance_only ?? false}
-              setValue={(name: string, checked: boolean) => {
-                setProfileData({ ...profileData, [name]: checked });
-              }}
+              setValue={handleToggleChange}
             />
             <ToggleButton
               label="Remote Only"
               name="remote_only"
               checked={profileData?.remote_only ?? false}
-              setValue={(name: string, checked: boolean) => {
-                setProfileData({ ...profileData, [name]: checked });
-              }}
+              setValue={handleToggleChange}
             />
           </div>
 
+          {/* Skills Section */}
           <div className="relative flex flex-col gap-4 mt-12 mb-2 z-30 sm:flex-row">
             <div className="flex-1">
               <label
@@ -740,20 +816,7 @@ export default function ProfilePage() {
                 <AutoSuggestInput
                   inputs={skills}
                   selectedInputs={selectedSkills}
-                  setSelectedInputs={(skills) => {
-                    setSelectedSkills(skills);
-                    setProfileData({
-                      ...profileData,
-                      skills: skills.join(","),
-                    });
-
-                    // Clear the skills error if at least one skill is added
-                    if (skills.length > 0 && errors.skills) {
-                      const updatedErrors = { ...errors };
-                      delete updatedErrors.skills;
-                      setErrors(updatedErrors);
-                    }
-                  }}
+                  setSelectedInputs={handleSkillsChange}
                 />
                 {errors.skills && (
                   <p className="text-red-500 text-sm mt-1 ml-3">
@@ -764,50 +827,47 @@ export default function ProfilePage() {
               <div className="pt-10">
                 {!!selectedSkills && selectedSkills?.length > 0 && (
                   <div className="flex flex-wrap mt-4 ">
-                    {selectedSkills.map((skill, index) => {
-                      console.log(skill, "Skill....");
-                      return (
-                        <div
-                          key={index}
-                          className="border border-[#FFC905] flex items-center bg-gray-200 rounded-full py-1 px-3 m-1"
+                    {selectedSkills.map((skill, index) => (
+                      <div
+                        key={index}
+                        className="border border-[#FFC905] flex items-center bg-gray-200 rounded-full py-1 px-3 m-1"
+                      >
+                        <span className="mr-2">{skill}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updatedSkills = [...selectedSkills];
+                            updatedSkills.splice(index, 1);
+                            handleSkillsChange(updatedSkills);
+                          }}
+                          className="w-6 text-black bg-gray-400 rounded-full"
                         >
-                          <span className="mr-2">{skill}</span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedSkills(
-                                selectedSkills.filter((_, i) => i !== index),
-                              );
-                            }}
-                            className="w-6 text-black bg-gray-400 rounded-full"
-                          >
-                            &#10005;
-                          </button>
-                        </div>
-                      );
-                    })}
+                          &#10005;
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
             </div>
           </div>
+
+          {/* Role Selection */}
           <div className="flex flex-col mt-3">
             <p className="my-4">I want to be:</p>
             <div className="w-1/2 sm:w-full mb-5 px-3 flex justify-between sm:px-1 sm:flex-wrap sm:gap-3">
               {createJobServices.map((service) => {
                 const { label, value } = service;
-                const isChecked = profileData[value];
-                console.log(`Role toggle state for ${value}:`, isChecked);
+                const isChecked = profileData[
+                  value as keyof ProfileData
+                ] as boolean;
                 return (
                   <ToggleButton
                     key={value}
                     label={label}
                     name={value}
                     checked={isChecked ?? false}
-                    setValue={(name: string, checked: boolean) => {
-                      console.log(`Setting ${name} to ${checked}`);
-                      setProfileData({ ...profileData, [name]: checked });
-                    }}
+                    setValue={handleToggleChange}
                   />
                 );
               })}
@@ -817,60 +877,53 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {/* Social media links: Linkedin, github, stackoverflow, telegram, portfolio */}
+          {/* Social Links */}
           <div className="flex w-full flex-col mt-7 mb-12">
             <h3 className="inline-block mt-7 mb-2 ml-1 text-base font-medium text-black form-label">
               Social Media Links:
             </h3>
-            {socialLinks.map((socialLink) => {
-              return (
-                <SocialLink
-                  key={socialLink.name}
-                  name={socialLink.name}
-                  icon={socialLink.icon}
-                  placeholder={socialLink.placeholder}
-                  defaultValue={
-                    profileData[
-                      socialLink.name as keyof typeof profileData
-                    ]?.toString() || ""
-                  }
-                  setValue={(name, value) => {
-                    setProfileData((prev) => ({
-                      ...prev,
-                      [name]: value,
-                    }));
-                  }}
-                  errorMessage={errors[socialLink.name as keyof typeof errors]}
-                />
-              );
-            })}
+            {socialLinks.map((socialLink) => (
+              <SocialLink
+                key={socialLink.name}
+                name={socialLink.name}
+                icon={socialLink.icon}
+                placeholder={socialLink.placeholder}
+                defaultValue={
+                  profileData[
+                    socialLink.name as keyof typeof profileData
+                  ]?.toString() || ""
+                }
+                setValue={(name, value) => handleInputChange(name, value)}
+                errorMessage={errors[socialLink.name as keyof typeof errors]}
+              />
+            ))}
           </div>
 
+          {/* Referral Section */}
           <ReferralSection />
 
+          {/* Submit Buttons */}
           <div className="mt-10 mb-16 text-center flex gap-4 justify-center">
-            <>
-              <button
-                className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
-                type="button"
-                name="save-talent-only"
-                onClick={handleSaveProfile}
-                disabled={saveProfileLoading}
-              >
-                {saveProfileLoading ? "Saving Profile..." : "Save Profile"}
-              </button>
-              <button
-                className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
-                type="submit"
-                name="send-for-review"
-                onClick={handleSendForReview}
-                disabled={reviewProfileLoading}
-              >
-                {reviewProfileLoading
-                  ? "Sending Profile To Review..."
-                  : "Send Profile To Review"}
-              </button>
-            </>
+            <button
+              className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
+              type="button"
+              name="save-talent-only"
+              onClick={handleSaveProfile}
+              disabled={saveProfileLoading}
+            >
+              {saveProfileLoading ? "Saving Profile..." : "Save Profile"}
+            </button>
+            <button
+              className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
+              type="submit"
+              name="send-for-review"
+              onClick={handleSendForReview}
+              disabled={reviewProfileLoading}
+            >
+              {reviewProfileLoading
+                ? "Sending Profile To Review..."
+                : "Send Profile To Review"}
+            </button>
           </div>
         </div>
       </form>
