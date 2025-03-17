@@ -147,7 +147,6 @@ export default function MyProfile() {
 
       if (Object.keys(newErrors).length > 0) {
         setErrors(newErrors);
-        console.log(errors, "errors...");
         toast.error("Please fill in all required fields");
         setIsSaving(false);
         return;
@@ -185,7 +184,6 @@ export default function MyProfile() {
       ),
     );
 
-    // TODO: POST formData to the server with fetch
     const profileResponse = await fetch("/api/companies/my-profile", {
       method: "POST",
       headers: {
@@ -199,7 +197,7 @@ export default function MyProfile() {
     if (!profileResponse.ok) {
       toast.error("Something went wrong!");
     } else {
-      if (isNewUser) {
+      if (validate) {
         await fetch("/api/send-email", {
           method: "POST",
           headers: {
@@ -211,12 +209,11 @@ export default function MyProfile() {
             subject: `Welcome to GoodHive, ${dataForm.designation}! 🌟 Let's Connect You with Top IT Talent`,
           }),
         });
-      }
-      if (validate === false) {
+
+        toast.success("Profile sent to review by the core team!");
+      } else {
         toast.success("Profile Saved!");
         window.location.reload();
-      } else {
-        toast.success("Profile sent to review by the core team!");
       }
     }
   };
