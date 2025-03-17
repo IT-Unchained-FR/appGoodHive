@@ -287,7 +287,34 @@ export default function ProfilePage() {
           body: JSON.stringify({ ...formData, validate }),
         });
 
+        console.log(
+          profileResponse.ok,
+          validate,
+          "profileResponse",
+          "validate",
+        );
         if (profileResponse.ok) {
+          // Send email when profile is sent for review
+          if (validate) {
+            try {
+              await fetch("/api/send-email", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  email: formData.email,
+                  type: "new-talent",
+                  subject: `Welcome to GoodHive, ${formData.first_name}! 🎉 Your profile has been sent for review`,
+                  toUserName: `${formData.first_name} ${formData.last_name}`,
+                }),
+              });
+            } catch (error) {
+              console.error("Error sending email:", error);
+              // Don't show error to user, since the profile was saved successfully
+            }
+          }
+
           toast.success(
             validate
               ? "Profile sent to review by the core team!"
@@ -465,7 +492,7 @@ export default function ProfilePage() {
             Set Availability
           </label>
           <ToggleButton
-            label="Set Availability"
+            label=""
             name="availability"
             tooltip="If Seeking Jobs"
             checked={profileData.availability}
