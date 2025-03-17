@@ -355,7 +355,7 @@ export default function MyProfile() {
               <textarea
                 className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
                 placeholder="Describe your company in a few words?"
-                maxLength={5000}
+                maxLength={10000}
                 rows={8}
                 defaultValue={profileData.headline}
                 onChange={(e) =>
@@ -371,7 +371,7 @@ export default function MyProfile() {
                 className="text-[13px] mt-2 text-right w-full"
                 style={{ color: "#FFC905" }}
               >
-                {profileData.headline?.length}/5000
+                {profileData.headline?.length}/10000
               </p>
             </div>
 
