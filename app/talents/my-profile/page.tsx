@@ -528,7 +528,7 @@ export default function ProfilePage() {
             <textarea
               className="form-control block w-full px-4 py-2 pb-4 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
               placeholder="Describe your skills and experience in a few words*"
-              maxLength={5000}
+              maxLength={10000}
               rows={8}
               value={profileData?.description || ""}
               onChange={(e) => handleInputChange("description", e.target.value)}
@@ -540,7 +540,7 @@ export default function ProfilePage() {
               className="text-[13px] mt-2 text-right w-full"
               style={{ color: "#FFC905" }}
             >
-              {profileData.description?.length || 0}/5000
+              {profileData.description?.length || 0}/10000
             </p>
           </div>
 
@@ -755,7 +755,7 @@ export default function ProfilePage() {
               className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
               placeholder="What you are looking for?"
               rows={8}
-              maxLength={5000}
+              maxLength={10000}
               value={profileData?.about_work || ""}
               onChange={(e) => handleInputChange("about_work", e.target.value)}
             />
@@ -766,7 +766,7 @@ export default function ProfilePage() {
               className="text-[13px] mt-2 text-right w-full"
               style={{ color: "#FFC905" }}
             >
-              {profileData.about_work?.length || 0}/5000
+              {profileData.about_work?.length || 0}/10000
             </p>
           </div>
 
