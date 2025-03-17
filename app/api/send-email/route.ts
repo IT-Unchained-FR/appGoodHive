@@ -15,7 +15,7 @@ const TEMPLATES = {
   "job-applied": JobAppliedTemplate,
   "contact-company": ContactCompanyTemplate,
   "new-talent": TalentRegistrationTemplate,
-  "new-company": CompanyRegistrationTemplate
+  "new-company": CompanyRegistrationTemplate,
 };
 
 interface RequestContentType {
@@ -43,6 +43,16 @@ export async function POST(request: Request) {
     userProfile,
     jobLink,
   }: RequestContentType = await request.json();
+  console.log(
+    email,
+    type,
+    subject,
+    toUserName,
+    name,
+    message,
+    userProfile,
+    "send-email-body",
+  );
   try {
     const { data, error } = await resend.emails.send({
       from: "GoodHive <no-reply@goodhive.io>",
