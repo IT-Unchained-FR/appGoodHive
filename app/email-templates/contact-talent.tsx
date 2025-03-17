@@ -2,7 +2,7 @@ import * as React from "react";
 import { EmailTemplateProps } from "@/interfaces/email-template";
 
 export const ContactTalentTemplate: React.FC<Readonly<EmailTemplateProps>> = (
-  props
+  props,
 ) => {
   const { toUserName, userProfile, message } = props;
   return (
