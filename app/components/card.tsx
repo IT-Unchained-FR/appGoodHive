@@ -98,7 +98,7 @@ export const Card: FC<Props> = ({
       <div className="flex flex-col h-full px-4 sm:px-2">
         <div className="flex md:flex-row">
           <div
-            className="shrink-0 relative flex items-center justify-center bg-yellow-300 cursor-pointer h-20 w-20 md:h-18 md:w-18 sm:h-18 sm:w-18"
+            className="shrink-0 relative flex items-center justify-center cursor-pointer h-20 w-20 md:h-18 md:w-18 sm:h-18 sm:w-18"
             style={{
               clipPath:
                 "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)",
