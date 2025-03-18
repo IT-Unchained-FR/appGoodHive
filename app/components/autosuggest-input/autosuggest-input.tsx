@@ -31,6 +31,27 @@ export const AutoSuggestInput: FC<AutoSuggestInputProps> = (props) => {
       !selectedInputs?.includes(input),
   );
 
+  const addCustomSkill = () => {
+    if (!inputValue || inputValue.trim() === "") return;
+
+    const trimmedValue = inputValue.trim();
+
+    // Check if value already exists in selected inputs
+    if (!selectedInputs.includes(trimmedValue)) {
+      if (isSingleInput) {
+        setSelectedInputs([trimmedValue]);
+      } else {
+        setSelectedInputs([...selectedInputs, trimmedValue]);
+      }
+    }
+
+    // Clear input and reset combobox
+    setInputValue("");
+    setTimeout(() => {
+      reset();
+    }, 0);
+  };
+
   const {
     isOpen,
     getMenuProps,
@@ -71,6 +92,16 @@ export const AutoSuggestInput: FC<AutoSuggestInputProps> = (props) => {
           classes,
         )}
         placeholder={placeholder}
+        onKeyDown={(e) => {
+          if (
+            e.key === "Enter" &&
+            inputValue.trim() !== "" &&
+            filteredInputs.length === 0
+          ) {
+            e.preventDefault();
+            addCustomSkill();
+          }
+        }}
       />
       <ul
         {...getMenuProps()}
@@ -94,9 +125,22 @@ export const AutoSuggestInput: FC<AutoSuggestInputProps> = (props) => {
               {item}
             </li>
           ))}
-        {isOpen && filteredInputs.length === 0 && (
-          <li className="px-4 py-2 text-gray-500">No suggestions found</li>
-        )}
+        {isOpen &&
+          filteredInputs.length === 0 &&
+          inputValue.trim() !== "" &&
+          inputValue.trim().length > 2 && (
+            <li
+              className="px-4 py-2 cursor-pointer text-blue-600 bg-blue-50 hover:bg-blue-100 flex items-center"
+              onClick={addCustomSkill}
+            >
+              <span className="mr-2">+</span>
+              Add "{inputValue.trim()}" Skill
+            </li>
+          )}
+        {isOpen &&
+          (inputValue.trim() === "" || inputValue.trim().length <= 2) && (
+            <li className="px-4 py-2 text-gray-500">No suggestions found</li>
+          )}
       </ul>
 
       {/* Selected Items */}
