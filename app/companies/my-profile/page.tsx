@@ -27,6 +27,7 @@ import { countryCodes } from "@/app/constants/phoneNumberCountryCode";
 import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/honey-bee-spinner";
 import { useForm } from "react-hook-form";
 import { companyProfileValidation } from "./validation-schema";
+import ProfileImageUpload from "@/app/components/profile-image-upload";
 
 export default function MyProfile() {
   const userId = Cookies.get("user_id");
@@ -270,31 +271,19 @@ export default function MyProfile() {
       <section>
         <form>
           <div className="flex flex-col items-center justify-center w-full mt-10">
-            {profileData.image_url ? (
-              <div
-                className="relative h-[230px] w-[230px] flex items-center mt-10 justify-center cursor-pointer bg-gray-100"
-                style={{
-                  clipPath:
-                    "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)",
+            <div className="flex justify-center mb-4">
+              <ProfileImageUpload
+                currentImage={profileData.image_url}
+                displayName={profileData.designation || ""}
+                onImageUpdate={(imageUrl) => {
+                  setProfileData({
+                    ...profileData,
+                    image_url: imageUrl,
+                  });
                 }}
-                onClick={handleImageClick}
-              >
-                <Image
-                  className="object-cover"
-                  src={profileData.image_url}
-                  alt="profile-picture"
-                  fill
-                />
-              </div>
-            ) : (
-              <DragAndDropFile
-                file={profileImage}
-                setFile={setProfileImage}
-                isRenderedPage={isRenderedPage}
-                setIsRenderedPage={setIsRenderedPage}
-                imageInputValue={imageInputValue}
+                size={180}
               />
-            )}
+            </div>
           </div>
           <div className="w-full flex justify-center mt-2">
             <Link href={`/companies/${userId}`}>

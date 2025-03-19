@@ -33,6 +33,7 @@ import { ToggleButton } from "@components/toggle-button";
 import { PopupModal } from "./PopupModal";
 import { AuthLayout } from "@/app/components/AuthLayout/AuthLayout";
 import { updateEscrowAmount } from "@/app/utils/escrow";
+import ProfileImageUpload from "@/app/components/profile-image-upload";
 
 export default function CreateJob() {
   const [description, setDescription] = useState("");
@@ -55,6 +56,7 @@ export default function CreateJob() {
   const [popupModalType, setPopupModalType] = useState("");
   const [isManageFundsModalOpen, setIsManageFundsModalOpen] = useState(false);
   const [blockchainBalance, setBlockchainBalance] = useState<number>(0);
+  const [jobImage, setJobImage] = useState<string | null>(null);
 
   const [jobServices, setJobServices] = useState({
     talent: true,
@@ -230,7 +232,7 @@ export default function CreateJob() {
       city: companyData?.city,
       country: companyData?.country,
       companyName: companyData?.designation,
-      imageUrl: companyData?.image_url,
+      imageUrl: jobImage || companyData?.image_url,
       jobType: jobType ? jobType.value : "",
       projectType: projectType ? projectType.value : "",
       talent: true,
@@ -297,6 +299,7 @@ export default function CreateJob() {
       setIsLoading(true);
       const response = await fetch(`/api/companies/job-data?id=${id}`);
       const data = await response.json();
+      console.log(data, "data");
       setJobData({ ...data, job_id: String(data.job_id) });
       setJobServices({
         talent: true,
@@ -305,6 +308,7 @@ export default function CreateJob() {
       });
       setSelectedSkills(data.skills);
       setBudget(data.budget);
+      setJobImage(data.image_url);
       setSelectedChain(
         chains[chains.findIndex((chain) => chain.value === data.chain)],
       );
@@ -376,7 +380,7 @@ export default function CreateJob() {
       city: companyData?.city,
       country: companyData?.country,
       companyName: companyData?.designation,
-      imageUrl: companyData?.image_url,
+      imageUrl: jobImage || companyData?.image_url,
       jobType: jobType?.value || "",
       projectType: projectType?.value || "",
       talent: true,
@@ -462,7 +466,21 @@ export default function CreateJob() {
         <section>
           <form onSubmit={handleSubmit}>
             <div className="flex flex-col w-full">
-              <div className="flex flex-col gap-4 mt-10">
+              <div className="flex flex-col gap-4">
+                <div className="mt-4 flex justify-center">
+                  <div className="flex flex-col gap-2 items-center">
+                    <ProfileImageUpload
+                      currentImage={jobImage || companyData?.image_url || ""}
+                      displayName="Job Image"
+                      onImageUpdate={(imageUrl) => setJobImage(imageUrl)}
+                      variant="job"
+                      size={160}
+                    />
+                    <p className="text-sm text-gray-500">
+                      This image will be displayed on the job page.
+                    </p>
+                  </div>
+                </div>
                 <div className="flex-1">
                   <label
                     htmlFor="title"
