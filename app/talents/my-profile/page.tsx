@@ -20,6 +20,7 @@ import Cookies from "js-cookie";
 import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/honey-bee-spinner";
 import { ReferralSection } from "@/app/components/referral/referral-section";
 import { SearchableSelectInput } from "@/app/components/searchable-select-input";
+import ProfileImageUpload from "@/app/components/profile-image-upload";
 
 export type ProfileData = {
   first_name: string;
@@ -441,36 +442,23 @@ export default function ProfilePage() {
 
   // Render components
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 pt-0">
       <ProfileStatus profileData={profileData} />
 
-      <form className="space-y-6">
+      <form className="space-y-6 mt-6 md:mt-8">
         {/* Profile Image */}
-        <div className="flex flex-col items-center justify-center w-full mt-10">
-          {profileData.image_url ? (
-            <div
-              className="relative h-[230px] w-[230px] flex items-center mt-10 justify-center cursor-pointer bg-gray-100"
-              style={{
-                clipPath:
-                  "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)",
-              }}
-            >
-              <Image
-                className="object-cover"
-                src={profileData.image_url}
-                alt="profile-picture"
-                fill
-              />
-            </div>
-          ) : (
-            <DragAndDropFile
-              file={profileImage}
-              setFile={setProfileImage}
-              isRenderedPage={true}
-              setIsRenderedPage={() => {}}
-              imageInputValue={imageInputRef}
-            />
-          )}
+        <div className="flex justify-center mb-4">
+          <ProfileImageUpload
+            currentImage={profileData.image_url}
+            displayName={`${profileData.first_name || ""} ${profileData.last_name || ""}`}
+            onImageUpdate={(imageUrl) => {
+              setProfileData({
+                ...profileData,
+                image_url: imageUrl,
+              });
+            }}
+            size={180}
+          />
         </div>
 
         {/* Public View Button */}
