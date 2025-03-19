@@ -272,7 +272,11 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
               </button>
             </div>
 
-            <p className="text-gray-600 mb-6">{modalSubtitle}</p>
+            <p className="text-gray-600 mb-2">{modalSubtitle}</p>
+            <p className="text-gray-600 mb-6 text-xs text-yellow-400">
+              Please Save Your {variant === "profile" ? "Profile" : "Job"} After
+              Uploading The Image and Saving Changes
+            </p>
 
             <div className="flex flex-col items-center mb-6">
               <div className="relative mb-4">
