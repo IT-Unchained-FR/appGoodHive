@@ -21,6 +21,22 @@ import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/hon
 import { ReferralSection } from "@/app/components/referral/referral-section";
 import { SearchableSelectInput } from "@/app/components/searchable-select-input";
 import ProfileImageUpload from "@/app/components/profile-image-upload";
+import dynamic from "next/dynamic";
+import "react-quill/dist/quill.snow.css";
+
+// Dynamically import React Quill to prevent server-side rendering issues
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+
+// Define Quill modules and formats
+const quillModules = {
+  toolbar: [
+    [{ header: [1, 2, 3, 4, 5, 6, false] }],
+    ["bold", "italic", "underline", "strike"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    ["link"],
+    ["clean"],
+  ],
+};
 
 export type ProfileData = {
   first_name: string;
@@ -513,22 +529,24 @@ export default function ProfilePage() {
 
           {/* Description */}
           <div className="mt-5">
-            <textarea
-              className="form-control block w-full px-4 py-2 pb-4 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-              placeholder="Describe your skills and experience in a few words*"
-              maxLength={10000}
-              rows={8}
+            <ReactQuill
+              theme="snow"
+              modules={quillModules}
+              className="quill-editor"
               value={profileData?.description || ""}
-              onChange={(e) => handleInputChange("description", e.target.value)}
+              onChange={(content) => handleInputChange("description", content)}
+              placeholder="Describe your skills and experience in a few words*"
+              style={{ height: "200px", marginBottom: "40px" }}
             />
             {errors.description && (
               <p className="text-red-500 text-sm mt-1">{errors.description}</p>
             )}
             <p
-              className="text-[13px] mt-2 text-right w-full"
+              className="text-[13px] mt-16 text-right w-full"
               style={{ color: "#FFC905" }}
             >
-              {profileData.description?.length || 0}/10000
+              {profileData.description?.replace(/<[^>]*>/g, "")?.length || 0}
+              /10000
             </p>
           </div>
 
@@ -739,22 +757,24 @@ export default function ProfilePage() {
             >
               About your Work*
             </label>
-            <textarea
-              className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-              placeholder="What you are looking for?"
-              rows={8}
-              maxLength={10000}
+            <ReactQuill
+              theme="snow"
+              modules={quillModules}
+              className="quill-editor"
               value={profileData?.about_work || ""}
-              onChange={(e) => handleInputChange("about_work", e.target.value)}
+              onChange={(content) => handleInputChange("about_work", content)}
+              placeholder="What you are looking for?"
+              style={{ height: "200px", marginBottom: "40px" }}
             />
             {errors.about_work && (
               <p className="text-red-500 text-sm mt-1">{errors.about_work}</p>
             )}
             <p
-              className="text-[13px] mt-2 text-right w-full"
+              className="text-[13px] mt-16 text-right w-full"
               style={{ color: "#FFC905" }}
             >
-              {profileData.about_work?.length || 0}/10000
+              {profileData.about_work?.replace(/<[^>]*>/g, "")?.length || 0}
+              /10000
             </p>
           </div>
 

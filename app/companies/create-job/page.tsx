@@ -6,6 +6,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useState, useMemo, useCallback } from "react";
 import toast from "react-hot-toast";
 import Cookies from "js-cookie";
+import dynamic from "next/dynamic";
+import "react-quill/dist/quill.snow.css";
+import "@/app/styles/rich-text.css";
 
 // Local imports
 import { useCreateJob } from "@/app/hooks/create-job";
@@ -34,6 +37,20 @@ import { PopupModal } from "./PopupModal";
 import { AuthLayout } from "@/app/components/AuthLayout/AuthLayout";
 import { updateEscrowAmount } from "@/app/utils/escrow";
 import ProfileImageUpload from "@/app/components/profile-image-upload";
+
+// Dynamically import React Quill to prevent server-side rendering issues
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+
+// Define Quill modules and formats
+const quillModules = {
+  toolbar: [
+    [{ header: [1, 2, 3, 4, 5, 6, false] }],
+    ["bold", "italic", "underline", "strike"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    ["link"],
+    ["clean"],
+  ],
+};
 
 export default function CreateJob() {
   const [description, setDescription] = useState("");
@@ -222,7 +239,7 @@ export default function CreateJob() {
       userId,
       title: formData.get("title"),
       typeEngagement: typeEngagement ? typeEngagement.value : "",
-      description: formData.get("description"),
+      description: description,
       duration: duration ? duration?.value : "",
       budget: budget,
       chain: selectedChain ? selectedChain.value : "",
@@ -309,6 +326,7 @@ export default function CreateJob() {
       setSelectedSkills(data.skills);
       setBudget(data.budget);
       setJobImage(data.image_url);
+      setDescription(data.description || "");
       setSelectedChain(
         chains[chains.findIndex((chain) => chain.value === data.chain)],
       );
@@ -353,24 +371,20 @@ export default function CreateJob() {
     }
   }, [id, addFunds]);
 
-  const handleDescriptionChange = (e: FormEvent<HTMLTextAreaElement>) => {
-    const { value } = e.currentTarget;
-    setDescription(value);
+  const handleDescriptionChange = (content: string) => {
+    setDescription(content);
   };
 
   const handleSaveJob = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     toast.loading("Saving...", { duration: 2000 });
 
-    // Get form values from state instead of FormData
     const dataForm = {
       userId,
       title: document.querySelector<HTMLInputElement>('input[name="title"]')
         ?.value,
       typeEngagement: typeEngagement?.value || "",
-      description: document.querySelector<HTMLTextAreaElement>(
-        'textarea[name="description"]',
-      )?.value,
+      description: description,
       duration: duration?.value || "",
       budget: budget,
       chain: selectedChain?.value || "",
@@ -534,28 +548,21 @@ export default function CreateJob() {
                   />
                 </div>
               </div>
-              <div>
+              <div className="flex flex-col w-full mt-4">
                 <label
                   htmlFor="description"
-                  className="inline-block mt-4 ml-3 text-base text-black form-label"
-                ></label>
-              </div>
-              <div>
-                <textarea
-                  name="description"
-                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                  placeholder="Project Description"
-                  maxLength={10000}
-                  rows={5}
-                  defaultValue={jobData?.description}
-                  onChange={handleDescriptionChange}
-                />
-                <p
-                  className="text-[13px] mt-2 text-right w-full"
-                  style={{ color: "#FFC905" }}
+                  className="inline-block ml-3 mb-1 text-base text-black form-label"
                 >
-                  {description.length}/10000
-                </p>
+                  Job Description*
+                </label>
+                <ReactQuill
+                  theme="snow"
+                  modules={quillModules}
+                  value={description}
+                  onChange={handleDescriptionChange}
+                  placeholder="Describe the job requirements and responsibilities..."
+                  className="quill-editor"
+                />
               </div>
               <div className="relative flex flex-col gap-4 mt-12 mb-10 sm:flex-row">
                 <div className="flex-1">

@@ -17,6 +17,7 @@ import {
 
 import Image from "next/image";
 import { getProfileData } from "@/lib/fetch-profile-data";
+import "@/app/styles/rich-text.css";
 
 type MyProfilePageProps = {
   params: {
@@ -68,7 +69,10 @@ export default async function Page(context: MyProfilePageProps) {
       <div className="p-6 space-y-4">
         <div className="">
           <h2 className="text-xl font-semibold mb-2">Description</h2>
-          <p className="text-gray-700">{user.description}</p>
+          <div
+            className="text-gray-700 rich-text-content"
+            dangerouslySetInnerHTML={{ __html: user.description || "" }}
+          />
         </div>
         <div className="grid grid-cols-2 gap-4 border-t pt-4">
           <div className="flex items-center space-x-2 text-gray-600">
@@ -93,7 +97,10 @@ export default async function Page(context: MyProfilePageProps) {
 
         <div className="border-t pt-4">
           <h2 className="text-xl font-semibold mb-2">About Work</h2>
-          <p className="text-gray-700">{user.about_work}</p>
+          <div
+            className="text-gray-700 rich-text-content"
+            dangerouslySetInnerHTML={{ __html: user.about_work || "" }}
+          />
         </div>
 
         <div className="border-t pt-4">
