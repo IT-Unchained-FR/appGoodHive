@@ -4,6 +4,7 @@ import moment from "moment";
 import { BigNumberish } from "ethers";
 
 import { Card } from "../../components/card";
+import "@/app/styles/rich-text.css";
 
 export interface JobOffer {
   id: number;
@@ -62,3 +63,60 @@ export default function JobResult({ jobOffers }: { jobOffers: any[] }) {
     </div>
   );
 }
+
+export const JobResultModal = ({
+  jobOffer,
+  onClose,
+}: {
+  jobOffer: JobOffer;
+  onClose: () => void;
+}) => {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-8 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">{jobOffer.title}</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="rich-text-content mt-4">
+          <div dangerouslySetInnerHTML={{ __html: jobOffer.jobDescription }} />
+        </div>
+
+        <div className="mt-4">
+          <p className="text-gray-600">
+            <strong>Duration:</strong> {jobOffer.duration}
+          </p>
+          <p className="text-gray-600">
+            <strong>Location:</strong> {jobOffer.city}, {jobOffer.country}
+          </p>
+          <p className="text-gray-600">
+            <strong>Rate:</strong> {jobOffer.rate} {jobOffer.currency}
+          </p>
+          <p className="text-gray-600">
+            <strong>Type:</strong> {jobOffer.typeEngagement}
+          </p>
+        </div>
+
+        <div className="mt-4">
+          <h3 className="font-semibold mb-2">Required Skills:</h3>
+          <div className="flex flex-wrap gap-2">
+            {jobOffer.skills.map((skill, index) => (
+              <span
+                key={index}
+                className="bg-gray-100 px-3 py-1 rounded-full text-sm"
+              >
+                {skill}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

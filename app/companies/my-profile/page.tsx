@@ -28,6 +28,22 @@ import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/hon
 import { useForm } from "react-hook-form";
 import { companyProfileValidation } from "./validation-schema";
 import ProfileImageUpload from "@/app/components/profile-image-upload";
+import dynamic from "next/dynamic";
+import "react-quill/dist/quill.snow.css";
+import "@/app/styles/rich-text.css";
+// Dynamically import React Quill to prevent server-side rendering issues
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+
+// Define Quill modules and formats
+const quillModules = {
+  toolbar: [
+    [{ header: [1, 2, 3, 4, 5, 6, false] }],
+    ["bold", "italic", "underline", "strike"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    ["link"],
+    ["clean"],
+  ],
+};
 
 export default function MyProfile() {
   const userId = Cookies.get("user_id");
@@ -335,21 +351,26 @@ export default function MyProfile() {
             <div>
               <label
                 htmlFor="headline"
-                className="inline-block ml-3 text-base text-black form-label"
+                className="inline-block ml-3 text-base text-black form-label mb-2"
               >
                 Describe your company in a few words?*
               </label>
             </div>
             <div>
-              <textarea
-                className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-lg hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                placeholder="Describe your company in a few words?"
-                maxLength={10000}
-                rows={8}
-                defaultValue={profileData.headline}
-                onChange={(e) =>
-                  setProfileData({ ...profileData, headline: e.target.value })
+              <ReactQuill
+                theme="snow"
+                modules={quillModules}
+                className="quill-editor"
+                value={profileData.headline || ""}
+                onChange={(content) =>
+                  setProfileData({ ...profileData, headline: content })
                 }
+                placeholder="Describe your company in a few words?"
+                style={{
+                  height: "200px",
+                  marginBottom: "40px",
+                  borderRadius: "10px",
+                }}
               />
               {errors.headline && (
                 <p className="text-red-500 text-sm mt-1">
@@ -357,10 +378,11 @@ export default function MyProfile() {
                 </p>
               )}
               <p
-                className="text-[13px] mt-2 text-right w-full"
+                className="text-[13px] mt-16 text-right w-full"
                 style={{ color: "#FFC905" }}
               >
-                {profileData.headline?.length}/10000
+                {profileData.headline?.replace(/<[^>]*>/g, "")?.length || 0}
+                /10000
               </p>
             </div>
 
