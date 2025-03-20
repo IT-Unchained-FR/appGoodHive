@@ -4,6 +4,7 @@ import { MessageBoxModal } from "@/app/components/message-box-modal";
 import Image from "next/image";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import "@/app/styles/rich-text.css";
 
 import { jobTypes, projectDuration } from "@constants/common";
 import { generateJobTypeEngage } from "@utils/generate-job-type-engage";
@@ -216,9 +217,10 @@ export const JobCard: FC<Props> = ({
               <p className="font-bold text-base pr-1 whitespace-nowrap">
                 Job description
               </p>
-              <span className=" flex text-justify text-gray-500 font-light">
-                {details}
-              </span>
+              <div
+                className="rich-text-content text-justify text-gray-500 font-light"
+                dangerouslySetInnerHTML={{ __html: details }}
+              />
             </div>
             <div className="flex flex-col pt-4">
               <p className="font-bold mb-2 text-base whitespace-nowrap">

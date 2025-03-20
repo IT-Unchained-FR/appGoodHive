@@ -2,6 +2,7 @@
 // opengraph-image
 import Image from "next/image";
 import Link from "next/link";
+import "@/app/styles/rich-text.css";
 
 import type { FC } from "react";
 import { Button } from "@components/button";
@@ -67,10 +68,18 @@ export const Card: FC<Props> = ({
   // Title and description
   const croppedTitle =
     title.length > 28 ? title.substring(0, 20) + "..." : title;
-  const croppedDescription =
-    description.length > 100
-      ? description.substring(0, 100) + "..."
-      : description;
+
+  // Function to strip HTML tags and crop text
+  const stripHtmlAndCrop = (html: string, maxLength: number) => {
+    const tmp = document.createElement("div");
+    tmp.innerHTML = html;
+    const text = tmp.textContent || tmp.innerText || "";
+    return text.length > maxLength
+      ? text.substring(0, maxLength) + "..."
+      : text;
+  };
+
+  const croppedDescription = stripHtmlAndCrop(description, 100);
 
   // Profile image
   const profileImage = image ? image : "/img/placeholder-image.png";
@@ -158,9 +167,15 @@ export const Card: FC<Props> = ({
             </div>
           </div>
         </div>
-        <p className="flex pt-3 mb-3 text-sm font-light text-[#151414]">
-          {croppedDescription}
-        </p>
+        <div className="pt-3 mb-3">
+          <div className="text-sm font-light text-[#151414] leading-relaxed line-clamp-2">
+            {croppedDescription}
+          </div>
+          <div
+            className="rich-text-content hidden"
+            dangerouslySetInnerHTML={{ __html: description }}
+          />
+        </div>
         <div className="flex flex-wrap my-3">
           {shortSkillList.map((skill, index) => (
             <div
