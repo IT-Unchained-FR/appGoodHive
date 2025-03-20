@@ -1,4 +1,5 @@
 import Image from "next/image";
+import "@/app/styles/rich-text.css";
 
 import { FC } from "react";
 
@@ -64,11 +65,11 @@ export const OfferCard: FC<Props> = ({
             <div className="pt-2 ">
               <p className="font-bold text-base pr-1 whitespace-nowrap">
                 {" "}
-                Job description
+                Job descriptionn
               </p>
-              <span className=" flex text-justify text-gray-500 font-light">
-                {jobDescription}
-              </span>
+              <div className="rich-text-content mb-4">
+                <div dangerouslySetInnerHTML={{ __html: jobDescription }} />
+              </div>
             </div>
             <div className="flex flex-col pt-4 ">
               <p className="font-bold text-base whitespace-nowrap">

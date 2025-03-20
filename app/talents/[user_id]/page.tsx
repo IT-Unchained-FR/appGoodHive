@@ -10,6 +10,8 @@ import ProfileAboutWork from "@/app/components/talents/ProfileAboutWork";
 import TalentsCVSection from "@/app/components/talents/TalentsCVSection";
 import GoodHiveSpinner from "@/app/components/spinners/hoodhive-spinner/goodhive-spinner";
 import LastActiveStatus from "@/app/components/LastActiveStatus";
+import "react-quill/dist/quill.snow.css";
+import "@/app/styles/rich-text.css";
 
 interface MyProfilePageProps {
   params: {
@@ -165,9 +167,10 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
         </div>
         <div className="flex flex-col w-1/2">
           <h3 className="text-[#4E4E4E] text-lg font-bold mb-5">Bio:</h3>
-          <p className="w-full max-h-52 mb-10 text-ellipsis overflow-hidden">
-            {description}
-          </p>
+          <div
+            className="w-full mb-10 text-ellipsis overflow-hidden rich-text-content"
+            dangerouslySetInnerHTML={{ __html: description || "" }}
+          />
           <ProfileAboutWork about_work={about_work} />
           <TalentSocialMedia
             twitter={twitter}
