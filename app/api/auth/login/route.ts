@@ -1,5 +1,7 @@
 import postgres from "postgres";
 import bcrypt from "bcryptjs";
+import { NextResponse } from "next/server";
+
 const sql = postgres(process.env.DATABASE_URL || "", {
   ssl: {
     rejectUnauthorized: false,
@@ -11,11 +13,9 @@ export async function POST(req: Request) {
     const { email, password } = await req.json();
 
     if (!email || !password) {
-      return new Response(
-        JSON.stringify({ message: "Email and Password are required" }),
-        {
-          status: 400,
-        },
+      return NextResponse.json(
+        { message: "Email and Password are required" },
+        { status: 400 },
       );
     }
 
@@ -27,11 +27,9 @@ export async function POST(req: Request) {
       `;
 
       if (users.length === 0) {
-        return new Response(
-          JSON.stringify({ message: "Invalid email or password" }),
-          {
-            status: 401,
-          },
+        return NextResponse.json(
+          { message: "Invalid email or password" },
+          { status: 401 },
         );
       }
 
@@ -41,37 +39,34 @@ export async function POST(req: Request) {
       const isPasswordValid = await bcrypt.compare(password, user.passwordhash);
 
       if (!isPasswordValid) {
-        return new Response(
-          JSON.stringify({ message: "Invalid email or password" }),
-          {
-            status: 401,
-          },
+        return NextResponse.json(
+          { message: "Invalid email or password" },
+          { status: 401 },
         );
       }
 
-      return new Response(
-        JSON.stringify({
-          message: "Login Successful",
+      // Return data in a format compatible with NextAuth
+      return NextResponse.json({
+        user: {
+          userid: user.userid,
           email: user.email,
-          user_id: user.userid,
-          user,
-        }),
-        {
-          status: 200,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          // Add any other user fields you want to include
         },
-      );
+        message: "Login Successful",
+      });
     } catch (error) {
       console.log(error, "Error From The API...");
-      return new Response(
-        JSON.stringify({ message: "There was an error logging in" }),
-        {
-          status: 500,
-        },
+      return NextResponse.json(
+        { message: "There was an error logging in" },
+        { status: 500 },
       );
     }
   } else {
-    return new Response(JSON.stringify({ message: "Method Not Allowed" }), {
-      status: 405,
-    });
+    return NextResponse.json(
+      { message: "Method Not Allowed" },
+      { status: 405 },
+    );
   }
 }

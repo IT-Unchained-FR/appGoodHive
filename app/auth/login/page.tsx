@@ -1,15 +1,19 @@
 "use client";
 
 import React from "react";
-import Cookies from "js-cookie";
-import toast from "react-hot-toast";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { FcGoogle } from "react-icons/fc";
+import toast from "react-hot-toast";
 
 const Login = () => {
+  const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
     const data = {
@@ -17,27 +21,33 @@ const Login = () => {
       password: formData.get("password"),
     };
 
-    setIsLoading(true);
-    const response = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
+    try {
+      const result = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
+      router.replace("/talents/my-profile");
 
-    const responseBody = await response.json();
-
-    if (response.ok) {
+      if (result?.error) {
+        toast.error("Invalid email or password");
+      } else {
+      }
+    } catch (error) {
+      toast.error("An error occurred during sign in");
+    } finally {
       setIsLoading(false);
-      console.log(responseBody, "responseBody...login");
-      Cookies.set("user_id", responseBody.user_id);
-      Cookies.set("loggedIn_user", JSON.stringify(responseBody.user));
+    }
+  };
 
-      window.location.href = "/talents/my-profile";
-    } else {
-      setIsLoading(false);
-      toast.error(responseBody.message);
+  const handleGoogleSignIn = async () => {
+    try {
+      await signIn("google", {
+        callbackUrl: "/talents/my-profile",
+        redirect: true,
+      });
+    } catch (error) {
+      toast.error("An error occurred during Google sign in");
     }
   };
 
@@ -115,6 +125,29 @@ const Login = () => {
             </button>
           )}
         </form>
+
+        {/* Google Sign In */}
+        <div className="mt-6">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">
+                Or continue with
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <button
+              onClick={handleGoogleSignIn}
+              className="w-56 flex items-center justify-center px-4 py-2 border border-[#FFC905] rounded-full shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FFC905]"
+            >
+              Sign in with Google
+            </button>
+          </div>
+        </div>
       </section>
     </main>
   );

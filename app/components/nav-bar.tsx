@@ -13,6 +13,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Cookies from "js-cookie";
 import { useAccount, useDisconnect } from "wagmi";
 import toast from "react-hot-toast";
+import { signIn, signOut } from "next-auth/react";
 
 const commonLinks = [
   { href: "/talents/job-search", label: "Find a Job" },
@@ -136,6 +137,9 @@ export const NavBar = () => {
   }, [isConnected, address, loggedIn_user_id]);
 
   console.log(loggedIn_user, "loggedIn_user");
+  const handleLogin = () => {
+    signIn("google"); // Trigger Google sign-in
+  };
   return (
     <header aria-label="Site Header" className="bg-black ">
       <div className="flex items-center h-16 gap-8 px-8 mx-auto sm:px-6">
@@ -174,23 +178,27 @@ export const NavBar = () => {
           </nav>
 
           <div className="flex items-center gap-5">
-            {loggedIn_user_id ? (
-              <button
-                className="my-2 text-base font-semibold bg-[#FFC905] h-10 w-40 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
-                type="submit"
-                onClick={handleLogout}
-              >
-                Logout
-              </button>
-            ) : (
-              <button
-                className="my-2 text-base font-semibold bg-[#FFC905] h-10 w-40 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
-                type="submit"
-                onClick={() => router.push("/auth/login")}
-              >
-                Login
-              </button>
-            )}
+            <button
+              className="my-2 text-base font-semibold bg-[#FFC905] h-10 w-40 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
+              type="submit"
+              onClick={() => signOut()}
+            >
+              Logout
+            </button>
+
+            <button
+              className={`border border-transparent rounded px-4 py-2 transition-colors bg-blue-500 hover:bg-blue-700 text-white`}
+              onClick={handleLogin}
+            >
+              Authenticate
+            </button>
+            <button
+              className="my-2 text-base font-semibold bg-[#FFC905] h-10 w-40 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
+              type="submit"
+              onClick={() => router.push("/auth/login")}
+            >
+              Login
+            </button>
             <div className="flex gap-4">
               <ConnectButton />
             </div>

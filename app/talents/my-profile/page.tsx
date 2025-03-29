@@ -23,6 +23,7 @@ import { SearchableSelectInput } from "@/app/components/searchable-select-input"
 import ProfileImageUpload from "@/app/components/profile-image-upload";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
+import { useSession } from "next-auth/react";
 
 // Dynamically import React Quill to prevent server-side rendering issues
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -101,13 +102,20 @@ export default function ProfilePage() {
   const imageInputRef = useRef(null);
   const isInitialMount = useRef(true);
 
+  const { data: session, status } = useSession() as any;
+
+  useEffect(() => {
+    console.log(session, "session");
+    if (session) {
+      setUserId(session.userId);
+    }
+  }, []);
+
   // Router
   const router = useRouter();
 
-  // User identifiers
-  const user_id = useMemo(() => Cookies.get("user_id"), []);
-
   // Primary state
+  const [user_id, setUserId] = useState<string | null>(null);
   const [profileData, setProfileData] = useState<ProfileData>(
     {} as ProfileData,
   );
