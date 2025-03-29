@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import { getToken } from "next-auth/jwt";
 
 const ADMIN_JWT_SECRET = new TextEncoder().encode(
   process.env.ADMIN_JWT_SECRET || "admin-jwt-secret-key",
@@ -36,18 +37,28 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // // Handle non-admin protected routes
-  // const user_id = req.cookies.get("user_id")?.value;
+  // Handle protected routes for authenticated users
+  const token = await getToken({ req });
+  const isAuth = !!token;
+  const isAuthPage =
+    req.nextUrl.pathname.startsWith("/auth/login") ||
+    req.nextUrl.pathname.startsWith("/auth/signup");
 
-  // // Define the login URL
-  // const loginUrl = new URL("/auth/login", req.url);
+  // If trying to access auth pages while logged in, redirect to home
+  if (isAuthPage) {
+    if (isAuth) {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+    return NextResponse.next();
+  }
 
-  // // If no token is present, redirect to login
-  // if (!user_id) {
-  //   return NextResponse.redirect(loginUrl);
-  // }
+  // If trying to access protected routes while not logged in, redirect to login
+  if (!isAuth) {
+    const loginUrl = new URL("/auth/login", req.url);
+    loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname);
+    return NextResponse.redirect(loginUrl);
+  }
 
-  // Allow the request to proceed
   return NextResponse.next();
 }
 
@@ -58,5 +69,7 @@ export const config = {
     "/talents/my-profile",
     "/companies/my-profile",
     "/admin/:path*",
+    "/auth/login",
+    "/auth/signup",
   ],
 };
