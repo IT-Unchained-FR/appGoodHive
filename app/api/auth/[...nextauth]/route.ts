@@ -19,40 +19,65 @@ export const authOptions: AuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string, // From .env
     }),
     CredentialsProvider({
-      name: "Credentials",
+      name: "Email OTP",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        otp: { label: "OTP", type: "text" },
       },
       async authorize(credentials) {
+        console.log(credentials, "credentials...");
         try {
+          if (!credentials?.email || !credentials?.otp) {
+            return null;
+          }
+
+          // Verify OTP
           const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`,
+            `${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify-otp`,
             {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                email: credentials?.email,
-                password: credentials?.password,
+                email: credentials.email,
+                otp: credentials.otp,
               }),
             },
           );
 
           const data = await response.json();
+          console.log(data, "data...");
 
-          if (response.ok && data?.user) {
-            // Return the user data that will be stored in the token
+          if (response.ok && data.success) {
+            // Get user data
+            const userQuery = await sql`
+              SELECT * FROM goodhive.users WHERE userid = ${data.userId} LIMIT 1
+            `;
+
+            if (userQuery.length > 0) {
+              const user = userQuery[0];
+
+              return {
+                id: user.userid,
+                email: user.email,
+                name:
+                  user.first_name && user.last_name
+                    ? `${user.first_name} ${user.last_name}`
+                    : user.email,
+                userData: user,
+              };
+            }
+
+            // Return minimal user if no full profile
             return {
-              id: data.user.userid,
-              email: data.user.email,
-              name: `${data.user.first_name} ${data.user.last_name}`,
-              userData: data.user, // Store the complete user data
+              id: data.userId,
+              email: credentials.email,
+              name: credentials.email,
+              userData: { email: credentials.email, userid: data.userId },
             };
           }
 
-          // If the response is not ok, return null to indicate authentication failure
           return null;
         } catch (error) {
           console.error("Authentication error:", error);

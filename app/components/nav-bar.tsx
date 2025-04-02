@@ -184,7 +184,7 @@ export const NavBar = () => {
                   type="submit"
                   onClick={() => router.push("/auth/login")}
                 >
-                  Login
+                  Get Started
                 </button>
               </>
             )}
