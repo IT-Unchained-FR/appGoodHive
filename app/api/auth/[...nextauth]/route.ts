@@ -23,6 +23,8 @@ export const authOptions: AuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         otp: { label: "OTP", type: "text" },
+        verified: { label: "Verified", type: "text" },
+        userId: { label: "User ID", type: "text" },
       },
       async authorize(credentials) {
         console.log(credentials, "credentials...");
@@ -31,28 +33,11 @@ export const authOptions: AuthOptions = {
             return null;
           }
 
-          // Verify OTP
-          const response = await fetch(
-            `${process.env.NEXTAUTH_URL}/api/auth/verify-otp`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                email: credentials.email,
-                otp: credentials.otp,
-              }),
-            },
-          );
-
-          const data = await response.json();
-          console.log(data, "data...");
-
-          if (response.ok && data.success) {
+          // Check if credentials include verified=true and userId
+          if (credentials?.verified === "true" && credentials?.userId) {
             // Get user data
             const userQuery = await sql`
-              SELECT * FROM goodhive.users WHERE userid = ${data.userId} LIMIT 1
+              SELECT * FROM goodhive.users WHERE userid = ${credentials.userId} LIMIT 1
             `;
 
             if (userQuery.length > 0) {
@@ -71,10 +56,13 @@ export const authOptions: AuthOptions = {
 
             // Return minimal user if no full profile
             return {
-              id: data.userId,
+              id: credentials.userId,
               email: credentials.email,
               name: credentials.email,
-              userData: { email: credentials.email, userid: data.userId },
+              userData: {
+                email: credentials.email,
+                userid: credentials.userId,
+              },
             };
           }
 

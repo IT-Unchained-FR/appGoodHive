@@ -42,18 +42,40 @@ const OTPVerification = ({ email, onResendOTP }: OTPVerificationProps) => {
     setIsLoading(true);
 
     try {
-      const result = await signIn("credentials", {
-        email,
-        otp,
-        redirect: false,
+      // Verify OTP directly first
+      const verifyResponse = await fetch("/api/auth/verify-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          otp,
+        }),
       });
 
-      if (result?.error) {
-        toast.error("Invalid code. Please try again.");
-        setOtp("");
+      const verifyData = await verifyResponse.json();
+
+      if (verifyResponse.ok && verifyData.success) {
+        // If verification is successful, then sign in
+        const result = await signIn("credentials", {
+          email,
+          otp,
+          verified: "true",
+          userId: verifyData.userId,
+          redirect: false,
+        });
+
+        if (result?.error) {
+          toast.error(result.error || "Authentication failed");
+          setOtp("");
+        } else {
+          toast.success("Verification successful");
+          router.replace("/talents/my-profile");
+        }
       } else {
-        toast.success("Verification successful");
-        router.replace("/talents/my-profile");
+        toast.error(verifyData.error || "Invalid verification code");
+        setOtp("");
       }
     } catch (error) {
       toast.error("An error occurred. Please try again.");
