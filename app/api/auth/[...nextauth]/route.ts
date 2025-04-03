@@ -32,17 +32,19 @@ export const authOptions: AuthOptions = {
           }
 
           // Verify OTP
-          const response = await fetch(`/api/auth/verify-otp`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
+          const response = await fetch(
+            `${process.env.NEXTAUTH_URL}/api/auth/verify-otp`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                email: credentials.email,
+                otp: credentials.otp,
+              }),
             },
-            body: JSON.stringify({
-              email: credentials.email,
-              otp: credentials.otp,
-            }),
-          });
-          console.log(response, "response...");
+          );
 
           const data = await response.json();
           console.log(data, "data...");
