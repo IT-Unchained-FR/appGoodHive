@@ -11,11 +11,13 @@ import {
   Link,
   CircleUserRound,
 } from "lucide-react";
-import Cookies from "js-cookie";
+import { useOkto, getAccount } from "@okto_web3/react-sdk";
 import { HoneybeeSpinner } from "../components/spinners/honey-bee-spinner/honey-bee-spinner";
 import { ConnectEmailPopup } from "../components/popups";
 import toast from "react-hot-toast";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { getTokens } from "@okto_web3/react-sdk";
+import { getPortfolio } from "@okto_web3/react-sdk";
 
 export interface UserProfile {
   id: number;
@@ -32,6 +34,8 @@ export default function UserProfilePage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [showConnectEmailPopup, setShowConnectEmailPopup] = useState(false);
   const { data: session, status } = useSession();
+  const oktoClient = useOkto();
+
   const user_id = session?.user_id;
 
   const fetchUserProfile = useCallback(async () => {
@@ -67,13 +71,45 @@ export default function UserProfilePage() {
     setShowConnectEmailPopup(true);
   };
 
+  const fetchUserWallets = useCallback(async () => {
+    try {
+      const wallets = await getAccount(oktoClient);
+      console.log("User wallets:", wallets);
+    } catch (error: any) {
+      console.error("Error fetching wallets:", error);
+    }
+  }, [oktoClient]);
+
+  const fetchTokens = useCallback(async () => {
+    try {
+      const tokens = await getTokens(oktoClient);
+      console.log("Supported tokens:", tokens);
+    } catch (error) {
+      console.error("Error fetching tokens:", error);
+    }
+  }, [oktoClient]);
+
+  const fetchPortfolio = useCallback(async () => {
+    try {
+      const portfolio = await getPortfolio(oktoClient);
+      console.log("Portfolio data:", portfolio);
+    } catch (error) {
+      console.error("Error fetching portfolio:", error);
+    }
+  }, [oktoClient]);
+
+  useEffect(() => {
+    fetchUserWallets();
+    fetchTokens();
+    fetchPortfolio();
+  }, [fetchUserWallets, fetchTokens, fetchPortfolio]);
+
   if (!userProfile) {
     return <HoneybeeSpinner message={"Loading Your User Profile..."} />;
   }
 
   return (
     <div className="bg-white flex items-center justify-center p-4 py-14 min-h-[calc(100vh-4rem)]">
-      <button onClick={() => signOut()}>Sign Out</button>
       <ConnectEmailPopup
         isOpen={showConnectEmailPopup}
         onClose={() => setShowConnectEmailPopup(false)}
