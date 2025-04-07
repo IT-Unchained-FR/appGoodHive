@@ -72,6 +72,7 @@ export const config = {
   matcher: [
     "/talents/my-profile/:path*",
     "/talents/my-profile",
+    "/user-profile",
     "/companies/my-profile",
     "/admin/:path*",
     "/auth/login",

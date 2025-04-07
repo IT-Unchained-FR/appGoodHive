@@ -24,6 +24,7 @@ import ProfileImageUpload from "@/app/components/profile-image-upload";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import { useSession } from "next-auth/react";
+import { useOkto } from "@okto_web3/react-sdk";
 
 // Dynamically import React Quill to prevent server-side rendering issues
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -98,6 +99,7 @@ const ProfileStatus = ({ profileData }: { profileData: ProfileData }) => {
 };
 
 export default function ProfilePage() {
+  const oktoClient = useOkto();
   // Static references
   const imageInputRef = useRef(null);
   const isInitialMount = useRef(true);
@@ -107,9 +109,18 @@ export default function ProfilePage() {
   useEffect(() => {
     console.log(session, "session");
     if (session) {
-      setUserId(session.userId);
+      setUserId(session.user_id);
     }
-  }, []);
+  }, [session]);
+
+  const isLoggedIn = !!oktoClient.userSWA;
+  const user_smart_wallet_address = oktoClient.userSWA;
+  console.log(
+    isLoggedIn,
+    "isLoggedIn",
+    user_smart_wallet_address,
+    "user_smart_wallet_address",
+  );
 
   // Router
   const router = useRouter();
@@ -158,6 +169,7 @@ export default function ProfilePage() {
 
       if (response.ok) {
         const data = await response.json();
+        console.log(data, "data");
         setProfileData(data);
 
         // Only set these on initial mount
