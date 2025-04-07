@@ -44,7 +44,7 @@ export const authOptions: AuthOptions = {
               const user = userQuery[0];
 
               return {
-                id: user.userid,
+                id: user.id ? user.id : "123",
                 email: user.email,
                 name:
                   user.first_name && user.last_name
@@ -79,40 +79,43 @@ export const authOptions: AuthOptions = {
   },
   callbacks: {
     async jwt({ token, user, account }) {
-      console.log(token, "token");
+      console.log(token, "token", user, "user", account, "account");
       if (account) {
         console.log(account, "account");
         token.id_token = account.id_token;
       }
 
       if (user) {
-        const google_id = !validateUuid(user.id);
+        const google_id = !validateUuid(user?.id);
 
         if (google_id) {
           const user_data = await sql`
             SELECT * 
               FROM goodhive.users 
-              WHERE google_auth_id = ${user.id}
+              WHERE google_auth_id = ${user?.id}
               LIMIT 1;
           `;
 
-          token.userId = user_data[0].userid;
+          token.userId = user_data[0]?.id || "123";
         } else {
           // Add user data to the token
-          token.userId = user.id;
+          token.userId = user?.id || "123";
         }
         //@ts-ignore
         token.userData = user.userData;
       }
+      console.log(token, "token.......");
       return token;
     },
     async session({ session, token }) {
       //@ts-ignore
       session.id_token = token.id_token;
       //@ts-ignore
-      session.userId = token.userId;
+      session.userId = token.userId || session.user?.id || "123";
       //@ts-ignore
       session.userData = token.userData;
+      console.log(session, "session.......", token, "token.......");
+
       return session;
     },
   },

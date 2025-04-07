@@ -44,6 +44,11 @@ export async function middleware(req: NextRequest) {
     req.nextUrl.pathname.startsWith("/auth/login") ||
     req.nextUrl.pathname.startsWith("/auth/signup");
 
+  // Don't apply auth redirects to the callback page
+  if (req.nextUrl.pathname.startsWith("/auth/callback")) {
+    return NextResponse.next();
+  }
+
   // If trying to access auth pages while logged in, redirect to home
   if (isAuthPage) {
     if (isAuth) {
@@ -71,5 +76,6 @@ export const config = {
     "/admin/:path*",
     "/auth/login",
     "/auth/signup",
+    "/auth/callback",
   ],
 };

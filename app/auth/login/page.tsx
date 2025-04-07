@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { signIn } from "next-auth/react";
+import React, { useMemo, useState } from "react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -9,9 +9,14 @@ import OTPVerification from "@/app/components/OTPVerification";
 
 const Login = () => {
   const router = useRouter();
+  const { data: session } = useSession();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showOTPVerification, setShowOTPVerification] = useState(false);
+
+  // Getting the id_token from the session
+  const idToken = useMemo(() => (session ? session : null), [session]);
+  console.log(idToken, "idToken");
 
   const handleRequestOTP = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -71,10 +76,19 @@ const Login = () => {
 
   const handleGoogleSignIn = async () => {
     try {
-      await signIn("google", {
-        callbackUrl: "/talents/my-profile",
-        redirect: true,
+      // Use a non-root callback URL to avoid middleware redirect to home
+      // /auth/callback is not matched by the middleware and will be handled by the redirect callback
+      const result = await signIn("google", {
+        redirect: false,
+        callbackUrl: "/auth/callback?redirect=false",
       });
+
+      // If there is an error, show it
+      if (result?.error) {
+        toast.error(result.error);
+      }
+
+      // For successful sign-in, the redirect logic will be handled by NextAuth's redirect callback
     } catch (error) {
       toast.error("An error occurred during Google sign in");
     }

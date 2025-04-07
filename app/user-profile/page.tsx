@@ -15,6 +15,7 @@ import Cookies from "js-cookie";
 import { HoneybeeSpinner } from "../components/spinners/honey-bee-spinner/honey-bee-spinner";
 import { ConnectEmailPopup } from "../components/popups";
 import toast from "react-hot-toast";
+import { useSession } from "next-auth/react";
 
 export interface UserProfile {
   id: number;
@@ -30,7 +31,8 @@ export default function UserProfilePage() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [showConnectEmailPopup, setShowConnectEmailPopup] = useState(false);
-
+  const { data: session } = useSession();
+  console.log(session, "session...");
   const user_id = Cookies.get("user_id");
 
   const fetchUserProfile = useCallback(async () => {

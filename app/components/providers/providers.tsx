@@ -18,6 +18,10 @@ function AppContent({
   session: any;
 }) {
   const { walletAddress, handleWalletChange } = useAuth();
+  console.log(
+    process.env.NEXT_PUBLIC_CLIENT_PRIVATE_KEY as any,
+    "clientPrivateKey",
+  );
 
   return (
     <SessionProvider session={session}>
