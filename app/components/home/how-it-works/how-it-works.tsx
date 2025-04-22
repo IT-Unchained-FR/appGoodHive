@@ -13,7 +13,7 @@ export const HowItWorks = () => {
     <div className="container mx-auto w-full pt-12 pb-12 flex flex-col items-center sm:pt-5">
       <iframe
         className="w-[640px] h-[360px] lg:w-[720px] lg:h-[480px] md:w-[640px] md:h-[360px] sm:w-[320px] sm:h-[180px] mb-8"
-        src="https://www.youtube.com/embed/JoAFVaxu3q4"
+        src="https://www.youtube.com/embed/4ctDaQpfEEg?si=2HG1IOlBXr7bo6OE"
         title="GoodHive: Revolutionizing Recruitment for Clients and Web3 Talent!"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowFullScreen
