@@ -36,6 +36,7 @@ const quillModules = {
     [{ list: "ordered" }, { list: "bullet" }],
     ["link"],
     ["clean"],
+    // [{ size: ["small", "medium", "large", "huge"] }],
   ],
 };
 
@@ -475,58 +476,130 @@ export default function ProfilePage() {
       const data = await response.json();
       console.log("LinkedIn profile data:", data);
 
-      // Populate form with LinkedIn data
-      if (data) {
-        // Extract skills array from LinkedIn data
-        const linkedInSkills = data.skills
-          ? data.skills.map((skill: any) => skill.name)
-          : [];
+      // Enhance content with AI
+      let enhancedTitle = data.headline || "";
+      let enhancedDescription = data.summary
+        ? `<p>${data.summary.replace(/\n/g, "</p><p>")}</p>`
+        : "";
+      let enhancedAboutWork = data.summary
+        ? `<p>${data.summary.replace(/\n/g, "</p><p>")}</p>`
+        : "";
 
-        // Find country object based on LinkedIn country data
-        const countryObject =
-          data.geo && data.geo.country
-            ? countries.find(
-                (c) => c.value.toLowerCase() === data.geo.country.toLowerCase(),
-              )
-            : null;
+      try {
+        toast.loading("Enhancing your profile with AI...", {
+          id: "ai-enhance",
+        });
 
-        // Format the LinkedIn summary for the rich text editor if it exists
-        const formattedSummary = data.summary
-          ? `<p>${data.summary.replace(/\n/g, "</p><p>")}</p>`
-          : "";
+        console.log("sending data to ai-enhance");
 
-        // Update profile data state
+        const aiResponse = await fetch("/api/ai-enhance", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ linkedinData: data }),
+        });
+
+        console.log("aiResponse", aiResponse);
+
+        if (aiResponse.ok) {
+          const enhancedData = await aiResponse.json();
+          enhancedTitle = enhancedData.title || data.headline || "";
+          enhancedDescription = enhancedData.description || enhancedDescription;
+          enhancedAboutWork = enhancedData.aboutWork || enhancedAboutWork;
+
+          toast.success("Profile enhanced with AI!", { id: "ai-enhance" });
+        } else {
+          console.error("Failed to enhance content with AI");
+          toast.error("Could not enhance with AI, using original content", {
+            id: "ai-enhance",
+          });
+        }
+      } catch (error) {
+        console.error("Error enhancing content with AI:", error);
+        toast.error("Could not enhance with AI, using original content", {
+          id: "ai-enhance",
+        });
+      }
+
+      // Extract skills array from LinkedIn data
+      const linkedInSkills = data.skills
+        ? data.skills.map((skill: any) => skill.name)
+        : [];
+
+      // Find country object based on LinkedIn country data
+      let countryObject = null;
+      if (data.geo) {
+        // Try to match by country name first
+        if (data.geo.country) {
+          countryObject = countries.find(
+            (c) => c.value.toLowerCase() === data.geo.country.toLowerCase(),
+          );
+        }
+
+        // If not found and we have country code, try to match by code
+        if (!countryObject && data.geo.countryCode) {
+          // Since 'code' property doesn't exist, try matching with countryCode in a different way
+          // For example, some country objects might have the code embedded in the value
+          const countryCode = data.geo.countryCode.toLowerCase();
+          countryObject = countries.find(
+            (c) =>
+              c.value.toLowerCase().includes(`(${countryCode})`) ||
+              c.value.toLowerCase() === countryCode,
+          );
+        }
+
+        // Last resort: try partial matching on country name
+        if (!countryObject && data.geo.country) {
+          const countryName = data.geo.country.toLowerCase();
+          countryObject = countries.find(
+            (c) =>
+              countryName.includes(c.value.toLowerCase()) ||
+              c.value.toLowerCase().includes(countryName),
+          );
+        }
+
+        console.log("LinkedIn country data:", {
+          country: data.geo.country,
+          countryCode: data.geo.countryCode,
+          matchedCountry: countryObject
+            ? countryObject.value
+            : "No match found",
+        });
+      }
+
+      // Update profile data state with all imported data
+      setProfileData((prev) => ({
+        ...prev,
+        first_name: data.firstName || prev.first_name,
+        last_name: data.lastName || prev.last_name,
+        title: enhancedTitle || prev.title,
+        description: enhancedDescription || prev.description,
+        about_work: enhancedAboutWork || prev.about_work,
+        city: data.geo?.city || prev.city,
+        linkedin: `https://linkedin.com/in/${data.username}` || prev.linkedin,
+      }));
+
+      // Update country selection if found
+      if (countryObject) {
+        setSelectedCountry(countryObject);
+        // Already set the country in profileData above
+      }
+
+      // Update skills if available
+      if (linkedInSkills.length > 0) {
+        setSelectedSkills(linkedInSkills);
+      }
+
+      // If profile image is available, consider updating it
+      if (data.profilePicture) {
+        // Note: This would require downloading and uploading the image
+        // For now, just setting the URL directly, though this may not work
+        // depending on your image hosting requirements
         setProfileData((prev) => ({
           ...prev,
-          first_name: data.firstName || prev.first_name,
-          last_name: data.lastName || prev.last_name,
-          title: data.headline || prev.title,
-          description: formattedSummary || prev.description,
-          about_work: formattedSummary || prev.about_work,
-          city: data.geo?.city || prev.city,
-          linkedin: `https://linkedin.com/in/${data.username}` || prev.linkedin,
+          image_url: data.profilePicture,
         }));
-
-        // Update country selection if found
-        if (countryObject) {
-          setSelectedCountry(countryObject);
-        }
-
-        // Update skills if available
-        if (linkedInSkills.length > 0) {
-          setSelectedSkills(linkedInSkills);
-        }
-
-        // If profile image is available, consider updating it
-        if (data.profilePicture) {
-          // Note: This would require downloading and uploading the image
-          // For now, just setting the URL directly, though this may not work
-          // depending on your image hosting requirements
-          setProfileData((prev) => ({
-            ...prev,
-            image_url: data.profilePicture,
-          }));
-        }
       }
 
       toast.success("LinkedIn profile data imported successfully!");
@@ -624,7 +697,7 @@ export default function ProfilePage() {
               <rect width="4" height="12" x="2" y="9" />
               <circle cx="4" cy="4" r="2" />
             </svg>
-            Import from LinkedIn
+            Import Profile From LinkedIn
           </button>
         </div>
 
@@ -691,7 +764,11 @@ export default function ProfilePage() {
               value={profileData?.description || ""}
               onChange={(content) => handleInputChange("description", content)}
               placeholder="Describe your skills and experience in a few words*"
-              style={{ height: "200px", marginBottom: "40px" }}
+              style={{
+                fontSize: "26px",
+                height: "200px",
+                marginBottom: "40px",
+              }}
             />
             {errors.description && (
               <p className="text-red-500 text-sm mt-1">{errors.description}</p>
@@ -919,7 +996,11 @@ export default function ProfilePage() {
               value={profileData?.about_work || ""}
               onChange={(content) => handleInputChange("about_work", content)}
               placeholder="What you are looking for?"
-              style={{ height: "200px", marginBottom: "40px" }}
+              style={{
+                fontSize: "26px",
+                height: "200px",
+                marginBottom: "40px",
+              }}
             />
             {errors.about_work && (
               <p className="text-red-500 text-sm mt-1">{errors.about_work}</p>
