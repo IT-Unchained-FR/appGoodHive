@@ -1,6 +1,5 @@
-import { FC, useEffect } from "react";
+import { FC, useEffect, useState } from "react";
 import Image from "next/image";
-import { FieldValues, UseFormSetValue } from "react-hook-form";
 
 type SocialLinkProps = {
   name: string;
@@ -8,7 +7,7 @@ type SocialLinkProps = {
   placeholder: string;
   defaultValue: string;
   isRequired?: boolean;
-  setValue: UseFormSetValue<FieldValues>;
+  setValue: (name: string, value: string) => void;
   errorMessage?: string;
 };
 
@@ -23,8 +22,18 @@ export const SocialLink: FC<SocialLinkProps> = (props) => {
     errorMessage,
   } = props;
 
+  const [inputValue, setInputValue] = useState(defaultValue || "");
+
+  // Update local state when default value changes
+  useEffect(() => {
+    setInputValue(defaultValue || "");
+  }, [defaultValue]);
+
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setValue(name, event.target.value);
+    const newValue = event.target.value;
+    setInputValue(newValue);
+    // Always pass the value to parent component, even if it's empty
+    setValue(name, newValue);
   };
 
   return (
@@ -39,7 +48,7 @@ export const SocialLink: FC<SocialLinkProps> = (props) => {
           type="text"
           name={name}
           maxLength={255}
-          defaultValue={defaultValue}
+          value={inputValue}
           required={isRequired}
           onChange={handleChange}
         />
