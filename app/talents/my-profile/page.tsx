@@ -23,6 +23,7 @@ import { SearchableSelectInput } from "@/app/components/searchable-select-input"
 import ProfileImageUpload from "@/app/components/profile-image-upload";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
+import { LinkedInImportModal } from "./linkedin-import-modal";
 
 // Dynamically import React Quill to prevent server-side rendering issues
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -137,6 +138,10 @@ export default function ProfilePage() {
     () => profileData?.approved === false && profileData.inreview === false,
     [profileData?.approved, profileData.inreview],
   );
+
+  // LinkedIn state
+  const [isLinkedInModalOpen, setIsLinkedInModalOpen] = useState(false);
+  const [isLinkedInImporting, setIsLinkedInImporting] = useState(false);
 
   // API calls
   const fetchProfile = useCallback(async () => {
@@ -445,6 +450,99 @@ export default function ProfilePage() {
     }));
   }, []);
 
+  // LinkedIn profile import handler
+  const handleLinkedInImport = async (username: string) => {
+    try {
+      setIsLinkedInImporting(true);
+
+      const response = await fetch(
+        `/api/linkedin-import?username=${encodeURIComponent(username)}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || "Failed to import LinkedIn profile",
+        );
+      }
+
+      const data = await response.json();
+      console.log("LinkedIn profile data:", data);
+
+      // Populate form with LinkedIn data
+      if (data) {
+        // Extract skills array from LinkedIn data
+        const linkedInSkills = data.skills
+          ? data.skills.map((skill: any) => skill.name)
+          : [];
+
+        // Find country object based on LinkedIn country data
+        const countryObject =
+          data.geo && data.geo.country
+            ? countries.find(
+                (c) => c.value.toLowerCase() === data.geo.country.toLowerCase(),
+              )
+            : null;
+
+        // Format the LinkedIn summary for the rich text editor if it exists
+        const formattedSummary = data.summary
+          ? `<p>${data.summary.replace(/\n/g, "</p><p>")}</p>`
+          : "";
+
+        // Update profile data state
+        setProfileData((prev) => ({
+          ...prev,
+          first_name: data.firstName || prev.first_name,
+          last_name: data.lastName || prev.last_name,
+          title: data.headline || prev.title,
+          description: formattedSummary || prev.description,
+          about_work: formattedSummary || prev.about_work,
+          city: data.geo?.city || prev.city,
+          linkedin: `https://linkedin.com/in/${data.username}` || prev.linkedin,
+        }));
+
+        // Update country selection if found
+        if (countryObject) {
+          setSelectedCountry(countryObject);
+        }
+
+        // Update skills if available
+        if (linkedInSkills.length > 0) {
+          setSelectedSkills(linkedInSkills);
+        }
+
+        // If profile image is available, consider updating it
+        if (data.profilePicture) {
+          // Note: This would require downloading and uploading the image
+          // For now, just setting the URL directly, though this may not work
+          // depending on your image hosting requirements
+          setProfileData((prev) => ({
+            ...prev,
+            image_url: data.profilePicture,
+          }));
+        }
+      }
+
+      toast.success("LinkedIn profile data imported successfully!");
+    } catch (error) {
+      console.error("Error importing LinkedIn profile:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to import LinkedIn profile",
+      );
+    } finally {
+      setIsLinkedInImporting(false);
+      setIsLinkedInModalOpen(false);
+    }
+  };
+
   // Loading states
   if (isProfileDataFetching) {
     window.scrollTo(0, 0);
@@ -479,13 +577,64 @@ export default function ProfilePage() {
 
         {/* Public View Button */}
         <div className="w-full flex justify-center mt-7">
-          <Button
-            text="Public View"
-            type="secondary"
-            size="medium"
-            onClickHandler={() => router.push(`/talents/${user_id}`)}
-          />
+          <button
+            type="button"
+            onClick={() => router.push(`/talents/${user_id}`)}
+            className="px-8 py-3 bg-white border-2 border-[#FFC905] text-gray-800 font-medium rounded-full transition-all duration-300 hover:shadow-lg hover:bg-gray-50 hover:border-[#FF8C05] flex items-center justify-center gap-2"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="lucide lucide-eye"
+            >
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            View Public Profile
+          </button>
         </div>
+
+        {/* LinkedIn Import Button */}
+        <div className="w-full flex justify-center mt-4">
+          <button
+            type="button"
+            onClick={() => setIsLinkedInModalOpen(true)}
+            className="px-8 py-3 bg-[#0A66C2] text-white font-medium rounded-full transition-all duration-300 hover:bg-[#004182] hover:shadow-lg flex items-center justify-center gap-2"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="lucide lucide-linkedin"
+            >
+              <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+              <rect width="4" height="12" x="2" y="9" />
+              <circle cx="4" cy="4" r="2" />
+            </svg>
+            Import from LinkedIn
+          </button>
+        </div>
+
+        {/* LinkedIn Import Modal */}
+        <LinkedInImportModal
+          isOpen={isLinkedInModalOpen}
+          onClose={() => setIsLinkedInModalOpen(false)}
+          onSubmit={handleLinkedInImport}
+          isLoading={isLinkedInImporting}
+        />
 
         {/* Availability Toggle */}
         <div className="flex w-full justify-center mt-5">
@@ -528,7 +677,13 @@ export default function ProfilePage() {
           )}
 
           {/* Description */}
-          <div className="mt-5">
+          <div className="mt-5 ml-0">
+            <label
+              htmlFor="description"
+              className="inline-block ml-3 text-base text-black form-label"
+            >
+              Description *
+            </label>
             <ReactQuill
               theme="snow"
               modules={quillModules}
