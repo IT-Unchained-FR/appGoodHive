@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       method: "GET",
       headers: {
         "x-rapidapi-host": "linkedin-api8.p.rapidapi.com",
-        "x-rapidapi-key": "1b52c7315emshc22c4613bd6f4f2p132fa3jsnd400753270c6",
+        "x-rapidapi-key": process.env.LINKEDIN_SCRAPER_API_KEY as string,
       },
     });
 
