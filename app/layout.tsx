@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 
 import { Suspense } from "react";
 import { WagmiConfig, createConfig, configureChains } from "wagmi";
@@ -19,6 +19,7 @@ import {
 } from "@rainbow-me/rainbowkit/wallets";
 import { Toaster } from "react-hot-toast";
 import { SiweMessage } from "siwe";
+import Cookies from "js-cookie";
 
 import { SwitchWalletCheck } from "@components/switch-wallet-check";
 import { NavBar } from "@components/nav-bar";
@@ -31,6 +32,7 @@ import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
 import ReferralCodeHandler from "./components/referralCodeHandler/ReferralCodeHandler";
 import LastActiveHandler from "./components/LastActiveHandler";
+import OnboardingPopup from "./components/Onboarding/OnboardingPopup";
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
   [polygon],
@@ -72,45 +74,44 @@ export default function RootLayout({
   const verifyingRef = useRef(false);
   const [authStatus, setAuthStatus] = useState<AuthenticationStatus>("loading");
   const [walletAddress, setWalletAddress] = useState<string>("");
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
-  // FIXED BUT KEP FOR REFERENCE - ADDRESS CONTEXT WRAPPER
-  // useEffect(() => {
-  //   const fetchStatus = async () => {
-  //     if (fetchingStatusRef.current || verifyingRef.current) {
-  //       return;
-  //     }
+  useEffect(() => {
+    try {
+      // Check if user is logged in
+      const loggedInUserCookie = Cookies.get("loggedIn_user");
 
-  //     fetchingStatusRef.current = true;
+      if (!loggedInUserCookie) {
+        return; // Exit if no user cookie found
+      }
 
-  //     try {
-  //       const checkAuthResponse = await fetch("/api/auth/me");
+      const loggedIn_user = JSON.parse(loggedInUserCookie);
 
-  //       const authResponse = await checkAuthResponse.json();
+      if (!loggedIn_user) {
+        return; // Exit if parsing failed or null value
+      }
 
-  //       const authenticated = Boolean(authResponse?.ok === true);
+      // Check if all three statuses are pending or undefined/null (treated as pending)
+      const isMentorPending =
+        loggedIn_user.mentor_status === "pending" ||
+        !loggedIn_user.mentor_status;
+      const isRecruiterPending =
+        loggedIn_user.recruiter_status === "pending" ||
+        !loggedIn_user.recruiter_status;
+      const isTalentPending =
+        loggedIn_user.talent_status === "pending" ||
+        !loggedIn_user.talent_status;
 
-  //       if (authenticated) {
-  //         setAuthStatus("authenticated");
-  //         Cookies.set("walletAddress", authResponse?.address);
-  //         setWalletAddress(authResponse?.address);
-  //       } else {
-  //         setAuthStatus("unauthenticated");
-  //       }
-  //     } catch (error) {
-  //       console.error(error);
+      const allStatusesPending =
+        isMentorPending && isRecruiterPending && isTalentPending;
 
-  //       setAuthStatus("unauthenticated");
-  //     } finally {
-  //       fetchingStatusRef.current = false;
-  //     }
-  //   };
-
-  //   if (!walletAddressCookie) fetchStatus();
-
-  //   window.addEventListener("focus", fetchStatus);
-
-  //   return () => window.removeEventListener("focus", fetchStatus);
-  // }, [walletAddressCookie]);
+      if (allStatusesPending) {
+        setShowOnboarding(true);
+      }
+    } catch (error) {
+      console.error("Error checking user status for onboarding:", error);
+    }
+  }, [authStatus, walletAddress]);
 
   const authAdapter = useMemo(() => {
     return createAuthenticationAdapter({
@@ -190,10 +191,17 @@ export default function RootLayout({
       console.error("Error logging out");
     }
   };
+  console.log(showOnboarding, "showOnboarding");
 
   return (
     <html lang="en">
       <body className="min-h-screen">
+        <OnboardingPopup
+          isOpen={showOnboarding}
+          onClose={() => {
+            setShowOnboarding(false);
+          }}
+        />
         <WagmiConfig config={config}>
           <RainbowKitAuthenticationProvider
             adapter={authAdapter}

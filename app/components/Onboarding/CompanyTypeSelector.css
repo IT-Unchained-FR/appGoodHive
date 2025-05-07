@@ -1,0 +1,82 @@
+.company-type-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.company-type-card {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.company-type-card:hover {
+  border-color: #D1D5DB;
+  background-color: #F9FAFB;
+}
+
+.company-type-card.selected {
+  border-color: #0055FF;
+  background-color: #F0F7FF;
+}
+
+.company-type-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background-color: #0055FF;
+  color: white;
+  margin-right: 16px;
+}
+
+.company-type-info {
+  flex: 1;
+}
+
+.company-type-info h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: #1F2937;
+}
+
+.company-type-info p {
+  font-size: 14px;
+  color: #6B7280;
+  margin: 4px 0 0 0;
+}
+
+.company-type-arrow {
+  color: #9CA3AF;
+}
+
+.company-type-card.selected .company-type-arrow {
+  color: #0055FF;
+}
+
+@media (max-width: 640px) {
+  .company-type-card {
+    padding: 12px;
+  }
+  
+  .company-type-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .company-type-info h3 {
+    font-size: 14px;
+  }
+  
+  .company-type-info p {
+    font-size: 12px;
+  }
+}
