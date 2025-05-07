@@ -6,6 +6,7 @@ import ProfileTypeSelector, { ProfileType } from "./ProfileTypeSelector";
 import VideoTutorials from "./VideoTutorials";
 import { ArrowLeft } from "lucide-react";
 import "./OnboardingPopup.css";
+import { useRouter } from "next/navigation";
 
 interface OnboardingPopupProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ const OnboardingPopup: React.FC<OnboardingPopupProps> = ({
   isOpen,
   onClose,
 }) => {
+  const router = useRouter();
   const [profileType, setProfileType] = useState<ProfileType>("talent");
   const [step, setStep] = useState<Step>("type");
   const [currentVideo, setCurrentVideo] = useState(0);
@@ -49,6 +51,16 @@ const OnboardingPopup: React.FC<OnboardingPopupProps> = ({
     setStep("type");
     setCurrentVideo(0);
     setProfileType("talent");
+  };
+
+  const handleGoToDashboard = () => {
+    if (onClose) onClose();
+
+    if (profileType === "talent") {
+      router.push("/talents/my-profile");
+    } else {
+      router.push("/companies/my-profile");
+    }
   };
 
   const renderContent = () => {
@@ -173,8 +185,9 @@ const OnboardingPopup: React.FC<OnboardingPopupProps> = ({
 
             <div className="space-y-3">
               <button
-                onClick={() => console.log(`Go to ${profileType} dashboard`)}
+                onClick={handleGoToDashboard}
                 className="w-full py-3 bg-[#FFC905] text-black rounded-lg hover:bg-[#FFD935] transition-colors"
+                type="button"
               >
                 Go to {profileType === "talent" ? "Talent" : "Company"}{" "}
                 Dashboard
