@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="honeycomb" width="30" height="52" patternUnits="userSpaceOnUse">
+      <path d="M14.5 0l14.5 25L14.5 50L0 25L14.5 0z M14.5 50l14.5 25L14.5 100L0 75L14.5 50z M44.5 25l14.5 25L44.5 75L30 50L44.5 25z" fill="white"/>
+    </pattern>
+  </defs>
+  <rect width="100" height="100" fill="url(#honeycomb)"/>
+</svg> 
