@@ -33,6 +33,7 @@ import "./globals.css";
 import ReferralCodeHandler from "./components/referralCodeHandler/ReferralCodeHandler";
 import LastActiveHandler from "./components/LastActiveHandler";
 import OnboardingPopup from "./components/Onboarding/OnboardingPopup";
+import { Providers } from "./providers";
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
   [polygon],
@@ -196,40 +197,42 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen">
-        <OnboardingPopup
-          isOpen={showOnboarding}
-          onClose={() => {
-            setShowOnboarding(false);
-          }}
-        />
-        <WagmiConfig config={config}>
-          <RainbowKitAuthenticationProvider
-            adapter={authAdapter}
-            status={authStatus}
-          >
-            <RainbowKitProvider chains={chains}>
-              <SwitchWalletCheck
-                walletAddress={walletAddress}
-                handleWalletChange={handleWalletChange}
-              />
-              <div className="flex flex-col min-h-screen">
-                <NavBar />
-                <Toaster />
+        <Providers>
+          <OnboardingPopup
+            isOpen={showOnboarding}
+            onClose={() => {
+              setShowOnboarding(false);
+            }}
+          />
+          <WagmiConfig config={config}>
+            <RainbowKitAuthenticationProvider
+              adapter={authAdapter}
+              status={authStatus}
+            >
+              <RainbowKitProvider chains={chains}>
+                <SwitchWalletCheck
+                  walletAddress={walletAddress}
+                  handleWalletChange={handleWalletChange}
+                />
+                <div className="flex flex-col min-h-screen">
+                  <NavBar />
+                  <Toaster />
 
-                <Suspense>
-                  <ReferralCodeHandler />
-                  <div className="flex-grow">
-                    <AddressContextWrapper setAuthStatus={setAuthStatus}>
-                      <LastActiveHandler />
-                      {children}
-                    </AddressContextWrapper>
-                  </div>
-                </Suspense>
-                <Footer />
-              </div>
-            </RainbowKitProvider>
-          </RainbowKitAuthenticationProvider>
-        </WagmiConfig>
+                  <Suspense>
+                    <ReferralCodeHandler />
+                    <div className="flex-grow">
+                      <AddressContextWrapper setAuthStatus={setAuthStatus}>
+                        <LastActiveHandler />
+                        {children}
+                      </AddressContextWrapper>
+                    </div>
+                  </Suspense>
+                  <Footer />
+                </div>
+              </RainbowKitProvider>
+            </RainbowKitAuthenticationProvider>
+          </WagmiConfig>
+        </Providers>
       </body>
     </html>
   );

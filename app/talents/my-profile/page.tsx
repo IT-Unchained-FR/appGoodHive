@@ -24,6 +24,7 @@ import ProfileImageUpload from "@/app/components/profile-image-upload";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import { LinkedInImportModal } from "./linkedin-import-modal";
+import { useOkto, getAccount } from "@okto_web3/react-sdk";
 
 // Dynamically import React Quill to prevent server-side rendering issues
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -99,6 +100,8 @@ const ProfileStatus = ({ profileData }: { profileData: ProfileData }) => {
 };
 
 export default function ProfilePage() {
+  const oktoClient = useOkto();
+  console.log("Juhan...");
   // Static references
   const imageInputRef = useRef(null);
   const isInitialMount = useRef(true);

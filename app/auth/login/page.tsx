@@ -7,13 +7,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import styles from "./login.module.scss";
+import { useOkto, getAccount } from "@okto_web3/react-sdk";
+import { GoogleLogin } from "@react-oauth/google";
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+
+  const oktoClient = useOkto();
 
   const slides = [
     {
@@ -79,40 +81,72 @@ const Login = () => {
     return () => clearInterval(interval);
   }, [currentSlide, isAnimating]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    const formData = new FormData(e.currentTarget);
-    const data = {
-      email: formData.get("email"),
-      password: formData.get("password"),
-    };
-
+  const handleGoogleLogin = async (credentialResponse: any) => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/auth/login", {
+      const user = await oktoClient.loginUsingOAuth({
+        idToken: credentialResponse.credential,
+        provider: "google",
+      });
+      const accounts = await getAccount(oktoClient);
+      console.log("Accounts:", accounts);
+
+      // Determine which account to use based on environment
+      const env = process.env.NEXT_PUBLIC_ENVIRONMENT || "sandbox";
+      const accountIndex = env === "sandbox" ? 1 : 0;
+      const selectedAccount = accounts[accountIndex];
+
+      console.log("Okto login successful:", user);
+      console.log("Selected account:", selectedAccount);
+      console.log("Environment:", env);
+
+      // Verify wallet address and create/update user
+      const verifyResponse = await fetch("/api/auth/verify-wallet", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          wallet_address: selectedAccount.address,
+          user_id: user.id || user, // Okto might return either the ID directly or an object with id
+        }),
       });
 
-      const responseBody = await response.json();
-
-      if (response.ok) {
-        Cookies.set("user_id", responseBody.user_id);
-        Cookies.set("loggedIn_user", JSON.stringify(responseBody.user));
-        toast.success("Welcome to the hive! 🐝");
-        window.location.href = "/talents/my-profile";
-      } else {
-        toast.error(responseBody.message);
+      if (!verifyResponse.ok) {
+        const errorData = await verifyResponse.json();
+        throw new Error(errorData.message || "Failed to verify wallet address");
       }
+
+      const verifyData = await verifyResponse.json();
+
+      // Store minimal user data in cookies
+      Cookies.set("user_id", verifyData.user.user_id);
+      Cookies.set("user_email", verifyData.user.email);
+      Cookies.set("user_address", verifyData.user.wallet_address);
+
+      toast.success("Welcome to the hive! 🐝");
+      window.location.href = "/talents/my-profile";
     } catch (error) {
-      toast.error("Something went wrong. Please try again.");
+      console.error("Login failed:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Google login failed. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Mock handler for email login - just logs to console
+  const handleEmailLogin = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    console.log("Email login attempted with:", {
+      email: formData.get("email"),
+      password: formData.get("password"),
+    });
+    toast.error("Only Google login is supported at this time");
   };
 
   return (
@@ -135,16 +169,21 @@ const Login = () => {
           </div>
 
           <div className={styles.socialButtons}>
-            <button type="button">
-              <Image
-                src="/google-icon.svg"
-                alt="Google"
-                width={20}
-                height={20}
+            <div className={styles.googleButton}>
+              <GoogleLogin
+                onSuccess={handleGoogleLogin}
+                onError={() => {
+                  toast.error("Google login failed. Please try again.");
+                }}
+                useOneTap
               />
-              <span>Google</span>
-            </button>
-            <button type="button">
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                toast.error("Only Google login is supported at this time")
+              }
+            >
               <Image
                 src="/facebook-icon.svg"
                 alt="Facebook"
@@ -159,7 +198,7 @@ const Login = () => {
             <span>or continue with email</span>
           </div>
 
-          <form onSubmit={handleSubmit} className={styles.form}>
+          <form onSubmit={handleEmailLogin} className={styles.form}>
             <div className={styles.inputGroup}>
               <label htmlFor="email">Email</label>
               <div className="relative">
@@ -181,30 +220,22 @@ const Login = () => {
               <label htmlFor="password">Password</label>
               <div className="relative">
                 <input
-                  type={showPassword ? "text" : "password"}
+                  type="password"
                   id="password"
                   name="password"
                   placeholder="Enter your password"
                   required
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className={styles.passwordToggle}
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
+                <Eye
+                  size={20}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                />
               </div>
             </div>
 
             <div className={styles.rememberForgot}>
               <div className={styles.rememberMe}>
-                <input
-                  type="checkbox"
-                  id="remember"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                />
+                <input type="checkbox" id="remember" />
                 <label htmlFor="remember">Remember me</label>
               </div>
               <Link
@@ -212,6 +243,10 @@ const Login = () => {
                   pathname: "/auth/forgot-password",
                 }}
                 className={styles.forgotPassword}
+                onClick={(e) => {
+                  e.preventDefault();
+                  toast.error("Only Google login is supported at this time");
+                }}
               >
                 Forgot Password?
               </Link>
@@ -227,7 +262,17 @@ const Login = () => {
 
             <p className={styles.signupPrompt}>
               New to GoodHive?
-              <Link href="/auth/signup">Create an account</Link>
+              <Link
+                href={{
+                  pathname: "/auth/signup",
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  toast.error("Only Google login is supported at this time");
+                }}
+              >
+                Create an account
+              </Link>
             </p>
           </form>
         </div>
