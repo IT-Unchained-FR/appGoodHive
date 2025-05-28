@@ -13,6 +13,8 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Cookies from "js-cookie";
 import { useAccount, useDisconnect } from "wagmi";
 import toast from "react-hot-toast";
+import { useOkto } from "@okto_web3/react-sdk";
+import { googleLogout } from "@react-oauth/google";
 
 const commonLinks = [
   { href: "/talents/job-search", label: "Find a Job" },
@@ -34,6 +36,7 @@ const companiesLinks = [
 export const NavBar = () => {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
+  const oktoClient = useOkto();
 
   const [isOpenMobileMenu, setIsOpenMobileMenu] = useState(false);
 
@@ -49,14 +52,33 @@ export const NavBar = () => {
       ? companiesLinks
       : commonLinks;
 
-  const handleLogout = () => {
-    Cookies.remove("user_email");
-    Cookies.remove("user_id");
-    Cookies.remove("wallet_address");
-    Cookies.remove("loggedIn_user");
-    disconnect();
+  const handleLogout = async () => {
+    try {
+      // Perform Google OAuth logout
+      googleLogout();
 
-    window.location.href = "/";
+      // Clear Okto session
+      oktoClient.sessionClear();
+      console.log("Successfully logged out from Okto");
+
+      // Remove cookies
+      Cookies.remove("user_id");
+      Cookies.remove("loggedIn_user");
+
+      // Disconnect wallet if connected
+      if (isConnected) {
+        disconnect();
+      }
+
+      // Show success message
+      toast.success("Successfully logged out");
+
+      // Redirect to login page
+      window.location.href = "/auth/login";
+    } catch (error) {
+      console.error("Logout failed:", error);
+      toast.error("Failed to logout. Please try again.");
+    }
   };
 
   const loggedInUserCookie = Cookies.get("loggedIn_user");

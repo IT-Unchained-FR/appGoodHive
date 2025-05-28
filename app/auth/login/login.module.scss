@@ -171,6 +171,24 @@
   margin-bottom: 1.5rem;
   cursor: pointer;
 
+  .googleButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    > div {
+      width: 100% !important;
+
+      > div {
+        width: 100% !important;
+      }
+
+      iframe {
+        width: 100% !important;
+      }
+    }
+  }
+
   button {
     display: flex;
     align-items: center;
