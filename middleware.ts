@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || "your-jwt-secret-key",
+);
+
 const ADMIN_JWT_SECRET = new TextEncoder().encode(
   process.env.ADMIN_JWT_SECRET || "admin-jwt-secret-key",
 );
@@ -15,40 +19,58 @@ export async function middleware(req: NextRequest) {
     }
 
     const adminToken = req.cookies.get("admin_token")?.value;
-    console.log("adminToken", adminToken);
-    // Define the login URL for admin
     const adminLoginUrl = new URL("/admin/login", req.url);
 
-    // If no admin token is present, redirect to admin login
     if (!adminToken) {
       return NextResponse.redirect(adminLoginUrl);
     }
 
     try {
-      // Verify the admin token
       const { payload } = await jwtVerify(adminToken, ADMIN_JWT_SECRET);
-      console.log("user", payload);
       return NextResponse.next();
     } catch (error) {
-      console.log("error", error);
-      // If token is invalid, redirect to admin login
+      console.error("Admin token verification failed:", error);
       return NextResponse.redirect(adminLoginUrl);
     }
   }
 
-  // Handle non-admin protected routes
-  const user_id = req.cookies.get("user_id")?.value;
+  // Skip middleware for public routes
+  if (
+    req.nextUrl.pathname.startsWith("/auth") ||
+    req.nextUrl.pathname === "/" ||
+    req.nextUrl.pathname.startsWith("/api/auth")
+  ) {
+    return NextResponse.next();
+  }
 
-  // Define the login URL
+  // Handle protected routes
+  const sessionToken = req.cookies.get("session_token")?.value;
   const loginUrl = new URL("/auth/login", req.url);
 
-  // If no token is present, redirect to login
-  if (!user_id) {
+  if (!sessionToken) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Allow the request to proceed
-  return NextResponse.next();
+  try {
+    // Verify the session token
+    const { payload } = await jwtVerify(sessionToken, JWT_SECRET);
+
+    // Add user info to request headers for downstream use
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set("x-user-id", payload.user_id as string);
+    requestHeaders.set("x-user-email", payload.email as string);
+    requestHeaders.set("x-user-wallet", payload.wallet_address as string);
+
+    // Return response with modified headers
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+  } catch (error) {
+    console.error("Session token verification failed:", error);
+    return NextResponse.redirect(loginUrl);
+  }
 }
 
 // Configure the routes where this middleware applies

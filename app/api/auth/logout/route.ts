@@ -1,20 +1,27 @@
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
-  if (cookies().get("address")?.value) {
-    cookies().set("address", "", {
-      path: "/",
-    });
-
-    // return a response
-    return new Response(null, {
-      status: 200,
-      statusText: "OK",
-    });
-  }
-
-  return new Response(null, {
-    status: 401,
-    statusText: "Unauthorized",
+  // Clear all session-related cookies
+  cookies().set("session_token", "", {
+    expires: new Date(0),
+    path: "/",
   });
+
+  cookies().set("user_id", "", {
+    expires: new Date(0),
+    path: "/",
+  });
+
+  cookies().set("user_email", "", {
+    expires: new Date(0),
+    path: "/",
+  });
+
+  cookies().set("user_address", "", {
+    expires: new Date(0),
+    path: "/",
+  });
+
+  return NextResponse.json({ message: "Logged out successfully" });
 }
