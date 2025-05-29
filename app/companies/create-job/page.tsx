@@ -1,56 +1,38 @@
 "use client";
 
-// Core dependencies
-import { Tooltip } from "@nextui-org/tooltip";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useEffect, useState, useMemo, useCallback } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Cookies from "js-cookie";
-import dynamic from "next/dynamic";
-import "react-quill/dist/quill.snow.css";
-import "@/app/styles/rich-text.css";
+import { ethers } from "ethers";
+import {
+  useOkto,
+  evmRawTransaction,
+  getOrdersHistory,
+} from "@okto_web3/react-sdk";
 
-// Local imports
-import { useCreateJob } from "@/app/hooks/create-job";
-import { chains } from "@constants/chains";
-import {
-  createJobServices,
-  jobTypes,
-  projectDuration,
-  projectTypes,
-  typeEngagements,
-} from "@constants/common";
-import { skills } from "@constants/skills";
-import {
-  ethereumTokens,
-  gnosisChainTokens,
-} from "@constants/token-list/index.js";
-import { polygonMainnetTokens } from "@constants/token-list/polygon";
-import LabelOption from "@interfaces/label-option";
-import { calculateJobCreateFees } from "@utils/calculate-job-create-fees";
-import { AutoSuggestInput } from "@components/autosuggest-input";
-import { Loader } from "@components/loader";
-import Modal from "@components/modal";
-import { SelectInput } from "@components/select-input";
-import { ToggleButton } from "@components/toggle-button";
-import { PopupModal } from "./PopupModal";
 import { AuthLayout } from "@/app/components/AuthLayout/AuthLayout";
-import { updateEscrowAmount } from "@/app/utils/escrow";
-import ProfileImageUpload from "@/app/components/profile-image-upload";
+import { Loader } from "@components/loader";
+import { JobForm } from "./JobForm";
+import { JobModals } from "./JobModals";
+import LabelOption from "@interfaces/label-option";
+import { chains } from "@constants/chains";
+import { polygonMainnetTokens } from "@constants/token-list/polygon";
 
-// Dynamically import React Quill to prevent server-side rendering issues
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+// Constants
+const AMOY_USDC_TOKEN_ADDRESS =
+  "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582" as `0x${string}`;
+const AMOY_CAIP2_ID = "eip155:80002"; // Polygon Amoy
+const GOODHIVE_CONTRACT_ADDRESS =
+  "0x76Dd1c2dd8F868665BEE369244Ee4590857d1BD3" as `0x${string}`;
 
-// Define Quill modules and formats
-const quillModules = {
-  toolbar: [
-    [{ header: [1, 2, 3, 4, 5, 6, false] }],
-    ["bold", "italic", "underline", "strike"],
-    [{ list: "ordered" }, { list: "bullet" }],
-    ["link"],
-    ["clean"],
-  ],
-};
+// Contract ABIs
+const erc20Abi = [
+  "function approve(address spender, uint256 amount) external returns (bool)",
+];
+const goodhiveJobContractAbi = [
+  "function createJob(uint128 jobId, uint256 amount, address token) external",
+];
 
 export default function CreateJob() {
   const [description, setDescription] = useState("");
@@ -74,7 +56,8 @@ export default function CreateJob() {
   const [isManageFundsModalOpen, setIsManageFundsModalOpen] = useState(false);
   const [blockchainBalance, setBlockchainBalance] = useState<number>(0);
   const [jobImage, setJobImage] = useState<string | null>(null);
-
+  const [transactionStatus, setTransactionStatus] = useState("");
+  const [oktoJobId, setOktoJobId] = useState<string | null>(null);
   const [jobServices, setJobServices] = useState({
     talent: true,
     recruiter: false,
@@ -87,101 +70,14 @@ export default function CreateJob() {
   const addFunds = searchParams.get("addFunds");
   const walletAddress = Cookies.get("wallet_address");
   const userId = Cookies.get("user_id");
-  const provisionalAmount =
-    jobData && Number(jobData.escrowAmount) > 0 ? jobData.escrowAmount : 0;
-
-  // Calculate fees whenever budget, projectType, or jobServices change
-  const totalFees = useMemo(() => {
-    return calculateJobCreateFees(projectType, budget, jobServices);
-  }, [projectType, budget, jobServices]);
-
-  const { createJobTx, checkBalanceTx, withdrawFundsTx, transferFundsTx } =
-    useCreateJob({
-      walletAddress: walletAddress ? walletAddress : "",
-      token: selectedCurrency?.value ?? "",
-    });
-
-  const updateBlockchainBalance = useCallback(async () => {
-    if (jobData?.job_id) {
-      const balance = await checkBalanceTx(jobData.job_id);
-      setBlockchainBalance(balance);
-      if (
-        balance &&
-        jobData?.escrowAmount &&
-        balance !== jobData?.escrowAmount
-      ) {
-        updateEscrowAmount(jobData?.job_id, Number(balance)); // Ensure balance is treated as a number
-      }
-    }
-  }, [checkBalanceTx, jobData]);
-
-  useEffect(() => {
-    if (!userId) {
-      router.push("/auth/login");
-    } else {
-      updateBlockchainBalance();
-    }
-  }, [userId, router, jobData, updateBlockchainBalance]);
+  const oktoClient = useOkto();
 
   const onPopupModalSubmit = async (amount: number, type: string) => {
-    switch (type) {
-      case "addFunds":
-        try {
-          await createJobTx(jobData?.job_id, amount);
-          await updateBlockchainBalance();
-          toast.success("Funds added successfully!");
-        } catch (error) {
-          if (error instanceof Error) {
-            toast.error(error.message);
-          } else {
-            toast.error("Error adding funds!");
-          }
-        } finally {
-          handlePopupModalClose();
-        }
-        break;
-
-      case "withdraw":
-        try {
-          await withdrawFundsTx(jobData?.job_id, amount);
-          await updateBlockchainBalance();
-          toast.success("Funds withdrawn successfully!");
-        } catch (error) {
-          if (error instanceof Error) {
-            toast.error(error.message);
-          } else {
-            toast.error("Error withdrawing funds!");
-          }
-        } finally {
-          handlePopupModalClose();
-        }
-        break;
-
-      case "transfer":
-        try {
-          await transferFundsTx(jobData?.job_id, amount);
-          await updateBlockchainBalance();
-          toast.success("Payment sent successfully!");
-        } catch (error) {
-          if (error instanceof Error) {
-            toast.error(error.message);
-          } else {
-            toast.error("Error sending payment!");
-          }
-        } finally {
-          handlePopupModalClose();
-        }
-        break;
-    }
+    console.log("Modal submit:", { amount, type });
+    handlePopupModalClose();
   };
 
   const handleCancelJob = async () => {
-    const balance = await checkBalanceTx(jobData?.job_id);
-
-    if (Number(balance) > 0) {
-      toast.error(`Please withdraw all funds before cancelling the job!`);
-      return;
-    }
     toast.loading("Cancelling...", { duration: 2000 });
     const response = await fetch(`/api/companies/delete-job`, {
       method: "POST",
@@ -222,16 +118,144 @@ export default function CreateJob() {
     setPopupModalType("");
   };
 
-  const onBudgetChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setBudget(event.target.value);
+  // Function to convert USDC amount to its smallest unit (6 decimals)
+  const getUsdcSmallestUnit = (amount: string): string | null => {
+    try {
+      const parsedAmount = ethers.utils.parseUnits(amount, 6); // USDC has 6 decimals
+      return parsedAmount.toString();
+    } catch (e) {
+      console.error("Invalid USDC amount:", e);
+      toast.error(
+        "Invalid USDC amount format. Please use a number like 0.1 or 10.",
+      );
+      return null;
+    }
+  };
+
+  const handleApproveAndCreateJob = async (jobId: string, amount: string) => {
+    if (!oktoClient) {
+      toast.error("Okto client not initialized.");
+      return false;
+    }
+
+    if (!walletAddress) {
+      toast.error("Wallet address not found.");
+      return false;
+    }
+
+    const usdcAmountSmallestUnit = getUsdcSmallestUnit(amount);
+    if (!usdcAmountSmallestUnit) {
+      return false;
+    }
+
+    const contractJobId = parseInt(jobId);
+    if (isNaN(contractJobId) || contractJobId <= 0) {
+      toast.error("Invalid Job ID. It must be a positive number.");
+      return false;
+    }
+
+    try {
+      // --- 1. Approve Transaction ---
+      setTransactionStatus("Preparing approval transaction...");
+      const erc20Interface = new ethers.utils.Interface(erc20Abi);
+      const approveData = erc20Interface.encodeFunctionData("approve", [
+        GOODHIVE_CONTRACT_ADDRESS,
+        usdcAmountSmallestUnit,
+      ]) as `0x${string}`;
+
+      const approveTxParams = {
+        caip2Id: AMOY_CAIP2_ID,
+        transaction: {
+          from: walletAddress as `0x${string}`,
+          to: AMOY_USDC_TOKEN_ADDRESS,
+          value: BigInt(0),
+          data: approveData,
+        },
+      };
+
+      setTransactionStatus("Sending approval transaction to Okto...");
+      const approveOktoJobId = await evmRawTransaction(
+        oktoClient,
+        approveTxParams,
+      );
+      setOktoJobId(approveOktoJobId);
+      setTransactionStatus(
+        `Approval transaction sent (Job ID: ${approveOktoJobId}). Waiting for confirmation...`,
+      );
+
+      // Wait for approval confirmation
+      let approvalConfirmed = false;
+      let retries = 0;
+      const maxRetries = 100;
+
+      while (!approvalConfirmed && retries < maxRetries) {
+        const orders = await getOrdersHistory(oktoClient, {
+          intentId: approveOktoJobId,
+          intentType: "RAW_TRANSACTION",
+        });
+
+        if (orders?.[0]?.status === "SUCCESSFUL") {
+          approvalConfirmed = true;
+          break;
+        } else if (orders?.[0]?.status === "FAILED") {
+          throw new Error(
+            `Approval failed: ${orders[0]?.reason || "Unknown reason"}`,
+          );
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        retries++;
+      }
+
+      if (!approvalConfirmed) {
+        throw new Error("Approval transaction timed out after 100 seconds");
+      }
+
+      // --- 2. Create Job Transaction ---
+      setTransactionStatus("Preparing createJob transaction...");
+      const goodhiveInterface = new ethers.utils.Interface(
+        goodhiveJobContractAbi,
+      );
+      const createJobData = goodhiveInterface.encodeFunctionData("createJob", [
+        contractJobId,
+        usdcAmountSmallestUnit,
+        AMOY_USDC_TOKEN_ADDRESS,
+      ]) as `0x${string}`;
+
+      const createJobTxParams = {
+        caip2Id: AMOY_CAIP2_ID,
+        transaction: {
+          from: walletAddress as `0x${string}`,
+          to: GOODHIVE_CONTRACT_ADDRESS,
+          value: BigInt(0),
+          data: createJobData,
+        },
+      };
+
+      setTransactionStatus("Sending createJob transaction to Okto...");
+      const createJobOktoJobId = await evmRawTransaction(
+        oktoClient,
+        createJobTxParams,
+      );
+      setOktoJobId(createJobOktoJobId);
+      setTransactionStatus(
+        `CreateJob transaction sent (Job ID: ${createJobOktoJobId}). Your job is being created on-chain!`,
+      );
+
+      return true;
+    } catch (e: any) {
+      console.error("Transaction failed:", e);
+      toast.error(`Transaction failed: ${e.message || "Unknown error"}`);
+      return false;
+    }
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    toast.loading("Saving...", { duration: 2000 });
     e.preventDefault();
+    setIsLoading(true);
+    toast.loading("Processing job creation...", { duration: 2000 });
 
     const formData = new FormData(e.currentTarget);
-
     const recruiter = formData.get("recruiter") === "on";
     const mentor = formData.get("mentor") === "on";
 
@@ -259,120 +283,46 @@ export default function CreateJob() {
       id,
     };
 
-    const jobSaveUrl = id
-      ? "/api/companies/update-job"
-      : "/api/companies/create-job";
-
-    const jobResponse = await fetch(jobSaveUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(dataForm),
-    });
-
-    const savedJobData = await jobResponse.json();
-
-    if (!jobResponse.ok) {
-      toast.error("Something went wrong!");
-    } else {
-      if (id) {
-        toast.success("Job Offer Published!");
-        router.push(`/companies/${userId}`);
-      } else {
-        toast.success("Job Offer Published! Now add some funds to it.");
-        router.push(
-          `/companies/create-job?id=${savedJobData.jobId}&addFunds=true`,
-        );
-      }
-    }
-  };
-
-  const onJobServicesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const updatedServices = {
-      ...jobServices,
-      [event.target.name]: event.target.checked,
-    };
-
-    setJobServices(updatedServices);
-  };
-
-  const fetchCompanyData = async () => {
     try {
-      setIsLoading(true);
-      const response = await fetch(
-        `/api/companies/my-profile?userId=${userId}`,
-      );
-      const data = await response.json();
-      setCompanyData(data);
-      setIsLoading(false);
-    } catch (error) {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchJobData = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch(`/api/companies/job-data?id=${id}`);
-      const data = await response.json();
-      console.log(data, "data");
-      setJobData({ ...data, job_id: String(data.job_id) });
-      setJobServices({
-        talent: true,
-        recruiter: data.recruiter === "true" || false,
-        mentor: data.mentor === "true" || false,
+      const jobSaveUrl = id
+        ? "/api/companies/update-job"
+        : "/api/companies/create-job";
+      const jobResponse = await fetch(jobSaveUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(dataForm),
       });
-      setSelectedSkills(data.skills);
-      setBudget(data.budget);
-      setJobImage(data.image_url);
-      setDescription(data.description || "");
-      setSelectedChain(
-        chains[chains.findIndex((chain) => chain.value === data.chain)],
-      );
-      setSelectedCurrency(
-        data.chain === "ethereum"
-          ? ethereumTokens[
-              ethereumTokens.findIndex((token) => token.value === data.currency)
-            ]
-          : data.chain === "polygon"
-            ? polygonMainnetTokens[
-                polygonMainnetTokens.findIndex(
-                  (token) => token.value === data.currency,
-                )
-              ]
-            : data.chain === "gnosis-chain"
-              ? gnosisChainTokens[
-                  gnosisChainTokens.findIndex(
-                    (token) => token.value === data.currency,
-                  )
-                ]
-              : null,
-      );
+
+      const savedJobData = await jobResponse.json();
+
+      if (!jobResponse.ok) {
+        throw new Error("Failed to save job data");
+      }
+
+      // If job is saved successfully, proceed with blockchain transaction
+      const jobId = id || savedJobData.jobId;
+      const success = await handleApproveAndCreateJob(jobId.toString(), budget);
+
+      if (success) {
+        toast.success("Job created successfully!");
+        if (id) {
+          router.push(`/companies/${userId}`);
+        } else {
+          router.push(
+            `/companies/create-job?id=${savedJobData.jobId}&addFunds=true`,
+          );
+        }
+      } else {
+        throw new Error("Failed to complete blockchain transaction");
+      }
     } catch (error) {
+      console.error("Error:", error);
+      toast.error("Failed to create job. Please try again.");
     } finally {
       setIsLoading(false);
     }
-  };
-
-  useEffect(() => {
-    if (userId) {
-      fetchCompanyData();
-    }
-  }, [userId]);
-
-  useEffect(() => {
-    if (id) {
-      updateBlockchainBalance();
-      fetchJobData();
-    }
-    if (id && addFunds === "true") {
-      handlePopupModal("addFunds");
-    }
-  }, [id, addFunds]);
-
-  const handleDescriptionChange = (content: string) => {
-    setDescription(content);
   };
 
   const handleSaveJob = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -437,6 +387,70 @@ export default function CreateJob() {
     }
   };
 
+  const fetchCompanyData = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(
+        `/api/companies/my-profile?userId=${userId}`,
+      );
+      const data = await response.json();
+      setCompanyData(data);
+      setIsLoading(false);
+    } catch (error) {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchJobData = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/companies/job-data?id=${id}`);
+      const data = await response.json();
+      setJobData({ ...data, job_id: String(data.job_id) });
+      setJobServices({
+        talent: true,
+        recruiter: data.recruiter === "true" || false,
+        mentor: data.mentor === "true" || false,
+      });
+      setSelectedSkills(data.skills);
+      setBudget(data.budget);
+      setJobImage(data.image_url);
+      setDescription(data.description || "");
+      setSelectedChain(
+        chains[chains.findIndex((chain) => chain.value === data.chain)] ||
+          chains[0],
+      );
+      setSelectedCurrency(
+        polygonMainnetTokens[
+          polygonMainnetTokens.findIndex(
+            (token) => token.value === data.currency,
+          )
+        ],
+      );
+    } catch (error) {
+      console.error("Error fetching job data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!userId) {
+      router.push("/auth/login");
+    } else {
+      fetchCompanyData();
+    }
+  }, [userId, router]);
+
+  useEffect(() => {
+    if (id) {
+      fetchJobData();
+    }
+    if (id && addFunds === "true") {
+      handlePopupModal("addFunds");
+    }
+  }, [id, addFunds]);
+
   if (isLoading) {
     return (
       <div className="flex w-full items-center justify-center h-screen">
@@ -478,384 +492,57 @@ export default function CreateJob() {
           </div>
         )}
         <section>
-          <form onSubmit={handleSubmit}>
-            <div className="flex flex-col w-full">
-              <div className="flex flex-col gap-4">
-                <div className="mt-4 flex justify-center">
-                  <div className="flex flex-col gap-2 items-center">
-                    <ProfileImageUpload
-                      currentImage={jobImage || companyData?.image_url || ""}
-                      displayName="Job Image"
-                      onImageUpdate={(imageUrl) => setJobImage(imageUrl)}
-                      variant="job"
-                      size={160}
-                    />
-                    <p className="text-sm text-gray-500">
-                      This image will be displayed on the job page.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <label
-                    htmlFor="title"
-                    className="inline-block ml-3 text-base text-black form-label"
-                  >
-                    Job Header*
-                  </label>
-                  <input
-                    className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                    placeholder="Job Header..."
-                    name="title"
-                    type="text"
-                    required
-                    maxLength={100}
-                    defaultValue={jobData?.title}
-                  />
-                </div>
-                <div className="w-full flex gap-5 justify-between sm:flex-col">
-                  <SelectInput
-                    labelText="Type of engagement"
-                    name="type-engagement"
-                    required={true}
-                    disabled={false}
-                    inputValue={typeEngagement}
-                    setInputValue={setTypeEngagement}
-                    options={typeEngagements}
-                    defaultValue={
-                      typeEngagements[
-                        typeEngagements.findIndex(
-                          (type) => type.value === jobData?.typeEngagement,
-                        )
-                      ]
-                    }
-                  />
-
-                  <SelectInput
-                    labelText="Job Type"
-                    name="job-type"
-                    required={true}
-                    disabled={false}
-                    inputValue={jobType}
-                    setInputValue={setJobType}
-                    options={jobTypes}
-                    defaultValue={
-                      jobTypes[
-                        jobTypes.findIndex(
-                          (type) => type.value === jobData?.jobType,
-                        )
-                      ]
-                    }
-                  />
-                </div>
-              </div>
-              <div className="flex flex-col w-full mt-4">
-                <label
-                  htmlFor="description"
-                  className="inline-block ml-3 mb-1 text-base text-black form-label"
-                >
-                  Job Description*
-                </label>
-                <ReactQuill
-                  theme="snow"
-                  modules={quillModules}
-                  value={description}
-                  onChange={handleDescriptionChange}
-                  placeholder="Describe the job requirements and responsibilities..."
-                  className="quill-editor"
-                />
-              </div>
-              <div className="relative flex flex-col gap-4 mt-12 mb-10 sm:flex-row">
-                <div className="flex-1">
-                  <label
-                    htmlFor="skills"
-                    className="inline-block ml-3 text-base font-bold text-black form-label"
-                  >
-                    Mandatory Skills*
-                  </label>
-                  <div className="absolute w-full pt-1 pr-10 text-base font-normal text-gray-600 bg-white form-control ">
-                    <AutoSuggestInput
-                      inputs={skills}
-                      selectedInputs={selectedSkills}
-                      setSelectedInputs={setSelectedSkills}
-                    />
-                  </div>
-                  <div className="pt-10">
-                    {!!selectedSkills && selectedSkills.length > 0 && (
-                      <div className="flex flex-wrap mt-4 ">
-                        {selectedSkills.map((skill, index) => (
-                          <div
-                            key={index}
-                            className="border border-[#FFC905] flex items-center bg-gray-200 rounded-full py-1 px-3 m-1"
-                          >
-                            <span className="mr-2">{skill}</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedSkills(
-                                  selectedSkills.filter((_, i) => i !== index),
-                                );
-                              }}
-                              className="w-6 text-black bg-gray-400 rounded-full"
-                            >
-                              &#10005;
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="w-1/2 sm:w-full mb-5 px-3 flex justify-between sm:flex-wrap sm:gap-5">
-                {createJobServices.map((service) => {
-                  const { label, value, tooltip } = service;
-                  const isChecked =
-                    jobServices[value as keyof typeof jobServices];
-                  const isTalent = value === "talent";
-                  return (
-                    <ToggleButton
-                      key={value}
-                      label={label}
-                      name={value}
-                      checked={isChecked}
-                      tooltip={tooltip}
-                      onChange={onJobServicesChange}
-                      disabled={isTalent}
-                    />
-                  );
-                })}
-              </div>
-
-              <div className="flex gap-4 mt-4 sm:flex-col">
-                <div className="flex-1">
-                  <SelectInput
-                    labelText="Project Duration"
-                    name="duration"
-                    required={true}
-                    disabled={false}
-                    inputValue={duration}
-                    setInputValue={setDuration}
-                    options={projectDuration}
-                    defaultValue={
-                      projectDuration[
-                        projectDuration.findIndex(
-                          (type) => type.value === jobData?.duration,
-                        )
-                      ]
-                    }
-                  />
-                </div>
-
-                <div className="flex-1">
-                  <SelectInput
-                    labelText="Project Type"
-                    name="projectType"
-                    required={true}
-                    disabled={false}
-                    inputValue={projectType}
-                    setInputValue={setProjectType}
-                    options={projectTypes}
-                    defaultValue={
-                      projectTypes[
-                        projectTypes.findIndex(
-                          (type) => type.value === jobData?.projectType,
-                        )
-                      ]
-                    }
-                  />
-                </div>
-                {projectType || jobData?.projectType ? (
-                  <div className="flex-1">
-                    <label
-                      htmlFor="budget"
-                      className="inline-block ml-3 text-base text-black form-label"
-                    >
-                      {projectType && projectType.value === "fixed"
-                        ? "Budget*"
-                        : "Expected Hourly Rate*"}
-                    </label>
-                    <input
-                      className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                      type="number"
-                      name="budget"
-                      onChange={onBudgetChange}
-                      required
-                      value={budget}
-                      maxLength={100}
-                      defaultValue={jobData?.budget}
-                      title="Enter budget amount"
-                      placeholder="Enter amount"
-                    />
-                  </div>
-                ) : null}
-              </div>
-              {budget ? (
-                <p className="mt-2 text-right">
-                  {projectType && projectType.value === "hourly"
-                    ? "Total fees per hour:"
-                    : "Total fees:"}{" "}
-                  {totalFees} USD
-                </p>
-              ) : null}
-              <div className="flex gap-4 mt-3"></div>
-              <div className="flex gap-4 mt-4 sm:flex-col">
-                <div className="flex-1">
-                  <SelectInput
-                    labelText="Chain"
-                    name="chain"
-                    required={true}
-                    disabled={true}
-                    inputValue={selectedChain}
-                    setInputValue={setSelectedChain}
-                    options={chains}
-                    defaultValue={
-                      chains[
-                        chains.findIndex(
-                          (type) => type.value === jobData?.chain,
-                        )
-                      ] || chains[0]
-                    }
-                  />
-                </div>
-                <div className="flex-1">
-                  <SelectInput
-                    labelText="Currency"
-                    name="currency"
-                    required={true}
-                    disabled={!selectedChain}
-                    inputValue={selectedCurrency}
-                    setInputValue={setSelectedCurrency}
-                    options={
-                      selectedChain?.value === "ethereum"
-                        ? ethereumTokens
-                        : selectedChain?.value === "polygon"
-                          ? polygonMainnetTokens
-                          : selectedChain?.value === "gnosis-chain"
-                            ? gnosisChainTokens
-                            : []
-                    }
-                    defaultValue={
-                      polygonMainnetTokens[
-                        polygonMainnetTokens.findIndex(
-                          (token) => token.value === jobData?.currency,
-                        )
-                      ]
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="mt-12 mb-8 w-full flex justify-end gap-4 text-right">
-                {!!id && (
-                  <Tooltip content="Provisioning funds boost swift community response to your job offer.">
-                    <button
-                      className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
-                      type="button"
-                      onClick={onManageFundsClick}
-                      disabled={isLoading || !companyData?.approved}
-                    >
-                      Manage Funds
-                    </button>
-                  </Tooltip>
-                )}
-                {!!id && (
-                  <button
-                    className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
-                    type="button"
-                    onClick={handleCancelJob}
-                    disabled={isLoading || !companyData?.approved}
-                  >
-                    Cancel Job
-                  </button>
-                )}
-
-                {isLoading ? (
-                  <button
-                    className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full opacity-50 cursor-not-allowed transition duration-150 ease-in-out"
-                    type="submit"
-                    disabled
-                  >
-                    Saving...
-                  </button>
-                ) : (
-                  <div className="flex gap-4">
-                    <button
-                      onClick={handleSaveJob}
-                      className="my-2 text-base font-semibold bg-transparent h-14 w-56 rounded-full border-2 border-[#FFC905] transition-all duration-300 hover:bg-[#FFC905]"
-                      disabled={isLoading || !companyData?.approved}
-                    >
-                      Save Job
-                    </button>
-                    <button
-                      className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full transition-all duration-300 hover:bg-transparent hover:border-2 hover:border-[#FFC905]"
-                      type="submit"
-                      disabled={isLoading || !companyData?.approved}
-                    >
-                      Publish Job
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </form>
+          <JobForm
+            isLoading={isLoading}
+            companyData={companyData}
+            jobData={jobData}
+            selectedSkills={selectedSkills}
+            setSelectedSkills={setSelectedSkills}
+            description={description}
+            setDescription={setDescription}
+            jobServices={jobServices}
+            setJobServices={setJobServices}
+            budget={budget}
+            setBudget={setBudget}
+            jobImage={jobImage}
+            setJobImage={setJobImage}
+            selectedChain={selectedChain}
+            setSelectedChain={setSelectedChain}
+            selectedCurrency={selectedCurrency}
+            setSelectedCurrency={setSelectedCurrency}
+            typeEngagement={typeEngagement}
+            setTypeEngagement={setTypeEngagement}
+            jobType={jobType}
+            setJobType={setJobType}
+            duration={duration}
+            setDuration={setDuration}
+            projectType={projectType}
+            setProjectType={setProjectType}
+            blockchainBalance={blockchainBalance}
+            onManageFundsClick={onManageFundsClick}
+            handleCancelJob={handleCancelJob}
+            handleSaveJob={handleSaveJob}
+            handleSubmit={handleSubmit}
+          />
         </section>
-        {/* Manage Funds Modal */}
-        <Modal
-          open={isManageFundsModalOpen}
-          onClose={handleManageFundsModalClose}
-        >
-          <div className="flex justify-between p-5 min-w-[300px]">
-            <h3 className="text-2xl font-semibold text-black">Manage Funds:</h3>
-            <button
-              type="button"
-              onClick={handleManageFundsModalClose}
-              className="w-6 h-6 text-black bg-gray-400 rounded-full"
-            >
-              &#10005;
-            </button>
-          </div>
-          <p className="px-5 mt-2 mb-3 font-base">{`Funds will primarily be allocated to cover the Protocol's Fees.`}</p>
-          <div className="flex flex-col p-5 justify-center items-center">
-            {!!id && (
-              <button
-                className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
-                type="button"
-                onClick={() => handlePopupModal("addFunds")}
-              >
-                Provision Funds
-              </button>
-            )}
-            {!!id && !!jobData?.escrowAmount && (
-              <button
-                className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
-                type="button"
-                onClick={() => handlePopupModal("withdraw")}
-              >
-                Withdraw Funds
-              </button>
-            )}
 
-            {!!id && !!jobData?.escrowAmount && (
-              <button
-                className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
-                type="button"
-                onClick={() => handlePopupModal("transfer")}
-              >
-                Pay Now
-              </button>
-            )}
-          </div>
-        </Modal>
-        <PopupModal
-          open={isPopupModalOpen}
-          onClose={handlePopupModalClose}
-          jobId={jobData?.job_id}
-          type={popupModalType}
-          onSubmit={onPopupModalSubmit}
-          currencyToken={selectedCurrency?.value ?? ""}
-          currencyLabel={selectedCurrency?.label ?? ""}
+        <JobModals
+          isManageFundsModalOpen={isManageFundsModalOpen}
+          handleManageFundsModalClose={handleManageFundsModalClose}
+          handlePopupModal={handlePopupModal}
+          jobData={jobData}
+          isPopupModalOpen={isPopupModalOpen}
+          handlePopupModalClose={handlePopupModalClose}
+          popupModalType={popupModalType}
+          onPopupModalSubmit={onPopupModalSubmit}
+          selectedCurrency={selectedCurrency}
         />
+
+        {transactionStatus && (
+          <div className="fixed top-0 left-0 right-0 bg-blue-500 text-white p-4 text-center z-50">
+            {transactionStatus}
+          </div>
+        )}
       </main>
     </AuthLayout>
   );

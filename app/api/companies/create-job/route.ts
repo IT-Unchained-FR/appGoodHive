@@ -7,7 +7,6 @@ export async function POST(request: Request) {
     typeEngagement,
     description,
     duration,
-    ratePerHour,
     budget,
     skills,
     chain,
@@ -27,14 +26,42 @@ export async function POST(request: Request) {
 
   const sql = postgres(process.env.DATABASE_URL || "", {
     ssl: {
-      rejectUnauthorized: false, // This allows connecting to a database with a self-signed certificate
+      rejectUnauthorized: false,
     },
   });
 
   try {
     const postedAt = new Date().toISOString();
 
-    await sql`
+    // First check if user exists and is approved
+    const userCheck = await sql`
+      SELECT approved 
+      FROM goodhive.companies 
+      WHERE user_id = ${userId}
+    `;
+
+    if (userCheck.length === 0) {
+      return new Response(
+        JSON.stringify({
+          error: "Company not found",
+          message: "Please create a company profile first",
+        }),
+        { status: 404 },
+      );
+    }
+
+    if (!userCheck[0].approved) {
+      return new Response(
+        JSON.stringify({
+          error: "Company not approved",
+          message: "Your company profile needs to be approved first",
+        }),
+        { status: 403 },
+      );
+    }
+
+    // Insert the job offer
+    const insertResult = await sql`
       INSERT INTO goodhive.job_offers (
         user_id,
         title,
@@ -79,28 +106,33 @@ export async function POST(request: Request) {
         ${walletAddress},
         ${postedAt},
         ${in_saving_stage}
-      );
+      ) RETURNING id;
     `;
 
-    // now get the saved job id and return that
-    const latestJob = await sql`
-      SELECT id
-      FROM goodhive.job_offers
-      WHERE user_id = ${userId}
-      ORDER BY posted_at DESC
-      LIMIT 1
-    `;
+    const jobId = insertResult[0]?.id;
 
-    const jobId = latestJob[0]?.id;
+    if (!jobId) {
+      throw new Error("Failed to create job - no ID returned");
+    }
 
-    return new Response(JSON.stringify({ jobId }), {
-      status: 200,
-    });
+    return new Response(
+      JSON.stringify({
+        jobId,
+        message: "Job created successfully",
+      }),
+      { status: 200 },
+    );
   } catch (error) {
-    console.error("Error inserting data:", error);
+    console.error("Error creating job:", error);
 
-    return new Response(JSON.stringify({ message: "Error inserting data" }), {
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({
+        error: "Database error",
+        message: "Failed to create job",
+      }),
+      { status: 500 },
+    );
+  } finally {
+    await sql.end();
   }
 }

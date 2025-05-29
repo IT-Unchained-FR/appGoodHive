@@ -141,7 +141,7 @@ importers:
         specifier: 13.3.0
         version: 13.3.0(eslint@8.38.0)(typescript@5.0.4)
       ethers:
-        specifier: ^5.7.2
+        specifier: ^5.8.0
         version: 5.8.0(bufferutil@4.0.9)(utf-8-validate@6.0.5)
       framer-motion:
         specifier: ^11.3.19
