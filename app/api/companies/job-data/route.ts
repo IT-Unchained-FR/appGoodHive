@@ -58,6 +58,7 @@ export async function GET(request: NextRequest) {
       walletAddress: item.wallet_address,
       createdAt: item.posted_at,
       job_id: item.job_id,
+      block_id: item.block_id,
     }));
 
     return new Response(JSON.stringify(singleJob[0]));
