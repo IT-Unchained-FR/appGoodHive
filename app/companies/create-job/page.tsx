@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Cookies from "js-cookie";
-import { ethers } from "ethers";
+import { BigNumber, ethers } from "ethers";
 import {
   useOkto,
   evmRawTransaction,
@@ -18,6 +18,7 @@ import { JobModals } from "./JobModals";
 import LabelOption from "@interfaces/label-option";
 import { chains } from "@constants/chains";
 import { polygonMainnetTokens } from "@constants/token-list/polygon";
+import { uuidToUint128 } from "@/lib/blockchain/uint128Conversion";
 
 // Constants
 const AMOY_USDC_TOKEN_ADDRESS =
@@ -68,12 +69,174 @@ export default function CreateJob() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const addFunds = searchParams.get("addFunds");
-  const walletAddress = Cookies.get("wallet_address");
+  const walletAddress = Cookies.get("user_address");
   const userId = Cookies.get("user_id");
   const oktoClient = useOkto();
+  console.log(jobData?.block_id, "job data");
+
+  const handleCreateJob = async (jobId: string, amount: string) => {
+    const contractJobIdStr = uuidToUint128(jobId);
+    const contractJobId = BigNumber.from(contractJobIdStr); // ✅ no overflow
+
+    if (!oktoClient) {
+      toast.error("Okto client not initialized.");
+      return false;
+    }
+
+    if (!walletAddress) {
+      toast.error("Wallet address not found.");
+      return false;
+    }
+
+    try {
+      const parsedAmount = getUsdcSmallestUnit(amount); // USDC has 6 decimals
+
+      console.log({
+        parsedAmount,
+        contractJobId,
+        bigNumber: contractJobId instanceof BigNumber,
+        goodhiveContractAddress: GOODHIVE_CONTRACT_ADDRESS,
+        usdcTokenAddress: AMOY_USDC_TOKEN_ADDRESS,
+        caip2Id: AMOY_CAIP2_ID,
+        walletAddress,
+      });
+
+      if (!parsedAmount) {
+        toast.error(
+          "Invalid USDC amount format. Please use a number like 0.1 or 10.",
+        );
+        return false;
+      }
+
+      // --- 1. Approve Transaction ---
+      setTransactionStatus("Preparing approval transaction...");
+      const erc20Interface = new ethers.utils.Interface(erc20Abi);
+      const approveData = erc20Interface.encodeFunctionData("approve", [
+        GOODHIVE_CONTRACT_ADDRESS,
+        parsedAmount,
+      ]) as `0x${string}`;
+
+      console.log("Executing Approve EVM Raw Transaction...");
+      const approveTxParams = {
+        caip2Id: AMOY_CAIP2_ID,
+        transaction: {
+          from: walletAddress as `0x${string}`,
+          to: AMOY_USDC_TOKEN_ADDRESS,
+          value: BigInt(0),
+          data: approveData,
+        },
+      };
+
+      setTransactionStatus("Sending approval transaction to Okto...");
+      const approveOktoJobId = await evmRawTransaction(
+        oktoClient,
+        approveTxParams,
+      );
+      setOktoJobId(approveOktoJobId);
+      console.log("Okto Approve Job ID:", approveOktoJobId);
+      setTransactionStatus(
+        `Approval transaction sent (Job ID: ${approveOktoJobId}). Waiting for confirmation...`,
+      );
+
+      // Wait for approval confirmation
+      let approvalConfirmed = false;
+      let retries = 0;
+      const maxRetries = 100;
+
+      while (!approvalConfirmed && retries < maxRetries) {
+        try {
+          const orders = await getOrdersHistory(oktoClient, {
+            intentId: approveOktoJobId,
+            intentType: "RAW_TRANSACTION",
+          });
+
+          if (orders?.[0]?.status === "SUCCESSFUL") {
+            approvalConfirmed = true;
+            break;
+          } else if (orders?.[0]?.status === "FAILED") {
+            throw new Error(
+              `Approval failed: ${orders[0]?.reason || "Unknown reason"}`,
+            );
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          retries++;
+        } catch (error: any) {
+          console.error("Error checking approval status:", error);
+          throw new Error(`Failed to confirm approval: ${error.message}`);
+        }
+      }
+
+      if (!approvalConfirmed) {
+        throw new Error("Approval transaction timed out after 100 seconds");
+      }
+
+      // --- 2. Create Job Transaction ---
+      setTransactionStatus("Preparing createJob transaction...");
+      const goodhiveInterface = new ethers.utils.Interface(
+        goodhiveJobContractAbi,
+      );
+      const createJobData = goodhiveInterface.encodeFunctionData("createJob", [
+        "100",
+        parsedAmount.toString(),
+        AMOY_USDC_TOKEN_ADDRESS,
+      ]) as `0x${string}`;
+
+      console.log("Executing CreateJob EVM Raw Transaction...");
+      const createJobTxParams = {
+        caip2Id: AMOY_CAIP2_ID,
+        transaction: {
+          from: walletAddress as `0x${string}`,
+          to: GOODHIVE_CONTRACT_ADDRESS,
+          value: BigInt(0),
+          data: createJobData,
+        },
+      };
+
+      setTransactionStatus("Sending createJob transaction to Okto...");
+      const createJobOktoJobId = await evmRawTransaction(
+        oktoClient,
+        createJobTxParams,
+      );
+      setOktoJobId(createJobOktoJobId);
+      console.log("Okto CreateJob Job ID:", createJobOktoJobId);
+      setTransactionStatus(
+        `CreateJob transaction sent (Job ID: ${createJobOktoJobId}). Your job is being created on-chain!`,
+      );
+
+      return true;
+    } catch (e: any) {
+      console.error("Transaction failed:", e);
+      toast.error(`Transaction failed: ${e.message || "Unknown error"}`);
+      return false;
+    }
+  };
 
   const onPopupModalSubmit = async (amount: number, type: string) => {
-    console.log("Modal submit:", { amount, type });
+    console.log(jobData, "job data");
+    const blockId = jobData?.block_id;
+
+    if (!blockId) {
+      toast.error("Block ID not found!");
+      return;
+    }
+
+    if (type === "addFunds" && id) {
+      setIsLoading(true);
+      try {
+        const success = await handleCreateJob(jobData?.id, amount.toString());
+        console.log(success, "success");
+        // if (success) {
+        //   toast.success("Funds added successfully!");
+        //   window.location.reload();
+        // }
+      } catch (error: any) {
+        console.error("Error adding funds:", error);
+        toast.error(`Failed to add funds: ${error.message}`);
+      } finally {
+        setIsLoading(false);
+      }
+    }
     handlePopupModalClose();
   };
 
@@ -121,132 +284,36 @@ export default function CreateJob() {
   // Function to convert USDC amount to its smallest unit (6 decimals)
   const getUsdcSmallestUnit = (amount: string): string | null => {
     try {
-      const parsedAmount = ethers.utils.parseUnits(amount, 6); // USDC has 6 decimals
-      return parsedAmount.toString();
+      // First convert the amount to a number to handle any potential string formatting
+      const numericAmount = parseFloat(amount);
+      if (isNaN(numericAmount)) {
+        throw new Error("Invalid amount format");
+      }
+
+      // Format the number to exactly 6 decimal places to avoid floating point issues
+      const formattedAmount = numericAmount.toFixed(6);
+
+      // Remove the decimal point and convert to string
+      const smallestUnit = formattedAmount.replace(".", "");
+
+      // Remove any leading zeros
+      const cleanedAmount = smallestUnit.replace(/^0+/, "");
+
+      console.log("Amount conversion:", {
+        original: amount,
+        numeric: numericAmount,
+        formatted: formattedAmount,
+        smallest: smallestUnit,
+        cleaned: cleanedAmount,
+      });
+
+      return cleanedAmount || "0";
     } catch (e) {
       console.error("Invalid USDC amount:", e);
       toast.error(
         "Invalid USDC amount format. Please use a number like 0.1 or 10.",
       );
       return null;
-    }
-  };
-
-  const handleApproveAndCreateJob = async (jobId: string, amount: string) => {
-    if (!oktoClient) {
-      toast.error("Okto client not initialized.");
-      return false;
-    }
-
-    if (!walletAddress) {
-      toast.error("Wallet address not found.");
-      return false;
-    }
-
-    const usdcAmountSmallestUnit = getUsdcSmallestUnit(amount);
-    if (!usdcAmountSmallestUnit) {
-      return false;
-    }
-
-    const contractJobId = parseInt(jobId);
-    if (isNaN(contractJobId) || contractJobId <= 0) {
-      toast.error("Invalid Job ID. It must be a positive number.");
-      return false;
-    }
-
-    try {
-      // --- 1. Approve Transaction ---
-      setTransactionStatus("Preparing approval transaction...");
-      const erc20Interface = new ethers.utils.Interface(erc20Abi);
-      const approveData = erc20Interface.encodeFunctionData("approve", [
-        GOODHIVE_CONTRACT_ADDRESS,
-        usdcAmountSmallestUnit,
-      ]) as `0x${string}`;
-
-      const approveTxParams = {
-        caip2Id: AMOY_CAIP2_ID,
-        transaction: {
-          from: walletAddress as `0x${string}`,
-          to: AMOY_USDC_TOKEN_ADDRESS,
-          value: BigInt(0),
-          data: approveData,
-        },
-      };
-
-      setTransactionStatus("Sending approval transaction to Okto...");
-      const approveOktoJobId = await evmRawTransaction(
-        oktoClient,
-        approveTxParams,
-      );
-      setOktoJobId(approveOktoJobId);
-      setTransactionStatus(
-        `Approval transaction sent (Job ID: ${approveOktoJobId}). Waiting for confirmation...`,
-      );
-
-      // Wait for approval confirmation
-      let approvalConfirmed = false;
-      let retries = 0;
-      const maxRetries = 100;
-
-      while (!approvalConfirmed && retries < maxRetries) {
-        const orders = await getOrdersHistory(oktoClient, {
-          intentId: approveOktoJobId,
-          intentType: "RAW_TRANSACTION",
-        });
-
-        if (orders?.[0]?.status === "SUCCESSFUL") {
-          approvalConfirmed = true;
-          break;
-        } else if (orders?.[0]?.status === "FAILED") {
-          throw new Error(
-            `Approval failed: ${orders[0]?.reason || "Unknown reason"}`,
-          );
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        retries++;
-      }
-
-      if (!approvalConfirmed) {
-        throw new Error("Approval transaction timed out after 100 seconds");
-      }
-
-      // --- 2. Create Job Transaction ---
-      setTransactionStatus("Preparing createJob transaction...");
-      const goodhiveInterface = new ethers.utils.Interface(
-        goodhiveJobContractAbi,
-      );
-      const createJobData = goodhiveInterface.encodeFunctionData("createJob", [
-        contractJobId,
-        usdcAmountSmallestUnit,
-        AMOY_USDC_TOKEN_ADDRESS,
-      ]) as `0x${string}`;
-
-      const createJobTxParams = {
-        caip2Id: AMOY_CAIP2_ID,
-        transaction: {
-          from: walletAddress as `0x${string}`,
-          to: GOODHIVE_CONTRACT_ADDRESS,
-          value: BigInt(0),
-          data: createJobData,
-        },
-      };
-
-      setTransactionStatus("Sending createJob transaction to Okto...");
-      const createJobOktoJobId = await evmRawTransaction(
-        oktoClient,
-        createJobTxParams,
-      );
-      setOktoJobId(createJobOktoJobId);
-      setTransactionStatus(
-        `CreateJob transaction sent (Job ID: ${createJobOktoJobId}). Your job is being created on-chain!`,
-      );
-
-      return true;
-    } catch (e: any) {
-      console.error("Transaction failed:", e);
-      toast.error(`Transaction failed: ${e.message || "Unknown error"}`);
-      return false;
     }
   };
 
@@ -303,9 +370,8 @@ export default function CreateJob() {
 
       // If job is saved successfully, proceed with blockchain transaction
       const jobId = id || savedJobData.jobId;
-      const success = await handleApproveAndCreateJob(jobId.toString(), budget);
-
-      if (success) {
+      // Skipping blockchain transaction for now
+      if (true) {
         toast.success("Job created successfully!");
         if (id) {
           router.push(`/companies/${userId}`);
