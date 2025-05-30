@@ -19,8 +19,10 @@ import LabelOption from "@interfaces/label-option";
 import { chains } from "@constants/chains";
 import { polygonMainnetTokens } from "@constants/token-list/polygon";
 import { uuidToUint128 } from "@/lib/blockchain/uint128Conversion";
+import { getJobBalance } from "@/app/lib/blockchain/contracts/GoodhiveJobContract";
 
 // Constants
+const AMOY_RPC_URL = "https://rpc-amoy.polygon.technology/";
 const AMOY_USDC_TOKEN_ADDRESS =
   "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582" as `0x${string}`;
 const AMOY_CAIP2_ID = "eip155:80002"; // Polygon Amoy
@@ -33,6 +35,8 @@ const erc20Abi = [
 ];
 const goodhiveJobContractAbi = [
   "function createJob(uint128 jobId, uint256 amount, address token) external",
+  "function checkBalance(uint128 jobId) external view returns (uint256)",
+  "function getJob(uint128 jobId) external view returns (address user, uint256 amount, address token)",
 ];
 
 export default function CreateJob() {
@@ -72,7 +76,6 @@ export default function CreateJob() {
   const walletAddress = Cookies.get("user_address");
   const userId = Cookies.get("user_id");
   const oktoClient = useOkto();
-  console.log(jobData?.block_id, "job data");
 
   const handleCreateJob = async (jobId: string, amount: string) => {
     const contractJobIdStr = uuidToUint128(jobId);
@@ -500,6 +503,18 @@ export default function CreateJob() {
     }
   };
 
+  const fetchJobBalance = async () => {
+    if (!id || !jobData?.id) return;
+
+    try {
+      const balance = await getJobBalance(jobData.id);
+      setBlockchainBalance(balance);
+    } catch (error) {
+      console.error("Error fetching balance:", error);
+      setBlockchainBalance(0);
+    }
+  };
+
   useEffect(() => {
     if (!userId) {
       router.push("/auth/login");
@@ -516,6 +531,12 @@ export default function CreateJob() {
       handlePopupModal("addFunds");
     }
   }, [id, addFunds]);
+
+  useEffect(() => {
+    if (jobData?.id) {
+      fetchJobBalance();
+    }
+  }, [jobData?.id]);
 
   if (isLoading) {
     return (
