@@ -31,8 +31,7 @@ export const getJobBalance = async (jobId: string): Promise<number> => {
     const contract = createGoodhiveJobContract(provider);
 
     // Convert jobId to uint128 format
-    const contractJobIdStr = uuidToUint128(jobId);
-    const contractJobId = BigNumber.from(contractJobIdStr);
+    const contractJobId = BigNumber.from(jobId);
 
     // Fetch balance
     const balance = await contract.checkBalance(contractJobId);
@@ -52,8 +51,7 @@ export const getJobInfo = async (jobId: string) => {
     const provider = new ethers.providers.JsonRpcProvider(AMOY_RPC_URL);
     const contract = createGoodhiveJobContract(provider);
 
-    const contractJobIdStr = uuidToUint128(jobId);
-    const contractJobId = BigNumber.from(contractJobIdStr);
+    const contractJobId = BigNumber.from(jobId);
 
     const [user, amount, token] = await contract.getJob(contractJobId);
     return {
