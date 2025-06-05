@@ -9,6 +9,7 @@ import {
   useOkto,
   evmRawTransaction,
   getOrdersHistory,
+  getAccount,
 } from "@okto_web3/react-sdk";
 
 import { AuthLayout } from "@/app/components/AuthLayout/AuthLayout";
@@ -23,21 +24,55 @@ import { getJobBalance } from "@/app/lib/blockchain/contracts/GoodhiveJobContrac
 
 // Constants
 const AMOY_RPC_URL = "https://rpc-amoy.polygon.technology/";
+const AMOY_CAIP2_ID = "eip155:80002"; // Polygon Amoy
+
+// Token Addresses on Amoy
 const AMOY_USDC_TOKEN_ADDRESS =
   "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582" as `0x${string}`;
-const AMOY_CAIP2_ID = "eip155:80002"; // Polygon Amoy
+const AMOY_DAI_TOKEN_ADDRESS =
+  "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063" as `0x${string}`;
+const AMOY_AGEUR_TOKEN_ADDRESS =
+  "0xE0B52e49357Fd4DAf2c15e02058DCE6BC0057db4" as `0x${string}`;
+const AMOY_EURO_TOKEN_ADDRESS =
+  "0x4d0B6356605e6FA95c025a6f6092ECcf0Cf4317b" as `0x${string}`;
+
 const GOODHIVE_CONTRACT_ADDRESS =
   "0x76Dd1c2dd8F868665BEE369244Ee4590857d1BD3" as `0x${string}`;
+
+// Token decimals mapping
+const TOKEN_DECIMALS: { [key: string]: number } = {
+  [AMOY_USDC_TOKEN_ADDRESS.toLowerCase()]: 6, // USDC has 6 decimals
+  [AMOY_DAI_TOKEN_ADDRESS.toLowerCase()]: 18, // DAI has 18 decimals
+  [AMOY_AGEUR_TOKEN_ADDRESS.toLowerCase()]: 18, // agEUR has 18 decimals
+  [AMOY_EURO_TOKEN_ADDRESS.toLowerCase()]: 18, // EURO has 18 decimals
+};
 
 // Contract ABIs
 const erc20Abi = [
   "function approve(address spender, uint256 amount) external returns (bool)",
+  "function balanceOf(address account) external view returns (uint256)",
+  "function allowance(address owner, address spender) external view returns (uint256)",
 ];
 const goodhiveJobContractAbi = [
   "function createJob(uint128 jobId, uint256 amount, address token) external",
   "function checkBalance(uint128 jobId) external view returns (uint256)",
   "function getJob(uint128 jobId) external view returns (address user, uint256 amount, address token)",
 ];
+
+// Function to generate a random uint128 job ID
+const generateJobId = () => {
+  // Generate a random number between 1 and 2^128 - 1
+  // We use ethers.BigNumber to handle large numbers safely
+  const maxUint128 = ethers.BigNumber.from(2).pow(128).sub(1);
+  const randomBytes = ethers.utils.randomBytes(16); // 16 bytes = 128 bits
+  const randomNumber = ethers.BigNumber.from(randomBytes);
+
+  // Ensure the number is within uint128 range
+  const jobId = randomNumber.mod(maxUint128);
+
+  // Add 1 to avoid zero
+  return jobId.add(1);
+};
 
 export default function CreateJob() {
   const [description, setDescription] = useState("");
@@ -63,6 +98,8 @@ export default function CreateJob() {
   const [jobImage, setJobImage] = useState<string | null>(null);
   const [transactionStatus, setTransactionStatus] = useState("");
   const [oktoJobId, setOktoJobId] = useState<string | null>(null);
+  const [walletAddress, setWalletAddress] = useState<string>("");
+
   const [jobServices, setJobServices] = useState({
     talent: true,
     recruiter: false,
@@ -73,13 +110,41 @@ export default function CreateJob() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const addFunds = searchParams.get("addFunds");
-  const walletAddress = Cookies.get("user_address");
   const userId = Cookies.get("user_id");
   const oktoClient = useOkto();
 
+  // Fetch user's wallet address when component mounts
+  useEffect(() => {
+    const fetchUserWallet = async () => {
+      setWalletAddress("0xB23330C6f193E3122A7BE261a44aB10D5849b8e2");
+      if (!oktoClient) return;
+
+      try {
+        const accounts = await getAccount(oktoClient);
+        console.log(accounts, "accounts...");
+        const amoyAccount = accounts.find(
+          (account: any) => account.caipId === AMOY_CAIP2_ID,
+        );
+
+        console.log(amoyAccount, "amoyAccount");
+        if (amoyAccount) {
+          setWalletAddress(amoyAccount?.address);
+        } else {
+          toast.error("No wallet found for Polygon Amoy network");
+        }
+      } catch (error: any) {
+        console.error("Error fetching user wallet:", error);
+        toast.error(`Failed to fetch wallet address: ${error.message}`);
+      }
+    };
+
+    fetchUserWallet();
+  }, [oktoClient]);
+
   const handleCreateJob = async (jobId: string, amount: string) => {
-    const contractJobIdStr = uuidToUint128(jobId);
-    const contractJobId = BigNumber.from(contractJobIdStr); // ✅ no overflow
+    // Generate a random uint128 job ID instead of using UUID conversion
+    const contractJobId = jobId;
+    console.log("Generated Job ID:", contractJobId);
 
     if (!oktoClient) {
       toast.error("Okto client not initialized.");
@@ -91,40 +156,58 @@ export default function CreateJob() {
       return false;
     }
 
+    // Determine which token to use based on selectedCurrency
+    let selectedTokenAddress = AMOY_USDC_TOKEN_ADDRESS; // Default to USDC
+    if (selectedCurrency?.value === "DAI") {
+      selectedTokenAddress = AMOY_DAI_TOKEN_ADDRESS;
+    } else if (selectedCurrency?.value === "agEUR") {
+      selectedTokenAddress = AMOY_AGEUR_TOKEN_ADDRESS;
+    } else if (selectedCurrency?.value === "EURO") {
+      selectedTokenAddress = AMOY_EURO_TOKEN_ADDRESS;
+    }
+
     try {
-      const parsedAmount = getUsdcSmallestUnit(amount); // USDC has 6 decimals
+      // Get token decimals
+      const tokenDecimals =
+        TOKEN_DECIMALS[selectedTokenAddress.toLowerCase()] || 6;
+      const parsedAmount = ethers.utils
+        .parseUnits(amount, tokenDecimals)
+        .toString();
 
-      console.log({
-        parsedAmount,
-        contractJobId,
-        bigNumber: contractJobId instanceof BigNumber,
-        goodhiveContractAddress: GOODHIVE_CONTRACT_ADDRESS,
-        usdcTokenAddress: AMOY_USDC_TOKEN_ADDRESS,
-        caip2Id: AMOY_CAIP2_ID,
-        walletAddress,
-      });
-
-      if (!parsedAmount) {
-        toast.error(
-          "Invalid USDC amount format. Please use a number like 0.1 or 10.",
-        );
+      if (!parsedAmount || BigNumber.from(parsedAmount).lte(0)) {
+        toast.error("Amount must be greater than 0");
         return false;
       }
 
-      // --- 1. Approve Transaction ---
-      setTransactionStatus("Preparing approval transaction...");
+      console.log({
+        parsedAmount,
+
+        contractJobId,
+        tokenAddress: selectedTokenAddress,
+        decimals: tokenDecimals,
+        walletAddress,
+      });
+
+      // --- 1. Check allowance first ---
       const erc20Interface = new ethers.utils.Interface(erc20Abi);
+      const allowanceData = erc20Interface.encodeFunctionData("allowance", [
+        walletAddress,
+        GOODHIVE_CONTRACT_ADDRESS,
+      ]) as `0x${string}`;
+
+      // --- 2. Approve Transaction if needed ---
+      setTransactionStatus("Preparing approval transaction...");
       const approveData = erc20Interface.encodeFunctionData("approve", [
         GOODHIVE_CONTRACT_ADDRESS,
         parsedAmount,
       ]) as `0x${string}`;
 
-      console.log("Executing Approve EVM Raw Transaction...");
+      console.log(approveData, "approveData");
       const approveTxParams = {
         caip2Id: AMOY_CAIP2_ID,
         transaction: {
           from: walletAddress as `0x${string}`,
-          to: AMOY_USDC_TOKEN_ADDRESS,
+          to: selectedTokenAddress,
           value: BigInt(0),
           data: approveData,
         },
@@ -136,7 +219,6 @@ export default function CreateJob() {
         approveTxParams,
       );
       setOktoJobId(approveOktoJobId);
-      console.log("Okto Approve Job ID:", approveOktoJobId);
       setTransactionStatus(
         `Approval transaction sent (Job ID: ${approveOktoJobId}). Waiting for confirmation...`,
       );
@@ -144,7 +226,7 @@ export default function CreateJob() {
       // Wait for approval confirmation
       let approvalConfirmed = false;
       let retries = 0;
-      const maxRetries = 100;
+      const maxRetries = 200;
 
       while (!approvalConfirmed && retries < maxRetries) {
         try {
@@ -174,18 +256,19 @@ export default function CreateJob() {
         throw new Error("Approval transaction timed out after 100 seconds");
       }
 
-      // --- 2. Create Job Transaction ---
+      // --- 3. Create Job Transaction ---
       setTransactionStatus("Preparing createJob transaction...");
       const goodhiveInterface = new ethers.utils.Interface(
         goodhiveJobContractAbi,
       );
+
       const createJobData = goodhiveInterface.encodeFunctionData("createJob", [
-        "100",
-        parsedAmount.toString(),
-        AMOY_USDC_TOKEN_ADDRESS,
+        contractJobId,
+        parsedAmount,
+        selectedTokenAddress,
       ]) as `0x${string}`;
 
-      console.log("Executing CreateJob EVM Raw Transaction...");
+      console.log(createJobData, "createJobData");
       const createJobTxParams = {
         caip2Id: AMOY_CAIP2_ID,
         transaction: {
@@ -196,15 +279,22 @@ export default function CreateJob() {
         },
       };
 
+      console.log(createJobTxParams, "createJobTxParams");
+
       setTransactionStatus("Sending createJob transaction to Okto...");
       const createJobOktoJobId = await evmRawTransaction(
         oktoClient,
         createJobTxParams,
       );
       setOktoJobId(createJobOktoJobId);
-      console.log("Okto CreateJob Job ID:", createJobOktoJobId);
       setTransactionStatus(
         `CreateJob transaction sent (Job ID: ${createJobOktoJobId}). Your job is being created on-chain!`,
+      );
+
+      // Store the generated job ID in your database or state if needed
+      console.log(
+        "Successfully created job with ID:",
+        contractJobId.toString(),
       );
 
       return true;
@@ -227,12 +317,15 @@ export default function CreateJob() {
     if (type === "addFunds" && id) {
       setIsLoading(true);
       try {
-        const success = await handleCreateJob(jobData?.id, amount.toString());
+        const success = await handleCreateJob(
+          jobData?.block_id,
+          amount.toString(),
+        );
         console.log(success, "success");
-        // if (success) {
-        //   toast.success("Funds added successfully!");
-        //   window.location.reload();
-        // }
+        if (success) {
+          toast.success("Funds added successfully!");
+          window.location.reload();
+        }
       } catch (error: any) {
         console.error("Error adding funds:", error);
         toast.error(`Failed to add funds: ${error.message}`);
@@ -285,40 +378,6 @@ export default function CreateJob() {
   };
 
   // Function to convert USDC amount to its smallest unit (6 decimals)
-  const getUsdcSmallestUnit = (amount: string): string | null => {
-    try {
-      // First convert the amount to a number to handle any potential string formatting
-      const numericAmount = parseFloat(amount);
-      if (isNaN(numericAmount)) {
-        throw new Error("Invalid amount format");
-      }
-
-      // Format the number to exactly 6 decimal places to avoid floating point issues
-      const formattedAmount = numericAmount.toFixed(6);
-
-      // Remove the decimal point and convert to string
-      const smallestUnit = formattedAmount.replace(".", "");
-
-      // Remove any leading zeros
-      const cleanedAmount = smallestUnit.replace(/^0+/, "");
-
-      console.log("Amount conversion:", {
-        original: amount,
-        numeric: numericAmount,
-        formatted: formattedAmount,
-        smallest: smallestUnit,
-        cleaned: cleanedAmount,
-      });
-
-      return cleanedAmount || "0";
-    } catch (e) {
-      console.error("Invalid USDC amount:", e);
-      toast.error(
-        "Invalid USDC amount format. Please use a number like 0.1 or 10.",
-      );
-      return null;
-    }
-  };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -507,7 +566,7 @@ export default function CreateJob() {
     if (!id || !jobData?.id) return;
 
     try {
-      const balance = await getJobBalance(jobData.id);
+      const balance = await getJobBalance(jobData.block_id);
       setBlockchainBalance(balance);
     } catch (error) {
       console.error("Error fetching balance:", error);
