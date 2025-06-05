@@ -22,6 +22,7 @@ import {
 } from "@constants/token-list/index.js";
 import { polygonMainnetTokens } from "@constants/token-list/polygon";
 import LabelOption from "@interfaces/label-option";
+import { toast } from "react-hot-toast";
 
 // Dynamically import React Quill to prevent server-side rendering issues
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -39,6 +40,7 @@ const quillModules = {
 
 interface JobFormProps {
   isLoading: boolean;
+  published: boolean;
   companyData: any;
   jobData: any;
   selectedSkills: string[];
@@ -118,8 +120,26 @@ export const JobForm = ({
     setBudget(event.target.value);
   };
 
+  const handleUnpublishJob = async () => {
+    console.log("Unpublish Job");
+    // try {
+    //   const response = await fetch(`/api/companies/manage-job`, {
+    //     method: "PATCH",
+    //     body: JSON.stringify({
+    //       jobId: jobData?.job_id,
+    //       publish: false,
+    //     }),
+    //   });
+    //   const data = await response.json();
+    //   console.log(data);
+    //   toast.success("Job unpublished successfully");
+    // } catch (error) {
+    //   console.error("Error unpublishing job:", error);
+    // }
+  };
+
   return (
-    <form onSubmit={handleSubmit}>
+    <form>
       <div className="flex flex-col w-full">
         <div className="flex flex-col gap-4">
           <div className="mt-4 flex justify-center">
@@ -415,13 +435,26 @@ export const JobForm = ({
               >
                 Save Job
               </button>
-              <button
-                className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full transition-all duration-300 hover:bg-transparent hover:border-2 hover:border-[#FFC905]"
-                type="submit"
-                disabled={isLoading || !companyData?.approved}
-              >
-                Publish Job
-              </button>
+
+              {!jobData?.published && (
+                <button
+                  className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full transition-all duration-300 hover:bg-transparent hover:border-2 hover:border-[#FFC905]"
+                  type="button"
+                  onClick={handleSubmit as any}
+                  disabled={isLoading || !companyData?.approved}
+                >
+                  Publish Job
+                </button>
+              )}
+              {jobData?.published && (
+                <button
+                  className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full transition-all duration-300 hover:bg-transparent hover:border-2 hover:border-[#FFC905]"
+                  onClick={handleUnpublishJob}
+                  // disabled={isLoading || !companyData?.approved}
+                >
+                  Unpublish Job
+                </button>
+              )}
             </div>
           )}
         </div>

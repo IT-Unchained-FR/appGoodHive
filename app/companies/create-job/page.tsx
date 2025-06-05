@@ -639,6 +639,7 @@ export default function CreateJob() {
         )}
         <section>
           <JobForm
+            published={jobData?.published || false}
             isLoading={isLoading}
             companyData={companyData}
             jobData={jobData}
