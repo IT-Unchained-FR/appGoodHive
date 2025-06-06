@@ -16,6 +16,7 @@ const Login = () => {
   const [isAnimating, setIsAnimating] = useState(false);
 
   const oktoClient = useOkto();
+  console.log(oktoClient, "oktoClient...");
 
   const slides = [
     {

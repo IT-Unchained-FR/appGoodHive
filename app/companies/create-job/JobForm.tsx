@@ -401,7 +401,7 @@ export const JobForm = ({
                 className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
                 type="button"
                 onClick={onManageFundsClick}
-                disabled={isLoading || !companyData?.approved}
+                // disabled={isLoading || !companyData?.approved}
               >
                 Manage Funds
               </button>
