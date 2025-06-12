@@ -27,16 +27,27 @@ export async function POST(request: NextRequest) {
       educations = [],
     } = linkedinData;
 
+    console.log("educations", educations);
+    console.log("position", position);
+
     // Extract skills names
     const skillNames = skills.map((skill: any) => skill.name || "").join(", ");
 
-    // Extract positions/experience
-    const experiences = position
-      .map(
-        (exp: any) =>
-          `${exp.title} at ${exp.company}${exp.description ? `: ${exp.description}` : ""}`,
-      )
-      .join("\n");
+    const formattedEducations = educations
+      .map((edu: any) => {
+        const startYear = edu.start?.year || "N/A";
+        const endYear = edu.end?.year || "Present";
+        return `${edu.degree} in ${edu.fieldOfStudy} from ${edu.schoolName} (${startYear} - ${endYear})`;
+      })
+      .join("; ");
+
+    const formattedExperiences = position
+      .map((pos: any) => {
+        const startYear = pos.start?.year || "N/A";
+        const endYear = pos.end?.year === 0 ? "Present" : pos.end?.year;
+        return `${pos.title} at ${pos.companyName} (${startYear} - ${endYear}), ${pos.location}`;
+      })
+      .join("; ");
 
     // Construct the prompt for title/headline
     const titlePrompt = `
@@ -45,7 +56,7 @@ export async function POST(request: NextRequest) {
     Use the following information:
     - Current headline: "${headline || "N/A"}"
     - Skills: ${skillNames}
-    - Experience: ${experiences}
+    - Experience: ${formattedExperiences}
     
     Keep it concise (under 50-60 characters), professional, and impactful.
     Include their primary expertise and what makes them stand out.
@@ -60,7 +71,7 @@ export async function POST(request: NextRequest) {
     - Current headline: "${headline || "N/A"}"
     - Current summary: "${summary || "N/A"}"
     - Skills: ${skillNames}
-    - Experience: ${experiences}
+    - Experience: ${formattedExperiences}
     
     Write a captivating description (200-300 words) highlighting their expertise, achievements, and unique value proposition.
     And also make sure it's been written in the language of the user (in the language of the user like user is talking to the audience).
@@ -69,21 +80,42 @@ export async function POST(request: NextRequest) {
     IMPORTANT: Do not include any markdown formatting or code blocks in your response.
     `;
 
-    // Construct the prompt for about work
     const aboutWorkPrompt = `
     You are an expert professional profile writer.
+    
     Create a compelling "About My Work" section for a talent profile using the following information:
     - Name: ${firstName} ${lastName}
     - Current headline: "${headline || "N/A"}"
     - Current summary: "${summary || "N/A"}"
     - Skills: ${skillNames}
-    - Experience: ${experiences}
+    - Experience: ${formattedExperiences}
+    - Education: ${formattedEducations || "N/A"}
     
-    Write a professional section (150-250 words) detailing their work approach, methodology, and what clients can expect.
-    Include their work ethics, collaboration style, and any unique aspects of their work process.
-    Use professional, confident language. Format in HTML paragraphs (<p>...</p>).
-    And also make sure it's been written in the language of the user. And make it different from the summary because it's about work and we will tell more about how I handle work in the summary.
-    IMPORTANT: Do not include any markdown formatting or code blocks in your response.
+    Your task is to write a professional, well-structured "About My Work" section (300–400 words) that includes the following clearly separated parts, formatted using <p> tags for paragraphs and <strong> or <h4> tags for section headings:
+    
+    1. <h2>Work Philosophy & Approach</h2>
+       - Describe their work ethics, how they approach tasks, commitment to quality, client collaboration style, and what makes them dependable.
+    
+    2. <h2>Key Skills</h2>
+       - Highlight their core competencies and technical or creative strengths. Include soft skills if applicable.
+    
+    3. <h2>Professional Experience</h2>
+       - Summarize major roles, industries worked in, and achievements or results they’ve delivered.
+    
+    4. <h2>Education & Continuous Learning</h2>
+       - Mention their academic background and any certifications or ongoing learning habits that support their expertise.
+    
+    5. <h2>What Clients Can Expect</h2>
+       - Communicate what clients will experience when working with this person: clarity, responsiveness, innovation, delivery, etc.
+    
+    Guidelines:
+    - To Mention My Name Please Use me so that it's easy to understand and user can understand that it's about me and I wrote it.
+    - Please make it rich text so I can enter this on the rich text editor.
+    - Make the header in bold and the text in normal and after each section add a line break and some space under the section.
+    - Use confident and polished language suitable for professional client profiles.
+    - DO NOT repeat the summary content — this is focused specifically on their work habits, professionalism, and how they deliver value.
+    - Ensure the text is written in the user’s language if provided.
+    - Do NOT use any markdown or code blocks in the response. Use HTML formatting only as directed above.
     `;
 
     // Make parallel API calls to OpenAI for each section
