@@ -630,6 +630,8 @@ export default function ProfilePage() {
     return <HoneybeeSpinner message={"Saving Your Profile..."} />;
   }
 
+  console.log("profileData", profileData);
+
   // Render components
   return (
     <div className="container mx-auto px-4 py-8 pt-0">
