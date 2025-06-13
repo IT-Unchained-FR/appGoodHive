@@ -9,6 +9,7 @@ import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import styles from "./login.module.scss";
 import { useOkto, getAccount } from "@okto_web3/react-sdk";
 import { GoogleLogin } from "@react-oauth/google";
+import OktoOTPLogin from "@/app/components/OktoOTPLogin/OktoOTPLogin";
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -16,7 +17,6 @@ const Login = () => {
   const [isAnimating, setIsAnimating] = useState(false);
 
   const oktoClient = useOkto();
-  console.log(oktoClient, "oktoClient...");
 
   const slides = [
     {
@@ -223,6 +223,7 @@ const Login = () => {
             <h1>Log in to your Account</h1>
             <p>Welcome back to the hive! Select your preferred login method:</p>
           </div>
+          <OktoOTPLogin />
 
           <div className={styles.socialButtons}>
             <div className={styles.googleButton}>
