@@ -22,29 +22,30 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { wallet_address, user_id } = await req.json();
+    const { wallet_address, user_id, email } = await req.json();
 
-    if (!wallet_address || !user_id) {
+    if (!wallet_address || !user_id || !email) {
       return NextResponse.json(
-        { message: "Wallet address and user ID are required" },
+        { message: "Wallet address, user ID, and email are required" },
         { status: 400 },
       );
     }
 
-    // First, try to find user by okto_id
+    // First, try to find user by email
     const existingUsers = await sql`
       SELECT * FROM goodhive.users
-      WHERE okto_id = ${user_id}
+      WHERE email = ${email}
     `;
 
     let user;
 
     if (existingUsers.length > 0) {
-      // User exists with this okto_id, update their wallet address
+      // User exists with this email, update their okto_id and wallet_address
       const updatedUsers = await sql`
         UPDATE goodhive.users
-        SET wallet_address = ${wallet_address}
-        WHERE okto_id = ${user_id}
+        SET okto_id = ${user_id},
+            wallet_address = ${wallet_address}
+        WHERE email = ${email}
         RETURNING *
       `;
       user = updatedUsers[0];
@@ -67,12 +68,14 @@ export async function POST(req: Request) {
         INSERT INTO goodhive.users (
           okto_id,
           wallet_address,
+          email,
           mentor_status,
           recruiter_status,
           talent_status
         ) VALUES (
           ${user_id},
           ${wallet_address},
+          ${email},
           'pending',
           'pending',
           'pending'
