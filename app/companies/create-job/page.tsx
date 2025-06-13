@@ -379,80 +379,6 @@ export default function CreateJob() {
 
   // Function to convert USDC amount to its smallest unit (6 decimals)
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsLoading(true);
-    toast.loading("Processing job creation...", { duration: 2000 });
-
-    const formData = new FormData(e.currentTarget);
-    const recruiter = formData.get("recruiter") === "on";
-    const mentor = formData.get("mentor") === "on";
-
-    const dataForm = {
-      userId,
-      title: formData.get("title"),
-      typeEngagement: typeEngagement ? typeEngagement.value : "",
-      description: description,
-      duration: duration ? duration?.value : "",
-      budget: budget,
-      chain: selectedChain ? selectedChain.value : "",
-      currency: selectedCurrency ? selectedCurrency.value : "",
-      skills: selectedSkills,
-      walletAddress: walletAddress ? walletAddress : "",
-      city: companyData?.city,
-      country: companyData?.country,
-      companyName: companyData?.designation,
-      imageUrl: jobImage || companyData?.image_url,
-      jobType: jobType ? jobType.value : "",
-      projectType: projectType ? projectType.value : "",
-      talent: true,
-      in_saving_stage: false,
-      recruiter,
-      mentor,
-      id,
-    };
-
-    try {
-      const jobSaveUrl = id
-        ? "/api/companies/update-job"
-        : "/api/companies/create-job";
-      const jobResponse = await fetch(jobSaveUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(dataForm),
-      });
-
-      const savedJobData = await jobResponse.json();
-
-      if (!jobResponse.ok) {
-        throw new Error("Failed to save job data");
-      }
-
-      // If job is saved successfully, proceed with blockchain transaction
-      const jobId = id || savedJobData.jobId;
-      // Skipping blockchain transaction for now
-      if (true) {
-        toast.success("Job created successfully!");
-        if (id) {
-          router.push(`/companies/${userId}`);
-        } else {
-          router.push(
-            `/companies/create-job?id=${savedJobData.jobId}&addFunds=true`,
-          );
-        }
-      } else {
-        throw new Error("Failed to complete blockchain transaction");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Failed to create job. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleSaveJob = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     toast.loading("Saving...", { duration: 2000 });
@@ -669,7 +595,6 @@ export default function CreateJob() {
             onManageFundsClick={onManageFundsClick}
             handleCancelJob={handleCancelJob}
             handleSaveJob={handleSaveJob}
-            handleSubmit={handleSubmit}
           />
         </section>
 
