@@ -83,6 +83,16 @@ const Login = () => {
   }, [currentSlide, isAnimating]);
 
   const handleGoogleLogin = async (credentialResponse: any) => {
+    // Clear all localStorage items
+    localStorage.clear();
+
+    // Clear all cookies
+    document.cookie.split(";").forEach(function (c) {
+      document.cookie = c
+        .replace(/^ +/, "")
+        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+    });
+
     if (!oktoClient) {
       toast.error("Please connect your wallet to continue");
       return;
