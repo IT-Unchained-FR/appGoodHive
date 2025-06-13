@@ -155,6 +155,7 @@ export const JobForm = ({
         body: JSON.stringify({
           jobId: jobData?.id,
           publish: true,
+          in_saving_stage: false,
         }),
       });
       const data = await response.json();

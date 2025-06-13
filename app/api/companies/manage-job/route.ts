@@ -1,7 +1,7 @@
 import postgres from "postgres";
 
 export async function PATCH(request: Request) {
-  const { jobId, publish } = await request.json();
+  const { jobId, publish, in_saving_stage } = await request.json();
 
   const sql = postgres(process.env.DATABASE_URL || "", {
     ssl: {
@@ -21,10 +21,11 @@ export async function PATCH(request: Request) {
       });
     }
 
-    // Update the published status
+    // Update the published status and in_saving_stage
     await sql`
       UPDATE goodhive.job_offers
-      SET published = ${publish}
+      SET published = ${publish},
+          in_saving_stage = ${in_saving_stage !== undefined ? in_saving_stage : sql`in_saving_stage`}
       WHERE id = ${jobId};
     `;
 
@@ -32,6 +33,7 @@ export async function PATCH(request: Request) {
       JSON.stringify({
         jobId,
         published: publish,
+        in_saving_stage: in_saving_stage,
         message: publish
           ? "Job published successfully"
           : "Job unpublished successfully",
