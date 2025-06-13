@@ -116,7 +116,6 @@ export default function CreateJob() {
   // Fetch user's wallet address when component mounts
   useEffect(() => {
     const fetchUserWallet = async () => {
-      setWalletAddress("0xB23330C6f193E3122A7BE261a44aB10D5849b8e2");
       if (!oktoClient) return;
 
       try {

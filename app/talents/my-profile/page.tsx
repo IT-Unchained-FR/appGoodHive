@@ -505,62 +505,20 @@ export default function ProfilePage() {
           throw new Error("Failed to enhance content with AI");
         }
 
-        // Handle streaming response
-        const reader = aiResponse.body?.getReader();
-        if (!reader) {
-          throw new Error("Failed to read response stream");
+        const aiData = await aiResponse.json();
+
+        if (aiData.status === "error") {
+          throw new Error(aiData.message);
         }
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+        // Update the profile data with AI-enhanced content
+        enhancedTitle = aiData.data.title;
+        enhancedDescription = aiData.data.description;
+        enhancedAboutWork = aiData.data.aboutWork;
 
-          // Convert the chunk to text
-          const chunk = new TextDecoder().decode(value);
-          const responses = chunk.split("\n").filter(Boolean);
-
-          for (const response of responses) {
-            try {
-              const data = JSON.parse(response);
-
-              // Handle different status updates
-              if (data.status === "started") {
-                toast.loading("Starting AI enhancement...", {
-                  id: "ai-enhance",
-                });
-              } else if (data.status === "generating") {
-                toast.loading(`Generating ${data.section}...`, {
-                  id: "ai-enhance",
-                });
-              } else if (data.status === "streaming") {
-                // Update the appropriate section based on the streaming content
-                switch (data.section) {
-                  case "title":
-                    enhancedTitle += data.content;
-                    break;
-                  case "description":
-                    enhancedDescription += data.content;
-                    break;
-                  case "aboutWork":
-                    enhancedAboutWork += data.content;
-                    break;
-                }
-              } else if (data.status === "completed") {
-                // Use the final data from the completed status
-                enhancedTitle = data.data.title;
-                enhancedDescription = data.data.description;
-                enhancedAboutWork = data.data.aboutWork;
-                toast.success("Profile enhanced with AI!", {
-                  id: "ai-enhance",
-                });
-              } else if (data.status === "error") {
-                throw new Error(data.message);
-              }
-            } catch (e) {
-              console.error("Error parsing response chunk:", e);
-            }
-          }
-        }
+        toast.success("Profile enhanced with AI!", {
+          id: "ai-enhance",
+        });
       } catch (error) {
         console.error("Error enhancing content with AI:", error);
         toast.error("Could not enhance with AI, using original content", {
