@@ -85,10 +85,26 @@ const Login = () => {
   const handleGoogleLogin = async (credentialResponse: any) => {
     setIsLoading(true);
     try {
+      // Decode the JWT token to get user info
+      const base64Url = credentialResponse.credential.split(".")[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split("")
+          .map(function (c) {
+            return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+          })
+          .join(""),
+      );
+
+      const userInfo = JSON.parse(jsonPayload);
+      const userEmail = userInfo.email;
+
       const user = await oktoClient.loginUsingOAuth({
         idToken: credentialResponse.credential,
         provider: "google",
       });
+
       const accounts = await getAccount(oktoClient);
       console.log("Accounts:", accounts);
 
@@ -110,6 +126,7 @@ const Login = () => {
         body: JSON.stringify({
           wallet_address: selectedAccount.address,
           user_id: user.id || user, // Okto might return either the ID directly or an object with id
+          email: userEmail, // Include the email from Google OAuth
         }),
       });
 
