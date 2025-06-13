@@ -479,7 +479,7 @@ export default function ProfilePage() {
       const data = await response.json();
       console.log("LinkedIn profile data:", data);
 
-      // Enhance content with AI
+      // Initialize default values
       let enhancedTitle = data.headline || "";
       let enhancedDescription = data.summary
         ? `<p>${data.summary.replace(/\n/g, "</p><p>")}</p>`
@@ -493,8 +493,6 @@ export default function ProfilePage() {
           id: "ai-enhance",
         });
 
-        console.log("sending data to ai-enhance");
-
         const aiResponse = await fetch("/api/ai-enhance", {
           method: "POST",
           headers: {
@@ -503,20 +501,65 @@ export default function ProfilePage() {
           body: JSON.stringify({ linkedinData: data }),
         });
 
-        console.log("aiResponse", aiResponse);
+        if (!aiResponse.ok) {
+          throw new Error("Failed to enhance content with AI");
+        }
 
-        if (aiResponse.ok) {
-          const enhancedData = await aiResponse.json();
-          enhancedTitle = enhancedData.title || data.headline || "";
-          enhancedDescription = enhancedData.description || enhancedDescription;
-          enhancedAboutWork = enhancedData.aboutWork || enhancedAboutWork;
+        // Handle streaming response
+        const reader = aiResponse.body?.getReader();
+        if (!reader) {
+          throw new Error("Failed to read response stream");
+        }
 
-          toast.success("Profile enhanced with AI!", { id: "ai-enhance" });
-        } else {
-          console.error("Failed to enhance content with AI");
-          toast.error("Could not enhance with AI, using original content", {
-            id: "ai-enhance",
-          });
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          // Convert the chunk to text
+          const chunk = new TextDecoder().decode(value);
+          const responses = chunk.split("\n").filter(Boolean);
+
+          for (const response of responses) {
+            try {
+              const data = JSON.parse(response);
+
+              // Handle different status updates
+              if (data.status === "started") {
+                toast.loading("Starting AI enhancement...", {
+                  id: "ai-enhance",
+                });
+              } else if (data.status === "generating") {
+                toast.loading(`Generating ${data.section}...`, {
+                  id: "ai-enhance",
+                });
+              } else if (data.status === "streaming") {
+                // Update the appropriate section based on the streaming content
+                switch (data.section) {
+                  case "title":
+                    enhancedTitle += data.content;
+                    break;
+                  case "description":
+                    enhancedDescription += data.content;
+                    break;
+                  case "aboutWork":
+                    enhancedAboutWork += data.content;
+                    break;
+                }
+              } else if (data.status === "completed") {
+                // Use the final data from the completed status
+                enhancedTitle = data.data.title;
+                enhancedDescription = data.data.description;
+                enhancedAboutWork = data.data.aboutWork;
+                toast.success("Profile enhanced with AI!", {
+                  id: "ai-enhance",
+                });
+              } else if (data.status === "error") {
+                throw new Error(data.message);
+              }
+            } catch (e) {
+              console.error("Error parsing response chunk:", e);
+            }
+          }
         }
       } catch (error) {
         console.error("Error enhancing content with AI:", error);
@@ -542,8 +585,6 @@ export default function ProfilePage() {
 
         // If not found and we have country code, try to match by code
         if (!countryObject && data.geo.countryCode) {
-          // Since 'code' property doesn't exist, try matching with countryCode in a different way
-          // For example, some country objects might have the code embedded in the value
           const countryCode = data.geo.countryCode.toLowerCase();
           countryObject = countries.find(
             (c) =>
@@ -561,14 +602,6 @@ export default function ProfilePage() {
               c.value.toLowerCase().includes(countryName),
           );
         }
-
-        console.log("LinkedIn country data:", {
-          country: data.geo.country,
-          countryCode: data.geo.countryCode,
-          matchedCountry: countryObject
-            ? countryObject.value
-            : "No match found",
-        });
       }
 
       // Update profile data state with all imported data
@@ -586,7 +619,6 @@ export default function ProfilePage() {
       // Update country selection if found
       if (countryObject) {
         setSelectedCountry(countryObject);
-        // Already set the country in profileData above
       }
 
       // Update skills if available
@@ -596,9 +628,6 @@ export default function ProfilePage() {
 
       // If profile image is available, consider updating it
       if (data.profilePicture) {
-        // Note: This would require downloading and uploading the image
-        // For now, just setting the URL directly, though this may not work
-        // depending on your image hosting requirements
         setProfileData((prev) => ({
           ...prev,
           image_url: data.profilePicture,
