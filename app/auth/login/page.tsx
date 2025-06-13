@@ -83,6 +83,10 @@ const Login = () => {
   }, [currentSlide, isAnimating]);
 
   const handleGoogleLogin = async (credentialResponse: any) => {
+    if (!oktoClient) {
+      toast.error("Please connect your wallet to continue");
+      return;
+    }
     setIsLoading(true);
     try {
       // Decode the JWT token to get user info
@@ -105,17 +109,7 @@ const Login = () => {
         provider: "google",
       });
 
-      const accounts = await getAccount(oktoClient);
-      console.log("Accounts:", accounts);
-
       // Determine which account to use based on environment
-      const env = process.env.NEXT_PUBLIC_ENVIRONMENT || "sandbox";
-      const accountIndex = env === "sandbox" ? 1 : 0;
-      const selectedAccount = accounts[accountIndex];
-
-      console.log("Okto login successful:", user);
-      console.log("Selected account:", selectedAccount);
-      console.log("Environment:", env);
 
       // Verify wallet address and create/update user
       const verifyResponse = await fetch("/api/auth/verify-wallet", {
@@ -124,7 +118,7 @@ const Login = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          wallet_address: selectedAccount.address,
+          wallet_address: user,
           user_id: user.id || user, // Okto might return either the ID directly or an object with id
           email: userEmail, // Include the email from Google OAuth
         }),
