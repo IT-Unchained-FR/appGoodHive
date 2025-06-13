@@ -24,6 +24,8 @@ export default async function JobSearchPage({
     count: 0,
   };
 
+  console.log(jobs, "jobs...", count, "count...");
+
   return (
     <div className="mb-12">
       <h1 className="pt-16 mx-5 text-xl font-bold">
@@ -37,6 +39,7 @@ export default async function JobSearchPage({
         itemsPerPage={itemsPerPage}
         totalItems={count}
         query={query}
+        activePage={Number(searchParams.page) || 1}
       />
     </div>
   );

@@ -47,6 +47,7 @@ export async function fetchJobs({
             (LOWER(company_name) LIKE ${contains(name)})
             ${recruiter === "true" ? sql`AND recruiter = 'true'` : sql``}
             ${mentor === "true" ? sql`AND mentor = 'true'` : sql``}
+            AND published = true
         `;
 
     const count = countJobs[0].count as number;
@@ -69,7 +70,10 @@ export async function fetchJobs({
       (LOWER(company_name) LIKE ${contains(name)})
       ${recruiter === "true" ? sql`AND recruiter = 'true'` : sql``}
       ${mentor === "true" ? sql`AND mentor = 'true'` : sql``}
+      AND published = true
       ORDER BY id DESC
+      LIMIT ${limit}
+      OFFSET ${offset}
       `;
 
     const jobs = jobsQuery.map((item) => ({
@@ -92,14 +96,10 @@ export async function fetchJobs({
       escrowAmount: item.escrow_amount,
       posted_at: item.posted_at,
       in_saving_stage: item.in_saving_stage,
+      published: item.published,
     }));
 
-    const sortedJobs = jobs.sort(
-      (a, b) => Number(b.escrowAmount) - Number(a.escrowAmount),
-    );
-    const paginatedJobs = sortedJobs.slice(offset, offset + limit);
-
-    return { jobs: paginatedJobs, count };
+    return { jobs, count };
   } catch (error) {
     console.log("💥", error);
     throw new Error("Failed to fetch data from the server");
