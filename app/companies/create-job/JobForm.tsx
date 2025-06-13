@@ -73,7 +73,6 @@ interface JobFormProps {
   onManageFundsClick: () => void;
   handleCancelJob: () => void;
   handleSaveJob: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  handleSubmit: (e: FormEvent<HTMLFormElement>) => void;
 }
 
 export const JobForm = ({
@@ -106,7 +105,6 @@ export const JobForm = ({
   onManageFundsClick,
   handleCancelJob,
   handleSaveJob,
-  handleSubmit,
 }: JobFormProps) => {
   const onJobServicesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const updatedServices = {
@@ -120,22 +118,56 @@ export const JobForm = ({
     setBudget(event.target.value);
   };
 
-  const handleUnpublishJob = async () => {
-    console.log("Unpublish Job");
-    // try {
-    //   const response = await fetch(`/api/companies/manage-job`, {
-    //     method: "PATCH",
-    //     body: JSON.stringify({
-    //       jobId: jobData?.job_id,
-    //       publish: false,
-    //     }),
-    //   });
-    //   const data = await response.json();
-    //   console.log(data);
-    //   toast.success("Job unpublished successfully");
-    // } catch (error) {
-    //   console.error("Error unpublishing job:", error);
-    // }
+  const handleUnpublishJob = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`/api/companies/manage-job`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          jobId: jobData?.id,
+          publish: false,
+        }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        toast.success("Job unpublished successfully");
+        window.location.reload();
+      } else {
+        throw new Error(data.message || "Failed to unpublish job");
+      }
+    } catch (error: any) {
+      console.error("Error unpublishing job:", error);
+      toast.error(error.message || "Failed to unpublish job");
+    }
+  };
+
+  const handlePublishJob = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`/api/companies/manage-job`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          jobId: jobData?.id,
+          publish: true,
+        }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        toast.success("Job published successfully");
+        window.location.reload();
+      } else {
+        throw new Error(data.message || "Failed to publish job");
+      }
+    } catch (error: any) {
+      console.error("Error publishing job:", error);
+      toast.error(error.message || "Failed to publish job");
+    }
   };
 
   return (
@@ -440,7 +472,7 @@ export const JobForm = ({
                 <button
                   className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full transition-all duration-300 hover:bg-transparent hover:border-2 hover:border-[#FFC905]"
                   type="button"
-                  onClick={handleSubmit as any}
+                  onClick={handlePublishJob}
                   disabled={isLoading || !companyData?.approved}
                 >
                   Publish Job
@@ -449,8 +481,9 @@ export const JobForm = ({
               {jobData?.published && (
                 <button
                   className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full transition-all duration-300 hover:bg-transparent hover:border-2 hover:border-[#FFC905]"
+                  type="button"
                   onClick={handleUnpublishJob}
-                  // disabled={isLoading || !companyData?.approved}
+                  disabled={isLoading || !companyData?.approved}
                 >
                   Unpublish Job
                 </button>

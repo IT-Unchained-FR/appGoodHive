@@ -134,53 +134,18 @@ const Login = () => {
         throw new Error("Failed to verify wallet address");
       }
 
-      // Handle streaming response
-      const reader = verifyResponse.body?.getReader();
-      if (!reader) {
-        throw new Error("Failed to read response stream");
-      }
+      const data = await verifyResponse.json();
 
-      let finalResponse;
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        // Convert the chunk to text
-        const chunk = new TextDecoder().decode(value);
-        const responses = chunk.split("\n").filter(Boolean);
-
-        for (const response of responses) {
-          try {
-            const data = JSON.parse(response);
-
-            // Handle different status updates
-            if (data.status === "updating") {
-              toast.loading("Updating your account...");
-            } else if (data.status === "creating") {
-              toast.loading("Creating your account...");
-            } else if (data.status === "success") {
-              toast.dismiss();
-              toast.success("Welcome to the hive! 🐝");
-              finalResponse = data;
-            } else if (data.error) {
-              toast.dismiss();
-              throw new Error(data.error);
-            }
-          } catch (e) {
-            console.error("Error parsing response chunk:", e);
-          }
-        }
-      }
-
-      if (!finalResponse) {
-        throw new Error("No valid response received");
+      if (data.error) {
+        throw new Error(data.error);
       }
 
       // Store minimal user data in cookies
-      Cookies.set("user_id", finalResponse.user.user_id);
-      Cookies.set("user_email", finalResponse.user.email);
-      Cookies.set("user_address", finalResponse.user.wallet_address);
+      Cookies.set("user_id", data.user.user_id);
+      Cookies.set("user_email", data.user.email);
+      Cookies.set("user_address", data.user.wallet_address);
 
+      toast.success("Welcome to the hive! 🐝");
       window.location.href = "/talents/my-profile";
     } catch (error) {
       console.error("Login failed:", error);
