@@ -40,11 +40,10 @@ export async function POST(req: Request) {
     let user;
 
     if (existingUsers.length > 0) {
-      // User exists with this email, update their okto_id and wallet_address
+      // User exists with this email, update their wallet_address
       const updatedUsers = await sql`
         UPDATE goodhive.users
-        SET okto_id = ${user_id},
-            wallet_address = ${wallet_address}
+        SET wallet_address = ${wallet_address}
         WHERE email = ${email}
         RETURNING *
       `;
@@ -66,14 +65,12 @@ export async function POST(req: Request) {
       // Create new user
       const newUsers = await sql`
         INSERT INTO goodhive.users (
-          okto_id,
           wallet_address,
           email,
           mentor_status,
           recruiter_status,
           talent_status
         ) VALUES (
-          ${user_id},
           ${wallet_address},
           ${email},
           'pending',
@@ -89,7 +86,6 @@ export async function POST(req: Request) {
     // Create session token
     const token = await new SignJWT({
       user_id: user.userid,
-      okto_id: user.okto_id,
       wallet_address: user.wallet_address,
       email: user.email,
     })
@@ -110,7 +106,6 @@ export async function POST(req: Request) {
       message: "Wallet verification successful",
       user: {
         user_id: user.userid,
-        okto_id: user.okto_id,
         email: user.email,
         wallet_address: user.wallet_address,
         mentor_status: user.mentor_status,

@@ -23,19 +23,6 @@ const OktoOTPLogin = () => {
     try {
       setIsLoading(true);
 
-      // Check for existing session and clear it if found
-      const existingSession = localStorage.getItem("okto_session");
-      if (existingSession) {
-        try {
-          oktoClient.sessionClear();
-          localStorage.removeItem("okto_session");
-          console.log("Cleared existing session");
-        } catch (clearError) {
-          console.error("Error clearing existing session:", clearError);
-          // Continue with OTP send even if clear fails
-        }
-      }
-
       const response = await oktoClient.sendOTP(email, "email");
       console.log("OTP Sent:", response);
       setToken(response.token);
@@ -104,15 +91,7 @@ const OktoOTPLogin = () => {
         }),
       });
 
-      if (!verifyResponse.ok) {
-        throw new Error("Failed to verify wallet address");
-      }
-
       const data = await verifyResponse.json();
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
 
       // Store minimal user data in cookies
       Cookies.set("user_id", data.user.user_id);
@@ -121,9 +100,29 @@ const OktoOTPLogin = () => {
 
       toast.success("Welcome to the hive! 🐝");
       window.location.href = "/talents/my-profile";
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error verifying OTP:", error);
-      toast.error("Failed to verify OTP. Please try again.");
+
+      // Check if it's a wallet address conflict error
+
+      // Check if the existing account is using Google login
+      try {
+        const checkAccountResponse = await fetch(
+          `/api/auth/check-account?email=${email}`,
+        );
+        const accountData = await checkAccountResponse.json();
+
+        if (accountData.loginMethod === "google") {
+          toast.error(
+            "You already have an account with Google login. Please use Google login instead.",
+          );
+        } else {
+          toast.error("This email is already associated with another account.");
+        }
+      } catch (checkError) {
+        console.error("Error checking account:", checkError);
+        toast.error("Failed to verify account status. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
