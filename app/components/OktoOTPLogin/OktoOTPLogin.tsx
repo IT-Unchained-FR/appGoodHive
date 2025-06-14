@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { useOkto } from "@okto_web3/react-sdk";
+import { useOkto, getAccount } from "@okto_web3/react-sdk";
 import { toast } from "react-hot-toast";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import Cookies from "js-cookie";
 import styles from "./OktoOTPLogin.module.scss";
 
 const OktoOTPLogin = () => {
@@ -21,6 +22,20 @@ const OktoOTPLogin = () => {
 
     try {
       setIsLoading(true);
+
+      // Check for existing session and clear it if found
+      const existingSession = localStorage.getItem("okto_session");
+      if (existingSession) {
+        try {
+          oktoClient.sessionClear();
+          localStorage.removeItem("okto_session");
+          console.log("Cleared existing session");
+        } catch (clearError) {
+          console.error("Error clearing existing session:", clearError);
+          // Continue with OTP send even if clear fails
+        }
+      }
+
       const response = await oktoClient.sendOTP(email, "email");
       console.log("OTP Sent:", response);
       setToken(response.token);
@@ -62,7 +77,7 @@ const OktoOTPLogin = () => {
 
     try {
       setIsLoading(true);
-      const session = await oktoClient.loginUsingEmail(
+      const walletAddress = await oktoClient.loginUsingEmail(
         email,
         otp,
         token,
@@ -70,9 +85,42 @@ const OktoOTPLogin = () => {
           localStorage.setItem("okto_session", JSON.stringify(session));
         },
       );
-      console.log("Login Successful:", session);
+      console.log("Login Successful:", walletAddress);
+      console.log("Okto Client:", oktoClient);
+      console.log("Okto User ID:", (oktoClient as any)._userKeys?.userId);
+
       toast.success("Login successful!");
-      // You can add additional logic here, like redirecting the user
+
+      // Verify wallet address and create/update user
+      const verifyResponse = await fetch("/api/auth/verify-wallet", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          wallet_address: walletAddress,
+          user_id: (oktoClient as any)._userKeys?.userId,
+          email: email,
+        }),
+      });
+
+      if (!verifyResponse.ok) {
+        throw new Error("Failed to verify wallet address");
+      }
+
+      const data = await verifyResponse.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      // Store minimal user data in cookies
+      Cookies.set("user_id", data.user.user_id);
+      Cookies.set("user_email", data.user.email);
+      Cookies.set("user_address", data.user.wallet_address);
+
+      toast.success("Welcome to the hive! 🐝");
+      window.location.href = "/talents/my-profile";
     } catch (error) {
       console.error("Error verifying OTP:", error);
       toast.error("Failed to verify OTP. Please try again.");
