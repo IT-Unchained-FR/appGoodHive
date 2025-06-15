@@ -165,48 +165,16 @@
 }
 
 .socialButtons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  width: 100%;
   margin-bottom: 1.5rem;
-  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
-  .googleButton {
+  > div {
+    width: 100%;
     display: flex;
-    align-items: center;
     justify-content: center;
-
-    > div {
-      width: 100% !important;
-
-      > div {
-        width: 100% !important;
-      }
-
-      iframe {
-        width: 100% !important;
-      }
-    }
-  }
-
-  button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.75rem;
-    border: 1px solid #e0e0e0;
-    border-radius: 0.5rem;
-    background: white;
-    transition: all 0.3s ease;
-    font-size: 0.9rem;
-    color: #333;
-
-    &:hover {
-      background: #f8f9fa;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    }
   }
 }
 
@@ -631,4 +599,54 @@
   .socialButtons {
     grid-template-columns: 1fr;
   }
+}
+
+.googleCustomButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: #1967d2;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  outline: none;
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    border-color: #1967d2;
+    box-shadow: 0 4px 12px rgba(25, 103, 210, 0.08);
+    background: #f5faff;
+    color: #174ea6;
+  }
+
+  &:active {
+    background: #e8f0fe;
+    border-color: #174ea6;
+    color: #174ea6;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  img {
+    margin-right: 0.5rem;
+  }
+}
+
+.googleButtonWrapper {
+  width: 480px !important;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  // gap: 1rem;
 }

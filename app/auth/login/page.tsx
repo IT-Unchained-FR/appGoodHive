@@ -8,7 +8,7 @@ import Image from "next/image";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import styles from "./login.module.scss";
 import { useOkto, getAccount } from "@okto_web3/react-sdk";
-import { GoogleLogin } from "@react-oauth/google";
+import { GoogleLogin, useGoogleLogin } from "@react-oauth/google";
 import OktoOTPLogin from "@/app/components/OktoOTPLogin/OktoOTPLogin";
 import { checkUserLoginMethod } from "@/lib/auth/checkUserLoginMethod";
 
@@ -129,8 +129,6 @@ const Login = () => {
         provider: "google",
       });
 
-      // Determine which account to use based on environment
-
       // Verify wallet address and create/update user
       const verifyResponse = await fetch("/api/auth/verify-wallet", {
         method: "POST",
@@ -202,115 +200,42 @@ const Login = () => {
             <h1>Log in to your Account</h1>
             <p>Welcome back to the hive! Select your preferred login method:</p>
           </div>
-          <OktoOTPLogin />
 
           <div className={styles.socialButtons}>
-            <div className={styles.googleButton}>
+            <div className={styles.googleButtonWrapper}>
+              <Image
+                src="/icons/honeybee-pointing.svg"
+                alt="Honeybee pointing"
+                width={50}
+                height={50}
+              />
               <GoogleLogin
                 onSuccess={handleGoogleLogin}
                 onError={() => {
                   toast.error("Google login failed. Please try again.");
                 }}
+                auto_select={false}
                 useOneTap
+                theme="outline"
+                width="400px"
+                text="signin_with"
+                shape="pill"
+                size="large"
+                logo_alignment="left"
+                containerProps={{
+                  style: {
+                    width: "400px !important",
+                  },
+                }}
               />
             </div>
-            <button
-              type="button"
-              onClick={() =>
-                toast.error("Only Google login is supported at this time")
-              }
-            >
-              <Image
-                src="/facebook-icon.svg"
-                alt="Facebook"
-                width={20}
-                height={20}
-              />
-              <span>Facebook</span>
-            </button>
           </div>
 
           <div className={styles.divider}>
             <span>or continue with email</span>
           </div>
 
-          <form onSubmit={handleEmailLogin} className={styles.form}>
-            <div className={styles.inputGroup}>
-              <label htmlFor="email">Email</label>
-              <div className="relative">
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  placeholder="Enter your email"
-                  required
-                />
-                <Mail
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                  size={20}
-                />
-              </div>
-            </div>
-
-            <div className={styles.inputGroup}>
-              <label htmlFor="password">Password</label>
-              <div className="relative">
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  placeholder="Enter your password"
-                  required
-                />
-                <Eye
-                  size={20}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                />
-              </div>
-            </div>
-
-            <div className={styles.rememberForgot}>
-              <div className={styles.rememberMe}>
-                <input type="checkbox" id="remember" />
-                <label htmlFor="remember">Remember me</label>
-              </div>
-              <Link
-                href={{
-                  pathname: "/auth/forgot-password",
-                }}
-                className={styles.forgotPassword}
-                onClick={(e) => {
-                  e.preventDefault();
-                  toast.error("Only Google login is supported at this time");
-                }}
-              >
-                Forgot Password?
-              </Link>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={styles.submitButton}
-            >
-              {isLoading ? "Buzzing in..." : "Log in"}
-            </button>
-
-            <p className={styles.signupPrompt}>
-              New to GoodHive?
-              <Link
-                href={{
-                  pathname: "/auth/signup",
-                }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  toast.error("Only Google login is supported at this time");
-                }}
-              >
-                Create an account
-              </Link>
-            </p>
-          </form>
+          <OktoOTPLogin />
         </div>
       </div>
 
