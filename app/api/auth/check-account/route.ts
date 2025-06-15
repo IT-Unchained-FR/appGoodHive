@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     `;
 
     if (users.length === 0) {
-      return NextResponse.json({ error: "Account not found" }, { status: 404 });
+      return NextResponse.json({ loginMethod: null });
     }
 
     return NextResponse.json({
