@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useOkto } from "@okto_web3/react-sdk";
 import { toast } from "react-hot-toast";
-import { Mail, Lock } from "lucide-react";
+import { Mail } from "lucide-react";
 import Cookies from "js-cookie";
 import styles from "./OktoOTPLogin.module.scss";
 import { checkUserLoginMethod } from "@/lib/auth/checkUserLoginMethod";
@@ -10,10 +10,58 @@ const OktoOTPLogin = () => {
   const oktoClient = useOkto();
 
   const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
+  const [otpValues, setOtpValues] = useState(["", "", "", "", "", ""]);
   const [token, setToken] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showOtpInput, setShowOtpInput] = useState(false);
+
+  // Refs for OTP inputs
+  const otpRefs = [
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+  ];
+
+  const handleOtpChange = (index: number, value: string) => {
+    // Only allow single digit
+    if (value.length > 1) return;
+
+    const newOtpValues = [...otpValues];
+    newOtpValues[index] = value;
+    setOtpValues(newOtpValues);
+
+    // Auto-focus next input
+    if (value && index < 5) {
+      otpRefs[index + 1].current?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
+    // Handle backspace
+    if (e.key === "Backspace" && !otpValues[index] && index > 0) {
+      otpRefs[index - 1].current?.focus();
+    }
+
+    // Handle paste
+    if (e.key === "v" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      navigator.clipboard.readText().then((text) => {
+        const digits = text.replace(/\D/g, "").slice(0, 6);
+        const newOtpValues = [...otpValues];
+        for (let i = 0; i < digits.length && i < 6; i++) {
+          newOtpValues[i] = digits[i];
+        }
+        setOtpValues(newOtpValues);
+
+        // Focus the next empty input or the last one
+        const nextIndex = Math.min(digits.length, 5);
+        otpRefs[nextIndex].current?.focus();
+      });
+    }
+  };
 
   async function handleSendOTP() {
     if (!email) {
@@ -57,6 +105,8 @@ const OktoOTPLogin = () => {
       const response = await oktoClient.resendOTP(email, token, "email");
       console.log("OTP Resent:", response);
       setToken(response.token);
+      // Clear OTP inputs
+      setOtpValues(["", "", "", "", "", ""]);
       toast.success("OTP resent to your email!");
     } catch (error) {
       console.error("Error resending OTP:", error);
@@ -67,8 +117,10 @@ const OktoOTPLogin = () => {
   }
 
   async function handleVerifyOTP() {
-    if (!email || !otp || !token) {
-      toast.error("Please enter all required fields");
+    const otp = otpValues.join("");
+
+    if (!email || otp.length !== 6 || !token) {
+      toast.error("Please enter the complete 6-digit OTP");
       return;
     }
 
@@ -120,7 +172,7 @@ const OktoOTPLogin = () => {
 
   return (
     <div className={styles.otpLoginContainer}>
-      <div className={styles.formWrapper}>
+      {!showOtpInput ? (
         <div className={styles.inputGroup}>
           <label htmlFor="email">Email</label>
           <div className="relative">
@@ -130,7 +182,7 @@ const OktoOTPLogin = () => {
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading || showOtpInput}
+              disabled={isLoading}
             />
             <Mail
               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -138,56 +190,58 @@ const OktoOTPLogin = () => {
             />
           </div>
         </div>
-
-        {showOtpInput && (
-          <div className={styles.inputGroup}>
-            <label htmlFor="otp">OTP</label>
-            <div className="relative">
-              <input
-                type="text"
-                id="otp"
-                placeholder="Enter OTP"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                disabled={isLoading}
-              />
-              <Lock
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                size={20}
-              />
-            </div>
+      ) : (
+        <div className={styles.otpSection}>
+          <div className={styles.otpHeader}>
+            <h2>Verify Your Email Address</h2>
+            <p>
+              Please enter the 6-digit code we sent to <strong>{email}</strong>.
+            </p>
           </div>
-        )}
 
-        <div className={styles.buttonGroup}>
-          {!showOtpInput ? (
-            <button
-              onClick={handleSendOTP}
-              disabled={isLoading}
-              className={styles.submitButton}
-            >
-              {isLoading ? "Sending..." : "Send OTP"}
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={handleResendOTP}
+          <div className={styles.otpInputContainer}>
+            {otpValues.map((value, index) => (
+              <input
+                key={index}
+                ref={otpRefs[index]}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]"
+                maxLength={1}
+                value={value}
+                onChange={(e) => handleOtpChange(index, e.target.value)}
+                onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                className={styles.otpInput}
                 disabled={isLoading}
-                className={styles.secondaryButton}
-              >
-                {isLoading ? "Resending..." : "Resend OTP"}
-              </button>
-              <button
-                onClick={handleVerifyOTP}
-                disabled={isLoading}
-                className={styles.submitButton}
-              >
-                {isLoading ? "Verifying..." : "Verify OTP"}
-              </button>
-            </>
-          )}
+                aria-label={`OTP digit ${index + 1}`}
+                title={`Enter digit ${index + 1} of verification code`}
+              />
+            ))}
+          </div>
+
+          <button
+            onClick={handleResendOTP}
+            disabled={isLoading}
+            className={styles.resendButton}
+          >
+            Send Again
+          </button>
         </div>
-      </div>
+      )}
+
+      <button
+        onClick={!showOtpInput ? handleSendOTP : handleVerifyOTP}
+        disabled={isLoading}
+        className={styles.submitButton}
+      >
+        {isLoading
+          ? !showOtpInput
+            ? "Sending..."
+            : "Verifying..."
+          : !showOtpInput
+            ? "Send OTP"
+            : "Verify & Login"}
+      </button>
     </div>
   );
 };
