@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { useOkto, getAccount } from "@okto_web3/react-sdk";
+import { useOkto } from "@okto_web3/react-sdk";
 import { toast } from "react-hot-toast";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Mail, Lock } from "lucide-react";
 import Cookies from "js-cookie";
 import styles from "./OktoOTPLogin.module.scss";
+import { checkUserLoginMethod } from "@/lib/auth/checkUserLoginMethod";
 
 const OktoOTPLogin = () => {
   const oktoClient = useOkto();
@@ -18,6 +19,15 @@ const OktoOTPLogin = () => {
     if (!email) {
       toast.error("Please enter your email address");
       return;
+    }
+
+    const accountData = await checkUserLoginMethod(email);
+
+    // If the account is already associated with Google login, show an error
+    if (accountData.loginMethod === "google") {
+      return toast.error(
+        "You already have an account with Google login. Please use Google login instead.",
+      );
     }
 
     try {
@@ -102,27 +112,7 @@ const OktoOTPLogin = () => {
       window.location.href = "/talents/my-profile";
     } catch (error: any) {
       console.error("Error verifying OTP:", error);
-
-      // Check if it's a wallet address conflict error
-
-      // Check if the existing account is using Google login
-      try {
-        const checkAccountResponse = await fetch(
-          `/api/auth/check-account?email=${email}`,
-        );
-        const accountData = await checkAccountResponse.json();
-
-        if (accountData.loginMethod === "google") {
-          toast.error(
-            "You already have an account with Google login. Please use Google login instead.",
-          );
-        } else {
-          toast.error("This email is already associated with another account.");
-        }
-      } catch (checkError) {
-        console.error("Error checking account:", checkError);
-        toast.error("Failed to verify account status. Please try again.");
-      }
+      toast.error("Failed to verify OTP. Please try again.");
     } finally {
       setIsLoading(false);
     }
