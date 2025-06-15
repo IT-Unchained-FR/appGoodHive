@@ -10,6 +10,7 @@ import styles from "./login.module.scss";
 import { useOkto, getAccount } from "@okto_web3/react-sdk";
 import { GoogleLogin } from "@react-oauth/google";
 import OktoOTPLogin from "@/app/components/OktoOTPLogin/OktoOTPLogin";
+import { checkUserLoginMethod } from "@/lib/auth/checkUserLoginMethod";
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -113,6 +114,15 @@ const Login = () => {
 
       const userInfo = JSON.parse(jsonPayload);
       const userEmail = userInfo.email;
+
+      const accountData = await checkUserLoginMethod(userEmail);
+
+      if (accountData.loginMethod === "email") {
+        toast.error(
+          "You already have an account with email login. Please use email login instead.",
+        );
+        return;
+      }
 
       const user = await oktoClient.loginUsingOAuth({
         idToken: credentialResponse.credential,
