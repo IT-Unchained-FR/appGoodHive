@@ -18,11 +18,7 @@ export async function GET(request: Request) {
   try {
     // Check if user exists and get their login method
     const users = await sql`
-      SELECT 
-        CASE 
-          WHEN wallet_address IS NOT NULL AND email = ${email} THEN 'email'
-          ELSE 'unknown'
-        END as login_method
+      SELECT login_method
       FROM goodhive.users
       WHERE email = ${email}
     `;
