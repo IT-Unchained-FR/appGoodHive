@@ -136,6 +136,7 @@ const Login = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          login_method: "google",
           wallet_address: user,
           user_id: user.id || user, // Okto might return either the ID directly or an object with id
           email: userEmail, // Include the email from Google OAuth

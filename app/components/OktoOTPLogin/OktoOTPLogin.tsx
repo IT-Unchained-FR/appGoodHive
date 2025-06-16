@@ -147,6 +147,7 @@ const OktoOTPLogin = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          login_method: "email",
           wallet_address: walletAddress,
           user_id: (oktoClient as any)._userKeys?.userId,
           email: email,
@@ -182,6 +183,11 @@ const OktoOTPLogin = () => {
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSendOTP();
+                }
+              }}
               disabled={isLoading}
             />
             <Mail
