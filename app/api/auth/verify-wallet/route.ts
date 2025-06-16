@@ -22,11 +22,21 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { wallet_address, user_id, email } = await req.json();
+    const { wallet_address, user_id, email, login_method } = await req.json();
 
-    if (!wallet_address || !user_id || !email) {
+    if (!wallet_address || !user_id || !email || !login_method) {
       return NextResponse.json(
-        { message: "Wallet address, user ID, and email are required" },
+        {
+          message:
+            "Wallet address, user ID, email, and login method are required",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (!["google", "email"].includes(login_method)) {
+      return NextResponse.json(
+        { message: "Invalid login method. Must be either 'google' or 'email'" },
         { status: 400 },
       );
     }
@@ -40,10 +50,11 @@ export async function POST(req: Request) {
     let user;
 
     if (existingUsers.length > 0) {
-      // User exists with this email, update their wallet_address
+      // User exists with this email, update their wallet_address and login_method
       const updatedUsers = await sql`
         UPDATE goodhive.users
-        SET wallet_address = ${wallet_address}
+        SET wallet_address = ${wallet_address},
+            login_method = ${login_method}
         WHERE email = ${email}
         RETURNING *
       `;
@@ -67,12 +78,14 @@ export async function POST(req: Request) {
         INSERT INTO goodhive.users (
           wallet_address,
           email,
+          login_method,
           mentor_status,
           recruiter_status,
           talent_status
         ) VALUES (
           ${wallet_address},
           ${email},
+          ${login_method},
           'pending',
           'pending',
           'pending'
