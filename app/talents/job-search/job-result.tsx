@@ -28,9 +28,9 @@ export interface JobOffer {
 
 export default function JobResult({ jobOffers }: { jobOffers: any[] }) {
   return (
-    <div className="grid grid-cols-3 gap-5 md:gap-4 sm:gap-4 lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-6 p-4 md:p-6 max-w-7xl mx-auto">
       {jobOffers.map((jobOffer, index) => {
-        if (jobOffer.in_saving_stage) return <></>;
+        if (jobOffer.in_saving_stage) return null;
         return (
           <Card
             uniqueId={jobOffer?.user_id}
@@ -38,25 +38,23 @@ export default function JobResult({ jobOffers }: { jobOffers: any[] }) {
             jobId={jobOffer.id}
             type="company"
             title={jobOffer.title}
-            postedBy={jobOffer.companyName} //TODO: connect job_offers table to companies table
+            postedBy={jobOffer.company_name}
             postedOn={`Posted On ${moment(jobOffer.posted_at).format(
               "MMMM Do YYYY",
             )}`}
-            image={jobOffer.image_url || "/img/company_img.png"} //TODO: connect job_offers table to companies table
-            country={jobOffer.country} // TODO: create flag table
-            city={jobOffer.city} //TODO: connect job_offers table to companies table
+            image={jobOffer.image_url || "/img/company_img.png"}
+            country={jobOffer.country}
+            city={jobOffer.city}
             budget={jobOffer.budget}
-            projectType={jobOffer.projectType}
+            projectType={jobOffer.project_type}
             currency={jobOffer.currency}
-            description={jobOffer.jobDescription}
+            description={jobOffer.description}
             skills={jobOffer.skills}
             buttonText="Apply"
-            walletAddress={jobOffer.walletAddress}
+            walletAddress={jobOffer.wallet_address}
             mentor={jobOffer.mentor}
             recruiter={jobOffer.recruiter}
-            escrowAmount={jobOffer.escrowAmount}
-            // escrowAmount={jobOffer.escrowAmount} Add escrowAmount to job_offers table
-            // escrowCurrency={jobOffer.escrowCurrency} Add escrowCurrency to job_offers table
+            escrowAmount={jobOffer.escrow_amount}
           />
         );
       })}
