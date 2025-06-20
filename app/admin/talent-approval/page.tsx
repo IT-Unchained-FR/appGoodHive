@@ -68,34 +68,39 @@ export default function AdminTalentApproval() {
       key: "applied_for",
       header: "Applied For",
       width: "13%",
-      render: (value: any, row: ProfileData) => (
-        <div className="flex flex-col gap-1">
-          {row.talent && (
-            <Badge
-              variant="outline"
-              className="bg-yellow-50 text-yellow-700 border-yellow-200 w-fit"
-            >
-              Talent
-            </Badge>
-          )}
-          {row.mentor && (
-            <Badge
-              variant="outline"
-              className="bg-yellow-50 text-yellow-700 border-yellow-200 w-fit"
-            >
-              Mentor
-            </Badge>
-          )}
-          {row.recruiter && (
-            <Badge
-              variant="outline"
-              className="bg-yellow-50 text-yellow-700 border-yellow-200 w-fit"
-            >
-              Recruiter
-            </Badge>
-          )}
-        </div>
-      ),
+      render: (value: any, row: ProfileData) => {
+        return (
+          <div className="flex flex-col gap-2 w-full justify-center items-center">
+            {row.talent && (
+              <Badge
+                style={{ width: "100%", justifyContent: "center" }}
+                variant="outline"
+                className="bg-yellow-50 text-yellow-700 border-yellow-200 w-fit"
+              >
+                Talent
+              </Badge>
+            )}
+            {row.mentor && (
+              <Badge
+                style={{ width: "100%", justifyContent: "center" }}
+                variant="outline"
+                className="bg-yellow-50 text-yellow-700 border-yellow-200 w-fit"
+              >
+                Mentor
+              </Badge>
+            )}
+            {row.recruiter && (
+              <Badge
+                style={{ width: "100%", justifyContent: "center" }}
+                variant="outline"
+                className="bg-yellow-50 text-yellow-700 border-yellow-200 w-fit"
+              >
+                Recruiter
+              </Badge>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: "email",
