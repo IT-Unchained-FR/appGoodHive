@@ -69,17 +69,18 @@ const OktoOTPLogin = () => {
       return;
     }
 
-    const accountData = await checkUserLoginMethod(email);
-
-    // If the account is already associated with Google login, show an error
-    if (accountData.loginMethod === "google") {
-      return toast.error(
-        "You already have an account with Google login. Please use Google login instead.",
-      );
-    }
-
     try {
       setIsLoading(true);
+
+      const accountData = await checkUserLoginMethod(email);
+
+      // If the account is already associated with Google login, show an error
+      if (accountData.loginMethod === "google") {
+        toast.error(
+          "You already have an account with Google login. Please use Google login instead.",
+        );
+        return;
+      }
 
       const response = await oktoClient.sendOTP(email, "email");
       console.log("OTP Sent:", response);

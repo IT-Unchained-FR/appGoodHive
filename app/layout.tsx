@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useEffect } from "react";
-
+import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 import { WagmiConfig, createConfig, configureChains } from "wagmi";
 import { polygon } from "wagmi/chains";
@@ -71,11 +71,15 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
   const fetchingStatusRef = useRef(false);
   const verifyingRef = useRef(false);
   const [authStatus, setAuthStatus] = useState<AuthenticationStatus>("loading");
   const [walletAddress, setWalletAddress] = useState<string>("");
   const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Check if we're in the admin section
+  const isAdminSection = pathname?.startsWith("/admin");
 
   useEffect(() => {
     try {
@@ -192,7 +196,6 @@ export default function RootLayout({
       console.error("Error logging out");
     }
   };
-  console.log(showOnboarding, "showOnboarding");
 
   return (
     <html lang="en">
@@ -215,7 +218,7 @@ export default function RootLayout({
                   handleWalletChange={handleWalletChange}
                 />
                 <div className="flex flex-col min-h-screen">
-                  <NavBar />
+                  {!isAdminSection && <NavBar />}
                   <Toaster />
 
                   <Suspense>
@@ -227,7 +230,7 @@ export default function RootLayout({
                       </AddressContextWrapper>
                     </div>
                   </Suspense>
-                  <Footer />
+                  {!isAdminSection && <Footer />}
                 </div>
               </RainbowKitProvider>
             </RainbowKitAuthenticationProvider>
