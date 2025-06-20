@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Icon } from "@/app/components/ui/icon";
+import { MoreHorizontal } from "lucide-react";
 import { ProfileData } from "@/app/talents/my-profile/page";
 import ApprovalPopup from "./components/ApprovalPopup";
 import moment from "moment";
@@ -122,7 +122,7 @@ export default function AdminTalentApproval() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <Icon name="more" className="h-4 w-4" />
+                <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
