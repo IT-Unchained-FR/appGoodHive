@@ -26,6 +26,14 @@ import {
 import { chains } from "@/app/constants/chains";
 import { Textarea } from "@/components/ui/textarea";
 
+// Currency options from tokens.json
+const currencyOptions = [
+  { value: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359", label: "USDC" },
+  { value: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063", label: "DAI" },
+  { value: "0xE0B52e49357Fd4DAf2c15e02058DCE6BC0057db4", label: "AUGUR" },
+  { value: "0x4d0B6356605e6FA95c025a6f6092ECcf0Cf4317b", label: "EURO" },
+];
+
 export default function AdminEditJobPage() {
   const params = useParams();
   const job_id = params.job_id as string;
@@ -274,12 +282,22 @@ export default function AdminEditJobPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="currency">Currency</Label>
-              <Input
-                id="currency"
+              <Select
                 name="currency"
                 value={job.currency}
-                onChange={handleInputChange}
-              />
+                onValueChange={(value) => handleSelectChange("currency", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  {currencyOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="chain">Blockchain</Label>
@@ -306,18 +324,48 @@ export default function AdminEditJobPage() {
         {/* Status Section */}
         <div className="p-6 bg-white rounded-lg shadow">
           <h3 className="text-xl font-semibold mb-6">Status</h3>
-          <div className="flex items-center space-x-4">
-            <Label htmlFor="published" className="flex-grow">
-              Published
-            </Label>
-            <Switch
-              id="published"
-              name="published"
-              checked={job.published}
-              onCheckedChange={(checked) =>
-                handleSwitchChange("published", checked)
-              }
-            />
+          <div className="space-y-4">
+            <div className="flex items-center space-x-4">
+              <Label htmlFor="published" className="flex-grow">
+                Published
+              </Label>
+              <Switch
+                id="published"
+                name="published"
+                checked={job.published}
+                onCheckedChange={(checked) =>
+                  handleSwitchChange("published", checked)
+                }
+              />
+            </div>
+            <div className="flex items-center space-x-4">
+              <Label htmlFor="in_saving_stage" className="flex-grow">
+                In Saving Stage
+              </Label>
+              <Switch
+                id="in_saving_stage"
+                name="in_saving_stage"
+                checked={job.in_saving_stage}
+                onCheckedChange={(checked) =>
+                  handleSwitchChange("in_saving_stage", checked)
+                }
+              />
+            </div>
+            <div className="text-sm text-gray-600 mt-4 p-3 bg-gray-50 rounded-md">
+              <p>
+                <strong>Status Rules:</strong>
+              </p>
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>
+                  If "In Saving Stage" is turned OFF and "Published" is ON, the
+                  job will be visible on the site
+                </li>
+                <li>
+                  If "Published" is ON but "In Saving Stage" is also ON, the job
+                  will NOT show on the site
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 

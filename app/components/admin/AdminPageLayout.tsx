@@ -19,7 +19,7 @@ export function AdminPageLayout({
         <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
         {subtitle && <p className="text-sm text-gray-600 mt-1">{subtitle}</p>}
       </div>
-      <div className="bg-white rounded-lg shadow-sm p-6">{children}</div>
+      <div className="rounded-lg shadow-sm p-6">{children}</div>
     </div>
   );
 }
