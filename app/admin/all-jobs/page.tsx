@@ -7,13 +7,6 @@ import { SearchInput } from "@/app/components/admin/SearchInput";
 import { Spinner } from "@/app/components/admin/Spinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Icon } from "@/components/ui/icon";
 import { IJobOffer } from "@/interfaces/job-offer";
 import Image from "next/image";
 
