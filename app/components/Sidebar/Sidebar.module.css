@@ -1,0 +1,204 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.sidebar {
+  /* Toast notifications colors */
+  --toastify-color-light: #fff;
+  --toastify-color-dark: #121212;
+  --toastify-color-info: #3498db;
+  --toastify-color-success: #07bc0c;
+  --toastify-color-warning: #f1c40f;
+  --toastify-color-error: #e74c3c;
+  --toastify-color-transparent: rgba(255, 255, 255, 0.7);
+
+  /* Custom accent colors */
+  --accent-primary: #ffc905;
+  --accent-secondary: #ffd84d;
+  --accent-hover: rgba(255, 201, 5, 0.1);
+  --accent-active: rgba(255, 201, 5, 0.2);
+  --accent-text: #b38600;
+  --accent-gradient: linear-gradient(
+    95deg,
+    var(--accent-primary),
+    var(--accent-secondary)
+  );
+
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100vh;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(108, 113, 140, 0.12);
+  z-index: 40;
+  transition: all 0.3s ease;
+}
+
+.sidebarContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings:
+    "ss05" on,
+    "ss03" on,
+    "case" on;
+  padding: 0 8px;
+}
+
+.sidebarContent::-webkit-scrollbar {
+  display: none;
+}
+
+.sidebarHeader {
+  padding: 24px 16px;
+  border-bottom: 1px solid rgba(108, 113, 140, 0.12);
+  margin: 0 -8px;
+}
+
+.sidebarTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1d1f;
+  margin: 0;
+}
+
+.navigationSection {
+  padding: 24px 8px;
+}
+
+.sectionLabel {
+  padding: 0 12px 12px;
+}
+
+.sectionLabel p {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6c718c;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.navList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  color: #535a74;
+  transition: all 0.2s ease-in-out;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.navItem:hover {
+  background-color: var(--accent-hover);
+  color: var(--accent-text);
+}
+
+.navItemActive {
+  background-color: var(--accent-active);
+  color: var(--accent-text);
+}
+
+.navItemActive .navIcon {
+  color: var(--accent-text);
+}
+
+.navItem:hover .navIcon {
+  color: var(--accent-text);
+}
+
+.navIcon {
+  margin-right: 12px;
+  width: 20px;
+  height: 20px;
+  color: #535a74;
+  transition: color 0.2s ease-in-out;
+  flex-shrink: 0;
+}
+
+.navLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.bottomSection {
+  border-top: 1px solid rgba(108, 113, 140, 0.12);
+  padding: 24px 16px;
+  margin: 0 -8px;
+}
+
+.bottomNav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.brandFooter {
+  margin-top: 24px;
+  padding: 0 8px;
+}
+
+.brandInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brandName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1a1d1f;
+}
+
+.brandBadge {
+  background: var(--accent-gradient);
+  color: #000000;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Special styling for logout button */
+.navItem.logoutButton {
+  color: #e74c3c;
+}
+
+.navItem.logoutButton:hover {
+  background-color: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+}
+
+.navItem.logoutButton .navIcon {
+  color: #e74c3c;
+}
+
+/* Main content styles */
+.mainContent {
+  flex: 1;
+  margin-left: 280px;
+  min-width: 0;
+  transition: margin-left 0.3s ease;
+}
+
+.contentWrapper {
+  padding: 24px;
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+}
