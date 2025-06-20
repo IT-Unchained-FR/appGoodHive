@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Icon } from "@/app/components/ui/icon";
+import { Icon } from "@/components/ui/icon";
 import { IJobOffer } from "@/interfaces/job-offer";
 import Image from "next/image";
 
