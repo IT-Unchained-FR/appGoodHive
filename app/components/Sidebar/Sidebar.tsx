@@ -44,6 +44,12 @@ const personalNavItems: NavItem[] = [
     dataE2e: "company-approval-menu",
   },
   {
+    href: "/admin/all-jobs",
+    icon: <Users className={styles.navIcon} />,
+    label: "All Jobs",
+    dataE2e: "all-jobs-menu",
+  },
+  {
     href: "/admin/talents",
     icon: <Network className={styles.navIcon} />,
     label: "All Talents",
