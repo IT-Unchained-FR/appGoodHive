@@ -11,6 +11,7 @@ import { useOkto, getAccount } from "@okto_web3/react-sdk";
 import { GoogleLogin, useGoogleLogin } from "@react-oauth/google";
 import OktoOTPLogin from "@/app/components/OktoOTPLogin/OktoOTPLogin";
 import { checkUserLoginMethod } from "@/lib/auth/checkUserLoginMethod";
+import { WalletConnect } from "@/app/components/WalletConnect/WalletConnect";
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -237,6 +238,18 @@ const Login = () => {
           </div>
 
           <OktoOTPLogin />
+
+          <div className={styles.divider}>
+            <span>or continue with your wallet</span>
+          </div>
+
+          <div className={styles.walletWrapper}>
+            <WalletConnect />
+            <p className={styles.walletCaption}>
+              If you've created an account using a wallet before, connect to
+              find your profile.
+            </p>
+          </div>
         </div>
       </div>
 

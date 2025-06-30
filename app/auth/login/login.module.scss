@@ -650,3 +650,94 @@
   align-items: center;
   // gap: 1rem;
 }
+
+.walletButton {
+  width: 100%;
+  padding: 0.875rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 0.5rem;
+  background: #fff;
+
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: #ffc905;
+    box-shadow: 0 4px 12px rgba(255, 201, 5, 0.15);
+  }
+
+  img {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.walletWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+
+  > div {
+    width: 100%;
+
+    // Style the RainbowKit button to match GoodHive's style
+    button {
+      width: 100% !important;
+      height: 40px !important; // Exactly match the top button height
+      background: #4f46e5 !important; // Indigo-600
+      color: white !important;
+      border: none !important;
+      border-radius: 9999px !important;
+      font-size: 1rem !important;
+      font-weight: 600 !important;
+      transition: all 0.15s ease-in-out !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 0 1.5rem !important;
+      cursor: pointer !important;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+
+      &:hover {
+        background: #4338ca !important; // Indigo-700
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25) !important;
+      }
+
+      &:active {
+        transform: translateY(0) !important;
+        background: #3730a3 !important; // Indigo-800
+        box-shadow: 0 2px 4px rgba(79, 70, 229, 0.1) !important;
+      }
+
+      // Style the inner content
+      > div {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+      }
+
+      img {
+        width: 20px !important;
+        height: 20px !important;
+      }
+    }
+  }
+}
+
+.walletCaption {
+  text-align: center;
+  font-size: 0.875rem;
+  color: #666;
+  line-height: 1.4;
+  margin-top: 0.25rem;
+}
