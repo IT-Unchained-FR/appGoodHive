@@ -1,5 +1,5 @@
 // components/Analytics.js
-import Script from 'next/script'
+import Script from "next/script";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID; // Replace with your Measurement ID
 
@@ -10,10 +10,7 @@ const GoogleAnalytics = () => (
       strategy="afterInteractive"
       src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
     />
-    <Script
-      id="google-analytics"
-      strategy="afterInteractive"
-    >
+    <Script id="google-analytics" strategy="afterInteractive">
       {`
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}

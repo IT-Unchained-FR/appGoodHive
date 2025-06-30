@@ -6,15 +6,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { CircleUserRound } from "lucide-react";
-
-import { useEffect, useState } from "react";
-
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useState } from "react";
 import Cookies from "js-cookie";
-import { useAccount, useDisconnect } from "wagmi";
 import toast from "react-hot-toast";
 import { useOkto } from "@okto_web3/react-sdk";
 import { googleLogout } from "@react-oauth/google";
+import { WalletConnect } from "./WalletConnect/WalletConnect";
+import { useDisconnect } from "wagmi";
 
 const commonLinks = [
   { href: "/talents/job-search", label: "Find a Job" },
@@ -23,27 +21,21 @@ const commonLinks = [
 
 const talentsLinks = [
   { href: "/talents/job-search", label: "Job Search" },
-  // { href: "/talents/my-applications", label: "My Applications" },
   { href: "/talents/my-profile", label: "My Talent Profile" },
 ];
 
 const companiesLinks = [
   { href: "/companies/search-talents", label: "Search Talents" },
-  // { href: "/companies/create-job", label: "Create Job" },
   { href: "/companies/my-profile", label: "My Company Profile" },
 ];
 
 export const NavBar = () => {
-  const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const oktoClient = useOkto();
-
   const [isOpenMobileMenu, setIsOpenMobileMenu] = useState(false);
-
   const router = useRouter();
   const pathname = usePathname();
 
-  // Get the logged in user email and id from cookies
   const loggedIn_user_id = Cookies.get("user_id");
 
   const links = pathname.startsWith("/talents")
@@ -54,26 +46,15 @@ export const NavBar = () => {
 
   const handleLogout = async () => {
     try {
-      // Perform Google OAuth logout
       googleLogout();
-
-      // Clear Okto session
       oktoClient.sessionClear();
-      console.log("Successfully logged out from Okto");
 
-      // Remove cookies
       Cookies.remove("user_id");
       Cookies.remove("loggedIn_user");
 
-      // Disconnect wallet if connected
-      if (isConnected) {
-        disconnect();
-      }
+      disconnect();
 
-      // Show success message
       toast.success("Successfully logged out");
-
-      // Redirect to login page
       window.location.href = "/auth/login";
     } catch (error) {
       console.error("Logout failed:", error);
@@ -81,85 +62,8 @@ export const NavBar = () => {
     }
   };
 
-  const loggedInUserCookie = Cookies.get("loggedIn_user");
-  const referralCode = Cookies.get("referralCode");
-  const loggedIn_user = loggedInUserCookie
-    ? JSON.parse(loggedInUserCookie)
-    : null;
-
-  useEffect(() => {
-    if (
-      isConnected &&
-      address &&
-      !loggedIn_user?.wallet_address &&
-      loggedIn_user_id
-    ) {
-      if (!loggedIn_user?.email) return;
-      fetch("/api/auth/set-wallet-address", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          walletAddress: address,
-          userId: loggedIn_user_id,
-          referralCode,
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            console.log(data.user, "data.user");
-            Cookies.set("loggedIn_user", JSON.stringify(data.user));
-            toast.success(data.message);
-          } else {
-            toast.error(data.message);
-            disconnect();
-          }
-        })
-        .catch((error) => {
-          console.error("Error wallet address saving:", error);
-        });
-    }
-  }, [
-    address,
-    isConnected,
-    loggedIn_user_id,
-    loggedIn_user?.wallet_address,
-    disconnect,
-    loggedIn_user?.email,
-    referralCode,
-  ]);
-
-  useEffect(() => {
-    // Checking if there is a user id in the cookies
-    if (!loggedIn_user_id && isConnected && address) {
-      // Check if the user exists in the database
-      fetch("/api/auth/wallet-login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ wallet_address: address }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          // Set the user id in the cookies
-          if (data.user_id) {
-            Cookies.set("user_id", data.user_id);
-          }
-          // Redirect the user to the profile page
-          window.location.href = "/talents/my-profile";
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-        });
-    }
-  }, [isConnected, address, loggedIn_user_id]);
-
-  console.log(loggedIn_user, "loggedIn_user");
   return (
-    <header aria-label="Site Header" className="bg-black ">
+    <header aria-label="Site Header" className="bg-black">
       <div className="flex items-center h-16 gap-8 px-8 mx-auto sm:px-6">
         <Link className="block" href="/">
           <span className="sr-only">Home</span>
@@ -213,20 +117,18 @@ export const NavBar = () => {
                 Login
               </button>
             )}
-            <div className="flex gap-4">
-              <ConnectButton />
-            </div>
-            <div>
-              {loggedIn_user_id && (
-                <Link href="/user-profile">
-                  <CircleUserRound
-                    size={36}
-                    color="white"
-                    className="cursor-pointer"
-                  />
-                </Link>
-              )}
-            </div>
+
+            <WalletConnect />
+
+            {loggedIn_user_id && (
+              <Link href="/user-profile">
+                <CircleUserRound
+                  size={36}
+                  color="white"
+                  className="cursor-pointer"
+                />
+              </Link>
+            )}
 
             <button
               onClick={() => setIsOpenMobileMenu(!isOpenMobileMenu)}
