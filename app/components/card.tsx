@@ -49,7 +49,7 @@ export const Card: FC<Props> = ({
   skills,
   budget,
   projectType,
-  currency = "$", // TODO: Add mapping with currencies (USD, EUR, etc.)
+  currency = "$",
   escrowAmount,
   walletAddress,
   mentor,
@@ -59,15 +59,15 @@ export const Card: FC<Props> = ({
   availability,
   type,
 }) => {
-  // Rate
+  // Rate formatting
   const rate =
     budget && currency
-      ? `${budget}${currency}/${projectType === "fixed" ? "Fixed" : "H"}`
+      ? `${budget}${currency}/${projectType === "fixed" ? "Fixed" : "hr"}`
       : null;
 
-  // Title and description
+  // Title and description with consistent truncation
   const croppedTitle =
-    title.length > 28 ? title.substring(0, 20) + "..." : title;
+    title.length > 32 ? title.substring(0, 29) + "..." : title;
 
   // Function to strip HTML tags and crop text
   const stripHtmlAndCrop = (html: string, maxLength: number) => {
@@ -80,6 +80,7 @@ export const Card: FC<Props> = ({
   };
 
   const croppedDescription = stripHtmlAndCrop(description, 100);
+  const croppedCompanyName = postedBy.length > 25 ? postedBy.substring(0, 22) + "..." : postedBy;
 
   // Profile image
   const profileImage = image ? image : "/img/placeholder-image.png";
@@ -88,138 +89,208 @@ export const Card: FC<Props> = ({
   const knowMoreLink =
     type === "talent" ? `/talents/${uniqueId}` : `/companies/${uniqueId}`;
 
-  // Flag & Icon
+  // Flag & Escrow Icon - ensure all cards have flags
   const countryFlag = generateCountryFlag(country);
-  const moneyIcon =
-    jobId && Number(escrowAmount) > 0
-      ? "/icons/money.svg"
-      : "/icons/no-money.svg";
+  const hasEscrow = jobId && escrowAmount && Number(escrowAmount) > 0;
+  
+  // Skills - show max 3 skills for consistent sizing
+  const displaySkills = skills.slice(0, 3);
+  const hasMoreSkills = skills.length > 3;
 
-  // Skills
-  const shortSkillList =
-    skills.length > 3 ? [...skills.slice(0, 3), "..."] : skills;
+  // Generate consistent badge for all job cards
+  const shouldShowBadge = type === "company"; // Only show badges for job cards
 
-  // see if the last active time was more than five minutes ago with moment js
-
-  // const diff = now.diff(lastActive, "minutes");
   return (
-    <div className="box-border block p-3 mt-11 bg-white bg-blend-darken rounded-3xl shadow-[2px_7px_20px_4px_#e2e8f0]">
-      <div className="flex flex-col h-full px-4 sm:px-2">
-        <div className="flex md:flex-row">
-          <div
-            className="shrink-0 relative flex items-center justify-center cursor-pointer h-20 w-20 md:h-18 md:w-18 sm:h-18 sm:w-18"
-            style={{
-              clipPath:
-                "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)",
-            }}
-          >
-            <Image
-              className="object-cover"
-              src={profileImage}
-              alt="avatar"
-              fill
-            />
+    <div className="group relative bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/40 rounded-2xl border border-amber-100/60 shadow-sm hover:shadow-2xl hover:border-[#FFC905]/30 transition-all duration-300 ease-in-out overflow-hidden cursor-pointer min-h-[320px] flex flex-col backdrop-blur-sm">
+      {/* Honey comb pattern background accent */}
+      <div className="absolute top-0 right-0 w-20 h-20 opacity-20 pointer-events-none">
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full text-yellow-400 transform rotate-12">
+          <path d="M17.5 3.5L22 6.5v6l-4.5 3L13 12.5v-6l4.5-3z M6.5 8.5L11 11.5v6l-4.5 3L2 17.5v-6l4.5-3z"/>
+        </svg>
+      </div>
+
+      {/* Status Badge - Always show for job cards */}
+      {shouldShowBadge && (
+        <div className="absolute top-4 right-4 z-10">
+          {hasEscrow ? (
+            <div className="flex items-center gap-1 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-full px-3 py-1.5 shadow-sm backdrop-blur-sm">
+              <svg className="w-3.5 h-3.5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+              </svg>
+              <span className="text-xs font-semibold text-green-700">🍯 Secured</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-full px-3 py-1.5 shadow-sm backdrop-blur-sm">
+              <svg className="w-3.5 h-3.5 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clipRule="evenodd" />
+              </svg>
+              <span className="text-xs font-semibold text-amber-700">🐝 Open</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="p-5 flex flex-col h-full">
+        {/* Header Section */}
+        <div className="flex items-start gap-3 mb-3">
+          <div className="relative flex-shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-100 to-yellow-200 overflow-hidden ring-2 ring-amber-200 shadow-sm border border-amber-200">
+              <Image
+                className="object-cover w-full h-full"
+                src={profileImage}
+                alt="Company logo"
+                width={48}
+                height={48}
+              />
+            </div>
+            {/* Bee accent on company logo */}
+            <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[#FFC905] rounded-full flex items-center justify-center text-xs shadow-sm">
+              🐝
+            </div>
           </div>
-          <div className="shrink pt-2 pl-4 md:ml-2 sm:pl-2 sm:max-w-[130px]">
-            <p className="text-lg font-semibold text-gray-800 sm:leading-tight sm:text-xs sm:mb-1">
-              {croppedTitle}
-            </p>
-            <Link
-              href={jobId ? `/companies/${uniqueId}` : `/talents/${uniqueId}`}
-            >
-              <p className="text-base text-gray-600 sm:text-xs sm:mb-1">
-                {postedBy}
-              </p>
-            </Link>
+          
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-semibold text-gray-900 mb-1 leading-tight">
+                  {croppedTitle}
+                </h3>
+                <Link
+                  href={jobId ? `/companies/${uniqueId}` : `/talents/${uniqueId}`}
+                  className="text-sm font-medium text-gray-600 hover:text-[#FFC905] transition-colors block"
+                >
+                  {croppedCompanyName}
+                </Link>
+              </div>
+              
+              <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+                {/* Always show flag or placeholder */}
+                {countryFlag ? (
+                  <div className="relative w-5 h-3.5 rounded-sm overflow-hidden shadow-sm border border-gray-200">
+                    <Image src={countryFlag} alt="country" fill className="object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-5 h-3.5 rounded-sm bg-gray-100 border border-gray-200 flex items-center justify-center">
+                    <span className="text-xs text-gray-400">🌍</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3 mt-2">
+              <span className="text-sm text-gray-500 truncate">{city || "Remote"}</span>
+              {rate && (
+                <span className="text-xs font-semibold text-[#FFC905] bg-gradient-to-r from-[#FFC905]/15 to-amber-200/60 px-2 py-0.5 rounded-lg border border-[#FFC905]/30 shadow-sm">
+                  {rate}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Description */}
+        <div className="mb-3">
+          <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
+            {croppedDescription || "Exciting opportunity to join our team and make an impact."}
+          </p>
+        </div>
+
+        {/* Skills */}
+        <div className="mb-4">
+          {displaySkills.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {displaySkills.map((skill, index) => (
+                <span
+                  key={index}
+                  className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gradient-to-r from-amber-50 to-yellow-50 text-gray-700 rounded-md border border-amber-200/60 hover:border-[#FFC905]/40 hover:bg-gradient-to-r hover:from-[#FFC905]/10 hover:to-amber-100 transition-all"
+                >
+                  {skill}
+                </span>
+              ))}
+              {hasMoreSkills && (
+                <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gradient-to-r from-[#FFC905]/15 to-amber-200/60 text-[#FFC905] rounded-md border border-[#FFC905]/30">
+                  +{skills.length - 3}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Spacer to push footer to bottom */}
+        <div className="flex-grow"></div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-3 border-t border-amber-200/50 mt-auto">
+          <div className="flex flex-col gap-1 flex-1 min-w-0">
             {type === "talent" && (
               <LastActiveStatus lastActiveTime={postedOn} />
             )}
             {type === "company" && (
-              <p className="mb-3 mt-1 text-xs font-bold text-gray-600 sm:text-xs">
+              <span className="text-xs text-gray-500 truncate">
                 {postedOn}
-              </p>
+              </span>
             )}
-          </div>
-          <div className="flex flex-col items-end pt-2 grow">
-            <div className="flex mb-1">
-              {jobId && (
-                <div className="relative w-6 mr-2 h-6">
-                  <Image alt="balance" src={moneyIcon} fill />
-                </div>
-              )}
-              {countryFlag && (
-                <div className="relative h-4 w-6">
-                  <Image src={countryFlag} alt="country" fill />
-                </div>
+            
+            {/* Open to status */}
+            <div className="flex items-center gap-1 text-xs">
+              {jobId ? (
+                <>
+                  {mentor && recruiter ? (
+                    <span className="text-blue-600 flex items-center gap-1 truncate">
+                      <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
+                      </svg>
+                      <span className="truncate">Mentors & Recruiters</span>
+                    </span>
+                  ) : mentor ? (
+                    <span className="text-blue-600 flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
+                      </svg>
+                      Open to Mentors
+                    </span>
+                  ) : recruiter ? (
+                    <span className="text-blue-600 flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
+                      </svg>
+                      Open to Recruiters
+                    </span>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  {freelancer && remote ? (
+                    <span className="text-green-600">💼 Freelancing & Remote</span>
+                  ) : freelancer ? (
+                    <span className="text-green-600">💼 Freelancing Only</span>
+                  ) : remote ? (
+                    <span className="text-blue-600">🌐 Remote Only</span>
+                  ) : null}
+                </>
               )}
             </div>
-            <p className="font-light mb-1 text-sm text-gray-500 text-right sm:text-xs sm:max-w-[80px]">
-              {city}
-            </p>
-            <div className="flex flex-col items-end gap-1">
-              <div className="text-xs font-bold mt-1">{rate}</div>
-              {type === "talent" && availability && (
-                <p className="text-xs">🟢 Available</p>
-              )}
-              {type === "talent" && !availability && (
-                <p className="text-xs">🔴 Not Available</p>
-              )}
-            </div>
           </div>
-        </div>
-        <div className="pt-3 mb-3">
-          <div className="text-sm font-light text-[#151414] leading-relaxed line-clamp-2">
-            {croppedDescription}
-          </div>
-          <div
-            className="rich-text-content hidden"
-            dangerouslySetInnerHTML={{ __html: description }}
-          />
-        </div>
-        <div className="flex flex-wrap my-3">
-          {shortSkillList.map((skill, index) => (
-            <div
-              key={index}
-              className="px-2 py-1 mb-2 mr-2 rounded-full bg-amber-100"
-            >
-              <span className="flex text-sm items-center">{skill}</span>
-            </div>
-          ))}
-        </div>
 
-        <div
-          className={`flex grow ${
-            mentor || recruiter || freelancer
-              ? "justify-between"
-              : "justify-end"
-          } items-end w-full md-2 gap-3 sm:gap-1.5 sm:flex-col sm:items-center`}
-        >
-          {jobId ? (
-            <p className="text-sm text-gray-500 mb-3">
-              {mentor && recruiter
-                ? "Open to Mentors & Recruiters"
-                : mentor
-                  ? "Open to Mentors"
-                  : recruiter
-                    ? "Open to Recruiters"
-                    : ""}
-            </p>
-          ) : (
-            <p className="text-sm text-gray-500 mb-3">
-              {freelancer && remote
-                ? "Freelancing & Remote"
-                : freelancer
-                  ? "Freelancing Only"
-                  : remote
-                    ? "Remote Only"
-                    : ""}
-            </p>
-          )}
-
-          <Link href={{ pathname: knowMoreLink, query: { id: jobId } }}>
-            <Button text="Know more" type="primary" size="small" />
+          <Link href={{ pathname: knowMoreLink, query: { id: jobId } }} className="flex-shrink-0 ml-3">
+            <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-[#FFC905] to-[#FFD93D] hover:from-[#FF8C05] hover:to-[#FFC905] rounded-xl transition-all duration-200 transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#FFC905]/50 focus:ring-offset-2 border border-[#FFC905]/20 shadow-md">
+              View Details
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </button>
           </Link>
         </div>
+
+        {/* Availability indicator for talents */}
+        {type === "talent" && (
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-amber-200/50">
+            <div className={`w-2 h-2 rounded-full ${availability ? 'bg-green-400' : 'bg-red-400'} shadow-sm`}></div>
+            <span className={`text-xs font-medium ${availability ? 'text-green-600' : 'text-red-600'}`}>
+              {availability ? 'Available for work' : 'Not available'}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
