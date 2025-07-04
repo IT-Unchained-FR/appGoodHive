@@ -51,7 +51,27 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({ isOpen, anchorRef, onC
     ? `$${Number(portfolio.aggregatedData.totalHoldingPriceUsdt).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
     : "$0.00";
 
-  const coins = Array.isArray(portfolio?.groupTokens)
+  // Default coins to show when no portfolio data is available
+  const defaultCoins = [
+    {
+      icon: "https://www.dextools.io/resources/tokens/logos/3/ether/0x455e53cbb86018ac2b8092fdcd39d8444affc3f6.png?1698233684",
+      name: "POL",
+      symbol: "POL",
+      network: "POLYGON",
+      balance: "0",
+      valueUsd: "0",
+    },
+    {
+      icon: "https://s2.coinmarketcap.com/static/img/coins/64x64/18852.png",
+      name: "Bridged USD Coin",
+      symbol: "USDC.e",
+      network: "POLYGON",
+      balance: "0",
+      valueUsd: "0",
+    }
+  ];
+
+  const coins = Array.isArray(portfolio?.groupTokens) && portfolio.groupTokens.length > 0
     ? portfolio.groupTokens.map((token: any) => ({
         icon: token.tokenImage,
         name: token.name,
@@ -60,7 +80,7 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({ isOpen, anchorRef, onC
         balance: token.balance,
         valueUsd: token.holdingsPriceUsdt,
       }))
-    : [];
+    : defaultCoins;
 
   return (
     <div
@@ -148,9 +168,6 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({ isOpen, anchorRef, onC
             <div className="w-full mt-2">
               <div className="text-sm font-semibold text-gray-900 mb-2">Coins</div>
               <div className="flex flex-col gap-2">
-                {coins.length === 0 && (
-                  <div className="text-gray-400 text-sm text-center py-4">No coins found.</div>
-                )}
                 {coins.map((coin: any, idx: number) => (
                   <div key={idx} className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#FFF7D1] transition">
                     {coin.icon ? (
@@ -162,10 +179,14 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({ isOpen, anchorRef, onC
                     )}
                     <div className="flex flex-col flex-1 min-w-0">
                       <span className="font-medium text-gray-900 text-sm truncate">{coin.name} <span className="text-xs text-gray-400 font-mono">({coin.symbol})</span></span>
-                      <span className="text-xs text-gray-400 truncate">{Number(coin.balance).toLocaleString(undefined, { maximumFractionDigits: 6 })} {coin.symbol}</span>
+                      <span className="text-xs text-gray-400 truncate">
+                        {Number(coin.balance) === 0 ? "No balance" : `${Number(coin.balance).toLocaleString(undefined, { maximumFractionDigits: 6 })} ${coin.symbol}`}
+                      </span>
                     </div>
                     <div className="flex flex-col items-end">
-                      <span className="font-semibold text-gray-900 text-sm">${Number(coin.valueUsd).toLocaleString(undefined, { maximumFractionDigits: 4 })}</span>
+                      <span className="font-semibold text-gray-900 text-sm">
+                        ${Number(coin.valueUsd).toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                      </span>
                     </div>
                   </div>
                 ))}
