@@ -28,7 +28,7 @@ export interface JobOffer {
 
 export default function JobResult({ jobOffers }: { jobOffers: any[] }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-6 p-4 md:p-6 max-w-7xl mx-auto">
+    <div className="grid grid-cols-3 gap-5 md:gap-4 sm:gap-4 lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1">
       {jobOffers.map((jobOffer, index) => {
         if (jobOffer.in_saving_stage) return null;
         return (
@@ -71,48 +71,70 @@ export const JobResultModal = ({
 }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-8 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold">{jobOffer.title}</h2>
+      <div className="bg-white p-8 rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto mx-4 shadow-2xl">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">{jobOffer.title}</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-gray-400 hover:text-gray-600 transition-colors duration-200 p-2 hover:bg-gray-100 rounded-full"
           >
-            ✕
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
 
-        <div className="rich-text-content mt-4">
+        <div className="rich-text-content mt-4 prose prose-gray max-w-none">
           <div dangerouslySetInnerHTML={{ __html: jobOffer.jobDescription }} />
         </div>
 
-        <div className="mt-4">
-          <p className="text-gray-600">
-            <strong>Duration:</strong> {jobOffer.duration}
-          </p>
-          <p className="text-gray-600">
-            <strong>Location:</strong> {jobOffer.city}, {jobOffer.country}
-          </p>
-          <p className="text-gray-600">
-            <strong>Rate:</strong> {jobOffer.rate} {jobOffer.currency}
-          </p>
-          <p className="text-gray-600">
-            <strong>Type:</strong> {jobOffer.typeEngagement}
-          </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 p-4 bg-gray-50 rounded-lg">
+          <div className="space-y-3">
+            <div>
+              <span className="text-sm font-semibold text-gray-600">Duration:</span>
+              <p className="text-gray-900">{jobOffer.duration}</p>
+            </div>
+            <div>
+              <span className="text-sm font-semibold text-gray-600">Location:</span>
+              <p className="text-gray-900">{jobOffer.city}, {jobOffer.country}</p>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div>
+              <span className="text-sm font-semibold text-gray-600">Rate:</span>
+              <p className="text-gray-900 font-semibold">{jobOffer.rate} {jobOffer.currency}</p>
+            </div>
+            <div>
+              <span className="text-sm font-semibold text-gray-600">Type:</span>
+              <p className="text-gray-900">{jobOffer.typeEngagement}</p>
+            </div>
+          </div>
         </div>
 
-        <div className="mt-4">
-          <h3 className="font-semibold mb-2">Required Skills:</h3>
+        <div className="mt-6">
+          <h3 className="font-semibold mb-3 text-gray-900">Required Skills:</h3>
           <div className="flex flex-wrap gap-2">
             {jobOffer.skills.map((skill, index) => (
               <span
                 key={index}
-                className="bg-gray-100 px-3 py-1 rounded-full text-sm"
+                className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium border border-amber-200"
               >
                 {skill}
               </span>
             ))}
           </div>
+        </div>
+
+        <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-200">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200 font-medium"
+          >
+            Close
+          </button>
+          <button className="px-6 py-2 bg-[#FFC905] hover:bg-[#FF8C05] text-black rounded-lg transition-colors duration-200 font-medium shadow-sm">
+            Apply Now
+          </button>
         </div>
       </div>
     </div>
