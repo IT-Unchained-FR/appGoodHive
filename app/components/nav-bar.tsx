@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { CircleUserRound } from "lucide-react";
-import { useState } from "react";
+import { CircleUserRound, Wallet } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { useOkto } from "@okto_web3/react-sdk";
 import { googleLogout } from "@react-oauth/google";
-import { WalletConnect } from "./WalletConnect/WalletConnect";
 import { useDisconnect } from "wagmi";
+import { WalletPopup } from "./WalletConnect/WalletPopup";
 
 const commonLinks = [
   { href: "/talents/job-search", label: "Find a Job" },
@@ -33,10 +33,29 @@ export const NavBar = () => {
   const { disconnect } = useDisconnect();
   const oktoClient = useOkto();
   const [isOpenMobileMenu, setIsOpenMobileMenu] = useState(false);
+  const [isOpenWalletPopup, setIsOpenWalletPopup] = useState(false);
+  const walletButtonRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
 
   const loggedIn_user_id = Cookies.get("user_id");
+
+  // Close wallet popup when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (walletButtonRef.current && !walletButtonRef.current.contains(event.target as Node)) {
+        setIsOpenWalletPopup(false);
+      }
+    };
+
+    if (isOpenWalletPopup) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpenWalletPopup]);
 
   const links = pathname.startsWith("/talents")
     ? talentsLinks
@@ -118,7 +137,25 @@ export const NavBar = () => {
               </button>
             )}
 
-            <WalletConnect />
+            {/* Wallet Button - Only show when logged in */}
+            {loggedIn_user_id && (
+              <div className="relative" ref={walletButtonRef}>
+                <button
+                  className="relative group flex items-center justify-center px-6 py-2 bg-transparent border-2 border-[#FFC905] text-[#FFC905] rounded-full hover:bg-[#FFC905] hover:text-black transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-[#FFC905]/25 h-10"
+                  onClick={() => setIsOpenWalletPopup(!isOpenWalletPopup)}
+                >
+                  <Wallet 
+                    size={20} 
+                    className="mr-2 transition-all duration-300 group-hover:rotate-12" 
+                  />
+                  <span className="font-semibold text-sm sm:text-base">Wallet</span>
+                  {/* Glow effect on hover */}
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#FFC905] to-[#FF8C05] opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-sm"></div>
+                </button>
+                {/* Wallet Popup (refactored) */}
+                <WalletPopup isOpen={isOpenWalletPopup} anchorRef={walletButtonRef} onClose={() => setIsOpenWalletPopup(false)} />
+              </div>
+            )}
 
             {loggedIn_user_id && (
               <Link href="/user-profile">
