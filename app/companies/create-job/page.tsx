@@ -10,6 +10,7 @@ import {
   evmRawTransaction,
   getOrdersHistory,
   getAccount,
+  getPortfolio,
 } from "@okto_web3/react-sdk";
 
 import { AuthLayout } from "@/app/components/AuthLayout/AuthLayout";
@@ -23,12 +24,11 @@ import { uuidToUint128 } from "@/lib/blockchain/uint128Conversion";
 import { getJobBalance } from "@/app/lib/blockchain/contracts/GoodhiveJobContract";
 
 // Constants
-const AMOY_RPC_URL = "https://rpc-amoy.polygon.technology/";
-const AMOY_CAIP2_ID = "eip155:80002"; // Polygon Amoy
+const POLYGON_CAIP2_ID = "eip155:137"; // Polygon Amoy
 
 // Token Addresses on Amoy
 const AMOY_USDC_TOKEN_ADDRESS =
-  "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582" as `0x${string}`;
+  "0x2791bca1f2de4661ed88a30c99a7a9449aa84174" as `0x${string}`;
 const AMOY_DAI_TOKEN_ADDRESS =
   "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063" as `0x${string}`;
 const AMOY_AGEUR_TOKEN_ADDRESS =
@@ -36,8 +36,12 @@ const AMOY_AGEUR_TOKEN_ADDRESS =
 const AMOY_EURO_TOKEN_ADDRESS =
   "0x4d0B6356605e6FA95c025a6f6092ECcf0Cf4317b" as `0x${string}`;
 
+// OLD CONTRACT ADDRESS
+// const GOODHIVE_CONTRACT_ADDRESS =
+//   "0x76Dd1c2dd8F868665BEE369244Ee4590857d1BD3" as `0x${string}`;
+
 const GOODHIVE_CONTRACT_ADDRESS =
-  "0x76Dd1c2dd8F868665BEE369244Ee4590857d1BD3" as `0x${string}`;
+  "0x26781503b90309CFD6f63A090E49f8C526D71267" as `0x${string}`;
 
 // Token decimals mapping
 const TOKEN_DECIMALS: { [key: string]: number } = {
@@ -120,9 +124,9 @@ export default function CreateJob() {
 
       try {
         const accounts = await getAccount(oktoClient);
-        console.log(accounts, "accounts...");
+        console.log(accounts, "accounts...goodhive");
         const amoyAccount = accounts.find(
-          (account: any) => account.caipId === AMOY_CAIP2_ID,
+          (account: any) => account.caipId === POLYGON_CAIP2_ID,
         );
 
         console.log(amoyAccount, "amoyAccount");
@@ -138,6 +142,16 @@ export default function CreateJob() {
     };
 
     fetchUserWallet();
+  }, [oktoClient]);
+
+
+  useEffect(() => {
+    const fetchUserPortfolio = async () => {
+      if (!oktoClient) return;
+      const portfolio = await getPortfolio(oktoClient);
+      console.log(portfolio, "portfolio...goodhive");
+    };
+    fetchUserPortfolio();
   }, [oktoClient]);
 
   const handleCreateJob = async (jobId: string, amount: string) => {
@@ -203,7 +217,7 @@ export default function CreateJob() {
 
       console.log(approveData, "approveData");
       const approveTxParams = {
-        caip2Id: AMOY_CAIP2_ID,
+        caip2Id: POLYGON_CAIP2_ID,
         transaction: {
           from: walletAddress as `0x${string}`,
           to: selectedTokenAddress,
@@ -269,7 +283,7 @@ export default function CreateJob() {
 
       console.log(createJobData, "createJobData");
       const createJobTxParams = {
-        caip2Id: AMOY_CAIP2_ID,
+        caip2Id: POLYGON_CAIP2_ID,
         transaction: {
           from: walletAddress as `0x${string}`,
           to: GOODHIVE_CONTRACT_ADDRESS,
