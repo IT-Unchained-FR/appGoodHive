@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Wallet, Copy, Check } from "lucide-react";
 import { getPortfolio, useOkto } from "@okto_web3/react-sdk";
 
-
-
 // Placeholder avatar (rocket emoji)
 const avatar = "🚀";
 
@@ -13,31 +11,22 @@ export interface WalletPopupProps {
   onClose: () => void;
 }
 
-
-
 export const WalletPopup: React.FC<WalletPopupProps> = ({ isOpen, anchorRef, onClose }) => {
   const oktoClient = useOkto();
-  const [walletOptions, setWalletOptions] = useState<any[]>([
-    { name: "Okto Wallet", address: oktoClient?.userSWA || "" },
-  ]);
-  const [selectedWallet, setSelectedWallet] = useState(walletOptions[0]);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [portfolio, setPortfolio] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
+  const [copiedAddress, setCopiedAddress] = useState<boolean>(false);
+
+  const walletAddress = oktoClient?.userSWA || "";
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && walletAddress) {
       setLoading(true);
       setError(null);
-      getPortfolio(oktoClient, selectedWallet.address)
+      getPortfolio(oktoClient, walletAddress)
         .then((data: any) => {
           setPortfolio(data);
-          setWalletOptions([
-            { name: "Okto Wallet", address: oktoClient?.userSWA || "" },
-            ...data.groupTokens,
-          ]);
           setLoading(false);
         })
         .catch((err: unknown) => {
@@ -45,7 +34,15 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({ isOpen, anchorRef, onC
           setLoading(false);
         });
     }
-  }, [isOpen, selectedWallet]);
+  }, [isOpen, walletAddress, oktoClient]);
+
+  const handleCopyAddress = () => {
+    if (walletAddress) {
+      navigator.clipboard.writeText(walletAddress);
+      setCopiedAddress(true);
+      setTimeout(() => setCopiedAddress(false), 1500);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -77,64 +74,18 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({ isOpen, anchorRef, onC
       {/* Arrow */}
       <div className="absolute -top-2 right-10 w-0 h-0 border-l-8 border-r-8 border-b-8 border-transparent border-b-white"></div>
       <div className="p-6 pb-4 flex flex-col items-center min-h-[320px]">
-        {/* Wallet selector */}
-        <div className="flex items-center gap-3 w-full relative">
+        {/* Wallet header */}
+        <div className="flex items-center gap-3 w-full">
           <span className="w-10 h-10 rounded-full flex items-center justify-center text-2xl bg-[#ffeabf] border border-[#FFC905]">{avatar}</span>
           <div className="flex flex-col flex-1 min-w-0">
-            <button
-              className="flex items-center gap-1 font-semibold text-gray-900 text-base leading-tight focus:outline-none focus:ring-2 focus:ring-[#FFC905] rounded px-1"
-              onClick={() => setDropdownOpen((v) => !v)}
-              aria-haspopup="listbox"
-              aria-expanded={dropdownOpen}
-            >
-              <span className="truncate max-w-[120px]">{selectedWallet.name}</span>
-              <svg className={`w-4 h-4 ml-1 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="#FFC905" strokeWidth="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <span className="text-xs text-gray-400 font-mono truncate">{selectedWallet.address}</span>
-            {/* Dropdown */}
-            {dropdownOpen && (
-              <ul className="absolute left-0 top-12 w-48 bg-white border border-[#FFC905] rounded-xl shadow-lg z-10 mt-1 overflow-hidden">
-                {walletOptions.map((opt, idx) => (
-                  <li
-                    key={opt.address}
-                    className={`px-4 py-2 cursor-pointer hover:bg-[#FFF7D1] text-sm ${selectedWallet.address === opt.address ? 'bg-[#FFF7D1] font-bold' : ''}`}
-                    onClick={() => { setSelectedWallet(opt); setDropdownOpen(false); }}
-                  >
-                    <span className="block truncate">{opt.name}</span>
-                    <span className="block text-xs text-gray-400 font-mono truncate flex items-center gap-1">
-                      {opt.address && opt.address.length >= 10
-                        ? `${opt.address.slice(0, 6)}...${opt.address.slice(-4)}`
-                        : opt.address || "-"}
-                      <button
-                        type="button"
-                        className="ml-1 p-1 rounded hover:bg-[#FFC905]/20 transition"
-                        onClick={e => {
-                          e.stopPropagation();
-                          if (opt.address) {
-                            navigator.clipboard.writeText(opt.address);
-                            setCopiedAddress(opt.address);
-                            setTimeout(() => setCopiedAddress(null), 1500);
-                          }
-                        }}
-                        aria-label="Copy address"
-                        disabled={!opt.address}
-                      >
-                        {copiedAddress === opt.address ? (
-                          <Check size={14} className="text-green-500 transition-transform scale-110" />
-                        ) : (
-                          <Copy size={14} className="text-gray-400 hover:text-[#FFC905] transition-transform" />
-                        )}
-                      </button>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <span className="font-semibold text-gray-900 text-base leading-tight">GoodHive Wallet</span>
+            <span className="text-xs text-gray-400 font-mono truncate">{walletAddress}</span>
           </div>
           <button className="ml-auto p-1 rounded-full hover:bg-[#FFF7D1] transition" onClick={onClose} aria-label="Close wallet popup">
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12" stroke="#FFC905" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
         </div>
+
         {/* Loading Spinner */}
         {loading ? (
           <div className="flex flex-1 items-center justify-center w-full min-h-[180px]">
@@ -152,6 +103,35 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({ isOpen, anchorRef, onC
               <div className="text-[#A6A6A6] text-sm font-medium">Wallet Balance</div>
               <div className="text-4xl font-extrabold text-gray-900">{balance}</div>
             </div>
+
+            {/* Wallet Address Section */}
+            <div className="w-full mt-4 mb-2">
+              <div className="bg-[#FFF7D1] rounded-xl p-3 border border-[#FFC905]/30">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-gray-700">Wallet Address</span>
+                  <button
+                    type="button"
+                    className="p-1 rounded hover:bg-[#FFC905]/20 transition"
+                    onClick={handleCopyAddress}
+                    aria-label="Copy address"
+                    disabled={!walletAddress}
+                  >
+                    {copiedAddress ? (
+                      <Check size={14} className="text-green-500 transition-transform scale-110" />
+                    ) : (
+                      <Copy size={14} className="text-gray-500 hover:text-[#FFC905] transition-transform" />
+                    )}
+                  </button>
+                </div>
+                <div className="text-xs font-mono text-gray-600 break-all">
+                  {walletAddress || "No wallet address available"}
+                </div>
+                <div className="mt-2 text-xs text-gray-500 leading-relaxed">
+                  This is your default GoodHive wallet address. You can start transactions immediately upon account creation.
+                </div>
+              </div>
+            </div>
+
             {/* Actions */}
             <div className="flex gap-3 w-full mt-2 mb-4">
               <button className="flex-1 py-2 rounded-xl bg-white border border-[#FFC905] text-gray-900 font-semibold flex items-center justify-center gap-2 hover:bg-[#FFF7D1] transition">
@@ -163,6 +143,7 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({ isOpen, anchorRef, onC
                 Activity
               </button>
             </div>
+
             {/* Coins */}
             <div className="w-full mt-2">
               <div className="text-sm font-semibold text-gray-900 mb-2">Coins</div>
