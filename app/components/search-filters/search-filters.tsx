@@ -79,8 +79,8 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
   };
 
   return (
-    <div className="bg-white">
-      <div className="border-b border-gray-200 pb-6 mb-8">
+    <div className="bg-gradient-to-r from-amber-50/60 via-white to-yellow-50/40 backdrop-blur-sm">
+      <div className="border-b border-amber-200/60 pb-6 mb-8">
         <h1 className="my-6 font-bold text-2xl text-gray-900">{title}</h1>
         <div className="relative pt-12 space-y-6 w-full max-w-2xl">
           <div className="absolute w-full top-0 left-0">

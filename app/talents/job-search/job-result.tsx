@@ -6,6 +6,32 @@ import { BigNumberish } from "ethers";
 import { Card } from "../../components/card";
 import "@/app/styles/rich-text.css";
 
+// TypeScript interface for the actual job offer data from API
+export interface ApiJobOffer {
+  id: string;
+  title: string;
+  companyName: string;
+  posted_at: Date;
+  image_url: string;
+  country: string;
+  city: string;
+  budget: string;
+  projectType: "fixed" | "hourly";
+  currency?: string;
+  jobDescription: string;
+  skills: string[];
+  walletAddress?: string;
+  mentor: boolean;
+  recruiter: boolean;
+  escrowAmount: string | null;
+  user_id: string;
+  in_saving_stage: boolean;
+  duration: string;
+  typeEngagement: string;
+  published: boolean;
+}
+
+// Legacy interface for modal (keeping for compatibility)
 export interface JobOffer {
   id: number;
   type: string;
@@ -26,7 +52,7 @@ export interface JobOffer {
   walletAddress?: string;
 }
 
-export default function JobResult({ jobOffers }: { jobOffers: any[] }) {
+export default function JobResult({ jobOffers }: { jobOffers: ApiJobOffer[] }) {
   return (
     <div className="grid grid-cols-3 gap-5 md:gap-4 sm:gap-4 lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1">
       {jobOffers.map((jobOffer, index) => {
@@ -34,27 +60,27 @@ export default function JobResult({ jobOffers }: { jobOffers: any[] }) {
         return (
           <Card
             uniqueId={jobOffer?.user_id}
-            key={index}
-            jobId={jobOffer.id}
+            key={`job-${jobOffer.id}-${index}`}
+            jobId={Number(jobOffer.id) || index}
             type="company"
-            title={jobOffer.title}
-            postedBy={jobOffer.company_name}
+            title={jobOffer.title || "Job Position"}
+            postedBy={jobOffer.companyName || "Company"}
             postedOn={`Posted On ${moment(jobOffer.posted_at).format(
               "MMMM Do YYYY",
             )}`}
             image={jobOffer.image_url || "/img/company_img.png"}
-            country={jobOffer.country}
-            city={jobOffer.city}
-            budget={jobOffer.budget}
-            projectType={jobOffer.project_type}
-            currency={jobOffer.currency}
-            description={jobOffer.description}
-            skills={jobOffer.skills}
+            country={jobOffer.country || ""}
+            city={jobOffer.city || "Remote"}
+            budget={Number(jobOffer.budget) || 0}
+            projectType={jobOffer.projectType || "hourly"}
+            currency={jobOffer.currency || "€"}
+            description={jobOffer.jobDescription || "No description available for this position."}
+            skills={jobOffer.skills && Array.isArray(jobOffer.skills) ? jobOffer.skills : []}
             buttonText="Apply"
-            walletAddress={jobOffer.wallet_address}
-            mentor={jobOffer.mentor}
-            recruiter={jobOffer.recruiter}
-            escrowAmount={jobOffer.escrow_amount}
+            walletAddress={jobOffer.walletAddress}
+            mentor={jobOffer.mentor || false}
+            recruiter={jobOffer.recruiter || false}
+            escrowAmount={jobOffer.escrowAmount || "0"}
           />
         );
       })}
