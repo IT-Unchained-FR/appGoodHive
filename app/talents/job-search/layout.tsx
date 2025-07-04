@@ -3,7 +3,7 @@ import React from "react";
 
 export default function JobSearchLayout({ children }: React.PropsWithChildren) {
   return (
-    <main className="w-full">
+    <main className="container mx-auto">
       <SearchFilters />
 
       {children}
