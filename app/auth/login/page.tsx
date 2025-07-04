@@ -20,6 +20,8 @@ const Login = () => {
 
   const oktoClient = useOkto();
 
+  console.log(oktoClient, "oktoClient...goodhive");
+
   const slides = [
     {
       title: "Connect with every hive member",
@@ -85,6 +87,7 @@ const Login = () => {
   }, [currentSlide, isAnimating]);
 
   const handleGoogleLogin = async (credentialResponse: any) => {
+    console.log(credentialResponse, "credentialResponse...goodhive");
     // Clear all localStorage items
     localStorage.clear();
 

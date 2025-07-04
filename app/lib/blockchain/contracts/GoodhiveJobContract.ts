@@ -1,9 +1,9 @@
 import { ethers, BigNumber } from "ethers";
 import { uuidToUint128 } from "@/lib/blockchain/uint128Conversion";
 
-export const AMOY_RPC_URL = "https://rpc-amoy.polygon.technology/";
-export const GOODHIVE_CONTRACT_ADDRESS =
-  "0x76Dd1c2dd8F868665BEE369244Ee4590857d1BD3" as `0x${string}`;
+export const POLYGON_MAINNET_RPC_URL = "https://polygon-rpc.com/";
+export const GOODHIVE_CONTRACT_ADDRESS = process.env
+  .NEXT_PUBLIC_GOODHIVE_POLYGON_MAINNET_DEPLOYED_CONTRACT_ADDRESS as `0x${string}`;
 
 export const goodhiveJobContractAbi = [
   "function createJob(uint128 jobId, uint256 amount, address token) external",
@@ -27,14 +27,16 @@ export const createGoodhiveJobContract = (
 export const getJobBalance = async (jobId: string): Promise<number> => {
   try {
     // Create provider and contract instance
-    const provider = new ethers.providers.JsonRpcProvider(AMOY_RPC_URL);
+    const provider = new ethers.providers.JsonRpcProvider(POLYGON_MAINNET_RPC_URL);
     const contract = createGoodhiveJobContract(provider);
 
     // Convert jobId to uint128 format
-    const contractJobId = BigNumber.from(jobId);
+    const contractJobId = "7777777"
 
     // Fetch balance
     const balance = await contract.checkBalance(contractJobId);
+
+    console.log("balance of the job:", balance);
 
     // Convert from smallest unit (6 decimals for USDC) to human readable
     const formattedBalance = ethers.utils.formatUnits(balance, 6);
@@ -48,7 +50,7 @@ export const getJobBalance = async (jobId: string): Promise<number> => {
 // Get full job information
 export const getJobInfo = async (jobId: string) => {
   try {
-    const provider = new ethers.providers.JsonRpcProvider(AMOY_RPC_URL);
+    const provider = new ethers.providers.JsonRpcProvider(POLYGON_MAINNET_RPC_URL);
     const contract = createGoodhiveJobContract(provider);
 
     const contractJobId = BigNumber.from(jobId);

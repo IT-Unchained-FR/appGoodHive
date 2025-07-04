@@ -101,7 +101,6 @@ const ProfileStatus = ({ profileData }: { profileData: ProfileData }) => {
 
 export default function ProfilePage() {
   const oktoClient = useOkto();
-  console.log("Juhan...");
   // Static references
   const imageInputRef = useRef(null);
   const isInitialMount = useRef(true);
