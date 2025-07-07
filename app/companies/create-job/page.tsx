@@ -1,33 +1,32 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import Cookies from "js-cookie";
-import { BigNumber, ethers } from "ethers";
 import {
-  useOkto,
   evmRawTransaction,
-  getOrdersHistory,
   getAccount,
+  getOrdersHistory,
   getPortfolio,
+  useOkto,
 } from "@okto_web3/react-sdk";
+import { BigNumber, ethers } from "ethers";
+import Cookies from "js-cookie";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 import { AuthLayout } from "@/app/components/AuthLayout/AuthLayout";
+import { getJobBalance } from "@/app/lib/blockchain/contracts/GoodhiveJobContract";
 import { Loader } from "@components/loader";
-import { JobForm } from "./JobForm";
-import { JobModals } from "./JobModals";
-import LabelOption from "@interfaces/label-option";
 import { chains } from "@constants/chains";
 import { polygonMainnetTokens } from "@constants/token-list/polygon";
-import { uuidToUint128 } from "@/lib/blockchain/uint128Conversion";
-import { getJobBalance } from "@/app/lib/blockchain/contracts/GoodhiveJobContract";
+import LabelOption from "@interfaces/label-option";
+import { JobForm } from "./JobForm";
+import { JobModals } from "./JobModals";
 
 // Constants
-const POLYGON_CAIP2_ID = "eip155:137"; // Polygon Amoy
+const POLYGON_CAIP2_ID = "eip155:137";
 
 // Token Addresses on Amoy
-const AMOY_USDC_TOKEN_ADDRESS =
+const USDCE_TOKEN_ADDRESS =
   "0x2791bca1f2de4661ed88a30c99a7a9449aa84174" as `0x${string}`;
 const AMOY_DAI_TOKEN_ADDRESS =
   "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063" as `0x${string}`;
@@ -45,7 +44,7 @@ const GOODHIVE_CONTRACT_ADDRESS =
 
 // Token decimals mapping
 const TOKEN_DECIMALS: { [key: string]: number } = {
-  [AMOY_USDC_TOKEN_ADDRESS.toLowerCase()]: 6, // USDC has 6 decimals
+  [USDCE_TOKEN_ADDRESS.toLowerCase()]: 6, // USDC has 6 decimals
   [AMOY_DAI_TOKEN_ADDRESS.toLowerCase()]: 18, // DAI has 18 decimals
   [AMOY_AGEUR_TOKEN_ADDRESS.toLowerCase()]: 18, // agEUR has 18 decimals
   [AMOY_EURO_TOKEN_ADDRESS.toLowerCase()]: 18, // EURO has 18 decimals
@@ -102,6 +101,7 @@ export default function CreateJob() {
   const [jobImage, setJobImage] = useState<string | null>(null);
   const [transactionStatus, setTransactionStatus] = useState("");
   const [oktoJobId, setOktoJobId] = useState<string | null>(null);
+  const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string>("");
 
   const [jobServices, setJobServices] = useState({
@@ -129,7 +129,6 @@ export default function CreateJob() {
           (account: any) => account.caipId === POLYGON_CAIP2_ID,
         );
 
-        console.log(amoyAccount, "amoyAccount");
         if (amoyAccount) {
           setWalletAddress(amoyAccount?.address);
         } else {
@@ -154,6 +153,14 @@ export default function CreateJob() {
     fetchUserPortfolio();
   }, [oktoClient]);
 
+  const handleCancelTransaction = () => {
+    setTransactionCancelled(true);
+    setTransactionStatus("");
+    setOktoJobId(null);
+    setIsLoading(false);
+    toast.success("Transaction cancelled");
+  };
+
   const handleCreateJob = async (jobId: string, amount: string) => {
     // Generate a random uint128 job ID instead of using UUID conversion
     const contractJobId = jobId;
@@ -169,8 +176,46 @@ export default function CreateJob() {
       return false;
     }
 
+    // Reset cancellation state
+    setTransactionCancelled(false);
+
+    // Add timeout for the entire operation
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => {
+        reject(new Error("Operation timed out after 5 minutes"));
+      }, 5 * 60 * 1000); // 5 minutes timeout
+    });
+
+    // Add cancellation promise
+    const cancellationPromise = new Promise((_, reject) => {
+      const checkCancellation = () => {
+        if (transactionCancelled) {
+          reject(new Error("Transaction cancelled by user"));
+        } else {
+          setTimeout(checkCancellation, 1000);
+        }
+      };
+      checkCancellation();
+    });
+
+    try {
+      return await Promise.race([
+        performCreateJob(contractJobId, amount),
+        timeoutPromise,
+        cancellationPromise
+      ]);
+    } catch (error: any) {
+      console.error("Transaction failed:", error);
+      toast.error(`Transaction failed: ${error.message || "Unknown error"}`);
+      setTransactionStatus("");
+      setOktoJobId(null);
+      return false;
+    }
+  };
+
+  const performCreateJob = async (contractJobId: string, amount: string) => {
     // Determine which token to use based on selectedCurrency
-    let selectedTokenAddress = AMOY_USDC_TOKEN_ADDRESS; // Default to USDC
+    let selectedTokenAddress = USDCE_TOKEN_ADDRESS; // Default to USDC
     if (selectedCurrency?.value === "DAI") {
       selectedTokenAddress = AMOY_DAI_TOKEN_ADDRESS;
     } else if (selectedCurrency?.value === "agEUR") {
@@ -239,14 +284,28 @@ export default function CreateJob() {
       // Wait for approval confirmation
       let approvalConfirmed = false;
       let retries = 0;
-      const maxRetries = 200;
+      const maxRetries = 60; // Reduced from 200 to 60 (1 minute)
+      let consecutiveErrors = 0;
+      const maxConsecutiveErrors = 5;
 
       while (!approvalConfirmed && retries < maxRetries) {
+        // Check if transaction was cancelled
+        if (transactionCancelled) {
+          throw new Error("Transaction cancelled by user");
+        }
+
         try {
+          setTransactionStatus(
+            `Checking approval status... (${retries + 1}/${maxRetries})`,
+          );
+
           const orders = await getOrdersHistory(oktoClient, {
             intentId: approveOktoJobId,
             intentType: "RAW_TRANSACTION",
           });
+
+          // Reset consecutive errors on successful API call
+          consecutiveErrors = 0;
 
           if (orders?.[0]?.status === "SUCCESSFUL") {
             approvalConfirmed = true;
@@ -261,12 +320,21 @@ export default function CreateJob() {
           retries++;
         } catch (error: any) {
           console.error("Error checking approval status:", error);
-          throw new Error(`Failed to confirm approval: ${error.message}`);
+          consecutiveErrors++;
+
+          // If we have too many consecutive errors, break the loop
+          if (consecutiveErrors >= maxConsecutiveErrors) {
+            throw new Error(`Failed to confirm approval after ${maxConsecutiveErrors} consecutive errors: ${error.message}`);
+          }
+
+          // For API errors, continue trying but increment retries
+          retries++;
+          await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait longer after errors
         }
       }
 
       if (!approvalConfirmed) {
-        throw new Error("Approval transaction timed out after 100 seconds");
+        throw new Error(`Approval transaction timed out after ${maxRetries} seconds`);
       }
 
       // --- 3. Create Job Transaction ---
@@ -311,10 +379,8 @@ export default function CreateJob() {
       );
 
       return true;
-    } catch (e: any) {
-      console.error("Transaction failed:", e);
-      toast.error(`Transaction failed: ${e.message || "Unknown error"}`);
-      return false;
+    } catch (error: any) {
+      throw error; // Re-throw the error to be handled by the outer function
     }
   };
 
@@ -485,13 +551,13 @@ export default function CreateJob() {
       setDescription(data.description || "");
       setSelectedChain(
         chains[chains.findIndex((chain) => chain.value === data.chain)] ||
-          chains[0],
+        chains[0],
       );
       setSelectedCurrency(
         polygonMainnetTokens[
-          polygonMainnetTokens.findIndex(
-            (token) => token.value === data.currency,
-          )
+        polygonMainnetTokens.findIndex(
+          (token) => token.value === data.currency,
+        )
         ],
       );
     } catch (error) {
@@ -502,6 +568,7 @@ export default function CreateJob() {
   };
 
   const fetchJobBalance = async () => {
+    console.log(jobData, "jobData");
     if (!id || !jobData?.id) return;
 
     try {
@@ -532,6 +599,7 @@ export default function CreateJob() {
 
   useEffect(() => {
     if (jobData?.id) {
+      console.log("fetching job balance", jobData.id);
       fetchJobBalance();
     }
   }, [jobData?.id]);
@@ -625,7 +693,17 @@ export default function CreateJob() {
 
         {transactionStatus && (
           <div className="fixed top-0 left-0 right-0 bg-blue-500 text-white p-4 text-center z-50">
-            {transactionStatus}
+            <div className="flex items-center justify-between max-w-4xl mx-auto">
+              <div className="flex-1">
+                {transactionStatus}
+              </div>
+              <button
+                onClick={handleCancelTransaction}
+                className="ml-4 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded text-sm font-medium transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         )}
       </main>

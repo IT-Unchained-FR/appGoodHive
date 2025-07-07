@@ -18,16 +18,29 @@ export const useCreateJob = (props: Props) => {
 
   const waitForTransactionReceipt = async (txHash: `0x${string}`) => {
     if (!window.ethereum) return;
-    while (true) {
-      const receipt = await window.ethereum.request({
-        method: "eth_getTransactionReceipt",
-        params: [txHash],
-      });
-      if (receipt) {
-        return receipt;
+    
+    const maxRetries = 60; // Wait up to 60 seconds
+    let retries = 0;
+    
+    while (retries < maxRetries) {
+      try {
+        const receipt = await window.ethereum.request({
+          method: "eth_getTransactionReceipt",
+          params: [txHash],
+        });
+        if (receipt) {
+          return receipt;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        retries++;
+      } catch (error) {
+        console.error("Error checking transaction receipt:", error);
+        retries++;
+        await new Promise((resolve) => setTimeout(resolve, 2000));
       }
-      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
+    
+    throw new Error(`Transaction receipt not found after ${maxRetries} seconds`);
   };
 
   const requestApproval = async (amount: number) => {
