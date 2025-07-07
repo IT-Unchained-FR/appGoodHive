@@ -26,6 +26,7 @@ export default async function CompanyProfilePage(
 ) {
   const { userId } = context.params;
   const { id: jobId } = context.searchParams;
+  console.log(jobId, "jobId...goodhive");
   let profileData: any = {};
   try {
     profileData = await getCompanyData(userId);
@@ -126,7 +127,7 @@ export default async function CompanyProfilePage(
                   details={singleJob.description}
                   duration={singleJob.duration}
                   image={singleJob.image_url || "/img/company_img.png"}
-                  countryFlag={generateCountryFlag(singleJob.country)}
+                  countryFlag={generateCountryFlag(singleJob.country) as string}
                   city={singleJob.city}
                   country={singleJob.country}
                   typeEngagement={singleJob.typeEngagement}

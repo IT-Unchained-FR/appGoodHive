@@ -1,4 +1,52 @@
 {
   "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  // Editor appearance and behavior
+  "editor.fontLigatures": true,
+  "editor.fontSize": 15,
+  "editor.lineHeight": 22,
+  "editor.cursorSmoothCaretAnimation": "on",
+  "editor.cursorBlinking": "expand",
+  "editor.minimap.enabled": false,
+  "editor.renderWhitespace": "selection",
+  // File management
+  "files.autoSave": "onFocusChange",
+  "explorer.confirmDelete": false,
+  // Code formatting
+  "editor.formatOnSave": true,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "prettier.singleQuote": true,
+  "prettier.semi": false,
+  "prettier.trailingComma": "es5",
+  // Cursor AI settings
+  "cursor.experimental.tabAutocomplete": true,
+  "cursor.experimental.inlineChat": true,
+  "cursor.experimental.inlineChat.showOnStartup": false,
+  "cursor.experimental.realtimeCodeSuggestions": true,
+  // Code suggestions & Intellisense
+  "editor.suggestSelection": "first",
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": true
+  },
+  "editor.inlineSuggest.enabled": true,
+  // Terminal
+  "terminal.integrated.fontSize": 14,
+  "terminal.integrated.shellIntegration.enabled": true,
+  // Git
+  "git.enableSmartCommit": true,
+  "git.autofetch": true,
+  // TypeScript/JavaScript
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "javascript.suggest.autoImports": true,
+  "typescript.suggest.autoImports": true,
+  // Extensions behavior
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  // Cursor-specific AI tooling
+  "cursor.experimental.devtoolsEnabled": true
 }

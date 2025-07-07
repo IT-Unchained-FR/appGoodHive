@@ -1,5 +1,4 @@
-import { ethers, BigNumber } from "ethers";
-import { uuidToUint128 } from "@/lib/blockchain/uint128Conversion";
+import { BigNumber, ethers } from "ethers";
 
 export const POLYGON_MAINNET_RPC_URL = "https://polygon-rpc.com/";
 export const GOODHIVE_CONTRACT_ADDRESS = process.env
@@ -31,10 +30,9 @@ export const getJobBalance = async (jobId: string): Promise<number> => {
     const contract = createGoodhiveJobContract(provider);
 
     // Convert jobId to uint128 format
-    const contractJobId = "7777777"
 
     // Fetch balance
-    const balance = await contract.checkBalance(contractJobId);
+    const balance = await contract.checkBalance(jobId);
 
     console.log("balance of the job:", balance);
 

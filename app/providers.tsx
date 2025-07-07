@@ -10,7 +10,7 @@ interface ProvidersProps {
 export function Providers({ children }: ProvidersProps) {
   console.log(process.env.NEXT_PUBLIC_ENVIRONMENT, "process.env.NEXT_PUBLIC_ENVIRONMENT...goodhive");
   return (
-    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
+    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID as string}>
       <OktoProvider
         config={{
           environment: process.env.NEXT_PUBLIC_ENVIRONMENT as "sandbox" | "production", // Change to "production" for production environment
