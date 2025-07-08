@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { Wallet, Copy, Check } from "lucide-react";
-import { getPortfolio, useOkto } from "@okto_web3/react-sdk";
+import { getAccount, getPortfolio, useOkto } from "@okto_web3/react-sdk";
+import { Check, Copy, Wallet } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
 
 // Placeholder avatar (rocket emoji)
 const avatar = "🚀";
@@ -17,9 +18,34 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({ isOpen, anchorRef, onC
   const [portfolio, setPortfolio] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [copiedAddress, setCopiedAddress] = useState<boolean>(false);
+  const [walletAddress, setWalletAddress] = useState<string>("");
 
-  const walletAddress = oktoClient?.userSWA || "";
+  const POLYGON_CAIP2_ID = "eip155:137";
 
+
+  useEffect(() => {
+    const fetchUserWallet = async () => {
+      if (!oktoClient) return;
+
+      try {
+        const accounts = await getAccount(oktoClient);
+        console.log(accounts, "accounts...goodhive");
+        const polygonAccount = accounts.find(
+          (account: any) => account.caipId === POLYGON_CAIP2_ID,
+        );
+        if (polygonAccount) {
+          setWalletAddress(polygonAccount?.address);
+        } else {
+          toast.error("No wallet found for Polygon network");
+        }
+      } catch (error: any) {
+        console.error("Error fetching user wallet:", error);
+        toast.error(`Failed to fetch wallet address: ${error.message}`);
+      }
+    };
+
+    fetchUserWallet();
+  }, [oktoClient]);
   useEffect(() => {
     if (isOpen && walletAddress) {
       setLoading(true);
@@ -73,13 +99,13 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({ isOpen, anchorRef, onC
 
   const coins = Array.isArray(portfolio?.groupTokens) && portfolio.groupTokens.length > 0
     ? portfolio.groupTokens.map((token: any) => ({
-        icon: token.tokenImage,
-        name: token.name,
-        symbol: token.symbol,
-        network: token.networkName,
-        balance: token.balance,
-        valueUsd: token.holdingsPriceUsdt,
-      }))
+      icon: token.tokenImage,
+      name: token.name,
+      symbol: token.symbol,
+      network: token.networkName,
+      balance: token.balance,
+      valueUsd: token.holdingsPriceUsdt,
+    }))
     : defaultCoins;
 
   return (
@@ -98,11 +124,11 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({ isOpen, anchorRef, onC
         <div className="flex items-center gap-3 w-full">
           <span className="w-10 h-10 rounded-full flex items-center justify-center text-2xl bg-[#ffeabf] border border-[#FFC905]">{avatar}</span>
           <div className="flex flex-col flex-1 min-w-0">
-            <span className="font-semibold text-gray-900 text-base leading-tight">GoodHive Wallet</span>
+            <span className="font-semibold text-gray-900 text-base leading-tight">My GoodHive Wallet</span>
             <span className="text-xs text-gray-400 font-mono truncate">{walletAddress}</span>
           </div>
           <button className="ml-auto p-1 rounded-full hover:bg-[#FFF7D1] transition" onClick={onClose} aria-label="Close wallet popup">
-            <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12" stroke="#FFC905" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12" stroke="#FFC905" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
         </div>
 
@@ -155,11 +181,11 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({ isOpen, anchorRef, onC
             {/* Actions */}
             <div className="flex gap-3 w-full mt-2 mb-4">
               <button className="flex-1 py-2 rounded-xl bg-white border border-[#FFC905] text-gray-900 font-semibold flex items-center justify-center gap-2 hover:bg-[#FFF7D1] transition">
-                <span className="inline-block"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7" stroke="#FFC905" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
+                <span className="inline-block"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7" stroke="#FFC905" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
                 Send
               </button>
               <button className="flex-1 py-2 rounded-xl bg-[#FFC905] text-black font-semibold flex items-center justify-center gap-2 hover:bg-[#FF8C05] transition">
-                <span className="inline-block"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 3v18m9-9H3" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
+                <span className="inline-block"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 3v18m9-9H3" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
                 Activity
               </button>
             </div>
