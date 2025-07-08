@@ -179,7 +179,7 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({ isOpen, anchorRef, onC
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3 w-full mt-2 mb-4">
+            {/* <div className="flex gap-3 w-full mt-2 mb-4">
               <button className="flex-1 py-2 rounded-xl bg-white border border-[#FFC905] text-gray-900 font-semibold flex items-center justify-center gap-2 hover:bg-[#FFF7D1] transition">
                 <span className="inline-block"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7" stroke="#FFC905" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
                 Send
@@ -188,7 +188,7 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({ isOpen, anchorRef, onC
                 <span className="inline-block"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 3v18m9-9H3" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
                 Activity
               </button>
-            </div>
+            </div> */}
 
             {/* Coins */}
             <div className="w-full mt-2">
