@@ -1,12 +1,9 @@
-import { FormEvent } from "react";
-import dynamic from "next/dynamic";
-import "react-quill/dist/quill.snow.css";
-import "@/app/styles/rich-text.css";
-import { Tooltip } from "@nextui-org/tooltip";
-import { SelectInput } from "@components/select-input";
-import { AutoSuggestInput } from "@components/autosuggest-input";
-import { ToggleButton } from "@components/toggle-button";
 import ProfileImageUpload from "@/app/components/profile-image-upload";
+import "@/app/styles/rich-text.css";
+import { calculateJobCreateFees } from "@/app/utils/calculate-job-create-fees";
+import { AutoSuggestInput } from "@components/autosuggest-input";
+import { SelectInput } from "@components/select-input";
+import { ToggleButton } from "@components/toggle-button";
 import { chains } from "@constants/chains";
 import {
   createJobServices,
@@ -22,7 +19,11 @@ import {
 } from "@constants/token-list/index.js";
 import { polygonMainnetTokens } from "@constants/token-list/polygon";
 import LabelOption from "@interfaces/label-option";
+import { Tooltip } from "@nextui-org/tooltip";
+import dynamic from "next/dynamic";
+import { useState } from "react";
 import { toast } from "react-hot-toast";
+import "react-quill/dist/quill.snow.css";
 
 // Dynamically import React Quill to prevent server-side rendering issues
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -106,6 +107,17 @@ export const JobForm = ({
   handleCancelJob,
   handleSaveJob,
 }: JobFormProps) => {
+  const [isCommissionExpanded, setIsCommissionExpanded] = useState(false);
+
+  // Calculate total percentage of selected services
+  const getTotalPercentage = () => {
+    let total = 0;
+    if (jobServices.talent) total += 10;
+    if (jobServices.recruiter) total += 8;
+    if (jobServices.mentor) total += 12;
+    return total;
+  };
+
   const onJobServicesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const updatedServices = {
       ...jobServices,
@@ -217,9 +229,9 @@ export const JobForm = ({
               options={typeEngagements}
               defaultValue={
                 typeEngagements[
-                  typeEngagements.findIndex(
-                    (type) => type.value === jobData?.typeEngagement,
-                  )
+                typeEngagements.findIndex(
+                  (type) => type.value === jobData?.typeEngagement,
+                )
                 ]
               }
             />
@@ -234,7 +246,7 @@ export const JobForm = ({
               options={jobTypes}
               defaultValue={
                 jobTypes[
-                  jobTypes.findIndex((type) => type.value === jobData?.jobType)
+                jobTypes.findIndex((type) => type.value === jobData?.jobType)
                 ]
               }
             />
@@ -330,9 +342,9 @@ export const JobForm = ({
               options={projectDuration}
               defaultValue={
                 projectDuration[
-                  projectDuration.findIndex(
-                    (type) => type.value === jobData?.duration,
-                  )
+                projectDuration.findIndex(
+                  (type) => type.value === jobData?.duration,
+                )
                 ]
               }
             />
@@ -349,9 +361,9 @@ export const JobForm = ({
               options={projectTypes}
               defaultValue={
                 projectTypes[
-                  projectTypes.findIndex(
-                    (type) => type.value === jobData?.projectType,
-                  )
+                projectTypes.findIndex(
+                  (type) => type.value === jobData?.projectType,
+                )
                 ]
               }
             />
@@ -382,6 +394,108 @@ export const JobForm = ({
           ) : null}
         </div>
 
+        {/* GoodHive Commission Section */}
+        <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div
+            className="flex items-center justify-between cursor-pointer"
+            onClick={() => setIsCommissionExpanded(!isCommissionExpanded)}
+          >
+            <div className="flex items-center gap-3">
+              <h3 className="text-lg font-semibold text-gray-800">GoodHive Commission Breakdown</h3>
+              <div className="flex items-center gap-1">
+                <span className="text-sm text-gray-600">Total:</span>
+                <span className="text-sm font-bold text-yellow-600">{getTotalPercentage()}%</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-sm text-gray-600">Total Commission</p>
+                <p className="text-xl font-bold text-yellow-600">
+                  {budget && Number(budget) > 0 ? (
+                    selectedCurrency?.label ?
+                      `${calculateJobCreateFees(projectType, budget, jobServices)} ${selectedCurrency.label}` :
+                      `${calculateJobCreateFees(projectType, budget, jobServices)} ${jobData?.currency || 'USDC'}`
+                  ) : (
+                    "Enter budget to see fees"
+                  )}
+                </p>
+              </div>
+              <div className={`transform transition-transform duration-200 ${isCommissionExpanded ? 'rotate-180' : ''}`}>
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {isCommissionExpanded && (
+            <div className="mt-4 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {jobServices.talent && (
+                  <div className="bg-white p-3 rounded border">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700">Talent Selection</span>
+                      <span className="text-sm font-bold text-green-600">10%</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Self-selection fee</p>
+                    {budget && Number(budget) > 0 && (
+                      <p className="text-sm font-semibold mt-1">
+                        {(Number(budget) * 0.1).toFixed(2)} {selectedCurrency?.label || jobData?.currency || 'USDC'}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {jobServices.recruiter && (
+                  <div className="bg-white p-3 rounded border">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700">Recruiter Service</span>
+                      <span className="text-sm font-bold text-blue-600">8%</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Talent curation fee</p>
+                    {budget && Number(budget) > 0 && (
+                      <p className="text-sm font-semibold mt-1">
+                        {(Number(budget) * 0.08).toFixed(2)} {selectedCurrency?.label || jobData?.currency || 'USDC'}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {jobServices.mentor && (
+                  <div className="bg-white p-3 rounded border">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700">Mentor Service</span>
+                      <span className="text-sm font-bold text-purple-600">12%</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Technical mentoring fee</p>
+                    {budget && Number(budget) > 0 && (
+                      <p className="text-sm font-semibold mt-1">
+                        {(Number(budget) * 0.12).toFixed(2)} {selectedCurrency?.label || jobData?.currency || 'USDC'}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {!jobServices.talent && !jobServices.recruiter && !jobServices.mentor && (
+                  <div className="col-span-full text-center py-4">
+                    <p className="text-gray-500">Select at least one service above to see commission breakdown</p>
+                  </div>
+                )}
+              </div>
+
+              {budget && Number(budget) > 0 && (jobServices.talent || jobServices.recruiter || jobServices.mentor) && (
+                <div className="mt-3 p-2 bg-gray-100 rounded text-center">
+                  <p className="text-xs text-gray-600">
+                    Total Project Cost: <span className="font-semibold">
+                      {(Number(budget) + Number(calculateJobCreateFees(projectType, budget, jobServices) || 0)).toFixed(2)} {selectedCurrency?.label || jobData?.currency || 'USDC'}
+                    </span>
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         <div className="flex gap-4 mt-4 sm:flex-col">
           <div className="flex-1">
             <SelectInput
@@ -394,7 +508,7 @@ export const JobForm = ({
               options={chains}
               defaultValue={
                 chains[
-                  chains.findIndex((type) => type.value === jobData?.chain)
+                chains.findIndex((type) => type.value === jobData?.chain)
                 ] || chains[0]
               }
             />
@@ -418,9 +532,9 @@ export const JobForm = ({
               }
               defaultValue={
                 polygonMainnetTokens[
-                  polygonMainnetTokens.findIndex(
-                    (token) => token.value === jobData?.currency,
-                  )
+                polygonMainnetTokens.findIndex(
+                  (token) => token.value === jobData?.currency,
+                )
                 ]
               }
             />
@@ -434,7 +548,7 @@ export const JobForm = ({
                 className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
                 type="button"
                 onClick={onManageFundsClick}
-                // disabled={isLoading || !companyData?.approved}
+              // disabled={isLoading || !companyData?.approved}
               >
                 Manage Funds
               </button>
