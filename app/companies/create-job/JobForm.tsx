@@ -1,6 +1,6 @@
 import ProfileImageUpload from "@/app/components/profile-image-upload";
 import "@/app/styles/rich-text.css";
-import { calculateJobCreateFees } from "@/app/utils/calculate-job-create-fees";
+import { calculateJobCreateFees, getBudgetLabel, getFeeDisplaySuffix } from "@/app/utils/calculate-job-create-fees";
 import { AutoSuggestInput } from "@components/autosuggest-input";
 import { SelectInput } from "@components/select-input";
 import { ToggleButton } from "@components/toggle-button";
@@ -413,10 +413,10 @@ export const JobForm = ({
                 <p className="text-xl font-bold text-yellow-600">
                   {budget && Number(budget) > 0 ? (
                     selectedCurrency?.label ?
-                      `${calculateJobCreateFees(projectType, budget, jobServices)} ${selectedCurrency.label}` :
-                      `${calculateJobCreateFees(projectType, budget, jobServices)} ${jobData?.currency || 'USDC'}`
+                      `${calculateJobCreateFees(projectType, budget, jobServices)} ${selectedCurrency.label}${getFeeDisplaySuffix(projectType)}` :
+                      `${calculateJobCreateFees(projectType, budget, jobServices)} ${jobData?.currency || 'USDC'}${getFeeDisplaySuffix(projectType)}`
                   ) : (
-                    "Enter budget to see fees"
+                    `Enter ${getBudgetLabel(projectType).toLowerCase()} to see fees`
                   )}
                 </p>
               </div>
@@ -440,7 +440,7 @@ export const JobForm = ({
                     <p className="text-xs text-gray-500 mt-1">Self-selection fee</p>
                     {budget && Number(budget) > 0 && (
                       <p className="text-sm font-semibold mt-1">
-                        {(Number(budget) * 0.1).toFixed(2)} {selectedCurrency?.label || jobData?.currency || 'USDC'}
+                        {(Number(budget) * 0.1).toFixed(2)} {selectedCurrency?.label || jobData?.currency || 'USDC'}{getFeeDisplaySuffix(projectType)}
                       </p>
                     )}
                   </div>
@@ -455,7 +455,7 @@ export const JobForm = ({
                     <p className="text-xs text-gray-500 mt-1">Talent curation fee</p>
                     {budget && Number(budget) > 0 && (
                       <p className="text-sm font-semibold mt-1">
-                        {(Number(budget) * 0.08).toFixed(2)} {selectedCurrency?.label || jobData?.currency || 'USDC'}
+                        {(Number(budget) * 0.08).toFixed(2)} {selectedCurrency?.label || jobData?.currency || 'USDC'}{getFeeDisplaySuffix(projectType)}
                       </p>
                     )}
                   </div>
@@ -470,7 +470,7 @@ export const JobForm = ({
                     <p className="text-xs text-gray-500 mt-1">Technical mentoring fee</p>
                     {budget && Number(budget) > 0 && (
                       <p className="text-sm font-semibold mt-1">
-                        {(Number(budget) * 0.12).toFixed(2)} {selectedCurrency?.label || jobData?.currency || 'USDC'}
+                        {(Number(budget) * 0.12).toFixed(2)} {selectedCurrency?.label || jobData?.currency || 'USDC'}{getFeeDisplaySuffix(projectType)}
                       </p>
                     )}
                   </div>
@@ -486,9 +486,22 @@ export const JobForm = ({
               {budget && Number(budget) > 0 && (jobServices.talent || jobServices.recruiter || jobServices.mentor) && (
                 <div className="mt-3 p-2 bg-gray-100 rounded text-center">
                   <p className="text-xs text-gray-600">
-                    Total Project Cost: <span className="font-semibold">
-                      {(Number(budget) + Number(calculateJobCreateFees(projectType, budget, jobServices) || 0)).toFixed(2)} {selectedCurrency?.label || jobData?.currency || 'USDC'}
-                    </span>
+                    {projectType?.value === "fixed" ? (
+                      <>
+                        Total Project Cost: <span className="font-semibold">
+                          {(Number(budget) + Number(calculateJobCreateFees(projectType, budget, jobServices) || 0)).toFixed(2)} {selectedCurrency?.label || jobData?.currency || 'USDC'}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        Total Rate: <span className="font-semibold">
+                          {(Number(budget) + Number(calculateJobCreateFees(projectType, budget, jobServices) || 0)).toFixed(2)} {selectedCurrency?.label || jobData?.currency || 'USDC'}/hr
+                        </span>
+                        <span className="block text-xs text-gray-500 mt-1">
+                          ({getBudgetLabel(projectType)}: {Number(budget).toFixed(2)} + Commission: {calculateJobCreateFees(projectType, budget, jobServices)} per hour)
+                        </span>
+                      </>
+                    )}
                   </p>
                 </div>
               )}
