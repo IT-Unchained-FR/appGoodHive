@@ -1,17 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Cookies from "js-cookie";
-import toast from "react-hot-toast";
-import Link from "next/link";
-import Image from "next/image";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
-import styles from "./login.module.scss";
-import { useOkto, getAccount } from "@okto_web3/react-sdk";
-import { GoogleLogin, useGoogleLogin } from "@react-oauth/google";
 import OktoOTPLogin from "@/app/components/OktoOTPLogin/OktoOTPLogin";
-import { checkUserLoginMethod } from "@/lib/auth/checkUserLoginMethod";
 import { WalletConnect } from "@/app/components/WalletConnect/WalletConnect";
+import { checkUserLoginMethod } from "@/lib/auth/checkUserLoginMethod";
+import { useOkto } from "@okto_web3/react-sdk";
+import { GoogleLogin } from "@react-oauth/google";
+import Cookies from "js-cookie";
+import Image from "next/image";
+import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import styles from "./login.module.scss";
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -242,7 +240,7 @@ const Login = () => {
 
           <OktoOTPLogin />
 
-          <div className={styles.divider}>
+          {/* <div className={styles.divider}>
             <span>or continue with your wallet</span>
           </div>
 
@@ -252,7 +250,7 @@ const Login = () => {
               If you've created an account using a wallet before, connect to
               find your profile.
             </p>
-          </div>
+          </div> */}
         </div>
       </div>
 
