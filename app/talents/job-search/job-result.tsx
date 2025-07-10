@@ -1,10 +1,9 @@
 "use client";
 import moment from "moment";
 
-import { BigNumberish } from "ethers";
 
-import { Card } from "../../components/card";
 import "@/app/styles/rich-text.css";
+import { Card } from "../../components/card";
 
 // TypeScript interface for the actual job offer data from API
 export interface ApiJobOffer {
@@ -23,7 +22,7 @@ export interface ApiJobOffer {
   walletAddress?: string;
   mentor: boolean;
   recruiter: boolean;
-  escrowAmount: string | null;
+  escrowAmount: boolean;
   user_id: string;
   in_saving_stage: boolean;
   duration: string;
@@ -48,7 +47,7 @@ export interface JobOffer {
   currency: string;
   skills: string[];
   buttonText: string;
-  escrowAmount: string;
+  escrowAmount: boolean;
   walletAddress?: string;
 }
 
@@ -80,7 +79,7 @@ export default function JobResult({ jobOffers }: { jobOffers: ApiJobOffer[] }) {
             walletAddress={jobOffer.walletAddress}
             mentor={jobOffer.mentor || false}
             recruiter={jobOffer.recruiter || false}
-            escrowAmount={jobOffer.escrowAmount || "0"}
+            escrowAmount={jobOffer.escrowAmount || false}
           />
         );
       })}
