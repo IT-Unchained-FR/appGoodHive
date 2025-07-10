@@ -32,3 +32,17 @@ export const calculateJobCreateFees = (
 
   return totalFees.toFixed(2);
 };
+
+// New function to get the appropriate fee display text based on project type
+export const getFeeDisplaySuffix = (projectType: LabelOption | null) => {
+  if (!projectType) return "";
+
+  return projectType.value === "fixed" ? "" : "/hr";
+};
+
+// New function to get the appropriate budget label for commission display
+export const getBudgetLabel = (projectType: LabelOption | null) => {
+  if (!projectType) return "Budget";
+
+  return projectType.value === "fixed" ? "Total Budget" : "Hourly Rate";
+};
