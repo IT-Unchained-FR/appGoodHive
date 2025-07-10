@@ -1,12 +1,11 @@
 "use client";
 // opengraph-image
+import "@/app/styles/rich-text.css";
 import Image from "next/image";
 import Link from "next/link";
-import "@/app/styles/rich-text.css";
 
-import type { FC } from "react";
-import { Button } from "@components/button";
 import { generateCountryFlag } from "@utils/generate-country-flag";
+import type { FC } from "react";
 import LastActiveStatus from "./LastActiveStatus";
 
 interface Props {
@@ -25,7 +24,7 @@ interface Props {
   description: string;
   skills: string[];
   buttonText: string;
-  escrowAmount?: string;
+  escrowAmount?: boolean;
   escrowCurrency?: string;
   walletAddress?: string;
   mentor?: boolean;
@@ -91,8 +90,8 @@ export const Card: FC<Props> = ({
 
   // Flag & Escrow Icon - ensure all cards have flags
   const countryFlag = generateCountryFlag(country);
-  const hasEscrow = jobId && escrowAmount && Number(escrowAmount) > 0;
-  
+  const hasEscrow = jobId !== undefined && escrowAmount;
+
   // Skills - show max 3 skills for consistent sizing
   const displaySkills = skills.slice(0, 3);
   const hasMoreSkills = skills.length > 3;
@@ -105,7 +104,7 @@ export const Card: FC<Props> = ({
       {/* Honey comb pattern background accent */}
       <div className="absolute top-0 right-0 w-20 h-20 opacity-20 pointer-events-none">
         <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full text-yellow-400 transform rotate-12">
-          <path d="M17.5 3.5L22 6.5v6l-4.5 3L13 12.5v-6l4.5-3z M6.5 8.5L11 11.5v6l-4.5 3L2 17.5v-6l4.5-3z"/>
+          <path d="M17.5 3.5L22 6.5v6l-4.5 3L13 12.5v-6l4.5-3z M6.5 8.5L11 11.5v6l-4.5 3L2 17.5v-6l4.5-3z" />
         </svg>
       </div>
 
@@ -113,18 +112,14 @@ export const Card: FC<Props> = ({
       {shouldShowBadge && (
         <div className="absolute top-4 right-4 z-10">
           {hasEscrow ? (
-            <div className="flex items-center gap-1 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-full px-3 py-1.5 shadow-sm backdrop-blur-sm">
-              <svg className="w-3.5 h-3.5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-              </svg>
-              <span className="text-xs font-semibold text-green-700">🍯 Secured</span>
+            <div className="flex items-center gap-1.5 bg-green-50/90 border border-green-200/60 rounded-lg px-2.5 py-1 shadow-sm backdrop-blur-sm">
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+              <span className="text-xs font-medium text-green-700">Secured</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-full px-3 py-1.5 shadow-sm backdrop-blur-sm">
-              <svg className="w-3.5 h-3.5 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clipRule="evenodd" />
-              </svg>
-              <span className="text-xs font-semibold text-amber-700">🐝 Open</span>
+            <div className="flex items-center gap-1.5 bg-amber-50/90 border border-amber-200/60 rounded-lg px-2.5 py-1 shadow-sm backdrop-blur-sm">
+              <div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
+              <span className="text-xs font-medium text-amber-700">Open</span>
             </div>
           )}
         </div>
@@ -148,7 +143,7 @@ export const Card: FC<Props> = ({
               🐝
             </div>
           </div>
-          
+
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
@@ -162,7 +157,7 @@ export const Card: FC<Props> = ({
                   {croppedCompanyName}
                 </Link>
               </div>
-              
+
               <div className="flex items-center gap-2 ml-2 flex-shrink-0">
                 {/* Always show flag or placeholder */}
                 {countryFlag ? (
@@ -176,7 +171,7 @@ export const Card: FC<Props> = ({
                 )}
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3 mt-2">
               <span className="text-sm text-gray-500 truncate">{city || "Remote"}</span>
               {rate && (
@@ -230,7 +225,7 @@ export const Card: FC<Props> = ({
                 {postedOn}
               </span>
             )}
-            
+
             {/* Open to status */}
             <div className="flex items-center gap-1 text-xs">
               {jobId ? (
