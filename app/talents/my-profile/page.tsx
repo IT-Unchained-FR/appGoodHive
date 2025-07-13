@@ -1,30 +1,27 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { toast } from "react-hot-toast";
-import { uploadFileToBucket } from "@/app/utils/upload-file-bucket";
-import Image from "next/image";
-import { Button } from "@/app/components/button";
-import { useRouter } from "next/navigation";
-import { ToggleButton } from "@/app/components/toggle-button";
-import Link from "next/link";
-import { resumeUploadSizeLimit } from "./constants";
-import { countries } from "@/app/constants/countries";
 import { AutoSuggestInput } from "@/app/components/autosuggest-input";
-import { skills } from "@/app/constants/skills";
-import { createJobServices } from "@/app/constants/common";
-import { socialLinks } from "./constant";
-import { SocialLink } from "./social-link";
-import DragAndDropFile from "@/app/components/drag-and-drop-file";
-import Cookies from "js-cookie";
-import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/honey-bee-spinner";
+import ProfileImageUpload from "@/app/components/profile-image-upload";
 import { ReferralSection } from "@/app/components/referral/referral-section";
 import { SearchableSelectInput } from "@/app/components/searchable-select-input";
-import ProfileImageUpload from "@/app/components/profile-image-upload";
+import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/honey-bee-spinner";
+import { ToggleButton } from "@/app/components/toggle-button";
+import { createJobServices } from "@/app/constants/common";
+import { countries } from "@/app/constants/countries";
+import { skills } from "@/app/constants/skills";
+import { uploadFileToBucket } from "@/app/utils/upload-file-bucket";
+import { useOkto } from "@okto_web3/react-sdk";
+import Cookies from "js-cookie";
 import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "react-hot-toast";
 import "react-quill/dist/quill.snow.css";
+import { socialLinks } from "./constant";
+import { resumeUploadSizeLimit } from "./constants";
 import { LinkedInImportModal } from "./linkedin-import-modal";
-import { useOkto, getAccount } from "@okto_web3/react-sdk";
+import { SocialLink } from "./social-link";
 
 // Dynamically import React Quill to prevent server-side rendering issues
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -832,9 +829,9 @@ export default function ProfilePage() {
                 placeholder="Search for a country..."
                 defaultValue={
                   countries[
-                    countries.findIndex(
-                      (country) => country.value === profileData?.country,
-                    )
+                  countries.findIndex(
+                    (country) => country.value === profileData?.country,
+                  )
                   ]
                 }
               />
