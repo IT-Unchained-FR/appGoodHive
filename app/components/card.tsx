@@ -64,10 +64,10 @@ export const Card: FC<Props> = ({
 
 
   // Rate formatting
-  const rate =
-    budget && currency
-      ? `${budget}${currency}/${projectType === "fixed" ? "Fixed" : "hr"}`
-      : null;
+  // const rate =
+  //   budget && currency
+  //     ? `${budget}${currency}/${projectType === "fixed" ? "Fixed" : "hr"}`
+  //     : null;
 
   // Title and description with consistent truncation
   const croppedTitle =
@@ -184,14 +184,14 @@ export const Card: FC<Props> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-3 mt-2">
+            {/* <div className="flex items-center gap-3 mt-2">
               <span className="text-sm text-gray-500 truncate">{city || "Remote"}</span>
               {rate && (
                 <span className="text-xs font-semibold text-[#FFC905] bg-gradient-to-r from-[#FFC905]/15 to-amber-200/60 px-2 py-0.5 rounded-lg border border-[#FFC905]/30 shadow-sm">
                   {rate}
                 </span>
               )}
-            </div>
+            </div> */}
           </div>
         </div>
 
