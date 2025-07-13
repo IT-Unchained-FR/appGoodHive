@@ -7,9 +7,11 @@ import Link from "next/link";
 import { generateCountryFlag } from "@utils/generate-country-flag";
 import type { FC } from "react";
 import LastActiveStatus from "./LastActiveStatus";
+import { OptimizedJobBalance } from "./OptimizedJobBalance";
 
 interface Props {
   jobId?: number;
+  blockId?: number;
   uniqueId: string;
   type: string;
   title: string;
@@ -37,6 +39,7 @@ interface Props {
 
 export const Card: FC<Props> = ({
   jobId,
+  blockId,
   uniqueId,
   title,
   postedBy,
@@ -48,7 +51,7 @@ export const Card: FC<Props> = ({
   skills,
   budget,
   projectType,
-  currency = "$",
+  currency = "",
   escrowAmount,
   walletAddress,
   mentor,
@@ -58,6 +61,8 @@ export const Card: FC<Props> = ({
   availability,
   type,
 }) => {
+
+
   // Rate formatting
   const rate =
     budget && currency
@@ -110,7 +115,7 @@ export const Card: FC<Props> = ({
 
       {/* Status Badge - Always show for job cards */}
       {shouldShowBadge && (
-        <div className="absolute top-4 right-4 z-10">
+        <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
           {hasEscrow ? (
             <div className="flex items-center gap-1.5 bg-green-50/90 border border-green-200/60 rounded-lg px-2.5 py-1 shadow-sm backdrop-blur-sm">
               <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
@@ -122,6 +127,13 @@ export const Card: FC<Props> = ({
               <span className="text-xs font-medium text-amber-700">Open</span>
             </div>
           )}
+
+          {/* Job Balance Display */}
+          <OptimizedJobBalance
+            jobId={jobId}
+            blockId={blockId}
+            currency={currency}
+          />
         </div>
       )}
 
