@@ -100,7 +100,7 @@ export const Card: FC<Props> = ({
   const shouldShowBadge = type === "company"; // Only show badges for job cards
 
   return (
-    <div className="group relative bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/40 rounded-2xl border border-amber-100/60 shadow-sm hover:shadow-2xl hover:border-[#FFC905]/30 transition-all duration-300 ease-in-out overflow-hidden cursor-pointer min-h-[320px] flex flex-col backdrop-blur-sm">
+    <div className="group relative bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/40 rounded-2xl border border-amber-100/60 shadow-sm hover:shadow-2xl hover:border-[#FFC905]/30 transition-all duration-300 ease-in-out overflow-hidden cursor-pointer flex flex-col backdrop-blur-sm">
       {/* Honey comb pattern background accent */}
       <div className="absolute top-0 right-0 w-20 h-20 opacity-20 pointer-events-none">
         <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full text-yellow-400 transform rotate-12">
