@@ -1,3 +1,4 @@
+import { getTokenNameFromAddress } from "@/app/utils/token-utils";
 import { BigNumber, ethers } from "ethers";
 
 export const POLYGON_MAINNET_RPC_URL = "https://polygon-rpc.com/";
@@ -45,6 +46,43 @@ export const getJobBalance = async (jobId: string): Promise<number> => {
   }
 };
 
+// Get job balance with token information
+export const getJobBalanceWithToken = async (jobId: string): Promise<{ balance: number; tokenAddress: string; tokenName: string }> => {
+  try {
+    const provider = new ethers.providers.JsonRpcProvider(POLYGON_MAINNET_RPC_URL);
+    const contract = createGoodhiveJobContract(provider);
+
+    const contractJobId = BigNumber.from(jobId);
+
+    // Get full job information including token address
+    const [user, amount, token] = await contract.getJob(contractJobId);
+
+    // Convert from smallest unit to human readable
+    // Most tokens use 6 decimals (USDC), but DAI uses 18
+    let decimals = 6; // Default to USDC decimals
+    const tokenName = getTokenNameFromAddress(token);
+
+    if (tokenName === "DAI" || tokenName === "agEUR" || tokenName === "EURO") {
+      decimals = 18;
+    }
+
+    const formattedBalance = ethers.utils.formatUnits(amount, decimals);
+
+    return {
+      balance: parseFloat(formattedBalance),
+      tokenAddress: token,
+      tokenName: tokenName,
+    };
+  } catch (error) {
+    console.error("Error fetching job balance with token:", error);
+    return {
+      balance: 0,
+      tokenAddress: "",
+      tokenName: "Unknown",
+    };
+  }
+};
+
 // Get full job information
 export const getJobInfo = async (jobId: string) => {
   try {
@@ -54,10 +92,21 @@ export const getJobInfo = async (jobId: string) => {
     const contractJobId = BigNumber.from(jobId);
 
     const [user, amount, token] = await contract.getJob(contractJobId);
+
+    // Get token name for better display
+    const tokenName = getTokenNameFromAddress(token);
+
+    // Use appropriate decimals
+    let decimals = 6; // Default to USDC decimals
+    if (tokenName === "DAI" || tokenName === "agEUR" || tokenName === "EURO") {
+      decimals = 18;
+    }
+
     return {
       user,
-      amount: ethers.utils.formatUnits(amount, 6), // Assuming USDC 6 decimals
+      amount: ethers.utils.formatUnits(amount, decimals),
       token,
+      tokenName,
     };
   } catch (error) {
     console.error("Error fetching job info:", error);

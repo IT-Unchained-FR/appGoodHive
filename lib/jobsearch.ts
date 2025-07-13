@@ -37,12 +37,12 @@ export async function fetchJobs({
         FROM goodhive.job_offers
         WHERE
           (LOWER(title) LIKE ${contains(
-            search,
-          )} OR LOWER(skills) LIKE ${contains(search)})
+      search,
+    )} OR LOWER(skills) LIKE ${contains(search)})
             AND 
             (LOWER(city) LIKE ${contains(
-              location,
-            )} OR LOWER(country) LIKE ${contains(location)})
+      location,
+    )} OR LOWER(country) LIKE ${contains(location)})
             AND
             (LOWER(company_name) LIKE ${contains(name)})
             ${recruiter === "true" ? sql`AND recruiter = 'true'` : sql``}
@@ -60,12 +60,12 @@ export async function fetchJobs({
       FROM goodhive.job_offers
       WHERE
       (LOWER(title) LIKE ${contains(search)} OR LOWER(skills) LIKE ${contains(
-        search,
-      )})
+      search,
+    )})
       AND
       (LOWER(city) LIKE ${contains(location)} OR LOWER(country) LIKE ${contains(
-        location,
-      )})
+      location,
+    )})
       AND
       (LOWER(company_name) LIKE ${contains(name)})
       ${recruiter === "true" ? sql`AND recruiter = 'true'` : sql``}
@@ -97,6 +97,8 @@ export async function fetchJobs({
       posted_at: item.posted_at,
       in_saving_stage: item.in_saving_stage,
       published: item.published,
+      block_id: item.block_id,
+      currency: item.currency,
     }));
 
     return { jobs, count };
