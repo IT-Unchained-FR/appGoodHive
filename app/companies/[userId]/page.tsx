@@ -1,12 +1,14 @@
+"use client";
+
 import Image from "next/image";
+import { useEffect, useState } from "react";
 
 import { Card } from "@/app/components/card";
 import { CompanyBio } from "@/app/components/companies/company-bio-section";
 import { CompanyContactBtn } from "@/app/components/companies/company-contact-btn";
 import { CompanySocialMediaAndContact } from "@/app/components/companies/profile-social-media-and-contact";
+import { getJobBalance } from "@/app/lib/blockchain/contracts/GoodhiveJobContract";
 import { generateCountryFlag } from "@/app/utils/generate-country-flag";
-import { getCompanyData } from "@/lib/fetch-company-data";
-import { getCompanyJobs, getSingleJob } from "@/lib/fetch-company-jobs";
 import { JobCard } from "@components/job-card";
 
 export const revalidate = 0;
@@ -20,39 +22,139 @@ type CompanyProfilePageProps = {
   };
 };
 
-export default async function CompanyProfilePage(
+// Helper function to fetch company data from API
+async function fetchCompanyData(userId: string) {
+  const response = await fetch(`/api/companies/my-profile?userId=${userId}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch company data: ${response.statusText}`);
+  }
+  return await response.json();
+}
+
+// Helper function to fetch company jobs from API
+async function fetchCompanyJobs(userId: string) {
+  const response = await fetch(`/api/companies/jobs?userId=${userId}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch company jobs: ${response.statusText}`);
+  }
+  return await response.json();
+}
+
+// Helper function to fetch single job from API
+async function fetchSingleJob(jobId: number) {
+  const response = await fetch(`/api/companies/job-data?id=${jobId}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch single job: ${response.statusText}`);
+  }
+  return await response.json();
+}
+
+export default function CompanyProfilePage(
   context: CompanyProfilePageProps,
 ) {
   const { userId } = context.params;
   const { id: jobId } = context.searchParams;
 
-  let profileData: any = {};
-  let jobs: any[] = [];
-  let singleJob: any = null;
+  const [profileData, setProfileData] = useState<any>({});
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [singleJob, setSingleJob] = useState<any>(null);
+  const [jobBalances, setJobBalances] = useState<{ [key: string]: number }>({});
+  const [isLoadingBalances, setIsLoadingBalances] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch company profile data with error handling
-  try {
-    profileData = await getCompanyData(userId);
-  } catch (error) {
-    console.error("Failed to fetch company data:", error);
-    profileData = {};
-  }
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
 
-  // Fetch company jobs with error handling
-  try {
-    jobs = await getCompanyJobs(userId);
-  } catch (error) {
-    console.error("Failed to fetch company jobs:", error);
-    jobs = [];
-  }
+      // Fetch company profile data with error handling
+      try {
+        const profileResult = await fetchCompanyData(userId);
+        setProfileData(profileResult);
+      } catch (error) {
+        console.error("Failed to fetch company data:", error);
+        setProfileData({});
+      }
 
-  // Fetch single job with error handling
-  try {
-    singleJob = await getSingleJob(jobId as unknown as number);
-  } catch (error) {
-    console.error("Failed to fetch single job:", error);
-    singleJob = null;
-  }
+      // Fetch company jobs with error handling
+      try {
+        const jobsResult = await fetchCompanyJobs(userId);
+        setJobs(jobsResult);
+      } catch (error) {
+        console.error("Failed to fetch company jobs:", error);
+        setJobs([]);
+      }
+
+      // Fetch single job with error handling
+      if (jobId) {
+        try {
+          const singleJobResult = await fetchSingleJob(jobId as unknown as number);
+          setSingleJob(singleJobResult);
+        } catch (error) {
+          console.error("Failed to fetch single job:", error);
+          setSingleJob(null);
+        }
+      }
+
+      setIsLoading(false);
+    };
+
+    fetchData();
+  }, [userId, jobId]);
+
+  useEffect(() => {
+    const fetchBalances = async () => {
+      if (!jobs.length && !singleJob) {
+        setIsLoadingBalances(false);
+        return;
+      }
+
+      try {
+        setIsLoadingBalances(true);
+        const balancePromises: Promise<{ jobId: string; balance: number }>[] = [];
+
+        // Fetch balance for featured job using block_id
+        if (singleJob?.block_id) {
+          balancePromises.push(
+            getJobBalance(singleJob.block_id.toString()).then(balance => ({
+              jobId: singleJob.id.toString(),
+              balance
+            }))
+          );
+        }
+
+        // Fetch balances for all jobs using block_id
+        jobs.forEach(job => {
+          if (job.block_id && job.id !== singleJob?.id) {
+            balancePromises.push(
+              getJobBalance(job.block_id.toString()).then(balance => ({
+                jobId: job.id.toString(),
+                balance
+              }))
+            );
+          }
+        });
+
+        const balanceResults = await Promise.allSettled(balancePromises);
+        const balances: { [key: string]: number } = {};
+
+        balanceResults.forEach((result) => {
+          if (result.status === 'fulfilled') {
+            balances[result.value.jobId] = result.value.balance;
+          } else {
+            console.error('Failed to fetch balance:', result.reason);
+          }
+        });
+
+        setJobBalances(balances);
+      } catch (error) {
+        console.error("Error fetching job balances:", error);
+      } finally {
+        setIsLoadingBalances(false);
+      }
+    };
+
+    fetchBalances();
+  }, [jobs, singleJob]);
 
   const {
     headline,
@@ -72,6 +174,14 @@ export default async function CompanyProfilePage(
     image_url,
     user_id,
   } = profileData;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#FFC905]"></div>
+      </div>
+    );
+  }
 
   return (
     <main className="relative pt-16 min-h-screen bg-gradient-to-b from-yellow-50/30 to-white">
@@ -180,6 +290,19 @@ export default async function CompanyProfilePage(
                 </h2>
               </div>
               <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-xl p-4 border border-yellow-200/50 shadow-sm">
+                {isLoadingBalances ? (
+                  <div className="mb-3 flex items-center gap-2 text-sm text-gray-600">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#FFC905]"></div>
+                    <span>Loading balance...</span>
+                  </div>
+                ) : (
+                  <div className="mb-3 flex items-center gap-2 text-sm">
+                    <span className="font-semibold text-green-700">💰 Escrow Balance:</span>
+                    <span className="text-green-600 font-bold">
+                      ${jobBalances[singleJob.id]?.toFixed(2) || '0.00'} USDC
+                    </span>
+                  </div>
+                )}
                 <JobCard
                   key={singleJob.id}
                   id={singleJob.id}
@@ -268,6 +391,19 @@ export default async function CompanyProfilePage(
 
                   return (
                     <div key={id} className="transform transition-all duration-200 hover:scale-[1.02]">
+                      {isLoadingBalances ? (
+                        <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-[#FFC905]"></div>
+                          <span>Loading balance...</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-xs mb-2">
+                          <span className="font-semibold text-green-700">💰 Balance:</span>
+                          <span className="text-green-600 font-bold">
+                            ${jobBalances[id]?.toFixed(2) || '0.00'} USDC
+                          </span>
+                        </div>
+                      )}
                       <Card
                         uniqueId={userId}
                         mentor={job.mentor === "true"}
