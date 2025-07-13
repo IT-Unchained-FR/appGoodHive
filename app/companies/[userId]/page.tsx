@@ -103,58 +103,28 @@ export default function CompanyProfilePage(
 
   useEffect(() => {
     const fetchBalances = async () => {
-      if (!jobs.length && !singleJob) {
+      if (!singleJob) {
         setIsLoadingBalances(false);
         return;
       }
 
       try {
         setIsLoadingBalances(true);
-        const balancePromises: Promise<{ jobId: string; balance: number }>[] = [];
 
-        // Fetch balance for featured job using block_id
+        // Only fetch balance for featured job using block_id
         if (singleJob?.block_id) {
-          balancePromises.push(
-            getJobBalance(singleJob.block_id.toString()).then(balance => ({
-              jobId: singleJob.id.toString(),
-              balance
-            }))
-          );
+          const balance = await getJobBalance(singleJob.block_id.toString());
+          setJobBalances({ [singleJob.id.toString()]: balance });
         }
-
-        // Fetch balances for all jobs using block_id
-        jobs.forEach(job => {
-          if (job.block_id && job.id !== singleJob?.id) {
-            balancePromises.push(
-              getJobBalance(job.block_id.toString()).then(balance => ({
-                jobId: job.id.toString(),
-                balance
-              }))
-            );
-          }
-        });
-
-        const balanceResults = await Promise.allSettled(balancePromises);
-        const balances: { [key: string]: number } = {};
-
-        balanceResults.forEach((result) => {
-          if (result.status === 'fulfilled') {
-            balances[result.value.jobId] = result.value.balance;
-          } else {
-            console.error('Failed to fetch balance:', result.reason);
-          }
-        });
-
-        setJobBalances(balances);
       } catch (error) {
-        console.error("Error fetching job balances:", error);
+        console.error("Error fetching job balance:", error);
       } finally {
         setIsLoadingBalances(false);
       }
     };
 
     fetchBalances();
-  }, [jobs, singleJob]);
+  }, [singleJob]);
 
   const {
     headline,
@@ -364,6 +334,7 @@ export default function CompanyProfilePage(
                     country,
                     escrowAmount,
                     postedAt,
+                    currency,
                   } = job;
 
                   const getRelativeTime = (postedAt: string) => {
@@ -391,24 +362,12 @@ export default function CompanyProfilePage(
 
                   return (
                     <div key={id} className="transform transition-all duration-200 hover:scale-[1.02]">
-                      {isLoadingBalances ? (
-                        <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
-                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-[#FFC905]"></div>
-                          <span>Loading balance...</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2 text-xs mb-2">
-                          <span className="font-semibold text-green-700">💰 Balance:</span>
-                          <span className="text-green-600 font-bold">
-                            ${jobBalances[id]?.toFixed(2) || '0.00'} USDC
-                          </span>
-                        </div>
-                      )}
                       <Card
                         uniqueId={userId}
                         mentor={job.mentor === "true"}
                         recruiter={job.recruiter === "true"}
                         jobId={id}
+                        blockId={job.block_id}
                         type="company"
                         title={title}
                         postedBy={companyName}
@@ -418,7 +377,7 @@ export default function CompanyProfilePage(
                         city={city}
                         budget={budget}
                         projectType={projectType}
-                        currency="USD"
+                        currency={currency}
                         description={description}
                         skills={skills}
                         buttonText="Apply"
