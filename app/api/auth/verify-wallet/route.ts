@@ -1,7 +1,7 @@
-import postgres from "postgres";
-import { cookies } from "next/headers";
 import { SignJWT } from "jose";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import postgres from "postgres";
 
 const sql = postgres(process.env.DATABASE_URL || "", {
   ssl: {
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
       // User exists with this email, update their wallet_address and login_method
       const updatedUsers = await sql`
         UPDATE goodhive.users
-        SET wallet_address = ${wallet_address},
+        SET okto_wallet_address = ${wallet_address},
             login_method = ${login_method}
         WHERE email = ${email}
         RETURNING *
@@ -63,8 +63,9 @@ export async function POST(req: Request) {
       // Check if wallet address is already in use
       const walletUsers = await sql`
         SELECT * FROM goodhive.users
-        WHERE wallet_address = ${wallet_address}
+        WHERE okto_wallet_address = ${wallet_address}
       `;
+      console.log(walletUsers, "walletUsers");
 
       if (walletUsers.length > 0) {
         return NextResponse.json(
@@ -76,7 +77,7 @@ export async function POST(req: Request) {
       // Create new user
       const newUsers = await sql`
         INSERT INTO goodhive.users (
-          wallet_address,
+          okto_wallet_address,
           email,
           login_method,
           mentor_status,
