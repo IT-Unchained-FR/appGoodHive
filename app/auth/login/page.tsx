@@ -37,25 +37,12 @@ const Login = () => {
 
   // 
   useEffect(() => {
-    // Clear all localStorage and sessionStorage
-    try {
-      localStorage.clear();
-      sessionStorage.clear();
-    } catch (e) {
-      // Ignore if storage is not available
-    }
-
-    // Remove all cookies
-    if (typeof document !== "undefined") {
-      const cookies = document.cookie.split(";") || [];
-      for (const cookie of cookies) {
-        const eqPos = cookie.indexOf("=");
-        const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
-        document.cookie =
-          name.trim() +
-          "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;SameSite=Lax";
-      }
-    }
+    localStorage.clear();
+    document.cookie.split(";").forEach(function (c) {
+      document.cookie = c
+        .replace(/^ +/, "")
+        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+    });
   }, []);
 
   const handleSlideChange = (index: number) => {

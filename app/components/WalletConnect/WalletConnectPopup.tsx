@@ -1,23 +1,112 @@
 "use client";
 
+import { checkUserLoginMethod } from "@/lib/auth/checkUserLoginMethod";
+import { useOkto } from "@okto_web3/react-sdk";
+import { GoogleLogin } from "@react-oauth/google";
 import { X } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
+import { toast } from "react-hot-toast";
+import styles from "./WalletConnectPopup.module.scss";
 
 interface WalletConnectPopupProps {
   isOpen: boolean;
   onClose: () => void;
   walletAddress: string;
+  email: string;
 }
 
 export const WalletConnectPopup = ({
   isOpen,
   onClose,
-  walletAddress
+  walletAddress,
+  email,
 }: WalletConnectPopupProps) => {
-  const [email, setEmail] = useState("");
+  const oktoClient = useOkto();
+
   const [isLoading, setIsLoading] = useState(false);
 
   if (!isOpen) return null;
+
+  const handleGoogleLogin = async (credentialResponse: any) => {
+    console.log(credentialResponse, "credentialResponse...goodhive");
+    const base64Url = credentialResponse.credential.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map(function (c) {
+          return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join(""),
+    );
+
+    const userInfo = JSON.parse(jsonPayload);
+    const userEmail = userInfo.email;
+
+    const goodHiveAccountData = await checkUserLoginMethod(userEmail);
+
+    if (goodHiveAccountData.loginMethod === "email") {
+      console.log("Please login with your email OTP to continue.");
+    } else {
+      console.log("Please login with your wallet to continue.");
+    }
+    console.log(goodHiveAccountData.wallet_address, walletAddress, "goodHiveAccountData.wallet_address and walletAddress...goodhive");
+
+    const isSameWallet = goodHiveAccountData.wallet_address === walletAddress;
+
+    if (isSameWallet) {
+
+      // If Same Wallet Address, And  don't have okto wallet address then add the okto wallet address to the goodhive account
+      if (!goodHiveAccountData.okto_wallet_address) {
+
+        // Fetch Okto Wallet Address
+        const oktoWalletAddress = await oktoClient.loginUsingOAuth({
+          idToken: credentialResponse.credential,
+          provider: "google"
+        });
+
+        console.log(oktoWalletAddress, "oktoWalletAddress...goodhive");
+        return;
+
+        // Update the goodhive account with the okto wallet address
+        const updateAccount = await fetch("/api/auth/update-account", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            okto_wallet_address: oktoWalletAddress,
+            user_id: goodHiveAccountData.user_id,
+            email: userEmail,
+            wallet_address: walletAddress,
+          }),
+        });
+
+
+
+        const updateResult = await updateAccount.json();
+
+        if (updateAccount.ok) {
+          toast.success("Account linked successfully! 🐝");
+          console.log("Account updated:", updateResult);
+        } else {
+          toast.error(updateResult.error || "Failed to link account");
+          console.error("Update failed:", updateResult);
+        }
+
+        console.log(oktoWalletAddress, "oktoWalletAddress...goodhive");
+        return;
+      }
+
+      return;
+    } else {
+      toast.error("Wallet not linked to this googleaccount.");
+    }
+
+    return;
+
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,8 +151,38 @@ export const WalletConnectPopup = ({
             To complete your profile and unlock all features, please add your email address:
           </p>
 
+          <div className={styles.socialButtons}>
+            <div className={styles.googleButtonWrapper}>
+              <Image
+                src="/icons/honeybee-pointing.svg"
+                alt="Honeybee pointing"
+                width={50}
+                height={50}
+              />
+              <GoogleLogin
+                onSuccess={handleGoogleLogin}
+                onError={() => {
+                  toast.error("Google login failed. Please try again.");
+                }}
+                auto_select={false}
+                useOneTap
+                theme="outline"
+                width="400px"
+                text="signin_with"
+                shape="pill"
+                size="large"
+                logo_alignment="left"
+                containerProps={{
+                  style: {
+                    width: "400px !important",
+                  },
+                }}
+              />
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit}>
-            <div className="mb-4">
+            {/* <div className="mb-4">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
               </label>
@@ -76,7 +195,7 @@ export const WalletConnectPopup = ({
                 placeholder="your@email.com"
                 required
               />
-            </div>
+            </div> */}
 
             <div className="flex gap-3">
               <button

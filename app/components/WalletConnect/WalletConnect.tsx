@@ -12,6 +12,7 @@ export const WalletConnect = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [walletAddress, setWalletAddress] = useState("");
+  const [email, setEmail] = useState("");
   const router = useRouter();
 
   const handleWalletLogin = async (walletAddress: string) => {
@@ -40,6 +41,7 @@ export const WalletConnect = () => {
         if (data.needsEmailSetup) {
           // Show popup for users who need to add email
           setWalletAddress(walletAddress);
+          setEmail(data.user.email);
           setShowPopup(true);
         } else {
           // Redirect to talent profile
@@ -51,9 +53,11 @@ export const WalletConnect = () => {
         console.log("New user created:", {
           userId: data.user.user_id,
           walletAddress: data.user.wallet_address,
+          email: data.user.email,
         });
 
         setWalletAddress(walletAddress);
+        setEmail(data.user.email);
         setShowPopup(true);
         toast.success("Welcome to GoodHive! 🐝");
       } else {
@@ -85,6 +89,7 @@ export const WalletConnect = () => {
     <>
       <ConnectButton />
       <WalletConnectPopup
+        email={email}
         isOpen={showPopup}
         onClose={handleClosePopup}
         walletAddress={walletAddress}
