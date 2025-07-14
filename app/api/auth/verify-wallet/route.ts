@@ -22,9 +22,9 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { wallet_address, user_id, email, login_method } = await req.json();
+    const { okto_wallet_address, wallet_address, user_id, email, login_method } = await req.json();
 
-    if (!wallet_address || !user_id || !email || !login_method) {
+    if (!okto_wallet_address || !user_id || !email || !login_method) {
       return NextResponse.json(
         {
           message:
@@ -50,10 +50,11 @@ export async function POST(req: Request) {
     let user;
 
     if (existingUsers.length > 0) {
-      // User exists with this email, update their wallet_address and login_method
+      // User exists with this email, update their okto_wallet_address and login_method
       const updatedUsers = await sql`
         UPDATE goodhive.users
-        SET okto_wallet_address = ${wallet_address},
+        SET okto_wallet_address = ${okto_wallet_address},
+            ${wallet_address ? sql`wallet_address = ${wallet_address},` : sql``}
             login_method = ${login_method}
         WHERE email = ${email}
         RETURNING *
@@ -63,7 +64,7 @@ export async function POST(req: Request) {
       // Check if wallet address is already in use
       const walletUsers = await sql`
         SELECT * FROM goodhive.users
-        WHERE okto_wallet_address = ${wallet_address}
+        WHERE okto_wallet_address = ${okto_wallet_address}
       `;
       console.log(walletUsers, "walletUsers");
 
@@ -84,7 +85,7 @@ export async function POST(req: Request) {
           recruiter_status,
           talent_status
         ) VALUES (
-          ${wallet_address},
+          ${okto_wallet_address},
           ${email},
           ${login_method},
           'pending',
@@ -100,7 +101,7 @@ export async function POST(req: Request) {
     // Create session token
     const token = await new SignJWT({
       user_id: user.userid,
-      wallet_address: user.wallet_address,
+      wallet_address: user.okto_wallet_address,
       email: user.email,
     })
       .setProtectedHeader({ alg: "HS256" })
@@ -121,7 +122,7 @@ export async function POST(req: Request) {
       user: {
         user_id: user.userid,
         email: user.email,
-        wallet_address: user.wallet_address,
+        wallet_address: user.okto_wallet_address,
         mentor_status: user.mentor_status,
         recruiter_status: user.recruiter_status,
         talent_status: user.talent_status,
