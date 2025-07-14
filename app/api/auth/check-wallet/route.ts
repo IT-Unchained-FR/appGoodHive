@@ -14,12 +14,6 @@ const JWT_SECRET = new TextEncoder().encode(
 );
 
 export async function POST(req: Request) {
-  if (req.method !== "POST") {
-    return NextResponse.json(
-      { message: "Method Not Allowed" },
-      { status: 405 },
-    );
-  }
 
   try {
     const { wallet_address } = await req.json();
