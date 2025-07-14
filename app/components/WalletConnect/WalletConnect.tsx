@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount } from "wagmi";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import Cookies from "js-cookie";
+import { useAccount } from "wagmi";
 
 export const WalletConnect = () => {
   const { address, isConnected } = useAccount();
@@ -25,37 +24,7 @@ export const WalletConnect = () => {
       const data = await response.json();
       console.log(data, "Wallet User Data...");
 
-      if (data.exists && data.user) {
-        console.log("User found:", {
-          userId: data.user.user_id,
-          email: data.user.email,
-          walletAddress: data.user.wallet_address,
-        });
-
-        // Clear existing localStorage and cookies before setting new ones
-        localStorage.clear();
-        document.cookie.split(";").forEach(function (c) {
-          document.cookie = c
-            .replace(/^ +/, "")
-            .replace(
-              /=.*/,
-              "=;expires=" + new Date().toUTCString() + ";path=/",
-            );
-        });
-
-        // Set user data in cookies (same as Google login)
-        Cookies.set("user_id", data.user.user_id);
-        Cookies.set("user_email", data.user.email);
-        Cookies.set("user_address", data.user.wallet_address);
-
-        toast.success("Welcome back to the hive! 🐝");
-
-        // Redirect to profile page
-        window.location.href = "/talents/my-profile";
-      } else {
-        console.log("Wallet not registered:", walletAddress);
-        toast("We don't have any previous user with this wallet address.");
-      }
+      return;
     } catch (error) {
       console.error("Error checking wallet:", error);
       toast.error("Failed to verify wallet status");

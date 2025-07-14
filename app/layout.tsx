@@ -1,38 +1,37 @@
 "use client";
 
-import { useMemo, useRef, useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
-import { Suspense } from "react";
-import { WagmiConfig, createConfig, configureChains } from "wagmi";
-import { polygon } from "wagmi/chains";
-import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
 import {
-  RainbowKitProvider,
-  RainbowKitAuthenticationProvider,
-  createAuthenticationAdapter,
   AuthenticationStatus,
+  RainbowKitAuthenticationProvider,
+  RainbowKitProvider,
   connectorsForWallets,
+  createAuthenticationAdapter,
 } from "@rainbow-me/rainbowkit";
 import {
   metaMaskWallet,
   walletConnectWallet,
 } from "@rainbow-me/rainbowkit/wallets";
+import Cookies from "js-cookie";
+import { usePathname } from "next/navigation";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import { SiweMessage } from "siwe";
-import Cookies from "js-cookie";
+import { WagmiConfig, configureChains, createConfig } from "wagmi";
+import { polygon } from "wagmi/chains";
+import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
 
-import { SwitchWalletCheck } from "@components/switch-wallet-check";
-import { NavBar } from "@components/nav-bar";
 import { Footer } from "@components/footer/footer";
+import { NavBar } from "@components/nav-bar";
+import { SwitchWalletCheck } from "@components/switch-wallet-check";
 import { GoodhiveInfuraAPILink } from "./constants/common";
 
 import AddressContextWrapper from "./components/addressContextWrapper/AddressContextWrapper";
 
 import "@rainbow-me/rainbowkit/styles.css";
-import "./globals.css";
-import ReferralCodeHandler from "./components/referralCodeHandler/ReferralCodeHandler";
 import LastActiveHandler from "./components/LastActiveHandler";
 import OnboardingPopup from "./components/Onboarding/OnboardingPopup";
+import ReferralCodeHandler from "./components/referralCodeHandler/ReferralCodeHandler";
+import "./globals.css";
 import { Providers } from "./providers";
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
@@ -59,9 +58,21 @@ const connectors = connectorsForWallets([
 ]);
 
 export const config = createConfig({
-  autoConnect: true,
+  autoConnect: false,
   publicClient,
-  connectors,
+  connectors: connectorsForWallets([
+    {
+      groupName: "My Goodhive App",
+      wallets: [
+        metaMaskWallet({
+          projectId,
+          chains,
+          shimDisconnect: true,
+        }),
+        walletConnectWallet({ projectId, chains }), // FIXME: WalletConnect is not working as expected
+      ],
+    },
+  ]),
   webSocketPublicClient,
 });
 
