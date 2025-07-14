@@ -1,7 +1,6 @@
-import { getAccount, getPortfolio, useOkto } from "@okto_web3/react-sdk";
+import { getPortfolio, useOkto } from "@okto_web3/react-sdk";
 import { Check, Copy, Wallet } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { toast } from "react-hot-toast";
 
 // Placeholder avatar (rocket emoji)
 const avatar = "🚀";
@@ -10,47 +9,24 @@ export interface WalletPopupProps {
   isOpen: boolean;
   anchorRef: React.RefObject<HTMLDivElement>;
   onClose: () => void;
+  oktoWalletAddress: string | null;
 }
 
-export const WalletPopup: React.FC<WalletPopupProps> = ({ isOpen, anchorRef, onClose }) => {
+export const WalletPopup: React.FC<WalletPopupProps> = ({ isOpen, anchorRef, onClose, oktoWalletAddress }) => {
   const oktoClient = useOkto();
   const [loading, setLoading] = useState(false);
   const [portfolio, setPortfolio] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [copiedAddress, setCopiedAddress] = useState<boolean>(false);
-  const [walletAddress, setWalletAddress] = useState<string>("");
 
   const POLYGON_CAIP2_ID = "eip155:137";
 
-
+  // Remove the wallet address fetching logic since it's now passed as prop
   useEffect(() => {
-    const fetchUserWallet = async () => {
-      if (!oktoClient) return;
-
-      try {
-        const accounts = await getAccount(oktoClient);
-        console.log(accounts, "accounts...goodhive");
-        const polygonAccount = accounts.find(
-          (account: any) => account.caipId === POLYGON_CAIP2_ID,
-        );
-        if (polygonAccount) {
-          setWalletAddress(polygonAccount?.address);
-        } else {
-          toast.error("No wallet found for Polygon network");
-        }
-      } catch (error: any) {
-        console.error("Error fetching user wallet:", error);
-        toast.error(`Failed to fetch wallet address: ${error.message}`);
-      }
-    };
-
-    fetchUserWallet();
-  }, [oktoClient]);
-  useEffect(() => {
-    if (isOpen && walletAddress) {
+    if (isOpen && oktoWalletAddress) {
       setLoading(true);
       setError(null);
-      getPortfolio(oktoClient, walletAddress)
+      getPortfolio(oktoClient, oktoWalletAddress)
         .then((data: any) => {
           setPortfolio(data);
           setLoading(false);
@@ -60,11 +36,11 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({ isOpen, anchorRef, onC
           setLoading(false);
         });
     }
-  }, [isOpen, walletAddress, oktoClient]);
+  }, [isOpen, oktoWalletAddress, oktoClient]);
 
   const handleCopyAddress = () => {
-    if (walletAddress) {
-      navigator.clipboard.writeText(walletAddress);
+    if (oktoWalletAddress) {
+      navigator.clipboard.writeText(oktoWalletAddress);
       setCopiedAddress(true);
       setTimeout(() => setCopiedAddress(false), 1500);
     }
@@ -125,7 +101,7 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({ isOpen, anchorRef, onC
           <span className="w-10 h-10 rounded-full flex items-center justify-center text-2xl bg-[#ffeabf] border border-[#FFC905]">{avatar}</span>
           <div className="flex flex-col flex-1 min-w-0">
             <span className="font-semibold text-gray-900 text-base leading-tight">My GoodHive Wallet</span>
-            <span className="text-xs text-gray-400 font-mono truncate">{walletAddress}</span>
+            <span className="text-xs text-gray-400 font-mono truncate">{oktoWalletAddress || "No wallet address available"}</span>
           </div>
           <button className="ml-auto p-1 rounded-full hover:bg-[#FFF7D1] transition" onClick={onClose} aria-label="Close wallet popup">
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12" stroke="#FFC905" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -160,7 +136,7 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({ isOpen, anchorRef, onC
                     className="p-1 rounded hover:bg-[#FFC905]/20 transition"
                     onClick={handleCopyAddress}
                     aria-label="Copy address"
-                    disabled={!walletAddress}
+                    disabled={!oktoWalletAddress}
                   >
                     {copiedAddress ? (
                       <Check size={14} className="text-green-500 transition-transform scale-110" />
@@ -170,7 +146,7 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({ isOpen, anchorRef, onC
                   </button>
                 </div>
                 <div className="text-xs font-mono text-gray-600 break-all">
-                  {walletAddress || "No wallet address available"}
+                  {oktoWalletAddress || "No wallet address available"}
                 </div>
                 <div className="mt-2 text-xs text-gray-500 leading-relaxed">
                   This is your default GoodHive wallet address. You can start transactions immediately upon account creation.
