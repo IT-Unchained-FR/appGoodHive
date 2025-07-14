@@ -18,8 +18,6 @@ const Login = () => {
 
   const oktoClient = useOkto();
 
-  console.log(oktoClient, "oktoClient...goodhive");
-
   const slides = [
     {
       title: "Connect with every hive member",
@@ -36,6 +34,29 @@ const Login = () => {
       description: "Discover and share valuable opportunities within the hive.",
     },
   ];
+
+  // 
+  useEffect(() => {
+    // Clear all localStorage and sessionStorage
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch (e) {
+      // Ignore if storage is not available
+    }
+
+    // Remove all cookies
+    if (typeof document !== "undefined") {
+      const cookies = document.cookie.split(";") || [];
+      for (const cookie of cookies) {
+        const eqPos = cookie.indexOf("=");
+        const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+        document.cookie =
+          name.trim() +
+          "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;SameSite=Lax";
+      }
+    }
+  }, []);
 
   const handleSlideChange = (index: number) => {
     if (isAnimating || index === currentSlide) return;
@@ -240,7 +261,7 @@ const Login = () => {
 
           <OktoOTPLogin />
 
-          {/* <div className={styles.divider}>
+          <div className={styles.divider}>
             <span>or continue with your wallet</span>
           </div>
 
@@ -250,7 +271,7 @@ const Login = () => {
               If you've created an account using a wallet before, connect to
               find your profile.
             </p>
-          </div> */}
+          </div>
         </div>
       </div>
 
