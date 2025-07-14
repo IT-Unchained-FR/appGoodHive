@@ -38,16 +38,12 @@ export const WalletConnect = () => {
           walletAddress: data.user.wallet_address,
         });
 
-        if (data.needsEmailSetup) {
-          // Show popup for users who need to add email
-          setWalletAddress(walletAddress);
-          setEmail(data.user.email);
-          setShowPopup(true);
-        } else {
-          // Redirect to talent profile
-          toast.success("Welcome back! 🐝");
-          router.push("/talents/my-profile");
-        }
+        // Show popup for users who need to add email
+        setWalletAddress(walletAddress);
+        setEmail(data.user.email);
+        setShowPopup(true);
+
+        // Redirect to talent profile
       } else if (data.isNewUser) {
         // New user created - show welcome popup
         console.log("New user created:", {
@@ -59,7 +55,6 @@ export const WalletConnect = () => {
         setWalletAddress(walletAddress);
         setEmail(data.user.email);
         setShowPopup(true);
-        toast.success("Welcome to GoodHive! 🐝");
       } else {
         toast.error("Failed to create or find user account");
       }
