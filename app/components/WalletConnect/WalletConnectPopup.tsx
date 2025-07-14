@@ -3,6 +3,7 @@
 import { checkUserLoginMethod } from "@/lib/auth/checkUserLoginMethod";
 import { useOkto } from "@okto_web3/react-sdk";
 import { GoogleLogin } from "@react-oauth/google";
+import Cookies from "js-cookie";
 import { X } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -51,61 +52,53 @@ export const WalletConnectPopup = ({
     } else {
       console.log("Please login with your wallet to continue.");
     }
-    console.log(goodHiveAccountData.wallet_address, walletAddress, "goodHiveAccountData.wallet_address and walletAddress...goodhive");
-
-    const isSameWallet = goodHiveAccountData.wallet_address === walletAddress;
-
-    if (isSameWallet) {
-
-      // If Same Wallet Address, And  don't have okto wallet address then add the okto wallet address to the goodhive account
-      if (!goodHiveAccountData.okto_wallet_address) {
-
-        // Fetch Okto Wallet Address
-        const oktoWalletAddress = await oktoClient.loginUsingOAuth({
-          idToken: credentialResponse.credential,
-          provider: "google"
-        });
-
-        console.log(oktoWalletAddress, "oktoWalletAddress...goodhive");
-        return;
-
-        // Update the goodhive account with the okto wallet address
-        const updateAccount = await fetch("/api/auth/update-account", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            okto_wallet_address: oktoWalletAddress,
-            user_id: goodHiveAccountData.user_id,
-            email: userEmail,
-            wallet_address: walletAddress,
-          }),
-        });
 
 
+    console.log(goodHiveAccountData.wallet_address, walletAddress, "goodHiveAccountData...goodhive");
 
-        const updateResult = await updateAccount.json();
+    // Fetch Okto Wallet Address
+    const user = await oktoClient.loginUsingOAuth({
+      idToken: credentialResponse.credential,
+      provider: "google"
+    });
 
-        if (updateAccount.ok) {
-          toast.success("Account linked successfully! 🐝");
-          console.log("Account updated:", updateResult);
-        } else {
-          toast.error(updateResult.error || "Failed to link account");
-          console.error("Update failed:", updateResult);
-        }
+    console.log(user, "user...goodhive");
 
-        console.log(oktoWalletAddress, "oktoWalletAddress...goodhive");
-        return;
-      }
 
-      return;
-    } else {
-      toast.error("Wallet not linked to this googleaccount.");
+    // Verify wallet address and create/update user
+    const verifyResponse = await fetch("/api/auth/verify-wallet", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        wallet_address: walletAddress,
+        login_method: "google",
+        okto_wallet_address: user,
+        user_id: user.id || user, // Okto might return either the ID directly or an object with id
+        email: userEmail, // Include the email from Google OAuth
+      }),
+    });
+
+    if (!verifyResponse.ok) {
+      throw new Error("Failed to verify wallet address");
     }
 
-    return;
+    const data = await verifyResponse.json();
+    if (data.error) {
+      throw new Error(data.error);
+    }
 
+    // 
+
+
+    // Store minimal user data in cookies
+    Cookies.set("user_id", data.user.user_id);
+    Cookies.set("user_email", data.user.email);
+    Cookies.set("user_address", data.user.wallet_address);
+
+    toast.success("Welcome to the hive! 🐝");
+    window.location.href = "/talents/my-profile";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
