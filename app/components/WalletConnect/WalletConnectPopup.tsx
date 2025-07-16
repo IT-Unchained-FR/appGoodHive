@@ -45,6 +45,11 @@ export const WalletConnectPopup = ({
     const userInfo = JSON.parse(jsonPayload);
     const userEmail = userInfo.email;
 
+    if (email !== userEmail) {
+      toast.error("Account With This Email Already Merged With Diffrent Wallet Address")
+      return;
+    }
+
     const goodHiveAccountData = await checkUserLoginMethod(userEmail);
 
     if (goodHiveAccountData.loginMethod === "email") {

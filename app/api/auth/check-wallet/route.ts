@@ -16,7 +16,7 @@ const JWT_SECRET = new TextEncoder().encode(
 export async function POST(req: Request) {
 
   try {
-    const { wallet_address } = await req.json();
+    const { wallet_address, method } = await req.json();
 
     if (!wallet_address) {
       return NextResponse.json(
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
       WHERE wallet_address = ${wallet_address}
     `;
 
-    console.log(users, "Users...");
+
 
     if (users.length > 0) {
       const user = users[0];
