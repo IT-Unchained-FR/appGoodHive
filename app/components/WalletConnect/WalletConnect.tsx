@@ -13,6 +13,7 @@ export const WalletConnect = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [walletAddress, setWalletAddress] = useState("");
   const [email, setEmail] = useState("");
+
   const router = useRouter();
 
   const handleWalletLogin = async (walletAddress: string) => {
@@ -24,7 +25,7 @@ export const WalletConnect = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ wallet_address: walletAddress }),
+        body: JSON.stringify({ wallet_address: walletAddress}),
       });
 
       const data = await response.json();
