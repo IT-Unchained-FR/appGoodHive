@@ -14,6 +14,8 @@ interface WalletConnectPopupProps {
   email: string;
   connectedWalletAddress: string;
   newUser: boolean;
+  needsEmailSetup: boolean;
+  walletUserId: string;
 }
 
 export const WalletConnectPopup = ({
@@ -22,6 +24,8 @@ export const WalletConnectPopup = ({
   email,
   newUser,
   connectedWalletAddress,
+  needsEmailSetup,
+  walletUserId,
 }: WalletConnectPopupProps) => {
   const oktoClient = useOkto();
   const [isLoading, setIsLoading] = useState(false);
@@ -31,7 +35,7 @@ export const WalletConnectPopup = ({
   const handleGoogleLogin = async (credentialResponse: any) => {
     console.log(credentialResponse, "credentialResponse...goodhive");
     setIsLoading(true);
-    
+
     try {
       const base64Url = credentialResponse.credential.split(".")[1];
       const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
@@ -47,40 +51,42 @@ export const WalletConnectPopup = ({
       const userInfo = JSON.parse(jsonPayload);
       const userEmail = userInfo.email;
 
-
-      if (email !== userEmail) {
+      if (email !== userEmail && !needsEmailSetup) {
         toast.error("This Email Already Merged With Different Wallet Address");
         setIsLoading(false);
         return;
       }
 
-      // Check if user exists with this email and has a different wallet address
-      const checkAccountResponse = await fetch(`/api/auth/check-account?email=${encodeURIComponent(userEmail)}`);
-      if (checkAccountResponse.ok) {
-        const accountData = await checkAccountResponse.json();
-        
-        // If user exists and has a wallet address
-        if (accountData.wallet_address) {
-          // If the existing wallet address doesn't match the connected one, show error
-          if (accountData.wallet_address !== connectedWalletAddress) {
-            toast.error("This email is already associated with a different wallet address");
-            setIsLoading(false);
-            return;
-          }
-          // If wallet addresses match, continue (user is reconnecting same wallet)
-        }
-        // If user exists but no wallet address, continue (user adding wallet to existing email account)
-      }
-      // If user doesn't exist (checkAccountResponse not ok), continue (new user)
-      
       // Fetch Okto Wallet Address
-      const user = await oktoClient.loginUsingOAuth({
+      const oktoUser = await oktoClient.loginUsingOAuth({
         idToken: credentialResponse.credential,
-        provider: "google"
+        provider: "google",
       });
 
-      
+      // if the user is new and needs to setup email then update the user with the new email
+      if (needsEmailSetup) {
+        // Update the user with the new email
+        const updateUserResponse = await fetch("/api/auth/update-user", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            user_id: walletUserId,
+            email: userEmail,
+          }),
+        });
 
+        if (!updateUserResponse.ok) {
+          const errorData = await updateUserResponse.json();
+          throw new Error(errorData.error);
+        }
+
+        const updateData = await updateUserResponse.json();
+        if (updateData.error) {
+          throw new Error(updateData.error);
+        }
+      }
 
       // Verify wallet address and create/update user
       const verifyResponse = await fetch("/api/auth/verify-wallet", {
@@ -91,8 +97,8 @@ export const WalletConnectPopup = ({
         body: JSON.stringify({
           wallet_address: connectedWalletAddress,
           login_method: "google",
-          okto_wallet_address: user,
-          user_id: user.id || user, // Okto might return either the ID directly or an object with id
+          okto_wallet_address: oktoUser,
+          user_id: walletUserId, // Okto might return either the ID directly or an object with id
           email: userEmail, // Include the email from Google OAuth
         }),
       });
@@ -113,9 +119,17 @@ export const WalletConnectPopup = ({
 
       toast.success("Welcome to the hive! 🐝");
       window.location.href = "/talents/my-profile";
-    } catch (error) {
-      console.error("Google login error:", error);
-      toast.error("Login failed. Please try again.");
+    } catch (error: any) {
+      console.error("Google login error:", error.message);
+
+      // Clear Okto session on error
+      try {
+        oktoClient.sessionClear();
+      } catch (clearError) {
+        console.error("Error clearing Okto session:", clearError);
+      }
+
+      toast.error(error.message || "Login failed. Please try again.");
       setIsLoading(false);
     }
   };
@@ -126,7 +140,7 @@ export const WalletConnectPopup = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-40" >
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-40">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto overflow-hidden">
         <div className="relative bg-gradient-to-r from-amber-400 to-yellow-500 px-6 py-4">
           <div className="flex justify-between items-center">
@@ -161,7 +175,8 @@ export const WalletConnectPopup = ({
                   Complete Your Registration
                 </h4>
                 <p className="text-sm text-amber-700 mb-3">
-                  To unlock all features and secure your account, please sign in with Google to complete your registration.
+                  To unlock all features and secure your account, please sign in
+                  with Google to complete your registration.
                 </p>
               </div>
 
@@ -216,7 +231,9 @@ export const WalletConnectPopup = ({
                   Great to see you again!
                 </p>
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4">
-                  <p className="text-xs text-gray-600 mb-1">Connected Wallet:</p>
+                  <p className="text-xs text-gray-600 mb-1">
+                    Connected Wallet:
+                  </p>
                   <p className="text-xs font-mono text-gray-800 break-all">
                     {connectedWalletAddress}
                   </p>
@@ -229,7 +246,8 @@ export const WalletConnectPopup = ({
                   Enhanced Features Available
                 </h4>
                 <p className="text-sm text-blue-700 mb-3">
-                  Sign in with Google to enable Okto wallet features and enhance your GoodHive experience.
+                  Sign in with Google to enable Okto wallet features and enhance
+                  your GoodHive experience.
                 </p>
               </div>
 
@@ -276,7 +294,9 @@ export const WalletConnectPopup = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => toast("Please use the Google sign-in button above")}
+                  onClick={() =>
+                    toast("Please use the Google sign-in button above")
+                  }
                   disabled={isLoading}
                   className="flex-1 px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-amber-500 to-yellow-500 rounded-lg hover:from-amber-600 hover:to-yellow-600 disabled:opacity-50 transition-all"
                 >
@@ -296,13 +316,12 @@ export const WalletConnectPopup = ({
           )}
 
           <div className="mt-4 text-xs text-gray-500 text-center">
-            {newUser 
+            {newUser
               ? "Google sign-in is required to complete your registration."
-              : "You can always connect Google later in your profile settings."
-            }
+              : "You can always connect Google later in your profile settings."}
           </div>
         </div>
       </div>
     </div>
   );
-}; 
+};

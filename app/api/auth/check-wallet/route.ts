@@ -14,9 +14,8 @@ const JWT_SECRET = new TextEncoder().encode(
 );
 
 export async function POST(req: Request) {
-
   try {
-    const { wallet_address, method } = await req.json();
+    const { wallet_address } = await req.json();
 
     if (!wallet_address) {
       return NextResponse.json(
@@ -31,14 +30,13 @@ export async function POST(req: Request) {
       WHERE wallet_address = ${wallet_address}
     `;
 
-
-
     if (users.length > 0) {
       const user = users[0];
 
       // Check if user has email or okto_wallet_address
       const hasEmail = user.email && user.email.trim() !== "";
-      const hasOktoWallet = user.okto_wallet_address && user.okto_wallet_address.trim() !== "";
+      const hasOktoWallet =
+        user.okto_wallet_address && user.okto_wallet_address.trim() !== "";
 
       // Create session token
       const token = await new SignJWT({

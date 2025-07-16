@@ -33,7 +33,9 @@ export const NavBar = () => {
   const oktoClient = useOkto();
   const [isOpenMobileMenu, setIsOpenMobileMenu] = useState(false);
   const [isOpenWalletPopup, setIsOpenWalletPopup] = useState(false);
-  const [oktoWalletAddress, setOktoWalletAddress] = useState<string | null>(null);
+  const [oktoWalletAddress, setOktoWalletAddress] = useState<string | null>(
+    null,
+  );
   const walletButtonRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -73,17 +75,20 @@ export const NavBar = () => {
   // Close wallet popup when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (walletButtonRef.current && !walletButtonRef.current.contains(event.target as Node)) {
+      if (
+        walletButtonRef.current &&
+        !walletButtonRef.current.contains(event.target as Node)
+      ) {
         setIsOpenWalletPopup(false);
       }
     };
 
     if (isOpenWalletPopup) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpenWalletPopup]);
 
@@ -178,7 +183,9 @@ export const NavBar = () => {
                     size={20}
                     className="mr-2 transition-all duration-300 group-hover:rotate-12"
                   />
-                  <span className="font-semibold text-sm sm:text-base">Wallet</span>
+                  <span className="font-semibold text-sm sm:text-base">
+                    Wallet
+                  </span>
                   {/* Glow effect on hover */}
                   <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#FFC905] to-[#FF8C05] opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-sm"></div>
                 </button>
