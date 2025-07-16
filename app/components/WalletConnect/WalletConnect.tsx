@@ -11,7 +11,8 @@ export const WalletConnect = () => {
   const { address, isConnected } = useAccount();
   const [isLoading, setIsLoading] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
-  const [walletAddress, setWalletAddress] = useState("");
+  const [connectedWalletAddress, setConnectedWalletAddress] = useState("");
+  const [newUser, setNewUser] = useState(false);
   const [email, setEmail] = useState("");
 
   const router = useRouter();
@@ -31,34 +32,15 @@ export const WalletConnect = () => {
       const data = await response.json();
       console.log(data, "Wallet User Data...");
 
-      if (data.exists && data.user && !data.isNewUser) {
-        // Existing user - redirect to talent profile
-        console.log("Existing user found:", {
-          userId: data.user.user_id,
-          email: data.user.email,
-          walletAddress: data.user.wallet_address,
-        });
+      setConnectedWalletAddress(walletAddress);
+      setEmail(data.user.email);
+      setNewUser(data.isNewUser);
+      
+      setShowPopup(true);
 
-        // Show popup for users who need to add email
-        setWalletAddress(walletAddress);
-        setEmail(data.user.email);
-        setShowPopup(true);
 
-        // Redirect to talent profile
-      } else if (data.isNewUser) {
-        // New user created - show welcome popup
-        console.log("New user created:", {
-          userId: data.user.user_id,
-          walletAddress: data.user.wallet_address,
-          email: data.user.email,
-        });
 
-        setWalletAddress(walletAddress);
-        setEmail(data.user.email);
-        setShowPopup(true);
-      } else {
-        toast.error("Failed to create or find user account");
-      }
+      
     } catch (error) {
       console.error("Error checking wallet:", error);
       toast.error("Failed to verify wallet status");
@@ -69,7 +51,7 @@ export const WalletConnect = () => {
 
   const handleClosePopup = () => {
     setShowPopup(false);
-    setWalletAddress("");
+    setConnectedWalletAddress("");
     // Redirect to talent profile even if they skip the email setup
     router.push("/talents/my-profile");
   };
@@ -88,7 +70,8 @@ export const WalletConnect = () => {
         email={email}
         isOpen={showPopup}
         onClose={handleClosePopup}
-        walletAddress={walletAddress}
+        connectedWalletAddress={connectedWalletAddress}
+        newUser={newUser}
       />
     </>
   );
