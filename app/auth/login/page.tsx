@@ -254,10 +254,6 @@ const Login = () => {
 
           <div className={styles.walletWrapper}>
             <WalletConnect />
-            <p className={styles.walletCaption}>
-              If you've created an account using a wallet before, connect to
-              find your profile.
-            </p>
           </div>
         </div>
       </div>
