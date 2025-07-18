@@ -1,3 +1,4 @@
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Check, Copy, Wallet } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useAccount, useBalance } from "wagmi";
@@ -44,12 +45,20 @@ export const WalletTab: React.FC<WalletTabProps> = ({
 
   // Fetch native token balance (MATIC for Polygon)
   const { data: nativeBalance, isLoading: nativeBalanceLoading } = useBalance({
-    address: wagmiAddress as `0x${string}`,
+    address: (wagmiAddress || walletAddress) as `0x${string}`,
     chainId: polygon.id,
     watch: true,
+    enabled: !!(wagmiAddress || walletAddress),
   });
 
-  console.log(nativeBalance, "nativeBalance", isConnected, "isConnected");
+  console.log(
+    nativeBalance,
+    "nativeBalance",
+    isConnected,
+    "isConnected",
+    walletAddress,
+    "storedWalletAddress",
+  );
 
   // Common token addresses on Polygon
   const USDCE_ADDRESS =
@@ -61,24 +70,27 @@ export const WalletTab: React.FC<WalletTabProps> = ({
 
   // Fetch token balances
   const { data: usdceBalance, isLoading: usdceLoading } = useBalance({
-    address: wagmiAddress as `0x${string}`,
+    address: (wagmiAddress || walletAddress) as `0x${string}`,
     token: USDCE_ADDRESS,
     chainId: polygon.id,
     watch: true,
+    enabled: !!(wagmiAddress || walletAddress),
   });
 
   const { data: usdtBalance, isLoading: usdtLoading } = useBalance({
-    address: wagmiAddress as `0x${string}`,
+    address: (wagmiAddress || walletAddress) as `0x${string}`,
     token: USDT_ADDRESS,
     chainId: polygon.id,
     watch: true,
+    enabled: !!(wagmiAddress || walletAddress),
   });
 
   const { data: daiBalance, isLoading: daiLoading } = useBalance({
-    address: wagmiAddress as `0x${string}`,
+    address: (wagmiAddress || walletAddress) as `0x${string}`,
     token: DAI_ADDRESS,
     chainId: polygon.id,
     watch: true,
+    enabled: !!(wagmiAddress || walletAddress),
   });
 
   const handleCopyAddress = (address: string) => {
@@ -91,7 +103,8 @@ export const WalletTab: React.FC<WalletTabProps> = ({
 
   // Calculate total balance for external wallet
   const calculateExternalBalance = () => {
-    if (walletType !== "external" || !isConnected) return "$0.00";
+    if (walletType !== "external" || (!isConnected && !walletAddress))
+      return "$0.00";
 
     let totalUSD = 0;
 
@@ -121,7 +134,8 @@ export const WalletTab: React.FC<WalletTabProps> = ({
 
   // Generate external wallet coins data
   const generateExternalCoins = () => {
-    if (walletType !== "external" || !isConnected) return [];
+    if (walletType !== "external" || (!isConnected && !walletAddress))
+      return [];
 
     const coins = [];
 
@@ -195,6 +209,32 @@ export const WalletTab: React.FC<WalletTabProps> = ({
     walletType === "external" &&
     (nativeBalanceLoading || usdceLoading || usdtLoading || daiLoading);
 
+  // Handle wallet connection with console.log
+  const handleConnectWallet = () => {
+    console.log("=== Wallet Connection Process ===");
+    console.log("Connecting MetaMask wallet...");
+    console.log("Current connection status:", isConnected);
+    console.log("Current wagmi address:", wagmiAddress);
+    console.log("Stored wallet address from DB:", walletAddress);
+    console.log("Wallet type:", walletType);
+    console.log("=================================");
+  };
+
+  // Add effect to log connection status changes
+  useEffect(() => {
+    if (walletType === "external") {
+      console.log("=== External Wallet Status Update ===");
+      console.log("Connection status changed:", isConnected);
+      console.log("Wagmi address:", wagmiAddress);
+      console.log("Stored address:", walletAddress);
+      console.log(
+        "Effective connection status:",
+        isConnected || !!walletAddress,
+      );
+      console.log("=====================================");
+    }
+  }, [isConnected, wagmiAddress, walletAddress, walletType]);
+
   if (loading || isExternalLoading) {
     return (
       <div className="flex flex-1 items-center justify-center w-full min-h-[180px]">
@@ -230,6 +270,73 @@ export const WalletTab: React.FC<WalletTabProps> = ({
     );
   }
 
+  // If external wallet is not connected and no wallet address is stored, show only address and connect button
+  if (walletType === "external" && !isConnected && !walletAddress) {
+    return (
+      <div className="w-full">
+        {/* Wallet Address Section */}
+        <div className="w-full mt-4 mb-2">
+          <div className="bg-[#FFF7D1] rounded-xl p-3 border border-[#FFC905]/30">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-gray-700">
+                  External Wallet Address
+                </span>
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                  Not Connected
+                </span>
+              </div>
+              <button
+                type="button"
+                className="p-1 rounded hover:bg-[#FFC905]/20 transition"
+                onClick={() => handleCopyAddress(walletAddress || "")}
+                aria-label="Copy address"
+                disabled={!walletAddress}
+              >
+                {copiedAddress ? (
+                  <Check
+                    size={14}
+                    className="text-green-500 transition-transform scale-110"
+                  />
+                ) : (
+                  <Copy
+                    size={14}
+                    className="text-gray-500 hover:text-[#FFC905] transition-transform"
+                  />
+                )}
+              </button>
+            </div>
+            <div className="text-xs font-mono text-gray-600 break-all">
+              {walletAddress || "No external wallet address available"}
+            </div>
+            <div className="mt-2 text-xs text-gray-500 leading-relaxed">
+              This is your external wallet address stored in your GoodHive
+              account. Connect your wallet to view balances and manage assets.
+            </div>
+          </div>
+        </div>
+
+        {/* Connect Wallet Button */}
+        <div className="w-full mt-4">
+          <div className="text-center">
+            <div className="text-sm font-semibold text-gray-900 mb-3">
+              Connect Your Wallet
+            </div>
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+              <p className="text-xs text-gray-600 mb-3">
+                Connect your MetaMask wallet to view your balances and manage
+                your assets on GoodHive.
+              </p>
+              <div onClick={handleConnectWallet}>
+                <ConnectButton />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full">
       {/* Balance */}
@@ -244,9 +351,22 @@ export const WalletTab: React.FC<WalletTabProps> = ({
       <div className="w-full mt-4 mb-2">
         <div className="bg-[#FFF7D1] rounded-xl p-3 border border-[#FFC905]/30">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-gray-700">
-              {walletType === "okto" ? "Okto" : "External"} Wallet Address
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-gray-700">
+                {walletType === "okto" ? "Okto" : "External"} Wallet Address
+              </span>
+              {walletType === "external" && (
+                <span
+                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                    isConnected || walletAddress
+                      ? "bg-green-100 text-green-800"
+                      : "bg-yellow-100 text-yellow-800"
+                  }`}
+                >
+                  {isConnected || walletAddress ? "Connected" : "Not Connected"}
+                </span>
+              )}
+            </div>
             <button
               type="button"
               className="p-1 rounded hover:bg-[#FFC905]/20 transition"
