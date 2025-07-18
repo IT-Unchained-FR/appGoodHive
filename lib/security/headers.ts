@@ -13,10 +13,10 @@ export function addSecurityHeaders(response: NextResponse): NextResponse {
     "style-src 'self' 'unsafe-inline' https://accounts.google.com",
     "img-src 'self' data: https: blob:",
     "font-src 'self' data:",
-    // Allow localhost in development for connect-src and add WalletConnect domains
+    // Allow localhost in development for connect-src and add WalletConnect domains and Infura
     isDevelopment
-      ? "connect-src 'self' http://localhost:* https://*.okto.tech https://api.goodhive.io https://accounts.google.com https://explorer-api.walletconnect.com ws://localhost:* wss://relay.walletconnect.com wss://relay.walletconnect.org"
-      : "connect-src 'self' https://*.okto.tech https://api.goodhive.io https://accounts.google.com https://explorer-api.walletconnect.com wss://relay.walletconnect.com wss://relay.walletconnect.org",
+      ? "connect-src 'self' http://localhost:* https://*.okto.tech https://api.goodhive.io https://accounts.google.com https://explorer-api.walletconnect.com https://*.infura.io ws://localhost:* wss://relay.walletconnect.com wss://relay.walletconnect.org"
+      : "connect-src 'self' https://*.okto.tech https://api.goodhive.io https://accounts.google.com https://explorer-api.walletconnect.com https://*.infura.io wss://relay.walletconnect.com wss://relay.walletconnect.org",
     // Add YouTube to frame-src
     "frame-src 'self' https://accounts.google.com https://verify.walletconnect.com https://www.youtube.com https://www.youtube-nocookie.com",
     "base-uri 'self'",

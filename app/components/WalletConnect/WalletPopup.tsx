@@ -1,6 +1,7 @@
 import { getPortfolio, useOkto } from "@okto_web3/react-sdk";
 import Cookies from "js-cookie";
 import React, { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
 import { WalletTab } from "./WalletTab";
 
 // Placeholder avatar (rocket emoji)
@@ -20,6 +21,7 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({
   oktoWalletAddress,
 }) => {
   const oktoClient = useOkto();
+  const { address: wagmiAddress, isConnected } = useAccount();
   const [loading, setLoading] = useState(false);
   const [portfolio, setPortfolio] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -30,11 +32,12 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({
 
   const POLYGON_CAIP2_ID = "eip155:137";
 
-  // Get external wallet address from cookies
+  // Get external wallet address from cookies or wagmi
   useEffect(() => {
     const userAddress = Cookies.get("user_address");
-    setExternalWalletAddress(userAddress || null);
-  }, [isOpen]);
+    const address = wagmiAddress || userAddress;
+    setExternalWalletAddress(address || null);
+  }, [isOpen, wagmiAddress]);
 
   // Fetch Okto portfolio data
   useEffect(() => {
@@ -115,7 +118,7 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({
             </span>
             <span className="text-xs text-gray-400 font-mono truncate">
               {activeTab === "okto"
-                ? oktoWalletAddress || "No Okto wallet address available"
+                ? oktoWalletAddress || "No Goodhive wallet address available"
                 : externalWalletAddress ||
                   "No external wallet address available"}
             </span>
@@ -147,7 +150,7 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({
             }`}
             onClick={() => setActiveTab("okto")}
           >
-            Okto Wallet
+            GoodHive Wallet
           </button>
           <button
             className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition ${
