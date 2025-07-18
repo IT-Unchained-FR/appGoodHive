@@ -23,6 +23,16 @@ const PUBLIC_PATHS = [
   "/api/auth/logout",
 ];
 
+// Helper function to check if a path is public
+function isPublicPath(path: string): boolean {
+  return PUBLIC_PATHS.some((publicPath) => {
+    if (publicPath === "/") {
+      return path === "/";
+    }
+    return path.startsWith(publicPath);
+  });
+}
+
 // Helper function to validate session token
 async function validateSessionToken(token: string) {
   try {
@@ -45,7 +55,7 @@ export async function middleware(req: NextRequest) {
     }
 
     // Skip authentication for public paths
-    if (PUBLIC_PATHS.some((publicPath) => path.startsWith(publicPath))) {
+    if (isPublicPath(path)) {
       response = NextResponse.next();
     }
     // Handle admin routes
