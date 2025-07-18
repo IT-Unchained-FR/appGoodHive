@@ -25,8 +25,6 @@ import { NavBar } from "@components/nav-bar";
 import { SwitchWalletCheck } from "@components/switch-wallet-check";
 import { GoodhiveInfuraAPILink } from "./constants/common";
 
-import AddressContextWrapper from "./components/addressContextWrapper/AddressContextWrapper";
-
 import "@rainbow-me/rainbowkit/styles.css";
 import LastActiveHandler from "./components/LastActiveHandler";
 import OnboardingPopup from "./components/Onboarding/OnboardingPopup";
@@ -250,10 +248,8 @@ export default function RootLayout({
                   <Suspense>
                     <ReferralCodeHandler />
                     <div className="flex-grow">
-                      <AddressContextWrapper setAuthStatus={setAuthStatus}>
-                        <LastActiveHandler />
-                        {children}
-                      </AddressContextWrapper>
+                      <LastActiveHandler />
+                      {children}
                     </div>
                   </Suspense>
                   {!isAdminSection && <Footer />}
