@@ -1,3 +1,8 @@
+import {
+  SEVEN_DAYS_IN_SECONDS,
+  clientAccessibleCookieConfig,
+  secureHttpOnlyCookieConfig,
+} from "@/lib/auth/cookieConfig";
 import { SignJWT } from "jose";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -14,34 +19,23 @@ const JWT_SECRET = new TextEncoder().encode(
 );
 
 export async function POST(req: Request) {
-  if (req.method !== "POST") {
-    return NextResponse.json(
-      { message: "Method Not Allowed" },
-      { status: 405 },
-    );
-  }
-
   try {
-    const { okto_wallet_address, wallet_address, user_id, email, login_method } = await req.json();
+    const {
+      okto_wallet_address,
+      email,
+      login_method,
+      user_id,
+      wallet_address,
+    } = await req.json();
 
-    if (!okto_wallet_address || !user_id || !email || !login_method) {
+    if (!okto_wallet_address) {
       return NextResponse.json(
-        {
-          message:
-            "Wallet address, user ID, email, and login method are required",
-        },
+        { message: "Wallet address is required" },
         { status: 400 },
       );
     }
 
-    if (!["google", "email"].includes(login_method)) {
-      return NextResponse.json(
-        { message: "Invalid login method. Must be either 'google' or 'email'" },
-        { status: 400 },
-      );
-    }
-
-    // First, try to find user by email
+    // Check if user exists with this email
     const existingUsers = await sql`
       SELECT * FROM goodhive.users
       WHERE email = ${email}
@@ -61,20 +55,6 @@ export async function POST(req: Request) {
       `;
       user = updatedUsers[0];
     } else {
-      // Check if wallet address is already in use
-      const walletUsers = await sql`
-        SELECT * FROM goodhive.users
-        WHERE okto_wallet_address = ${okto_wallet_address}
-      `;
-      console.log(walletUsers, "walletUsers");
-
-      if (walletUsers.length > 0) {
-        return NextResponse.json(
-          { message: "Wallet address already associated with another account" },
-          { status: 409 },
-        );
-      }
-
       // Create new user
       const newUsers = await sql`
         INSERT INTO goodhive.users (
@@ -98,7 +78,7 @@ export async function POST(req: Request) {
       user = newUsers[0];
     }
 
-    // Create session token
+    // Create session token with 7-day expiration
     const token = await new SignJWT({
       user_id: user.userid,
       wallet_address: user.okto_wallet_address,
@@ -106,30 +86,37 @@ export async function POST(req: Request) {
     })
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
-      .setExpirationTime("24h")
+      .setExpirationTime(`${SEVEN_DAYS_IN_SECONDS}s`)
       .sign(JWT_SECRET);
 
-    // Set session cookie
-    cookies().set("session_token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 86400, // 24 hours
-    });
+    // Set session cookie with secure config
+    cookies().set("session_token", token, secureHttpOnlyCookieConfig);
+
+    // Set user cookies for frontend access with client-accessible config
+    cookies().set("user_id", user.userid, clientAccessibleCookieConfig);
+
+    if (user.email) {
+      cookies().set("user_email", user.email, clientAccessibleCookieConfig);
+    }
+
+    cookies().set(
+      "user_address",
+      user.wallet_address,
+      clientAccessibleCookieConfig,
+    );
 
     return NextResponse.json({
-      message: "Wallet verification successful",
+      exists: true,
+      isNewUser: false,
+      needsEmailSetup: !user.email,
       user: {
         user_id: user.userid,
         email: user.email,
-        wallet_address: user.okto_wallet_address,
-        mentor_status: user.mentor_status,
-        recruiter_status: user.recruiter_status,
-        talent_status: user.talent_status,
+        wallet_address: user.wallet_address,
       },
     });
   } catch (error) {
-    console.error("Error verifying wallet:", error);
+    console.error("Error in verify-wallet:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 },

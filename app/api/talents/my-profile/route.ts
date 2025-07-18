@@ -1,6 +1,8 @@
 import postgres from "postgres";
 
+import { getSessionUser } from "@/lib/auth/sessionUtils";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 // Force the browser to always fetch the latest data from the server
 export const fetchCache = "force-no-store";
@@ -140,46 +142,25 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: NextRequest) {
-  const searchParamsEntries = request.nextUrl.searchParams.entries();
-  const searchParams = Object.fromEntries(searchParamsEntries);
-
-  // FIXME: use snake_case instead of camelCase
-  const { user_id } = searchParams;
-
-  console.log(user_id, "user_id");
-
   try {
-    const user = await sql`
-      SELECT t.*, u.talent_status, u.mentor_status, u.recruiter_status, u.userid, u.approved_roles
-      FROM goodhive.talents t
-      JOIN goodhive.users u ON t.user_id = u.userid
-      WHERE t.user_id = ${user_id}
-    `;
+    const user = await getSessionUser();
 
-    console.log(user, "user");
-
-    if (user.length === 0) {
-      return new Response(JSON.stringify({ message: "User not found" }), {
-        status: 404,
-      });
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 },
+      );
     }
 
-    const userProfile = {
-      ...user[0],
-      description: user[0].description
-        ? Buffer.from(user[0].description, "base64").toString("utf-8")
-        : null,
-      about_work: user[0].about_work
-        ? Buffer.from(user[0].about_work, "base64").toString("utf-8")
-        : null,
-    };
+    // Use user.user_id, user.email, user.wallet_address from JWT payload
+    // instead of reading from client-side cookies
 
-    return new Response(JSON.stringify(userProfile));
+    // Your existing logic here...
   } catch (error) {
-    console.error("Error retrieving data:", error);
-
-    return new Response(JSON.stringify({ message: "Error retrieving data" }), {
-      status: 500,
-    });
+    console.error("Error in my-profile API:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
