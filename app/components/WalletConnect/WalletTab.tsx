@@ -1,7 +1,7 @@
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Check, Copy, Wallet } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { useAccount, useBalance } from "wagmi";
+import { useAccount, useBalance, useDisconnect } from "wagmi";
 import { polygon } from "wagmi/chains";
 
 interface WalletTabProps {
@@ -24,6 +24,7 @@ export const WalletTab: React.FC<WalletTabProps> = ({
   const [copiedAddress, setCopiedAddress] = useState<boolean>(false);
   const [maticPrice, setMaticPrice] = useState<number>(0);
   const { address: wagmiAddress, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
 
   // Fetch MATIC price from CoinGecko
   useEffect(() => {
@@ -58,6 +59,10 @@ export const WalletTab: React.FC<WalletTabProps> = ({
     "isConnected",
     walletAddress,
     "storedWalletAddress",
+    wagmiAddress,
+    "wagmiAddress",
+    !!disconnect,
+    "disconnectFunctionAvailable",
   );
 
   // Common token addresses on Polygon
@@ -217,6 +222,13 @@ export const WalletTab: React.FC<WalletTabProps> = ({
     console.log("Current wagmi address:", wagmiAddress);
     console.log("Stored wallet address from DB:", walletAddress);
     console.log("Wallet type:", walletType);
+    console.log("Disconnect function available:", !!disconnect);
+    console.log("Wagmi connection state:", {
+      isConnected,
+      address: wagmiAddress,
+      hasStoredAddress: !!walletAddress,
+      effectiveConnection: isConnected || !!walletAddress,
+    });
     console.log("=================================");
   };
 
@@ -231,9 +243,16 @@ export const WalletTab: React.FC<WalletTabProps> = ({
         "Effective connection status:",
         isConnected || !!walletAddress,
       );
+      console.log("Disconnect function available:", !!disconnect);
+      console.log("Wagmi connection details:", {
+        isConnected,
+        address: wagmiAddress,
+        hasStoredAddress: !!walletAddress,
+        effectiveConnection: isConnected || !!walletAddress,
+      });
       console.log("=====================================");
     }
-  }, [isConnected, wagmiAddress, walletAddress, walletType]);
+  }, [isConnected, wagmiAddress, walletAddress, walletType, disconnect]);
 
   if (loading || isExternalLoading) {
     return (
@@ -271,7 +290,7 @@ export const WalletTab: React.FC<WalletTabProps> = ({
   }
 
   // If external wallet is not connected and no wallet address is stored, show only address and connect button
-  if (walletType === "external" && !isConnected && !walletAddress) {
+  if (walletType === "external" && isConnected) {
     return (
       <div className="w-full">
         {/* Wallet Address Section */}
