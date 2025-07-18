@@ -17,7 +17,8 @@ export function addSecurityHeaders(response: NextResponse): NextResponse {
     isDevelopment
       ? "connect-src 'self' http://localhost:* https://*.okto.tech https://api.goodhive.io https://accounts.google.com https://explorer-api.walletconnect.com ws://localhost:* wss://relay.walletconnect.com wss://relay.walletconnect.org"
       : "connect-src 'self' https://*.okto.tech https://api.goodhive.io https://accounts.google.com https://explorer-api.walletconnect.com wss://relay.walletconnect.com wss://relay.walletconnect.org",
-    "frame-src 'self' https://accounts.google.com https://verify.walletconnect.com",
+    // Add YouTube to frame-src
+    "frame-src 'self' https://accounts.google.com https://verify.walletconnect.com https://www.youtube.com https://www.youtube-nocookie.com",
     "base-uri 'self'",
     "form-action 'self'",
   ].join("; ");
@@ -25,7 +26,6 @@ export function addSecurityHeaders(response: NextResponse): NextResponse {
   response.headers.set("Content-Security-Policy", cspDirectives);
 
   // Prevent clickjacking
-  response.headers.set("X-Frame-Options", "DENY");
 
   // Prevent MIME type sniffing
   response.headers.set("X-Content-Type-Options", "nosniff");
