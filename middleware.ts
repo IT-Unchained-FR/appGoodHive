@@ -21,6 +21,7 @@ const PUBLIC_PATHS = [
   "/api/auth/verify-wallet",
   "/api/auth/check-wallet",
   "/api/auth/logout",
+  "/api/auth/me",
 ];
 
 // Helper function to check if a path is public
