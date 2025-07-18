@@ -108,17 +108,61 @@ export default function ProfilePage() {
   // User identifiers
   const user_id = useMemo(() => Cookies.get("user_id"), []);
 
+  // UI state
+  const [isProfileDataFetching, setIsProfileDataFetching] = useState(false);
+  const [saveProfileLoading, setSaveProfileLoading] = useState(false);
+  const [reviewProfileLoading, setReviewProfileLoading] = useState(false);
+  const [isTokenVerifying, setIsTokenVerifying] = useState(true);
+
+  // Add proper JWT token verification
+  useEffect(() => {
+    const verifyToken = async () => {
+      try {
+        // Call the /api/auth/me endpoint to verify the session token
+        const response = await fetch("/api/auth/me", {
+          method: "GET",
+          credentials: "include", // Include cookies
+        });
+
+        if (!response.ok) {
+          // Token is invalid or expired, redirect to login
+          router.replace("/auth/login");
+          return;
+        }
+
+        const data = await response.json();
+
+        // Verify that the user_id from the token matches the cookie
+        if (data.user_id !== user_id) {
+          // Token and cookie mismatch, redirect to login
+          router.replace("/auth/login");
+          return;
+        }
+
+        // Token is valid, stop loading
+        setIsTokenVerifying(false);
+      } catch (error) {
+        console.error("Error verifying token:", error);
+        // Error occurred, redirect to login
+        router.replace("/auth/login");
+      }
+    };
+
+    // Only verify if user_id exists
+    if (user_id) {
+      verifyToken();
+    } else {
+      // No user_id cookie, redirect to login
+      router.replace("/auth/login");
+    }
+  }, [user_id, router]);
+
   // Primary state
   const [profileData, setProfileData] = useState<ProfileData>(
     {} as ProfileData,
   );
   const [user, setUser] = useState<any>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
-  // UI state
-  const [isProfileDataFetching, setIsProfileDataFetching] = useState(false);
-  const [saveProfileLoading, setSaveProfileLoading] = useState(false);
-  const [reviewProfileLoading, setReviewProfileLoading] = useState(false);
 
   // Form state
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
@@ -603,6 +647,10 @@ export default function ProfilePage() {
   };
 
   // Loading states
+  if (isTokenVerifying) {
+    return <HoneybeeSpinner message={"Verifying authentication..."} />;
+  }
+
   if (isProfileDataFetching) {
     window.scrollTo(0, 0);
     return <HoneybeeSpinner message={"Loading Your Profile..."} />;
@@ -829,9 +877,9 @@ export default function ProfilePage() {
                 placeholder="Search for a country..."
                 defaultValue={
                   countries[
-                  countries.findIndex(
-                    (country) => country.value === profileData?.country,
-                  )
+                    countries.findIndex(
+                      (country) => country.value === profileData?.country,
+                    )
                   ]
                 }
               />

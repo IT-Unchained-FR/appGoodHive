@@ -1,6 +1,5 @@
 import postgres from "postgres";
 
-import { getSessionUser } from "@/lib/auth/sessionUtils";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -53,9 +52,7 @@ export async function POST(request: Request) {
     // Filter out undefined, null, and empty string fields
     const fields = {
       title,
-      description: description
-        ? Buffer.from(description, "utf-8").toString("base64")
-        : null,
+      description,
       first_name,
       last_name,
       country,
@@ -63,9 +60,7 @@ export async function POST(request: Request) {
       phone_country_code,
       phone_number,
       email,
-      about_work: about_work
-        ? Buffer.from(about_work, "utf-8").toString("base64")
-        : null,
+      about_work,
       rate,
       skills,
       image_url,
@@ -143,19 +138,63 @@ export async function POST(request: Request) {
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getSessionUser();
+    // Get user_id from query parameters
+    const { searchParams } = new URL(request.url);
+    const user_id = searchParams.get("user_id");
 
-    if (!user) {
+    if (!user_id) {
       return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 },
+        { error: "User ID is required" },
+        { status: 400 },
       );
     }
 
-    // Use user.user_id, user.email, user.wallet_address from JWT payload
-    // instead of reading from client-side cookies
+    // Fetch talent profile data from database
+    const talents = await sql`
+      SELECT 
+        title,
+        description,
+        first_name,
+        last_name,
+        country,
+        city,
+        phone_country_code,
+        phone_number,
+        email,
+        telegram,
+        about_work,
+        rate,
+        skills,
+        image_url,
+        cv_url,
+        linkedin,
+        github,
+        stackoverflow,
+        twitter,
+        portfolio,
+        freelance_only,
+        remote_only,
+        talent,
+        mentor,
+        recruiter,
+        hide_contact_details,
+        availability,
+        approved,
+        inReview,
+        user_id
+      FROM goodhive.talents 
+      WHERE user_id = ${user_id}
+    `;
 
-    // Your existing logic here...
+    if (talents.length === 0) {
+      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+    }
+
+    const profileData = talents[0];
+
+    // No need to decode - fields are stored as character varying in the database
+
+    return NextResponse.json(profileData);
   } catch (error) {
     console.error("Error in my-profile API:", error);
     return NextResponse.json(
