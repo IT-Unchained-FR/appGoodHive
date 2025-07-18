@@ -1,8 +1,9 @@
-import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { AddressContext } from "../context";
-import { useAccount } from "wagmi";
+"use client";
+
 import { AuthenticationStatus } from "@rainbow-me/rainbowkit";
-import Cookies from "js-cookie";
+import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { useAccount } from "wagmi";
+import { AddressContext } from "../context";
 
 const AddressContextWrapper = ({
   children,
@@ -11,61 +12,76 @@ const AddressContextWrapper = ({
   children: React.ReactNode;
   setAuthStatus: Dispatch<SetStateAction<AuthenticationStatus>>;
 }) => {
-  const user_id = Cookies.get("user_id");
   const { address } = useAccount();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  // Send a request to the server to store last active time
+  // Get user info from server-side validation
   useEffect(() => {
-    const user_email = Cookies.get("user_email");
+    const fetchUserInfo = async () => {
+      try {
+        const response = await fetch("/api/auth/me", {
+          credentials: "include",
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUserId(data.user.user_id);
+          setWalletAddress(data.user.wallet_address);
+        }
+      } catch (error) {
+        console.error("Error fetching user info:", error);
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
+
+  // Send last active time using server-validated user ID
+  useEffect(() => {
     const sendLastActiveTime = async () => {
-      if (!user_id) return;
+      if (!userId) return;
+
       try {
         const lastActiveTimeResponse = await fetch(
           "/api/auth/last-active-time",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ walletAddress, user_id }),
+            body: JSON.stringify({ user_id: userId }),
           },
         );
 
-        console.log(lastActiveRequestSentTime, "lastActiveRequestSentTime");
-
         if (lastActiveTimeResponse.ok) {
-          Cookies.set(
+          // Store timestamp in localStorage instead of cookies
+          localStorage.setItem(
             "last_active_request_sent_time",
             new Date().toISOString(),
           );
         }
       } catch (error) {
-        console.error(error, "Error sending last active time");
-      } finally {
+        console.error("Error sending last active time:", error);
       }
     };
 
-    // Send the last active time if it has been more than 5 minutes since the last request
-    const lastActiveRequestSentTime = Cookies.get(
+    const lastActiveRequestSentTime = localStorage.getItem(
       "last_active_request_sent_time",
     );
 
-    console.log(lastActiveRequestSentTime, "lastActiveRequestSentTime");
-
-    if (lastActiveRequestSentTime === undefined) {
-      if (walletAddress || user_email) {
+    if (!lastActiveRequestSentTime) {
+      if (userId) {
         sendLastActiveTime();
       }
     } else {
       const last_req_less_than_5_minutes =
-        new Date().getTime() -
-          new Date(lastActiveRequestSentTime as string).getTime() <
+        new Date().getTime() - new Date(lastActiveRequestSentTime).getTime() <
         300000;
 
-      if ((walletAddress || user_email) && !last_req_less_than_5_minutes) {
+      if (userId && !last_req_less_than_5_minutes) {
         sendLastActiveTime();
       }
     }
-  }, [walletAddress]);
+  }, [userId]);
 
   useEffect(() => {
     const fetchStatus = async () => {
