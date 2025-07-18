@@ -1,5 +1,5 @@
 import { Check, Copy, Wallet } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAccount, useBalance } from "wagmi";
 import { polygon } from "wagmi/chains";
 
@@ -21,7 +21,26 @@ export const WalletTab: React.FC<WalletTabProps> = ({
   error = null,
 }) => {
   const [copiedAddress, setCopiedAddress] = useState<boolean>(false);
+  const [maticPrice, setMaticPrice] = useState<number>(0);
   const { address: wagmiAddress, isConnected } = useAccount();
+
+  // Fetch MATIC price from CoinGecko
+  useEffect(() => {
+    const fetchMaticPrice = async () => {
+      try {
+        const response = await fetch(
+          "https://api.coingecko.com/api/v3/simple/price?ids=polygon-ecosystem-token&vs_currencies=usd",
+        );
+        const data = await response.json();
+        setMaticPrice(data["polygon-ecosystem-token"]?.usd || 0);
+      } catch (error) {
+        console.error("Failed to fetch MATIC price:", error);
+        setMaticPrice(0.8); // Fallback to hardcoded value
+      }
+    };
+
+    fetchMaticPrice();
+  }, []);
 
   // Fetch native token balance (MATIC for Polygon)
   const { data: nativeBalance, isLoading: nativeBalanceLoading } = useBalance({
@@ -33,17 +52,17 @@ export const WalletTab: React.FC<WalletTabProps> = ({
   console.log(nativeBalance, "nativeBalance", isConnected, "isConnected");
 
   // Common token addresses on Polygon
-  const USDC_ADDRESS =
-    "0x2791bca1f2de4661ed88a30c99a7a9449aa84174" as `0x${string}`;
+  const USDCE_ADDRESS =
+    "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174" as `0x${string}`;
   const USDT_ADDRESS =
     "0xc2132d05d31c914a87c6611c10748aeb04b58e8f" as `0x${string}`;
   const DAI_ADDRESS =
     "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063" as `0x${string}`;
 
   // Fetch token balances
-  const { data: usdcBalance, isLoading: usdcLoading } = useBalance({
+  const { data: usdceBalance, isLoading: usdceLoading } = useBalance({
     address: wagmiAddress as `0x${string}`,
-    token: USDC_ADDRESS,
+    token: USDCE_ADDRESS,
     chainId: polygon.id,
     watch: true,
   });
@@ -76,26 +95,26 @@ export const WalletTab: React.FC<WalletTabProps> = ({
 
     let totalUSD = 0;
 
-    // Add native MATIC balance (approximate USD value)
+    // Add native MATIC balance (real USD value from API)
     if (nativeBalance?.formatted) {
-      const maticValue = parseFloat(nativeBalance.formatted) * 0.8; // Approximate MATIC price
+      const maticValue = parseFloat(nativeBalance.formatted) * maticPrice;
       totalUSD += maticValue;
     }
 
-    // Add USDC balance (1:1 with USD)
-    if (usdcBalance?.formatted) {
-      totalUSD += parseFloat(usdcBalance.formatted);
+    // Add USDC.e balance (1:1 with USD)
+    if (usdceBalance?.formatted) {
+      totalUSD += parseFloat(usdceBalance.formatted);
     }
 
-    // Add USDT balance (1:1 with USD)
-    if (usdtBalance?.formatted) {
-      totalUSD += parseFloat(usdtBalance.formatted);
-    }
+    // // Add USDT balance (1:1 with USD)
+    // if (usdtBalance?.formatted) {
+    //   totalUSD += parseFloat(usdtBalance.formatted);
+    // }
 
-    // Add DAI balance (1:1 with USD)
-    if (daiBalance?.formatted) {
-      totalUSD += parseFloat(daiBalance.formatted);
-    }
+    // // Add DAI balance (1:1 with USD)
+    // if (daiBalance?.formatted) {
+    //   totalUSD += parseFloat(daiBalance.formatted);
+    // }
 
     return `$${totalUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
   };
@@ -114,19 +133,19 @@ export const WalletTab: React.FC<WalletTabProps> = ({
         symbol: "MATIC",
         network: "POLYGON",
         balance: nativeBalance.formatted,
-        valueUsd: (parseFloat(nativeBalance.formatted) * 0.8).toFixed(2), // Approximate
+        valueUsd: (parseFloat(nativeBalance.formatted) * maticPrice).toFixed(2), // Real price from API
       });
     }
 
-    // Add USDC
-    if (usdcBalance?.formatted && parseFloat(usdcBalance.formatted) > 0) {
+    // Add USDC.e
+    if (usdceBalance?.formatted && parseFloat(usdceBalance.formatted) > 0) {
       coins.push({
-        icon: "https://s2.coinmarketcap.com/static/img/coins/64x64/3408.png",
-        name: "USD Coin",
-        symbol: "USDC",
+        icon: "https://s2.coinmarketcap.com/static/img/coins/64x64/18852.png",
+        name: "Bridged USD Coin",
+        symbol: "USDC.e",
         network: "POLYGON",
-        balance: usdcBalance.formatted,
-        valueUsd: usdcBalance.formatted,
+        balance: usdceBalance.formatted,
+        valueUsd: usdceBalance.formatted,
       });
     }
 
@@ -174,7 +193,7 @@ export const WalletTab: React.FC<WalletTabProps> = ({
     walletType === "external" ? calculateExternalBalance() : balance;
   const isExternalLoading =
     walletType === "external" &&
-    (nativeBalanceLoading || usdcLoading || usdtLoading || daiLoading);
+    (nativeBalanceLoading || usdceLoading || usdtLoading || daiLoading);
 
   if (loading || isExternalLoading) {
     return (
