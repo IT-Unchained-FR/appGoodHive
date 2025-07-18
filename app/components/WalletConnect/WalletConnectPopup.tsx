@@ -228,7 +228,7 @@ export const WalletConnectPopup = ({
                   <span className="text-3xl">👋</span>
                 </div>
                 <p className="text-gray-700 font-medium mb-2">
-                  Great to see you again!
+                  Welcome To GoodHive
                 </p>
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4">
                   <p className="text-xs text-gray-600 mb-1">
