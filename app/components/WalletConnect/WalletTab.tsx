@@ -1,5 +1,7 @@
 import { Check, Copy, Wallet } from "lucide-react";
 import React, { useState } from "react";
+import { useAccount, useBalance } from "wagmi";
+import { polygon } from "wagmi/chains";
 
 interface WalletTabProps {
   walletType: "okto" | "external";
@@ -19,6 +21,46 @@ export const WalletTab: React.FC<WalletTabProps> = ({
   error = null,
 }) => {
   const [copiedAddress, setCopiedAddress] = useState<boolean>(false);
+  const { address: wagmiAddress, isConnected } = useAccount();
+
+  // Fetch native token balance (MATIC for Polygon)
+  const { data: nativeBalance, isLoading: nativeBalanceLoading } = useBalance({
+    address: wagmiAddress as `0x${string}`,
+    chainId: polygon.id,
+    watch: true,
+  });
+
+  console.log(nativeBalance, "nativeBalance", isConnected, "isConnected");
+
+  // Common token addresses on Polygon
+  const USDC_ADDRESS =
+    "0x2791bca1f2de4661ed88a30c99a7a9449aa84174" as `0x${string}`;
+  const USDT_ADDRESS =
+    "0xc2132d05d31c914a87c6611c10748aeb04b58e8f" as `0x${string}`;
+  const DAI_ADDRESS =
+    "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063" as `0x${string}`;
+
+  // Fetch token balances
+  const { data: usdcBalance, isLoading: usdcLoading } = useBalance({
+    address: wagmiAddress as `0x${string}`,
+    token: USDC_ADDRESS,
+    chainId: polygon.id,
+    watch: true,
+  });
+
+  const { data: usdtBalance, isLoading: usdtLoading } = useBalance({
+    address: wagmiAddress as `0x${string}`,
+    token: USDT_ADDRESS,
+    chainId: polygon.id,
+    watch: true,
+  });
+
+  const { data: daiBalance, isLoading: daiLoading } = useBalance({
+    address: wagmiAddress as `0x${string}`,
+    token: DAI_ADDRESS,
+    chainId: polygon.id,
+    watch: true,
+  });
 
   const handleCopyAddress = (address: string) => {
     if (address) {
@@ -28,30 +70,113 @@ export const WalletTab: React.FC<WalletTabProps> = ({
     }
   };
 
-  // Default coins for external wallet (dummy data)
-  const defaultExternalCoins = [
-    {
-      icon: "https://s2.coinmarketcap.com/static/img/coins/64x64/1.png",
-      name: "Ethereum",
-      symbol: "ETH",
-      network: "ETHEREUM",
-      balance: "0.5",
-      valueUsd: "1250.00",
-    },
-    {
-      icon: "https://s2.coinmarketcap.com/static/img/coins/64x64/825.png",
-      name: "Tether USD",
-      symbol: "USDT",
-      network: "ETHEREUM",
-      balance: "1000",
-      valueUsd: "1000.00",
-    },
-  ];
+  // Calculate total balance for external wallet
+  const calculateExternalBalance = () => {
+    if (walletType !== "external" || !isConnected) return "$0.00";
 
-  const displayCoins = walletType === "external" ? defaultExternalCoins : coins;
-  const displayBalance = walletType === "external" ? "$2,250.00" : balance;
+    let totalUSD = 0;
 
-  if (loading) {
+    // Add native MATIC balance (approximate USD value)
+    if (nativeBalance?.formatted) {
+      const maticValue = parseFloat(nativeBalance.formatted) * 0.8; // Approximate MATIC price
+      totalUSD += maticValue;
+    }
+
+    // Add USDC balance (1:1 with USD)
+    if (usdcBalance?.formatted) {
+      totalUSD += parseFloat(usdcBalance.formatted);
+    }
+
+    // Add USDT balance (1:1 with USD)
+    if (usdtBalance?.formatted) {
+      totalUSD += parseFloat(usdtBalance.formatted);
+    }
+
+    // Add DAI balance (1:1 with USD)
+    if (daiBalance?.formatted) {
+      totalUSD += parseFloat(daiBalance.formatted);
+    }
+
+    return `$${totalUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  };
+
+  // Generate external wallet coins data
+  const generateExternalCoins = () => {
+    if (walletType !== "external" || !isConnected) return [];
+
+    const coins = [];
+
+    // Add MATIC
+    if (nativeBalance?.formatted && parseFloat(nativeBalance.formatted) > 0) {
+      coins.push({
+        icon: "https://s2.coinmarketcap.com/static/img/coins/64x64/3890.png",
+        name: "Polygon",
+        symbol: "MATIC",
+        network: "POLYGON",
+        balance: nativeBalance.formatted,
+        valueUsd: (parseFloat(nativeBalance.formatted) * 0.8).toFixed(2), // Approximate
+      });
+    }
+
+    // Add USDC
+    if (usdcBalance?.formatted && parseFloat(usdcBalance.formatted) > 0) {
+      coins.push({
+        icon: "https://s2.coinmarketcap.com/static/img/coins/64x64/3408.png",
+        name: "USD Coin",
+        symbol: "USDC",
+        network: "POLYGON",
+        balance: usdcBalance.formatted,
+        valueUsd: usdcBalance.formatted,
+      });
+    }
+
+    // Add USDT
+    if (usdtBalance?.formatted && parseFloat(usdtBalance.formatted) > 0) {
+      coins.push({
+        icon: "https://s2.coinmarketcap.com/static/img/coins/64x64/825.png",
+        name: "Tether USD",
+        symbol: "USDT",
+        network: "POLYGON",
+        balance: usdtBalance.formatted,
+        valueUsd: usdtBalance.formatted,
+      });
+    }
+
+    // Add DAI
+    if (daiBalance?.formatted && parseFloat(daiBalance.formatted) > 0) {
+      coins.push({
+        icon: "https://s2.coinmarketcap.com/static/img/coins/64x64/4943.png",
+        name: "Dai",
+        symbol: "DAI",
+        network: "POLYGON",
+        balance: daiBalance.formatted,
+        valueUsd: daiBalance.formatted,
+      });
+    }
+
+    return coins.length > 0
+      ? coins
+      : [
+          {
+            icon: "https://s2.coinmarketcap.com/static/img/coins/64x64/3890.png",
+            name: "Polygon",
+            symbol: "MATIC",
+            network: "POLYGON",
+            balance: "0",
+            valueUsd: "0",
+          },
+        ];
+  };
+
+  const displayCoins =
+    walletType === "external" ? generateExternalCoins() : coins;
+  const displayBalance =
+    walletType === "external" ? calculateExternalBalance() : balance;
+  const isExternalLoading =
+    walletType === "external" &&
+    (nativeBalanceLoading || usdcLoading || usdtLoading || daiLoading);
+
+  if (loading || isExternalLoading) {
     return (
       <div className="flex flex-1 items-center justify-center w-full min-h-[180px]">
         <svg
@@ -124,11 +249,12 @@ export const WalletTab: React.FC<WalletTabProps> = ({
             </button>
           </div>
           <div className="text-xs font-mono text-gray-600 break-all">
-            {walletAddress || `No ${walletType} wallet address available`}
+            {walletAddress ||
+              `No ${walletType === "okto" ? "GoodHive" : "External"} wallet address available`}
           </div>
           <div className="mt-2 text-xs text-gray-500 leading-relaxed">
             {walletType === "okto"
-              ? "This is your Okto wallet address. You can view your portfolio and manage your assets here."
+              ? "This is your Goodhive Wallet address. You can view your portfolio and manage your assets here."
               : "This is your external wallet address connected to your GoodHive account. You can use this address for transactions and payments on the platform."}
           </div>
         </div>
