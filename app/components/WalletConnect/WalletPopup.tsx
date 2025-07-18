@@ -4,8 +4,9 @@ import React, { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { WalletTab } from "./WalletTab";
 
-// Placeholder avatar (rocket emoji)
-const avatar = "🚀";
+// Placeholder avatars
+const oktoAvatar = "🚀";
+const externalAvatar = "🔗";
 
 export interface WalletPopupProps {
   isOpen: boolean;
@@ -95,6 +96,26 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({
         }))
       : defaultCoins;
 
+  // Get current wallet info based on active tab
+  const getCurrentWalletInfo = () => {
+    if (activeTab === "okto") {
+      return {
+        title: "My GoodHive Wallet",
+        avatar: oktoAvatar,
+        address: oktoWalletAddress || "No Goodhive wallet address available",
+      };
+    } else {
+      return {
+        title: "My External Wallet",
+        avatar: externalAvatar,
+        address:
+          externalWalletAddress || "No external wallet address available",
+      };
+    }
+  };
+
+  const currentWallet = getCurrentWalletInfo();
+
   return (
     <div
       className="absolute top-full right-0 mt-4 z-50 min-w-[340px] max-w-[95vw] bg-white rounded-2xl border border-[#FFC905] shadow-2xl p-0"
@@ -110,17 +131,14 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({
         {/* Wallet header */}
         <div className="flex items-center gap-3 w-full">
           <span className="w-10 h-10 rounded-full flex items-center justify-center text-2xl bg-[#ffeabf] border border-[#FFC905]">
-            {avatar}
+            {currentWallet.avatar}
           </span>
           <div className="flex flex-col flex-1 min-w-0">
             <span className="font-semibold text-gray-900 text-base leading-tight">
-              My GoodHive Wallet
+              {currentWallet.title}
             </span>
             <span className="text-xs text-gray-400 font-mono truncate">
-              {activeTab === "okto"
-                ? oktoWalletAddress || "No Goodhive wallet address available"
-                : externalWalletAddress ||
-                  "No external wallet address available"}
+              {currentWallet.address}
             </span>
           </div>
           <button
