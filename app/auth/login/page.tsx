@@ -35,7 +35,7 @@ const Login = () => {
     },
   ];
 
-  // 
+  //
   useEffect(() => {
     localStorage.clear();
     document.cookie.split(";").forEach(function (c) {
