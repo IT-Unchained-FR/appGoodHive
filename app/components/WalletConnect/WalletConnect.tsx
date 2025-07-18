@@ -15,22 +15,20 @@ interface WalletUserState {
     user_id: string;
     email: string;
     wallet_address: string;
-  }
+  };
 }
-
 
 export const WalletConnect = () => {
   const { address, isConnected } = useAccount();
-  const [isLoading, setIsLoading] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [connectedWalletAddress, setConnectedWalletAddress] = useState("");
   const [walletUser, setWalletUser] = useState<WalletUserState | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleWalletLogin = async (walletAddress: string) => {
     setIsLoading(true);
     setConnectedWalletAddress(walletAddress);
-
 
     try {
       const response = await fetch("/api/auth/check-wallet", {
@@ -38,18 +36,13 @@ export const WalletConnect = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ wallet_address: walletAddress}),
+        body: JSON.stringify({ wallet_address: walletAddress }),
       });
 
       const data = await response.json();
 
       setWalletUser(data);
       setShowPopup(true);
-
-
-
-
-      
     } catch (error) {
       console.error("Error checking wallet:", error);
       toast.error("Failed to verify wallet status");
@@ -72,25 +65,20 @@ export const WalletConnect = () => {
     }
   }, [isConnected, address]);
 
-
   return (
     <>
       <ConnectButton />
-      {walletUser&& (
-
-
-      
-      <WalletConnectPopup
-        email={walletUser.user.email}
-        isOpen={showPopup}
-        onClose={handleClosePopup}
-        connectedWalletAddress={connectedWalletAddress}
-        newUser={walletUser.isNewUser}
-        needsEmailSetup={walletUser.needsEmailSetup}
-        walletUserId={walletUser.user.user_id}
-
-      />
-    )}
+      {walletUser && (
+        <WalletConnectPopup
+          email={walletUser.user.email}
+          isOpen={showPopup}
+          onClose={handleClosePopup}
+          connectedWalletAddress={connectedWalletAddress}
+          newUser={walletUser.isNewUser}
+          needsEmailSetup={walletUser.needsEmailSetup}
+          walletUserId={walletUser.user.user_id}
+        />
+      )}
     </>
   );
 };

@@ -2,6 +2,7 @@
 
 import OktoOTPLogin from "@/app/components/OktoOTPLogin/OktoOTPLogin";
 import { WalletConnect } from "@/app/components/WalletConnect/WalletConnect";
+import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/honey-bee-spinner";
 import { checkUserLoginMethod } from "@/lib/auth/checkUserLoginMethod";
 import { useOkto } from "@okto_web3/react-sdk";
 import { GoogleLogin } from "@react-oauth/google";
@@ -193,6 +194,11 @@ const Login = () => {
     toast.error("Only Google login is supported at this time");
   };
 
+  // Setting Spinner
+  if (isLoading) {
+    return <HoneybeeSpinner message={"Connecting You To The Hive..."} />;
+  }
+
   return (
     <div className={styles.loginContainer}>
       <div className={styles.formSection}>
@@ -246,7 +252,7 @@ const Login = () => {
             <span>or continue with email</span>
           </div>
 
-          <OktoOTPLogin />
+          <OktoOTPLogin setIsLoading={setIsLoading} isLoading={isLoading} />
 
           <div className={styles.divider}>
             <span>or continue with your wallet</span>

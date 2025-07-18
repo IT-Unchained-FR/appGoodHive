@@ -6,13 +6,18 @@ import React, { useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import styles from "./OktoOTPLogin.module.scss";
 
-const OktoOTPLogin = () => {
+const OktoOTPLogin = ({
+  setIsLoading,
+  isLoading,
+}: {
+  setIsLoading: (loading: boolean) => void;
+  isLoading: boolean;
+}) => {
   const oktoClient = useOkto();
 
   const [email, setEmail] = useState("");
   const [otpValues, setOtpValues] = useState(["", "", "", "", "", ""]);
   const [token, setToken] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [showOtpInput, setShowOtpInput] = useState(false);
 
   // Refs for OTP inputs
