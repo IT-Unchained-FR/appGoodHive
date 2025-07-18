@@ -34,6 +34,21 @@ import ReferralCodeHandler from "./components/referralCodeHandler/ReferralCodeHa
 import "./globals.css";
 import { Providers } from "./providers";
 
+// Suppress hydration warnings for browser extension attributes
+if (typeof window !== "undefined") {
+  const originalConsoleError = console.error;
+  console.error = (...args) => {
+    if (
+      args[0]?.includes?.(
+        "Extra attributes from the server: cz-shortcut-listen",
+      )
+    ) {
+      return;
+    }
+    originalConsoleError.apply(console, args);
+  };
+}
+
 const { chains, publicClient, webSocketPublicClient } = configureChains(
   [polygon],
   [
