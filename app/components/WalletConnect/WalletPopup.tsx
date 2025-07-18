@@ -36,9 +36,10 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({
   // Get external wallet address from cookies or wagmi
   useEffect(() => {
     const userAddress = Cookies.get("user_address");
-    const address = wagmiAddress || userAddress;
+    // Prioritize wagmi address if connected, otherwise use stored address from cookies
+    const address = isConnected ? wagmiAddress : userAddress;
     setExternalWalletAddress(address || null);
-  }, [isOpen, wagmiAddress]);
+  }, [isOpen, wagmiAddress, isConnected]);
 
   // Fetch Okto portfolio data
   useEffect(() => {
