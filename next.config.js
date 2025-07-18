@@ -9,7 +9,7 @@ const nextConfig = {
       "goodhive-image.s3.us-east-005.backblazeb2.com",
       "goodhive.s3.us-east-005.backblazeb2.com",
       "cdn.sanity.io",
-      "picsum.photos"
+      "picsum.photos",
     ],
     unoptimized: true,
   },
@@ -19,17 +19,17 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  output: 'standalone',
+  output: "standalone",
   poweredByHeader: false,
   swcMinify: true,
-  transpilePackages: ['ethers', 'siwe'],
+  transpilePackages: ["ethers", "siwe"],
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,
-      'ethers': require.resolve('ethers')
+      ethers: require.resolve("ethers"),
     };
     return config;
-  }
+  },
 };
 
 module.exports = nextConfig;
