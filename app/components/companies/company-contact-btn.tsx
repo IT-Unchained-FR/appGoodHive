@@ -1,11 +1,10 @@
 "use client";
 
 import { Button } from "@components/button";
-import React, { useState, useContext } from "react";
-import toast from "react-hot-toast";
-import { AddressContext } from "@components/context";
 import { MessageBoxModal } from "@components/message-box-modal";
 import Cookies from "js-cookie";
+import { useState } from "react";
+import toast from "react-hot-toast";
 
 interface Props {
   toEmail: string;

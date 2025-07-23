@@ -1,22 +1,30 @@
 import {
-  MapPin,
-  Phone,
-  Mail,
-  Globe,
-  Linkedin,
-  Github,
-  Twitter,
   Briefcase,
-  DollarSign,
   Calendar,
   CheckCircle,
-  XCircle,
+  DollarSign,
   FileText,
-  // User,
+  Github,
+  Globe,
+  Linkedin,
+  Mail,
+  MapPin,
+  Phone,
+  Twitter,
+  XCircle,
 } from "lucide-react";
+import { Metadata } from "next";
 
-import Image from "next/image";
 import { getProfileData } from "@/lib/fetch-profile-data";
+import Image from "next/image";
+
+export const metadata: Metadata = {
+  title: "Talent Profile - Admin View | GoodHive",
+  description:
+    "Admin view of talent profile with detailed information, skills, and status. Monitor and manage talent profiles in the GoodHive platform.",
+  keywords:
+    "admin talent view, talent profile management, Web3 talent admin, blockchain developer profile, talent status monitoring",
+};
 
 type MyProfilePageProps = {
   params: {

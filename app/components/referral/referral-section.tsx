@@ -1,9 +1,8 @@
-import React, { useCallback, useContext, useEffect, useState } from "react";
-import Image from "next/image";
-import { AddressContext } from "../context";
-import { toast } from "react-hot-toast";
 import { Tooltip } from "@nextui-org/tooltip";
 import Cookies from "js-cookie";
+import Image from "next/image";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
 
 type referralObject = {
   wallet_address: string;

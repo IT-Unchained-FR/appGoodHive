@@ -1,17 +1,16 @@
 "use client";
 
 import { MessageBoxModal } from "@/app/components/message-box-modal";
+import "@/app/styles/rich-text.css";
 import Image from "next/image";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import "@/app/styles/rich-text.css";
 
 import { jobTypes, projectDuration } from "@constants/common";
 import { generateJobTypeEngage } from "@utils/generate-job-type-engage";
-import { FC, useContext, useState } from "react";
-import { Button } from "./button";
-import { AddressContext } from "./context";
 import Cookies from "js-cookie";
+import { FC, useState } from "react";
+import { Button } from "./button";
 
 interface Props {
   id: number;

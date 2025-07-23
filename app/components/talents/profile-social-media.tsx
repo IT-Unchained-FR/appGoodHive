@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
-import React, { FC, useContext, useEffect, useState } from "react";
+import Link from "next/link";
+import { FC, useEffect, useState } from "react";
 
-import { AddressContext } from "@components/context";
 import Cookies from "js-cookie";
 
 type Props = {

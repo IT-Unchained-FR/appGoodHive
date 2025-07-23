@@ -1,30 +1,27 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { toast } from "react-hot-toast";
-import { uploadFileToBucket } from "@/app/utils/upload-file-bucket";
-import Image from "next/image";
-import { Button } from "@/app/components/button";
-import { useRouter } from "next/navigation";
-import { ToggleButton } from "@/app/components/toggle-button";
-import Link from "next/link";
-import { resumeUploadSizeLimit } from "./constants";
-import { countries } from "@/app/constants/countries";
 import { AutoSuggestInput } from "@/app/components/autosuggest-input";
-import { skills } from "@/app/constants/skills";
-import { createJobServices } from "@/app/constants/common";
-import { socialLinks } from "./constant";
-import { SocialLink } from "./social-link";
-import DragAndDropFile from "@/app/components/drag-and-drop-file";
-import Cookies from "js-cookie";
-import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/honey-bee-spinner";
+import ProfileImageUpload from "@/app/components/profile-image-upload";
 import { ReferralSection } from "@/app/components/referral/referral-section";
 import { SearchableSelectInput } from "@/app/components/searchable-select-input";
-import ProfileImageUpload from "@/app/components/profile-image-upload";
+import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/honey-bee-spinner";
+import { ToggleButton } from "@/app/components/toggle-button";
+import { createJobServices } from "@/app/constants/common";
+import { countries } from "@/app/constants/countries";
+import { skills } from "@/app/constants/skills";
+import { uploadFileToBucket } from "@/app/utils/upload-file-bucket";
+import { useOkto } from "@okto_web3/react-sdk";
+import Cookies from "js-cookie";
 import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "react-hot-toast";
 import "react-quill/dist/quill.snow.css";
+import { socialLinks } from "./constant";
+import { resumeUploadSizeLimit } from "./constants";
 import { LinkedInImportModal } from "./linkedin-import-modal";
-import { useOkto, getAccount } from "@okto_web3/react-sdk";
+import { SocialLink } from "./social-link";
 
 // Dynamically import React Quill to prevent server-side rendering issues
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -99,6 +96,27 @@ const ProfileStatus = ({ profileData }: { profileData: ProfileData }) => {
   );
 };
 
+// Replace previous base64 decode utility with this:
+function decodeBase64HtmlWrappedInPTags(str: string) {
+  if (!str) return "";
+  // Try to extract base64 from inside <p>...</p>
+  const match = str.match(/^<p>([A-Za-z0-9+/=\s]+)<\/p>$/);
+  if (match) {
+    try {
+      const base64 = match[1].replace(/\s/g, "");
+      const decoded = atob(base64);
+      // If the decoded string is HTML, return it
+      if (/<[a-z][\s\S]*>/i.test(decoded)) {
+        return decoded;
+      }
+      return base64; // fallback
+    } catch (e) {
+      return str;
+    }
+  }
+  return str;
+}
+
 export default function ProfilePage() {
   const oktoClient = useOkto();
   // Static references
@@ -111,17 +129,61 @@ export default function ProfilePage() {
   // User identifiers
   const user_id = useMemo(() => Cookies.get("user_id"), []);
 
+  // UI state
+  const [isProfileDataFetching, setIsProfileDataFetching] = useState(false);
+  const [saveProfileLoading, setSaveProfileLoading] = useState(false);
+  const [reviewProfileLoading, setReviewProfileLoading] = useState(false);
+  const [isTokenVerifying, setIsTokenVerifying] = useState(true);
+
+  // Add proper JWT token verification
+  useEffect(() => {
+    const verifyToken = async () => {
+      try {
+        // Call the /api/auth/me endpoint to verify the session token
+        const response = await fetch("/api/auth/me", {
+          method: "GET",
+          credentials: "include", // Include cookies
+        });
+
+        if (!response.ok) {
+          // Token is invalid or expired, redirect to login
+          router.replace("/auth/login");
+          return;
+        }
+
+        const data = await response.json();
+
+        // Verify that the user_id from the token matches the cookie
+        if (data.user_id !== user_id) {
+          // Token and cookie mismatch, redirect to login
+          router.replace("/auth/login");
+          return;
+        }
+
+        // Token is valid, stop loading
+        setIsTokenVerifying(false);
+      } catch (error) {
+        console.error("Error verifying token:", error);
+        // Error occurred, redirect to login
+        router.replace("/auth/login");
+      }
+    };
+
+    // Only verify if user_id exists
+    if (user_id) {
+      verifyToken();
+    } else {
+      // No user_id cookie, redirect to login
+      router.replace("/auth/login");
+    }
+  }, [user_id, router]);
+
   // Primary state
   const [profileData, setProfileData] = useState<ProfileData>(
     {} as ProfileData,
   );
   const [user, setUser] = useState<any>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
-  // UI state
-  const [isProfileDataFetching, setIsProfileDataFetching] = useState(false);
-  const [saveProfileLoading, setSaveProfileLoading] = useState(false);
-  const [reviewProfileLoading, setReviewProfileLoading] = useState(false);
 
   // Form state
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
@@ -606,6 +668,10 @@ export default function ProfilePage() {
   };
 
   // Loading states
+  if (isTokenVerifying) {
+    return <HoneybeeSpinner message={"Verifying authentication..."} />;
+  }
+
   if (isProfileDataFetching) {
     window.scrollTo(0, 0);
     return <HoneybeeSpinner message={"Loading Your Profile..."} />;
@@ -752,7 +818,9 @@ export default function ProfilePage() {
               theme="snow"
               modules={quillModules}
               className="quill-editor"
-              value={profileData?.description || ""}
+              value={decodeBase64HtmlWrappedInPTags(
+                profileData?.description || "",
+              )}
               onChange={(content) => handleInputChange("description", content)}
               placeholder="Describe your skills and experience in a few words*"
               style={{
@@ -984,7 +1052,9 @@ export default function ProfilePage() {
               theme="snow"
               modules={quillModules}
               className="quill-editor"
-              value={profileData?.about_work || ""}
+              value={decodeBase64HtmlWrappedInPTags(
+                profileData?.about_work || "",
+              )}
               onChange={(content) => handleInputChange("about_work", content)}
               placeholder="What you are looking for?"
               style={{

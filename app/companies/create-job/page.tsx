@@ -125,14 +125,14 @@ export default function CreateJob() {
       try {
         const accounts = await getAccount(oktoClient);
         console.log(accounts, "accounts...goodhive");
-        const amoyAccount = accounts.find(
+        const oktoAccount = accounts.find(
           (account: any) => account.caipId === POLYGON_CAIP2_ID,
         );
 
-        if (amoyAccount) {
-          setWalletAddress(amoyAccount?.address);
+        if (oktoAccount) {
+          setWalletAddress(oktoAccount?.address);
         } else {
-          toast.error("No wallet found for Polygon Amoy network");
+          toast.error("No wallet found for Polygon network");
         }
       } catch (error: any) {
         console.error("Error fetching user wallet:", error);

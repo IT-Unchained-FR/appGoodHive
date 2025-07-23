@@ -1,4 +1,5 @@
 import { getAllPosts } from "@/lib/blog";
+import { Metadata } from "next";
 import PostCard from "../components/blog/PostCard";
 
 export interface Post {
@@ -42,6 +43,14 @@ export interface Post {
     bio: string;
   };
 }
+
+export const metadata: Metadata = {
+  title: "Blog - Web3 & Blockchain Insights | GoodHive",
+  description:
+    "Stay updated with the latest insights, tips, and stories from the Web3 and blockchain world. Discover trends, career advice, and industry news from GoodHive.",
+  keywords:
+    "Web3 blog, blockchain insights, crypto career advice, decentralized economy news, Web3 trends, blockchain education",
+};
 
 export const revalidate = 0;
 

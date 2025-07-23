@@ -1,6 +1,15 @@
-import { fetchTalents } from "@/lib/talents";
 import { Card } from "@/app/components/card";
 import { Pagination } from "@/app/components/pagination";
+import { fetchTalents } from "@/lib/talents";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Search Talents - Find Web3 & Blockchain Professionals | GoodHive",
+  description:
+    "Search and discover top Web3 developers, blockchain experts, and crypto professionals. Connect with skilled talent for your decentralized projects and blockchain initiatives.",
+  keywords:
+    "search Web3 developers, blockchain talent, crypto professionals, decentralized experts, smart contract developers, DeFi talent search",
+};
 
 const itemsPerPage = 9;
 

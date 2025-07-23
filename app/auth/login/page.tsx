@@ -2,6 +2,7 @@
 
 import OktoOTPLogin from "@/app/components/OktoOTPLogin/OktoOTPLogin";
 import { WalletConnect } from "@/app/components/WalletConnect/WalletConnect";
+import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/honey-bee-spinner";
 import { checkUserLoginMethod } from "@/lib/auth/checkUserLoginMethod";
 import { useOkto } from "@okto_web3/react-sdk";
 import { GoogleLogin } from "@react-oauth/google";
@@ -17,8 +18,6 @@ const Login = () => {
   const [isAnimating, setIsAnimating] = useState(false);
 
   const oktoClient = useOkto();
-
-  console.log(oktoClient, "oktoClient...goodhive");
 
   const slides = [
     {
@@ -36,6 +35,27 @@ const Login = () => {
       description: "Discover and share valuable opportunities within the hive.",
     },
   ];
+
+  //
+  useEffect(() => {
+    const clearSession = async () => {
+      localStorage.clear();
+      document.cookie.split(";").forEach(function (c) {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+      if (oktoClient && typeof oktoClient.sessionClear === "function") {
+        try {
+          oktoClient.sessionClear();
+          console.log("=======Session Cleared=======");
+        } catch (err) {
+          console.error("Failed to clear Okto session:", err);
+        }
+      }
+    };
+    clearSession();
+  }, [oktoClient]);
 
   const handleSlideChange = (index: number) => {
     if (isAnimating || index === currentSlide) return;
@@ -139,7 +159,7 @@ const Login = () => {
         },
         body: JSON.stringify({
           login_method: "google",
-          wallet_address: user,
+          okto_wallet_address: user,
           user_id: user.id || user, // Okto might return either the ID directly or an object with id
           email: userEmail, // Include the email from Google OAuth
         }),
@@ -184,6 +204,11 @@ const Login = () => {
     });
     toast.error("Only Google login is supported at this time");
   };
+
+  // Setting Spinner
+  if (isLoading) {
+    return <HoneybeeSpinner message={"Connecting You To The Hive..."} />;
+  }
 
   return (
     <div className={styles.loginContainer}>
@@ -238,19 +263,15 @@ const Login = () => {
             <span>or continue with email</span>
           </div>
 
-          <OktoOTPLogin />
+          <OktoOTPLogin setIsLoading={setIsLoading} isLoading={isLoading} />
 
-          {/* <div className={styles.divider}>
+          <div className={styles.divider}>
             <span>or continue with your wallet</span>
           </div>
 
           <div className={styles.walletWrapper}>
             <WalletConnect />
-            <p className={styles.walletCaption}>
-              If you've created an account using a wallet before, connect to
-              find your profile.
-            </p>
-          </div> */}
+          </div>
         </div>
       </div>
 

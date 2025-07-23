@@ -1,17 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount } from "wagmi";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import Cookies from "js-cookie";
+import { useAccount } from "wagmi";
+import { WalletConnectPopup } from "./WalletConnectPopup";
+
+interface WalletUserState {
+  exists: boolean;
+  isNewUser: boolean;
+  needsEmailSetup: boolean;
+  user: {
+    user_id: string;
+    email: string;
+    wallet_address: string;
+  };
+}
 
 export const WalletConnect = () => {
   const { address, isConnected } = useAccount();
+  const [showPopup, setShowPopup] = useState(false);
+  const [connectedWalletAddress, setConnectedWalletAddress] = useState("");
+  const [walletUser, setWalletUser] = useState<WalletUserState | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleWalletLogin = async (walletAddress: string) => {
     setIsLoading(true);
+    setConnectedWalletAddress(walletAddress);
 
     try {
       const response = await fetch("/api/auth/check-wallet", {
@@ -23,45 +40,22 @@ export const WalletConnect = () => {
       });
 
       const data = await response.json();
-      console.log(data, "Wallet User Data...");
 
-      if (data.exists && data.user) {
-        console.log("User found:", {
-          userId: data.user.user_id,
-          email: data.user.email,
-          walletAddress: data.user.wallet_address,
-        });
-
-        // Clear existing localStorage and cookies before setting new ones
-        localStorage.clear();
-        document.cookie.split(";").forEach(function (c) {
-          document.cookie = c
-            .replace(/^ +/, "")
-            .replace(
-              /=.*/,
-              "=;expires=" + new Date().toUTCString() + ";path=/",
-            );
-        });
-
-        // Set user data in cookies (same as Google login)
-        Cookies.set("user_id", data.user.user_id);
-        Cookies.set("user_email", data.user.email);
-        Cookies.set("user_address", data.user.wallet_address);
-
-        toast.success("Welcome back to the hive! 🐝");
-
-        // Redirect to profile page
-        window.location.href = "/talents/my-profile";
-      } else {
-        console.log("Wallet not registered:", walletAddress);
-        toast("We don't have any previous user with this wallet address.");
-      }
+      setWalletUser(data);
+      setShowPopup(true);
     } catch (error) {
       console.error("Error checking wallet:", error);
       toast.error("Failed to verify wallet status");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleClosePopup = () => {
+    setShowPopup(false);
+    setConnectedWalletAddress("");
+    // Redirect to talent profile even if they skip the email setup
+    router.push("/talents/my-profile");
   };
 
   useEffect(() => {
@@ -71,5 +65,20 @@ export const WalletConnect = () => {
     }
   }, [isConnected, address]);
 
-  return <ConnectButton />;
+  return (
+    <>
+      <ConnectButton />
+      {walletUser && (
+        <WalletConnectPopup
+          email={walletUser.user.email}
+          isOpen={showPopup}
+          onClose={handleClosePopup}
+          connectedWalletAddress={connectedWalletAddress}
+          newUser={walletUser.isNewUser}
+          needsEmailSetup={walletUser.needsEmailSetup}
+          walletUserId={walletUser.user.user_id}
+        />
+      )}
+    </>
+  );
 };

@@ -7,7 +7,6 @@ import { ChangeEvent, useState } from "react";
 import LabelOption from "@interfaces/label-option";
 import { Button } from "../components/button";
 import { IconButton } from "../components/icon-button";
-import { Card } from "../components/card";
 import { Input } from "../components/input";
 import { SelectInput } from "../components/select-input";
 
@@ -18,7 +17,7 @@ export default function Design() {
   const [passwordValue, setPasswordValue] = useState("");
   const [urlValue, setURLValue] = useState("");
   const [selectedOption, setSelectedOption] = useState<LabelOption | null>(
-    null
+    null,
   );
 
   const textHandleChange = (event: ChangeEvent<HTMLInputElement>) => {

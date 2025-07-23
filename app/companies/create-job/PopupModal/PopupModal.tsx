@@ -1,8 +1,8 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { useAccount } from "wagmi";
 
 import { useCreateJob } from "@/app/hooks/create-job";
-import { AddressContext } from "@components/context";
 import Modal from "@components/modal";
 import type { FC } from "react";
 import type { AddFundsModalProps } from "./PopupModal.types";
@@ -16,7 +16,8 @@ export const PopupModal: FC<AddFundsModalProps> = (props) => {
     props;
 
   const { title, description, buttonText } = generateContent(type);
-  const walletAddress = useContext(AddressContext);
+  const { address } = useAccount();
+  const walletAddress = address || "";
 
   const { checkBalanceTx } = useCreateJob({
     walletAddress,
