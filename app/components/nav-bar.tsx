@@ -1,17 +1,16 @@
 "use client";
 
-import { Route } from "next";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import Image from "next/image";
-import { usePathname } from "next/navigation";
-import { CircleUserRound, Wallet } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
-import Cookies from "js-cookie";
-import toast from "react-hot-toast";
-import { useOkto } from "@okto_web3/react-sdk";
+import { getAccount, useOkto } from "@okto_web3/react-sdk";
 import { googleLogout } from "@react-oauth/google";
-import { useDisconnect } from "wagmi";
+import Cookies from "js-cookie";
+import { CircleUserRound, Wallet } from "lucide-react";
+import { Route } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import React, { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount, useDisconnect } from "wagmi";
 import { WalletPopup } from "./WalletConnect/WalletPopup";
 
 const commonLinks = [
@@ -29,33 +28,87 @@ const companiesLinks = [
   { href: "/companies/my-profile", label: "My Company Profile" },
 ];
 
+// Add usePrevious hook
+function usePrevious<T>(value: T): T | undefined {
+  const ref = React.useRef<T>();
+  useEffect(() => {
+    ref.current = value;
+  }, [value]);
+  return ref.current;
+}
+
 export const NavBar = () => {
   const { disconnect } = useDisconnect();
   const oktoClient = useOkto();
   const [isOpenMobileMenu, setIsOpenMobileMenu] = useState(false);
   const [isOpenWalletPopup, setIsOpenWalletPopup] = useState(false);
+  const [oktoWalletAddress, setOktoWalletAddress] = useState<string | null>(
+    null,
+  );
   const walletButtonRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
+  const { address: wagmiAddress, isConnected } = useAccount();
+  const prevIsConnected = usePrevious(isConnected);
 
   const loggedIn_user_id = Cookies.get("user_id");
+
+  const POLYGON_CAIP2_ID = "eip155:137";
+
+  // Fetch Okto wallet address
+  useEffect(() => {
+    const fetchUserWallet = async () => {
+      if (!oktoClient || !loggedIn_user_id) {
+        setOktoWalletAddress(null);
+        return;
+      }
+
+      try {
+        const accounts = await getAccount(oktoClient);
+        console.log(accounts, "accounts...goodhive");
+        const polygonAccount = accounts.find(
+          (account: any) => account.caipId === POLYGON_CAIP2_ID,
+        );
+        if (polygonAccount) {
+          setOktoWalletAddress(polygonAccount?.address);
+        } else {
+          setOktoWalletAddress(null);
+        }
+      } catch (error: any) {
+        console.error("Error fetching user wallet:", error);
+        setOktoWalletAddress(null);
+      }
+    };
+
+    fetchUserWallet();
+  }, [oktoClient, loggedIn_user_id]);
 
   // Close wallet popup when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (walletButtonRef.current && !walletButtonRef.current.contains(event.target as Node)) {
+      if (
+        walletButtonRef.current &&
+        !walletButtonRef.current.contains(event.target as Node)
+      ) {
         setIsOpenWalletPopup(false);
       }
     };
 
     if (isOpenWalletPopup) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpenWalletPopup]);
+
+  // Ensure WalletPopup stays open after wallet connect
+  /* useEffect(() => {
+    if (!prevIsConnected && isConnected) {
+      setIsOpenWalletPopup(true);
+    }
+  }, [isConnected, prevIsConnected]); */
 
   const links = pathname.startsWith("/talents")
     ? talentsLinks
@@ -144,16 +197,23 @@ export const NavBar = () => {
                   className="relative group flex items-center justify-center px-6 py-2 bg-transparent border-2 border-[#FFC905] text-[#FFC905] rounded-full hover:bg-[#FFC905] hover:text-black transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-[#FFC905]/25 h-10"
                   onClick={() => setIsOpenWalletPopup(!isOpenWalletPopup)}
                 >
-                  <Wallet 
-                    size={20} 
-                    className="mr-2 transition-all duration-300 group-hover:rotate-12" 
+                  <Wallet
+                    size={20}
+                    className="mr-2 transition-all duration-300 group-hover:rotate-12"
                   />
-                  <span className="font-semibold text-sm sm:text-base">Wallet</span>
+                  <span className="font-semibold text-sm sm:text-base">
+                    Wallet
+                  </span>
                   {/* Glow effect on hover */}
                   <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#FFC905] to-[#FF8C05] opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-sm"></div>
                 </button>
                 {/* Wallet Popup (refactored) */}
-                <WalletPopup isOpen={isOpenWalletPopup} anchorRef={walletButtonRef} onClose={() => setIsOpenWalletPopup(false)} />
+                <WalletPopup
+                  isOpen={isOpenWalletPopup}
+                  anchorRef={walletButtonRef}
+                  onClose={() => setIsOpenWalletPopup(false)}
+                  oktoWalletAddress={oktoWalletAddress}
+                />
               </div>
             )}
 

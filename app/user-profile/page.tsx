@@ -1,20 +1,19 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import Cookies from "js-cookie";
 import {
+  Briefcase,
+  CircleUserRound,
+  GraduationCap,
+  Link,
   Mail,
   User,
-  Briefcase,
-  GraduationCap,
   Users,
   Wallet,
-  Link,
-  CircleUserRound,
 } from "lucide-react";
-import Cookies from "js-cookie";
-import { HoneybeeSpinner } from "../components/spinners/honey-bee-spinner/honey-bee-spinner";
-import { ConnectEmailPopup } from "../components/popups";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { HoneybeeSpinner } from "../components/spinners/honey-bee-spinner/honey-bee-spinner";
 
 export interface UserProfile {
   id: number;
@@ -72,11 +71,11 @@ export default function UserProfilePage() {
 
   return (
     <div className="bg-white flex items-center justify-center p-4 py-14 min-h-[calc(100vh-4rem)]">
-      <ConnectEmailPopup
+      {/* <ConnectEmailPopup
         isOpen={showConnectEmailPopup}
         onClose={() => setShowConnectEmailPopup(false)}
         setUserProfile={setUserProfile}
-      />
+      /> */}
       <div className="w-full max-w-4xl bg-white shadow-xl rounded-xl overflow-hidden border border-gray-200 animate-fade-in-up">
         <div className="bg-[#FFC905] p-6 flex gap-4 items-center justify-center">
           <CircleUserRound

@@ -3,7 +3,7 @@
   "typescript.enablePromptUseWorkspaceTsdk": true,
   // Editor appearance and behavior
   "editor.fontLigatures": true,
-  "editor.fontSize": 15,
+  "editor.fontSize": 13,
   "editor.lineHeight": 22,
   "editor.cursorSmoothCaretAnimation": "on",
   "editor.cursorBlinking": "expand",
@@ -33,7 +33,7 @@
   },
   "editor.inlineSuggest.enabled": true,
   // Terminal
-  "terminal.integrated.fontSize": 14,
+  "terminal.integrated.fontSize": 11,
   "terminal.integrated.shellIntegration.enabled": true,
   // Git
   "git.enableSmartCommit": true,

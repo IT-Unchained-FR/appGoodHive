@@ -1,6 +1,7 @@
 import postgres from "postgres";
 
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 // Force the browser to always fetch the latest data from the server
 export const fetchCache = "force-no-store";
@@ -51,9 +52,7 @@ export async function POST(request: Request) {
     // Filter out undefined, null, and empty string fields
     const fields = {
       title,
-      description: description
-        ? Buffer.from(description, "utf-8").toString("base64")
-        : null,
+      description,
       first_name,
       last_name,
       country,
@@ -61,9 +60,7 @@ export async function POST(request: Request) {
       phone_country_code,
       phone_number,
       email,
-      about_work: about_work
-        ? Buffer.from(about_work, "utf-8").toString("base64")
-        : null,
+      about_work,
       rate,
       skills,
       image_url,
@@ -140,46 +137,69 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: NextRequest) {
-  const searchParamsEntries = request.nextUrl.searchParams.entries();
-  const searchParams = Object.fromEntries(searchParamsEntries);
-
-  // FIXME: use snake_case instead of camelCase
-  const { user_id } = searchParams;
-
-  console.log(user_id, "user_id");
-
   try {
-    const user = await sql`
-      SELECT t.*, u.talent_status, u.mentor_status, u.recruiter_status, u.userid, u.approved_roles
-      FROM goodhive.talents t
-      JOIN goodhive.users u ON t.user_id = u.userid
-      WHERE t.user_id = ${user_id}
-    `;
+    // Get user_id from query parameters
+    const { searchParams } = new URL(request.url);
+    const user_id = searchParams.get("user_id");
 
-    console.log(user, "user");
-
-    if (user.length === 0) {
-      return new Response(JSON.stringify({ message: "User not found" }), {
-        status: 404,
-      });
+    if (!user_id) {
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 },
+      );
     }
 
-    const userProfile = {
-      ...user[0],
-      description: user[0].description
-        ? Buffer.from(user[0].description, "base64").toString("utf-8")
-        : null,
-      about_work: user[0].about_work
-        ? Buffer.from(user[0].about_work, "base64").toString("utf-8")
-        : null,
-    };
+    // Fetch talent profile data from database
+    const talents = await sql`
+      SELECT 
+        title,
+        description,
+        first_name,
+        last_name,
+        country,
+        city,
+        phone_country_code,
+        phone_number,
+        email,
+        telegram,
+        about_work,
+        rate,
+        skills,
+        image_url,
+        cv_url,
+        linkedin,
+        github,
+        stackoverflow,
+        twitter,
+        portfolio,
+        freelance_only,
+        remote_only,
+        talent,
+        mentor,
+        recruiter,
+        hide_contact_details,
+        availability,
+        approved,
+        inReview,
+        user_id
+      FROM goodhive.talents 
+      WHERE user_id = ${user_id}
+    `;
 
-    return new Response(JSON.stringify(userProfile));
+    if (talents.length === 0) {
+      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+    }
+
+    const profileData = talents[0];
+
+    // No need to decode - fields are stored as character varying in the database
+
+    return NextResponse.json(profileData);
   } catch (error) {
-    console.error("Error retrieving data:", error);
-
-    return new Response(JSON.stringify({ message: "Error retrieving data" }), {
-      status: 500,
-    });
+    console.error("Error in my-profile API:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
