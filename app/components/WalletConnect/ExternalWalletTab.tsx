@@ -334,7 +334,7 @@ export const ExternalWalletTab: React.FC<ExternalWalletTabProps> = ({
   }
   if (walletVerificationStatus === "duplicate") {
     return (
-      <div className="flex flex-1 items-center justify-center w-full min-h-[180px] text-red-500 font-semibold">
+      <div className="flex flex-1 items-center justify-center w-full min-h-[180px] text-red-500 font-semibold text-center">
         {verificationError ||
           "This wallet address is already connected to another user."}
       </div>
@@ -342,7 +342,7 @@ export const ExternalWalletTab: React.FC<ExternalWalletTabProps> = ({
   }
   if (walletVerificationStatus === "error") {
     return (
-      <div className="flex flex-1 items-center justify-center w-full min-h-[180px] text-red-500 font-semibold">
+      <div className="flex flex-1 items-center justify-center w-full min-h-[180px] text-red-500 font-semibold text-center">
         {verificationError || "An error occurred. Please try again."}
       </div>
     );

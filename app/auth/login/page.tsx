@@ -38,13 +38,24 @@ const Login = () => {
 
   //
   useEffect(() => {
-    localStorage.clear();
-    document.cookie.split(";").forEach(function (c) {
-      document.cookie = c
-        .replace(/^ +/, "")
-        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-    });
-  }, []);
+    const clearSession = async () => {
+      localStorage.clear();
+      document.cookie.split(";").forEach(function (c) {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+      if (oktoClient && typeof oktoClient.sessionClear === "function") {
+        try {
+          oktoClient.sessionClear();
+          console.log("=======Session Cleared=======");
+        } catch (err) {
+          console.error("Failed to clear Okto session:", err);
+        }
+      }
+    };
+    clearSession();
+  }, [oktoClient]);
 
   const handleSlideChange = (index: number) => {
     if (isAnimating || index === currentSlide) return;
