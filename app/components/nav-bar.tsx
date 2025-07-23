@@ -8,9 +8,9 @@ import { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { useDisconnect } from "wagmi";
+import { useAccount, useDisconnect } from "wagmi";
 import { WalletPopup } from "./WalletConnect/WalletPopup";
 
 const commonLinks = [
@@ -28,6 +28,15 @@ const companiesLinks = [
   { href: "/companies/my-profile", label: "My Company Profile" },
 ];
 
+// Add usePrevious hook
+function usePrevious<T>(value: T): T | undefined {
+  const ref = React.useRef<T>();
+  useEffect(() => {
+    ref.current = value;
+  }, [value]);
+  return ref.current;
+}
+
 export const NavBar = () => {
   const { disconnect } = useDisconnect();
   const oktoClient = useOkto();
@@ -39,6 +48,8 @@ export const NavBar = () => {
   const walletButtonRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
+  const { address: wagmiAddress, isConnected } = useAccount();
+  const prevIsConnected = usePrevious(isConnected);
 
   const loggedIn_user_id = Cookies.get("user_id");
 
@@ -91,6 +102,13 @@ export const NavBar = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpenWalletPopup]);
+
+  // Ensure WalletPopup stays open after wallet connect
+  useEffect(() => {
+    if (!prevIsConnected && isConnected) {
+      setIsOpenWalletPopup(true);
+    }
+  }, [isConnected, prevIsConnected]);
 
   const links = pathname.startsWith("/talents")
     ? talentsLinks
