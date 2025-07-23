@@ -104,11 +104,11 @@ export const NavBar = () => {
   }, [isOpenWalletPopup]);
 
   // Ensure WalletPopup stays open after wallet connect
-  useEffect(() => {
+  /* useEffect(() => {
     if (!prevIsConnected && isConnected) {
       setIsOpenWalletPopup(true);
     }
-  }, [isConnected, prevIsConnected]);
+  }, [isConnected, prevIsConnected]); */
 
   const links = pathname.startsWith("/talents")
     ? talentsLinks
