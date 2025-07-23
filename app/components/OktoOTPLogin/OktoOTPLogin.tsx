@@ -1,18 +1,23 @@
-import React, { useState, useRef, useEffect } from "react";
-import { useOkto } from "@okto_web3/react-sdk";
-import { toast } from "react-hot-toast";
-import { Mail } from "lucide-react";
-import Cookies from "js-cookie";
-import styles from "./OktoOTPLogin.module.scss";
 import { checkUserLoginMethod } from "@/lib/auth/checkUserLoginMethod";
+import { useOkto } from "@okto_web3/react-sdk";
+import Cookies from "js-cookie";
+import { Mail } from "lucide-react";
+import React, { useRef, useState } from "react";
+import { toast } from "react-hot-toast";
+import styles from "./OktoOTPLogin.module.scss";
 
-const OktoOTPLogin = () => {
+const OktoOTPLogin = ({
+  setIsLoading,
+  isLoading,
+}: {
+  setIsLoading: (loading: boolean) => void;
+  isLoading: boolean;
+}) => {
   const oktoClient = useOkto();
 
   const [email, setEmail] = useState("");
   const [otpValues, setOtpValues] = useState(["", "", "", "", "", ""]);
   const [token, setToken] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [showOtpInput, setShowOtpInput] = useState(false);
 
   // Refs for OTP inputs
@@ -149,7 +154,7 @@ const OktoOTPLogin = () => {
         },
         body: JSON.stringify({
           login_method: "email",
-          wallet_address: walletAddress,
+          okto_wallet_address: walletAddress,
           user_id: (oktoClient as any)._userKeys?.userId,
           email: email,
         }),

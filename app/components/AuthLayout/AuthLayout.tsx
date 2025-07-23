@@ -1,25 +1,46 @@
-import { useEffect } from "react";
+"use client";
+
 import { useRouter } from "next/navigation";
-import Cookies from "js-cookie";
-import Spinner from "../Spinner/Spinner";
+import { useEffect, useState } from "react";
 import { Loader } from "../loader";
 
 export const AuthLayout = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
-  const userId = Cookies.get("user_id");
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (!userId) {
-      router.push("/auth/login");
-    }
-  }, [userId, router]);
+    const checkAuth = async () => {
+      try {
+        const response = await fetch("/api/auth/me", {
+          credentials: "include",
+        });
 
-  if (!userId) {
+        if (response.ok) {
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+          router.push("/auth/login");
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        setIsAuthenticated(false);
+        router.push("/auth/login");
+      }
+    };
+
+    checkAuth();
+  }, [router]);
+
+  if (isAuthenticated === null) {
     return (
       <div className="flex w-full items-center justify-center h-screen">
         <Loader />
       </div>
     );
+  }
+
+  if (!isAuthenticated) {
+    return null; // Will redirect to login
   }
 
   return <>{children}</>;

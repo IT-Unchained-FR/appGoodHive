@@ -1,36 +1,25 @@
 "use client";
 
-import {
-  useRef,
-  useState,
-  FormEvent,
-  useEffect,
-  useContext,
-  useCallback,
-} from "react";
 import Cookies from "js-cookie";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
 
-import DragAndDropFile from "../../components/drag-and-drop-file";
-import { AddressContext } from "../../components/context";
+import { Button } from "@/app/components/button";
+import ProfileImageUpload from "@/app/components/profile-image-upload";
+import { ReferralSection } from "@/app/components/referral/referral-section";
+import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/honey-bee-spinner";
+import { countryCodes } from "@/app/constants/phoneNumberCountryCode";
+import "@/app/styles/rich-text.css";
+import { socialLinks } from "@/app/talents/my-profile/constant";
+import { SocialLink } from "@/app/talents/my-profile/social-link";
+import LabelOption from "@interfaces/label-option";
+import { uploadFileToBucket } from "@utils/upload-file-bucket";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import "react-quill/dist/quill.snow.css";
 import { SelectInput } from "../../components/select-input";
 import { countries } from "../../constants/countries";
-import LabelOption from "@interfaces/label-option";
-import { Button } from "@/app/components/button";
-import Link from "next/link";
-import Image from "next/image";
-import { SocialLink } from "@/app/talents/my-profile/social-link";
-import { socialLinks } from "@/app/talents/my-profile/constant";
-import { uploadFileToBucket } from "@utils/upload-file-bucket";
-import { ReferralSection } from "@/app/components/referral/referral-section";
-import { countryCodes } from "@/app/constants/phoneNumberCountryCode";
-import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/honey-bee-spinner";
-import { useForm } from "react-hook-form";
-import { companyProfileValidation } from "./validation-schema";
-import ProfileImageUpload from "@/app/components/profile-image-upload";
-import dynamic from "next/dynamic";
-import "react-quill/dist/quill.snow.css";
-import "@/app/styles/rich-text.css";
 // Dynamically import React Quill to prevent server-side rendering issues
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
@@ -89,7 +78,8 @@ export default function MyProfile() {
     null,
   );
 
-  const walletAddress = useContext(AddressContext);
+  const { address } = useAccount();
+  const walletAddress = address || "";
 
   const handleImageClick = () => {
     setProfileData({ ...profileData, image_url: "" });

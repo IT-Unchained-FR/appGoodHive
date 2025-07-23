@@ -1,84 +1,152 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import {
+  ADMIN_JWT_SECRET,
+  JWT_SECRET,
+  handleAuthError,
+} from "./lib/auth/jwtConfig";
+import { addSecurityHeaders } from "./lib/security/headers";
+import { rateLimit } from "./middleware/rateLimit";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "your-jwt-secret-key",
-);
+// Public paths that don't need authentication
+const PUBLIC_PATHS = [
+  "/auth/login",
+  "/auth/signup",
+  "/",
+  "/api/auth/login",
+  "/api/auth/signup",
+  "/api/auth/nonce",
+  "/api/auth/verify",
+  "/api/auth/verify-wallet",
+  "/api/auth/check-wallet",
+  "/api/auth/logout",
+  "/api/auth/me",
+];
 
-const ADMIN_JWT_SECRET = new TextEncoder().encode(
-  process.env.ADMIN_JWT_SECRET || "admin-jwt-secret-key",
-);
-
-export async function middleware(req: NextRequest) {
-  // Check if the request is for an admin route
-  if (req.nextUrl.pathname.startsWith("/admin")) {
-    // Skip middleware for admin login page
-    if (req.nextUrl.pathname === "/admin/login") {
-      return NextResponse.next();
+// Helper function to check if a path is public
+function isPublicPath(path: string): boolean {
+  return PUBLIC_PATHS.some((publicPath) => {
+    if (publicPath === "/") {
+      return path === "/";
     }
+    return path.startsWith(publicPath);
+  });
+}
 
-    const adminToken = req.cookies.get("admin_token")?.value;
-    const adminLoginUrl = new URL("/admin/login", req.url);
-
-    if (!adminToken) {
-      return NextResponse.redirect(adminLoginUrl);
-    }
-
-    try {
-      const { payload } = await jwtVerify(adminToken, ADMIN_JWT_SECRET);
-      return NextResponse.next();
-    } catch (error) {
-      console.error("Admin token verification failed:", error);
-      return NextResponse.redirect(adminLoginUrl);
-    }
-  }
-
-  // Skip middleware for public routes
-  if (
-    req.nextUrl.pathname.startsWith("/auth") ||
-    req.nextUrl.pathname === "/" ||
-    req.nextUrl.pathname.startsWith("/api/auth")
-  ) {
-    return NextResponse.next();
-  }
-
-  // Handle protected routes
-  const sessionToken = req.cookies.get("session_token")?.value;
-  const loginUrl = new URL("/auth/login", req.url);
-
-  if (!sessionToken) {
-    return NextResponse.redirect(loginUrl);
-  }
-
+// Helper function to validate session token
+async function validateSessionToken(token: string) {
   try {
-    // Verify the session token
-    const { payload } = await jwtVerify(sessionToken, JWT_SECRET);
-
-    // Add user info to request headers for downstream use
-    const requestHeaders = new Headers(req.headers);
-    requestHeaders.set("x-user-id", payload.user_id as string);
-    requestHeaders.set("x-user-email", payload.email as string);
-    requestHeaders.set("x-user-wallet", payload.wallet_address as string);
-
-    // Return response with modified headers
-    return NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      },
-    });
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    return payload;
   } catch (error) {
-    console.error("Session token verification failed:", error);
-    return NextResponse.redirect(loginUrl);
+    return null;
   }
 }
 
-// Configure the routes where this middleware applies
+export async function middleware(req: NextRequest) {
+  const path = req.nextUrl.pathname;
+  let response: NextResponse;
+
+  try {
+    // Apply rate limiting
+    const rateLimitResponse = await rateLimit(req);
+    if (rateLimitResponse.status === 429) {
+      return rateLimitResponse;
+    }
+
+    // Skip authentication for public paths
+    if (isPublicPath(path)) {
+      response = NextResponse.next();
+    }
+    // Handle admin routes
+    else if (path.startsWith("/admin")) {
+      const adminToken = req.cookies.get("admin_session_token")?.value;
+
+      if (!adminToken) {
+        return NextResponse.redirect(new URL("/admin/login", req.url));
+      }
+
+      try {
+        await jwtVerify(adminToken, ADMIN_JWT_SECRET);
+        response = NextResponse.next();
+      } catch (error) {
+        const authError = handleAuthError(error);
+        console.error("Admin authentication error:", authError.message);
+
+        const redirectResponse = NextResponse.redirect(
+          new URL("/admin/login", req.url),
+        );
+        redirectResponse.cookies.delete("admin_session_token");
+        return redirectResponse;
+      }
+    }
+    // Handle regular protected routes
+    else {
+      const sessionToken = req.cookies.get("session_token")?.value;
+
+      if (!sessionToken) {
+        if (path.startsWith("/api/")) {
+          return NextResponse.json(
+            { error: "Authentication required", code: "MISSING_TOKEN" },
+            { status: 401 },
+          );
+        }
+        return NextResponse.redirect(new URL("/auth/login", req.url));
+      }
+
+      // Validate the session token
+      const payload = await validateSessionToken(sessionToken);
+
+      if (!payload) {
+        // Clear invalid session cookies
+        const redirectResponse = path.startsWith("/api/")
+          ? NextResponse.json(
+              { error: "Invalid session", code: "INVALID_TOKEN" },
+              { status: 401 },
+            )
+          : NextResponse.redirect(new URL("/auth/login", req.url));
+
+        redirectResponse.cookies.delete("session_token");
+        redirectResponse.cookies.delete("user_id");
+        redirectResponse.cookies.delete("user_email");
+        redirectResponse.cookies.delete("user_address");
+        return redirectResponse;
+      }
+
+      // Add user info to headers for API routes
+      if (path.startsWith("/api/")) {
+        response = NextResponse.next();
+        response.headers.set("x-user-id", payload.user_id as string);
+        response.headers.set("x-user-email", payload.email as string);
+        response.headers.set(
+          "x-wallet-address",
+          payload.wallet_address as string,
+        );
+      } else {
+        response = NextResponse.next();
+      }
+    }
+
+    // Add security headers
+    return addSecurityHeaders(response);
+  } catch (error) {
+    console.error("Middleware error:", error);
+    return NextResponse.redirect(new URL("/auth/login", req.url));
+  }
+}
+
 export const config = {
   matcher: [
-    "/talents/my-profile/:path*",
-    "/talents/my-profile",
-    "/companies/my-profile",
-    "/admin/:path*",
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - img/ (static images)
+     * - icons/ (static icons)
+     * - public/ (all public assets)
+     */
+    "/((?!_next/static|_next/image|favicon.ico|img/|icons/|public/).*)",
   ],
 };

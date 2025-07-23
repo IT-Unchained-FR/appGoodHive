@@ -1,23 +1,31 @@
 import {
-  MapPin,
-  Phone,
-  Mail,
-  Globe,
-  Linkedin,
-  Github,
-  Twitter,
   Briefcase,
-  DollarSign,
   Calendar,
   CheckCircle,
-  XCircle,
+  DollarSign,
   FileText,
-  // User,
+  Github,
+  Globe,
+  Linkedin,
+  Mail,
+  MapPin,
+  Phone,
+  Twitter,
+  XCircle,
 } from "lucide-react";
+import { Metadata } from "next";
 
-import Image from "next/image";
-import { getProfileData } from "@/lib/fetch-profile-data";
 import "@/app/styles/rich-text.css";
+import { getProfileData } from "@/lib/fetch-profile-data";
+import Image from "next/image";
+
+export const metadata: Metadata = {
+  title: "Admin Talent Management - GoodHive",
+  description:
+    "Admin interface for managing talent profiles, reviewing applications, and monitoring talent status in the GoodHive Web3 recruitment platform.",
+  keywords:
+    "admin talent management, talent profile review, Web3 talent admin, blockchain developer management, talent approval process",
+};
 
 type MyProfilePageProps = {
   params: {
