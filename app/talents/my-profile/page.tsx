@@ -96,6 +96,27 @@ const ProfileStatus = ({ profileData }: { profileData: ProfileData }) => {
   );
 };
 
+// Replace previous base64 decode utility with this:
+function decodeBase64HtmlWrappedInPTags(str: string) {
+  if (!str) return "";
+  // Try to extract base64 from inside <p>...</p>
+  const match = str.match(/^<p>([A-Za-z0-9+/=\s]+)<\/p>$/);
+  if (match) {
+    try {
+      const base64 = match[1].replace(/\s/g, "");
+      const decoded = atob(base64);
+      // If the decoded string is HTML, return it
+      if (/<[a-z][\s\S]*>/i.test(decoded)) {
+        return decoded;
+      }
+      return base64; // fallback
+    } catch (e) {
+      return str;
+    }
+  }
+  return str;
+}
+
 export default function ProfilePage() {
   const oktoClient = useOkto();
   // Static references
@@ -797,7 +818,9 @@ export default function ProfilePage() {
               theme="snow"
               modules={quillModules}
               className="quill-editor"
-              value={profileData?.description || ""}
+              value={decodeBase64HtmlWrappedInPTags(
+                profileData?.description || "",
+              )}
               onChange={(content) => handleInputChange("description", content)}
               placeholder="Describe your skills and experience in a few words*"
               style={{
@@ -1029,7 +1052,9 @@ export default function ProfilePage() {
               theme="snow"
               modules={quillModules}
               className="quill-editor"
-              value={profileData?.about_work || ""}
+              value={decodeBase64HtmlWrappedInPTags(
+                profileData?.about_work || "",
+              )}
               onChange={(content) => handleInputChange("about_work", content)}
               placeholder="What you are looking for?"
               style={{
