@@ -728,6 +728,7 @@ export default function ProfilePage() {
           isOpen={isLinkedInModalOpen}
           onClose={() => setIsLinkedInModalOpen(false)}
           onImportSuccess={handleLinkedInImportSuccess}
+          isLoading={isLinkedInImporting}
         />
 
         {/* Availability Toggle */}
