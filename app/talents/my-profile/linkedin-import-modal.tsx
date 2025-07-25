@@ -6,6 +6,7 @@ interface LinkedInImportModalProps {
   isOpen: boolean;
   onClose: () => void;
   onImportSuccess: (data: any) => void;
+  isLoading?: boolean;
 }
 
 // Define styles
@@ -59,6 +60,7 @@ export const LinkedInImportModal = ({
   isOpen,
   onClose,
   onImportSuccess,
+  isLoading: externalLoading = false,
 }: LinkedInImportModalProps) => {
   const [username, setUsername] = useState("");
   const [mounted, setMounted] = useState(false);
@@ -137,6 +139,8 @@ export const LinkedInImportModal = ({
   // Only render on client-side
   if (!mounted || !isOpen) return null;
 
+  const loading = isLoading || externalLoading;
+
   return createPortal(
     <div className={styles.modalOverlay}>
       <div ref={modalRef} className={styles.modalContent}>
@@ -148,7 +152,7 @@ export const LinkedInImportModal = ({
           <button
             className={styles.closeButton}
             onClick={onClose}
-            disabled={isLoading}
+            disabled={loading}
             aria-label="Close modal"
           >
             <X />
@@ -173,7 +177,7 @@ export const LinkedInImportModal = ({
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="johndoe"
                 className={styles.input}
-                disabled={isLoading}
+                disabled={loading}
                 required
               />
               <span className={styles.inputPrefix}>linkedin.com/in/</span>
@@ -184,16 +188,16 @@ export const LinkedInImportModal = ({
                 type="button"
                 onClick={onClose}
                 className={styles.cancelButton}
-                disabled={isLoading}
+                disabled={loading}
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 className={styles.submitButton}
-                disabled={isLoading || !username.trim()}
+                disabled={loading || !username.trim()}
               >
-                {isLoading ? (
+                {loading ? (
                   <>
                     <Loader2 className={styles.spinner} />
                     Importing...
