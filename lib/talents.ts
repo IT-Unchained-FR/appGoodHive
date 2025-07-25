@@ -1,5 +1,4 @@
 import postgres from "postgres";
-import Talent from "@/interfaces/talent";
 
 const sql = postgres(process.env.DATABASE_URL || "", {
   ssl: {
@@ -9,6 +8,24 @@ const sql = postgres(process.env.DATABASE_URL || "", {
 
 function contains(str: string) {
   return "%" + str.toLowerCase() + "%";
+}
+
+// Helper function to safely decode base64 or return original string
+function safeBase64Decode(value: string | null | undefined): string {
+  if (!value) return "";
+
+  try {
+    // Check if the string looks like base64 (contains only base64 characters)
+    const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+    if (base64Regex.test(value)) {
+      return Buffer.from(value, "base64").toString("utf-8");
+    }
+    // If it doesn't look like base64, return as is
+    return value;
+  } catch (error) {
+    console.error("Error decoding base64:", error);
+    return value || "";
+  }
 }
 
 export async function fetchTalents({
@@ -58,9 +75,7 @@ export async function fetchTalents({
     const talents: any[] = talentsCursor.map((talent) => {
       return {
         title: talent.title,
-        description: Buffer.from(talent.description, "base64").toString(
-          "utf-8",
-        ),
+        description: safeBase64Decode(talent.description),
         firstName: talent.first_name,
         lastName: talent.last_name,
         country: talent.country,
@@ -68,7 +83,7 @@ export async function fetchTalents({
         phoneCountryCode: talent.phone_country_code,
         skills: talent.skills?.split(",") || [],
         email: talent.email,
-        aboutWork: Buffer.from(talent.about_work, "base64").toString("utf-8"),
+        aboutWork: safeBase64Decode(talent.about_work),
         telegram: talent.telegram,
         rate: talent.rate,
         currency: talent.currency,
