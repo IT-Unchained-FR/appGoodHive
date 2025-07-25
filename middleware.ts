@@ -62,10 +62,19 @@ export async function middleware(req: NextRequest) {
       response = NextResponse.next();
     }
     // Handle admin routes
-    else if (path.startsWith("/admin")) {
+    else if (path.startsWith("/admin") || path.startsWith("/api/admin")) {
       const adminToken = req.cookies.get("admin_token")?.value;
 
       if (!adminToken) {
+        if (path.startsWith("/api/")) {
+          return NextResponse.json(
+            {
+              error: "Admin authentication required",
+              code: "MISSING_ADMIN_TOKEN",
+            },
+            { status: 401 },
+          );
+        }
         return NextResponse.redirect(new URL("/admin/login", req.url));
       }
 
@@ -75,6 +84,15 @@ export async function middleware(req: NextRequest) {
       } catch (error) {
         const authError = handleAuthError(error);
         console.error("Admin authentication error:", authError.message);
+
+        if (path.startsWith("/api/")) {
+          const errorResponse = NextResponse.json(
+            { error: "Invalid admin session", code: "INVALID_ADMIN_TOKEN" },
+            { status: 401 },
+          );
+          errorResponse.cookies.delete("admin_token");
+          return errorResponse;
+        }
 
         const redirectResponse = NextResponse.redirect(
           new URL("/admin/login", req.url),
