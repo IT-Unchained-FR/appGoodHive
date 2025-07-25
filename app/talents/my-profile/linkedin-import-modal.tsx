@@ -1,12 +1,11 @@
-import { useState, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
 import { Linkedin, Loader2, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 interface LinkedInImportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (username: string) => void;
-  isLoading: boolean;
+  onImportSuccess: (data: any) => void;
 }
 
 // Define styles
@@ -59,11 +58,11 @@ const keyframes = `
 export const LinkedInImportModal = ({
   isOpen,
   onClose,
-  onSubmit,
-  isLoading,
+  onImportSuccess,
 }: LinkedInImportModalProps) => {
   const [username, setUsername] = useState("");
   const [mounted, setMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -96,10 +95,42 @@ export const LinkedInImportModal = ({
     };
   }, [isOpen, onClose]);
 
+  const handleLinkedInImport = async (username: string) => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(
+        `/api/linkedin-import?username=${encodeURIComponent(username)}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || "Failed to import LinkedIn profile",
+        );
+      }
+
+      const data = await response.json();
+      console.log("Bright Data LinkedIn JSON:", data);
+      if (onImportSuccess) {
+        onImportSuccess(data);
+      }
+    } catch (error) {
+      console.error("Error importing LinkedIn profile:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (username.trim()) {
-      onSubmit(username.trim());
+      handleLinkedInImport(username.trim());
     }
   };
 

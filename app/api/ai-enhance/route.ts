@@ -20,41 +20,44 @@ export async function POST(request: NextRequest) {
     const {
       firstName,
       lastName,
-      headline,
+      headline, // not used in your data, but keep for fallback
       summary,
       skills = [],
-      position = [],
+      experience = [],
       educations = [],
+      position, // this is the string headline/title
     } = linkedinData;
 
-    console.log("educations", educations);
-    console.log("position", position);
-
     // Extract skills names
-    const skillNames = skills.map((skill: any) => skill.name || "").join(", ");
+    const skillNames = skills
+      .map((skill: any) => skill.name || skill || "")
+      .join(", ");
 
     const formattedEducations = educations
       .map((edu: any) => {
-        const startYear = edu.start?.year || "N/A";
-        const endYear = edu.end?.year || "Present";
-        return `${edu.degree} in ${edu.fieldOfStudy} from ${edu.schoolName} (${startYear} - ${endYear})`;
+        const startYear = edu.start?.year || edu.start_year || "N/A";
+        const endYear = edu.end?.year || edu.end_year || "Present";
+        return `${edu.degree || ""} in ${edu.fieldOfStudy || edu.field || ""} from ${edu.schoolName || edu.title || ""} (${startYear} - ${endYear})`;
       })
       .join("; ");
 
-    const formattedExperiences = position
-      .map((pos: any) => {
-        const startYear = pos.start?.year || "N/A";
-        const endYear = pos.end?.year === 0 ? "Present" : pos.end?.year;
-        return `${pos.title} at ${pos.companyName} (${startYear} - ${endYear}), ${pos.location}`;
+    const formattedExperiences = experience
+      .map((exp: any) => {
+        const start = exp.start_date || exp.start || "N/A";
+        const end = exp.end_date || exp.end || "Present";
+        return `${exp.title} at ${exp.company || exp.company_name || ""} (${start} - ${end}), ${exp.location || ""}`;
       })
       .join("; ");
+
+    // Use position (string) as headline, fallback to headline or empty string
+    const headlineText = position || headline || "";
 
     // Construct the prompts
     const titlePrompt = `
     You are an expert professional profile writer. 
     Create a compelling and professional profile headline for a talent in the tech industry.
     Use the following information:
-    - Current headline: "${headline || "N/A"}"
+    - Current headline: "${headlineText}"
     - Skills: ${skillNames}
     - Experience: ${formattedExperiences}
     
@@ -66,9 +69,9 @@ export async function POST(request: NextRequest) {
     const descriptionPrompt = `
     You are an expert professional profile writer.
     Create a compelling professional summary/description for a talent profile using the following information:
-    - Name: ${firstName} ${lastName}
-    - Current headline: "${headline || "N/A"}"
-    - Current summary: "${summary || "N/A"}"
+    - Name: ${firstName || linkedinData.first_name || ""} ${lastName || linkedinData.last_name || ""}
+    - Current headline: "${headlineText}"
+    - Current summary: "${summary || linkedinData.about || "N/A"}"
     - Skills: ${skillNames}
     - Experience: ${formattedExperiences}
     
@@ -83,9 +86,9 @@ export async function POST(request: NextRequest) {
     You are an expert professional profile writer.
     
     Create a compelling "About My Work" section for a talent profile using the following information:
-    - Name: ${firstName} ${lastName}
-    - Current headline: "${headline || "N/A"}"
-    - Current summary: "${summary || "N/A"}"
+    - Name: ${firstName || linkedinData.first_name || ""} ${lastName || linkedinData.last_name || ""}
+    - Current headline: "${headlineText}"
+    - Current summary: "${summary || linkedinData.about || "N/A"}"
     - Skills: ${skillNames}
     - Experience: ${formattedExperiences}
     - Education: ${formattedEducations || "N/A"}

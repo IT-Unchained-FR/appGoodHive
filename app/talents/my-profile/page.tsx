@@ -76,6 +76,9 @@ export type ProfileData = {
   inreview?: boolean;
   referred_by?: string;
   approved_roles?: object[];
+  experience?: any[];
+  education?: any[];
+  current_company?: string;
 };
 
 // Component to display profile status
@@ -538,132 +541,94 @@ export default function ProfilePage() {
       }
 
       const data = await response.json();
-      console.log("LinkedIn profile data:", data);
-
-      // Initialize default values
-      let enhancedTitle = data.headline || "";
-      let enhancedDescription = data.summary
-        ? `<p>${data.summary.replace(/\n/g, "</p><p>")}</p>`
-        : "";
-      let enhancedAboutWork = data.summary
-        ? `<p>${data.summary.replace(/\n/g, "</p><p>")}</p>`
-        : "";
-
-      try {
-        toast.loading("Enhancing your profile with AI...", {
-          id: "ai-enhance",
-        });
-
-        const aiResponse = await fetch("/api/ai-enhance", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ linkedinData: data }),
-        });
-
-        if (!aiResponse.ok) {
-          throw new Error("Failed to enhance content with AI");
-        }
-
-        const aiData = await aiResponse.json();
-
-        if (aiData.status === "error") {
-          throw new Error(aiData.message);
-        }
-
-        // Update the profile data with AI-enhanced content
-        enhancedTitle = aiData.data.title;
-        enhancedDescription = aiData.data.description;
-        enhancedAboutWork = aiData.data.aboutWork;
-
-        toast.success("Profile enhanced with AI!", {
-          id: "ai-enhance",
-        });
-      } catch (error) {
-        console.error("Error enhancing content with AI:", error);
-        toast.error("Could not enhance with AI, using original content", {
-          id: "ai-enhance",
-        });
-      }
-
-      // Extract skills array from LinkedIn data
-      const linkedInSkills = data.skills
-        ? data.skills.map((skill: any) => skill.name)
-        : [];
-
-      // Find country object based on LinkedIn country data
-      let countryObject = null;
-      if (data.geo) {
-        // Try to match by country name first
-        if (data.geo.country) {
-          countryObject = countries.find(
-            (c) => c.value.toLowerCase() === data.geo.country.toLowerCase(),
-          );
-        }
-
-        // If not found and we have country code, try to match by code
-        if (!countryObject && data.geo.countryCode) {
-          const countryCode = data.geo.countryCode.toLowerCase();
-          countryObject = countries.find(
-            (c) =>
-              c.value.toLowerCase().includes(`(${countryCode})`) ||
-              c.value.toLowerCase() === countryCode,
-          );
-        }
-
-        // Last resort: try partial matching on country name
-        if (!countryObject && data.geo.country) {
-          const countryName = data.geo.country.toLowerCase();
-          countryObject = countries.find(
-            (c) =>
-              countryName.includes(c.value.toLowerCase()) ||
-              c.value.toLowerCase().includes(countryName),
-          );
-        }
-      }
-
-      // Update profile data state with all imported data
-      setProfileData((prev) => ({
-        ...prev,
-        first_name: data.firstName || prev.first_name,
-        last_name: data.lastName || prev.last_name,
-        title: enhancedTitle || prev.title,
-        description: enhancedDescription || prev.description,
-        about_work: enhancedAboutWork || prev.about_work,
-        city: data.geo?.city || prev.city,
-        linkedin: `https://linkedin.com/in/${data.username}` || prev.linkedin,
-      }));
-
-      // Update country selection if found
-      if (countryObject) {
-        setSelectedCountry(countryObject);
-      }
-
-      // Update skills if available
-      if (linkedInSkills.length > 0) {
-        setSelectedSkills(linkedInSkills);
-      }
-
-      // If profile image is available, consider updating it
-      if (data.profilePicture) {
-        setProfileData((prev) => ({
-          ...prev,
-          image_url: data.profilePicture,
-        }));
-      }
-
-      toast.success("LinkedIn profile data imported successfully!");
+      console.log("Bright Data LinkedIn JSON:", data);
     } catch (error) {
       console.error("Error importing LinkedIn profile:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to import LinkedIn profile",
-      );
     } finally {
       setIsLinkedInImporting(false);
+    }
+  };
+
+  // Handler for LinkedIn import success
+  const handleLinkedInImportSuccess = async (linkedinData: any) => {
+    if (!Array.isArray(linkedinData) || linkedinData.length === 0) {
+      toast.error("No LinkedIn data found.");
+      return;
+    }
+    const data = linkedinData[0];
+    setIsLinkedInImporting(true);
+    try {
+      // Send to AI enhancement endpoint
+      const aiResponse = await fetch("/api/ai-enhance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ linkedinData: data }),
+      });
+      let aiData = {
+        title: data.position || "",
+        description: data.about || "",
+        aboutWork: data.about || "",
+      };
+      if (aiResponse.ok) {
+        const aiJson = await aiResponse.json();
+        if (aiJson.status === "completed") {
+          aiData = aiJson.data;
+        }
+      }
+      // Map skills
+      let skillsArr: string[] = [];
+      if (Array.isArray(data.skills) && data.skills.length > 0) {
+        skillsArr = data.skills.map((s: any) => s.name || s).filter(Boolean);
+      } else if (Array.isArray(data.experience)) {
+        // Try to infer from experience descriptions
+        data.experience.forEach((exp: any) => {
+          if (exp.description) {
+            // Simple keyword extraction (could be improved)
+            const matches = exp.description.match(/([A-Za-z0-9#\.\+\-]+)/g);
+            if (matches) skillsArr.push(...matches);
+          }
+        });
+        skillsArr = Array.from(new Set(skillsArr));
+      }
+      if (skillsArr.length > 0) {
+        setSelectedSkills(skillsArr);
+      }
+      // Map experience, education, current company
+      setProfileData((prev) => ({
+        ...prev,
+        first_name:
+          data.first_name || data.name?.split(" ")[0] || prev.first_name,
+        last_name:
+          data.last_name ||
+          data.name?.split(" ").slice(1).join(" ") ||
+          prev.last_name,
+        title: aiData.title || data.position || prev.title,
+        description: aiData.description || data.about || prev.description,
+        about_work: aiData.aboutWork || data.about || prev.about_work,
+        city: data.city || prev.city,
+        country: data.country_code || prev.country,
+        linkedin: data.url || prev.linkedin,
+        image_url: data.avatar || prev.image_url,
+        skills: skillsArr.length > 0 ? skillsArr.join(",") : prev.skills,
+        experience: data.experience || prev.experience,
+        education: data.education || prev.education,
+        current_company: data.current_company || prev.current_company,
+        // Add more mappings as needed
+      }));
+      // Optionally set country select
+      if (data.country_code) {
+        const countryObj = countries.find((c) =>
+          c.value.toLowerCase().includes(data.country_code.toLowerCase()),
+        );
+        if (countryObj) setSelectedCountry(countryObj);
+      }
+      toast.success("LinkedIn profile imported and polished!");
       setIsLinkedInModalOpen(false);
+    } catch (error) {
+      console.error("Error enhancing LinkedIn data with AI:", error);
+      toast.error("Failed to enhance LinkedIn data with AI");
+    } finally {
+      setIsLinkedInImporting(false);
     }
   };
 
@@ -762,8 +727,7 @@ export default function ProfilePage() {
         <LinkedInImportModal
           isOpen={isLinkedInModalOpen}
           onClose={() => setIsLinkedInModalOpen(false)}
-          onSubmit={handleLinkedInImport}
-          isLoading={isLinkedInImporting}
+          onImportSuccess={handleLinkedInImportSuccess}
         />
 
         {/* Availability Toggle */}
