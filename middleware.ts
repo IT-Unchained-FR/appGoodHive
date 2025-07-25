@@ -13,9 +13,11 @@ import { rateLimit } from "./middleware/rateLimit";
 const PUBLIC_PATHS = [
   "/auth/login",
   "/auth/signup",
+  "/admin/login",
   "/",
   "/api/auth/login",
   "/api/auth/signup",
+  "/api/auth/admin/login",
   "/api/auth/nonce",
   "/api/auth/verify",
   "/api/auth/verify-wallet",
@@ -61,7 +63,7 @@ export async function middleware(req: NextRequest) {
     }
     // Handle admin routes
     else if (path.startsWith("/admin")) {
-      const adminToken = req.cookies.get("admin_session_token")?.value;
+      const adminToken = req.cookies.get("admin_token")?.value;
 
       if (!adminToken) {
         return NextResponse.redirect(new URL("/admin/login", req.url));
@@ -77,7 +79,7 @@ export async function middleware(req: NextRequest) {
         const redirectResponse = NextResponse.redirect(
           new URL("/admin/login", req.url),
         );
-        redirectResponse.cookies.delete("admin_session_token");
+        redirectResponse.cookies.delete("admin_token");
         return redirectResponse;
       }
     }
