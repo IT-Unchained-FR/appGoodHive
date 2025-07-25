@@ -575,24 +575,22 @@ export default function ProfilePage() {
           aiData = aiJson.data;
         }
       }
-      // Map skills
-      let skillsArr: string[] = [];
-      if (Array.isArray(data.skills) && data.skills.length > 0) {
-        skillsArr = data.skills.map((s: any) => s.name || s).filter(Boolean);
-      } else if (Array.isArray(data.experience)) {
-        // Try to infer from experience descriptions
-        data.experience.forEach((exp: any) => {
-          if (exp.description) {
-            // Simple keyword extraction (could be improved)
-            const matches = exp.description.match(/([A-Za-z0-9#\.\+\-]+)/g);
-            if (matches) skillsArr.push(...matches);
-          }
-        });
-        skillsArr = Array.from(new Set(skillsArr));
+
+      // Extract skills using AI
+      const skillsResponse = await fetch("/api/ai-extract-skills", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ linkedinData: data }),
+      });
+
+      let extractedSkills: string[] = [];
+      if (skillsResponse.ok) {
+        const skillsJson = await skillsResponse.json();
+        if (skillsJson.status === "completed" && skillsJson.data.skills) {
+          extractedSkills = skillsJson.data.skills;
+        }
       }
-      if (skillsArr.length > 0) {
-        setSelectedSkills(skillsArr);
-      }
+
       // Map experience, education, current company
       setProfileData((prev) => ({
         ...prev,
@@ -609,12 +607,19 @@ export default function ProfilePage() {
         country: data.country_code || prev.country,
         linkedin: data.url || prev.linkedin,
         image_url: data.avatar || prev.image_url,
-        skills: skillsArr.length > 0 ? skillsArr.join(",") : prev.skills,
+        skills:
+          extractedSkills.length > 0 ? extractedSkills.join(",") : prev.skills,
         experience: data.experience || prev.experience,
         education: data.education || prev.education,
         current_company: data.current_company || prev.current_company,
         // Add more mappings as needed
       }));
+
+      // Set extracted skills if available
+      if (extractedSkills.length > 0) {
+        setSelectedSkills(extractedSkills);
+      }
+
       // Optionally set country select
       if (data.country_code) {
         const countryObj = countries.find((c) =>
