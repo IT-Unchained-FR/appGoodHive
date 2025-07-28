@@ -1,5 +1,5 @@
-import { FC, useEffect, useState } from "react";
 import Image from "next/image";
+import { FC, useEffect, useState } from "react";
 
 type SocialLinkProps = {
   name: string;
