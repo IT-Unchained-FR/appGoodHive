@@ -3,8 +3,9 @@
   "typescript.enablePromptUseWorkspaceTsdk": true,
   // Editor appearance and behavior
   "editor.fontLigatures": true,
-  "editor.fontSize": 13,
+  "editor.fontSize": 12,
   "editor.lineHeight": 22,
+  "editor.fontWeight": 500,
   "editor.cursorSmoothCaretAnimation": "on",
   "editor.cursorBlinking": "expand",
   "editor.minimap.enabled": false,
