@@ -5,7 +5,7 @@ interface ProfileActionsProps {
   profileData: ProfileData;
   user_id: string;
   onViewPublicProfile: () => void;
-  onLinkedInImport: () => void;
+  // onLinkedInImport: () => void;
   onToggleChange: (name: string, checked: boolean) => void;
 }
 
@@ -13,7 +13,7 @@ export const ProfileActions = ({
   profileData,
   user_id,
   onViewPublicProfile,
-  onLinkedInImport,
+  // onLinkedInImport,
   onToggleChange,
 }: ProfileActionsProps) => {
   return (
@@ -45,10 +45,10 @@ export const ProfileActions = ({
       </div>
 
       {/* LinkedIn Import Button */}
-      <div className="w-full flex justify-center mt-4">
+      {/* <div className="w-full flex justify-center mt-4">
         <button
           type="button"
-          onClick={onLinkedInImport}
+          onClick={() => {}}
           className="px-8 py-3 bg-[#0A66C2] text-white font-medium rounded-full transition-all duration-300 hover:bg-[#004182] hover:shadow-lg flex items-center justify-center gap-2"
         >
           <svg
@@ -69,7 +69,7 @@ export const ProfileActions = ({
           </svg>
           Import Profile From LinkedIn
         </button>
-      </div>
+      </div> */}
 
       {/* Availability Toggle */}
       <div className="flex w-full justify-center mt-5">
