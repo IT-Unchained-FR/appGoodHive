@@ -20,7 +20,8 @@ import { toast } from "react-hot-toast";
 import "react-quill/dist/quill.snow.css";
 import { socialLinks } from "./constant";
 import { resumeUploadSizeLimit } from "./constants";
-import { LinkedInImportModal } from "./linkedin-import-modal";
+// import { LinkedInImportModal } from "./linkedin-import-modal";
+import { PDFImportModal } from "./pdf-import-modal";
 import { SocialLink } from "./social-link";
 
 // Dynamically import React Quill to prevent server-side rendering issues
@@ -208,8 +209,12 @@ export default function ProfilePage() {
   );
 
   // LinkedIn state
-  const [isLinkedInModalOpen, setIsLinkedInModalOpen] = useState(false);
-  const [isLinkedInImporting, setIsLinkedInImporting] = useState(false);
+  // const [isLinkedInModalOpen, setIsLinkedInModalOpen] = useState(false);
+  // const [isLinkedInImporting, setIsLinkedInImporting] = useState(false);
+
+  // AI Profile Generation state
+  const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
+  const [isPDFImporting, setIsPDFImporting] = useState(false);
 
   // API calls
   const fetchProfile = useCallback(async () => {
@@ -519,123 +524,184 @@ export default function ProfilePage() {
   }, []);
 
   // LinkedIn profile import handler
-  const handleLinkedInImport = async (username: string) => {
+  // const handleLinkedInImport = async (username: string) => {
+  //   try {
+  //     setIsLinkedInImporting(true);
+
+  //     const response = await fetch(
+  //       `/api/linkedin-import?username=${encodeURIComponent(username)}`,
+  //       {
+  //         method: "GET",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //       },
+  //     );
+
+  //     if (!response.ok) {
+  //         const errorData = await response.json();
+  //         throw new Error(
+  //           errorData.message || "Failed to import LinkedIn profile",
+  //         );
+  //       }
+
+  //       const data = await response.json();
+  //       console.log("Bright Data LinkedIn JSON:", data);
+  //     } catch (error) {
+  //       console.error("Error importing LinkedIn profile:", error);
+  //     } finally {
+  //       setIsLinkedInImporting(false);
+  //     }
+  //   };
+
+  // Handler for AI profile generation success
+  const handlePDFImportSuccess = async (generatedData: any) => {
     try {
-      setIsLinkedInImporting(true);
+      setIsPDFImporting(true);
 
-      const response = await fetch(
-        `/api/linkedin-import?username=${encodeURIComponent(username)}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        },
-      );
+      // Map the generated data to profile fields
+      setProfileData((prev) => ({
+        ...prev,
+        first_name: generatedData.first_name || prev.first_name,
+        last_name: generatedData.last_name || prev.last_name,
+        title: generatedData.title || prev.title,
+        description: generatedData.description || prev.description,
+        email: generatedData.email || prev.email,
+        phone_number: generatedData.phone_number || prev.phone_number,
+        phone_country_code:
+          generatedData.phone_country_code || prev.phone_country_code,
+        country: generatedData.country || prev.country,
+        city: generatedData.city || prev.city,
+        about_work: generatedData.about_work || prev.about_work,
+        linkedin: generatedData.linkedin || prev.linkedin,
+        github: generatedData.github || prev.github,
+        portfolio: generatedData.portfolio || prev.portfolio,
+        experience: generatedData.experience || prev.experience,
+        education: generatedData.education || prev.education,
+      }));
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || "Failed to import LinkedIn profile",
-        );
+      // Set generated skills if available
+      if (generatedData.skills) {
+        const skillsArray = generatedData.skills
+          .split(",")
+          .map((skill: string) => skill.trim());
+        setSelectedSkills(skillsArray);
       }
 
-      const data = await response.json();
-      console.log("Bright Data LinkedIn JSON:", data);
+      // Set country if available
+      if (generatedData.country) {
+        const countryObj = countries.find((c) =>
+          c.value.toLowerCase().includes(generatedData.country.toLowerCase()),
+        );
+        if (countryObj) {
+          setSelectedCountry(countryObj);
+        }
+      }
+
+      // Set rate if available
+      if (generatedData.rate) {
+        setProfileData((prev) => ({
+          ...prev,
+          rate: generatedData.rate,
+        }));
+      }
+
+      toast.success("Profile data generated successfully!");
     } catch (error) {
-      console.error("Error importing LinkedIn profile:", error);
+      console.error("Error processing generated data:", error);
+      toast.error("Failed to process generated data");
     } finally {
-      setIsLinkedInImporting(false);
+      setIsPDFImporting(false);
     }
   };
 
   // Handler for LinkedIn import success
-  const handleLinkedInImportSuccess = async (linkedinData: any) => {
-    if (!Array.isArray(linkedinData) || linkedinData.length === 0) {
-      toast.error("No LinkedIn data found.");
-      return;
-    }
-    const data = linkedinData[0];
-    setIsLinkedInImporting(true);
-    try {
-      // Send to AI enhancement endpoint
-      const aiResponse = await fetch("/api/ai-enhance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ linkedinData: data }),
-      });
-      let aiData = {
-        title: data.position || "",
-        description: data.about || "",
-        aboutWork: data.about || "",
-      };
-      if (aiResponse.ok) {
-        const aiJson = await aiResponse.json();
-        if (aiJson.status === "completed") {
-          aiData = aiJson.data;
-        }
-      }
+  // const handleLinkedInImportSuccess = async (linkedinData: any) => {
+  //   if (!Array.isArray(linkedinData) || linkedinData.length === 0) {
+  //     toast.error("No LinkedIn data found.");
+  //     return;
+  //   }
+  //   const data = linkedinData[0];
+  //   setIsLinkedInImporting(true);
+  //   try {
+  //     // Send to AI enhancement endpoint
+  //     const aiResponse = await fetch("/api/ai-enhance", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ linkedinData: data }),
+  //     });
+  //     let aiData = {
+  //       title: data.position || "",
+  //       description: data.about || "",
+  //       aboutWork: data.about || "",
+  //     };
+  //     if (aiResponse.ok) {
+  //       const aiJson = await aiResponse.json();
+  //       if (aiJson.status === "completed") {
+  //         aiData = aiJson.data;
+  //       }
+  //     }
 
-      // Extract skills using AI
-      const skillsResponse = await fetch("/api/ai-extract-skills", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ linkedinData: data }),
-      });
+  //     // Extract skills using AI
+  //     const skillsResponse = await fetch("/api/ai-extract-skills", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ linkedinData: data }),
+  //     });
 
-      let extractedSkills: string[] = [];
-      if (skillsResponse.ok) {
-        const skillsJson = await skillsResponse.json();
-        if (skillsJson.status === "completed" && skillsJson.data.skills) {
-          extractedSkills = skillsJson.data.skills;
-        }
-      }
+  //     let extractedSkills: string[] = [];
+  //     if (skillsResponse.ok) {
+  //       const skillsJson = await skillsResponse.json();
+  //       if (skillsJson.status === "completed" && skillsJson.data.skills) {
+  //         extractedSkills = skillsJson.data.skills;
+  //       }
+  //     }
 
-      // Map experience, education, current company
-      setProfileData((prev) => ({
-        ...prev,
-        first_name:
-          data.first_name || data.name?.split(" ")[0] || prev.first_name,
-        last_name:
-          data.last_name ||
-          data.name?.split(" ").slice(1).join(" ") ||
-          prev.last_name,
-        title: aiData.title || data.position || prev.title,
-        description: aiData.description || data.about || prev.description,
-        about_work: aiData.aboutWork || data.about || prev.about_work,
-        city: data.city || prev.city,
-        country: data.country_code || prev.country,
-        linkedin: data.url || prev.linkedin,
-        image_url: data.avatar || prev.image_url,
-        skills:
-          extractedSkills.length > 0 ? extractedSkills.join(",") : prev.skills,
-        experience: data.experience || prev.experience,
-        education: data.education || prev.education,
-        current_company: data.current_company || prev.current_company,
-        // Add more mappings as needed
-      }));
+  //     // Map experience, education, current company
+  //     setProfileData((prev) => ({
+  //       ...prev,
+  //       first_name:
+  //         data.first_name || data.name?.split(" ")[0] || prev.first_name,
+  //       last_name:
+  //         data.last_name ||
+  //         data.name?.split(" ").slice(1).join(" ") ||
+  //         prev.last_name,
+  //       title: aiData.title || data.position || prev.title,
+  //       description: aiData.description || data.about || prev.description,
+  //       about_work: aiData.aboutWork || data.about || prev.about_work,
+  //       city: data.city || prev.city,
+  //       country: data.country_code || prev.country,
+  //       linkedin: data.url || prev.linkedin,
+  //       image_url: data.avatar || prev.image_url,
+  //       skills:
+  //         extractedSkills.length > 0 ? extractedSkills.join(",") : prev.skills,
+  //       experience: data.experience || prev.experience,
+  //       education: data.education || prev.education,
+  //       current_company: data.current_company || prev.current_company,
+  //       // Add more mappings as needed
+  //     }));
 
-      // Set extracted skills if available
-      if (extractedSkills.length > 0) {
-        setSelectedSkills(extractedSkills);
-      }
+  //     // Set extracted skills if available
+  //     if (extractedSkills.length > 0) {
+  //       setSelectedSkills(extractedSkills);
+  //     }
 
-      // Optionally set country select
-      if (data.country_code) {
-        const countryObj = countries.find((c) =>
-          c.value.toLowerCase().includes(data.country_code.toLowerCase()),
-        );
-        if (countryObj) setSelectedCountry(countryObj);
-      }
-      toast.success("LinkedIn profile imported and polished!");
-      setIsLinkedInModalOpen(false);
-    } catch (error) {
-      console.error("Error enhancing LinkedIn data with AI:", error);
-      toast.error("Failed to enhance LinkedIn data with AI");
-    } finally {
-      setIsLinkedInImporting(false);
-    }
-  };
+  //     // Optionally set country select
+  //     if (data.country_code) {
+  //       const countryObj = countries.find((c) =>
+  //         c.value.toLowerCase().includes(data.country_code.toLowerCase()),
+  //       );
+  //       if (countryObj) setSelectedCountry(countryObj);
+  //     }
+  //     toast.success("LinkedIn profile imported and polished!");
+  //     setIsLinkedInModalOpen(false);
+  //   } catch (error) {
+  //     console.error("Error enhancing LinkedIn data with AI:", error);
+  //     toast.error("Failed to enhance LinkedIn data with AI");
+  //   } finally {
+  //     setIsLinkedInImporting(false);
+  //   }
+  // };
 
   // Loading states
   if (isTokenVerifying) {
@@ -701,8 +767,34 @@ export default function ProfilePage() {
           </button>
         </div>
 
-        {/* LinkedIn Import Button */}
+        {/* AI Profile Generation Button */}
         <div className="w-full flex justify-center mt-4">
+          <button
+            type="button"
+            onClick={() => setIsPDFModalOpen(true)}
+            className="px-8 py-3 bg-[#FF6B35] text-white font-medium rounded-full transition-all duration-300 hover:bg-[#E55A2B] hover:shadow-lg flex items-center justify-center gap-2"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="lucide lucide-brain"
+            >
+              <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.23 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z" />
+              <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.23 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z" />
+            </svg>
+            Generate Profile with AI
+          </button>
+        </div>
+
+        {/* LinkedIn Import Button */}
+        {/* <div className="w-full flex justify-center mt-4">
           <button
             type="button"
             onClick={() => setIsLinkedInModalOpen(true)}
@@ -726,15 +818,23 @@ export default function ProfilePage() {
             </svg>
             Import Profile From LinkedIn
           </button>
-        </div>
+        </div> */}
+
+        {/* AI Profile Generation Modal */}
+        <PDFImportModal
+          isOpen={isPDFModalOpen}
+          onClose={() => setIsPDFModalOpen(false)}
+          onImportSuccess={handlePDFImportSuccess}
+          isLoading={isPDFImporting}
+        />
 
         {/* LinkedIn Import Modal */}
-        <LinkedInImportModal
+        {/* <LinkedInImportModal
           isOpen={isLinkedInModalOpen}
           onClose={() => setIsLinkedInModalOpen(false)}
           onImportSuccess={handleLinkedInImportSuccess}
           isLoading={isLinkedInImporting}
-        />
+        /> */}
 
         {/* Availability Toggle */}
         <div className="flex w-full justify-center mt-5">
