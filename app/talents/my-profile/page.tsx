@@ -102,7 +102,11 @@ const ProfileStatus = ({ profileData }: { profileData: ProfileData }) => {
 
 // Replace previous base64 decode utility with this:
 function decodeBase64HtmlWrappedInPTags(str: string) {
-  if (!str) return "";
+  if (!str || typeof str !== "string") return "";
+
+  // Handle empty or whitespace-only strings
+  if (str.trim() === "") return "";
+
   // Try to extract base64 from inside <p>...</p>
   const match = str.match(/^<p>([A-Za-z0-9+/=\s]+)<\/p>$/);
   if (match) {
@@ -126,6 +130,7 @@ export default function ProfilePage() {
   // Static references
   const imageInputRef = useRef(null);
   const isInitialMount = useRef(true);
+  const isMounted = useRef(false);
 
   // Router
   const router = useRouter();
@@ -196,6 +201,8 @@ export default function ProfilePage() {
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [isUploadedCvLink, setIsUploadedCvLink] = useState(false);
   const [walletAddress, setWalletAddress] = useState("");
+  const [descriptionContent, setDescriptionContent] = useState("");
+  const [aboutWorkContent, setAboutWorkContent] = useState("");
 
   // Derived state
   const unapprovedProfile = useMemo(
@@ -238,6 +245,9 @@ export default function ProfilePage() {
           if (data.skills) {
             setSelectedSkills(data.skills.split(","));
           }
+          // Initialize rich text editor content
+          setDescriptionContent(data.description || "");
+          setAboutWorkContent(data.about_work || "");
           isInitialMount.current = false;
         }
       }
@@ -271,7 +281,15 @@ export default function ProfilePage() {
     };
 
     initializeData();
+    isMounted.current = true;
   }, [user_id, fetchProfile, fetchUser]);
+
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   // Form validation
   const validateForm = useCallback(
@@ -510,10 +528,12 @@ export default function ProfilePage() {
   );
 
   const handleInputChange = useCallback((name: string, value: any) => {
-    setProfileData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    if (isMounted.current) {
+      setProfileData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   }, []);
 
   const handleToggleChange = useCallback((name: string, checked: boolean) => {
@@ -718,8 +738,6 @@ export default function ProfilePage() {
     return <HoneybeeSpinner message={"Saving Your Profile..."} />;
   }
 
-  console.log("profileData", profileData);
-
   // Render components
   return (
     <div className="container mx-auto px-4 py-8 pt-0">
@@ -888,10 +906,11 @@ export default function ProfilePage() {
               theme="snow"
               modules={quillModules}
               className="quill-editor"
-              value={decodeBase64HtmlWrappedInPTags(
-                profileData?.description || "",
-              )}
-              onChange={(content) => handleInputChange("description", content)}
+              value={descriptionContent}
+              onChange={(content) => {
+                setDescriptionContent(content);
+                handleInputChange("description", content);
+              }}
               placeholder="Describe your skills and experience in a few words*"
               style={{
                 fontSize: "26px",
@@ -1122,10 +1141,11 @@ export default function ProfilePage() {
               theme="snow"
               modules={quillModules}
               className="quill-editor"
-              value={decodeBase64HtmlWrappedInPTags(
-                profileData?.about_work || "",
-              )}
-              onChange={(content) => handleInputChange("about_work", content)}
+              value={aboutWorkContent}
+              onChange={(content) => {
+                setAboutWorkContent(content);
+                handleInputChange("about_work", content);
+              }}
               placeholder="What you are looking for?"
               style={{
                 fontSize: "26px",
