@@ -34,23 +34,32 @@ export const CompaniesCard: FC<Props> = ({
   return (
     <div className="mt-11 ">
       <div className="block bg-blend-darken shadow-gray-300 rounded-3xl shadow-xl box-border border-r-2 border-l-2  border-radius  bg-white">
-        <div className="flex pl-4 pr-5 pt-5 justify-end">
-          {" "}
-          <Image
-            className="mt-1 h-5 mb-4 flex w-8"
-            src={countryFlag}
-            alt="country"
-            width={15}
-            height={9}
-          />
-        </div>
         <div className="w-20 mx-auto flex justify-center">
           <Image src={image} alt="avatar" width={157} height={166} />
         </div>
-        <div className=" pt-7 flex flex-col items-center ">
-          <p className="flex text-center font-semibold text-xl text-gray-800 ">
-            {designation}
-          </p>
+        <div className="pt-7 flex flex-col items-center">
+          <div className="flex items-center gap-2 mb-2">
+            <p className="flex text-center font-semibold text-xl text-gray-800">
+              {designation}
+            </p>
+
+            {/* Modern Country Flag Display */}
+            {countryFlag && (
+              <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 border border-gray-200/60 shadow-sm">
+                <div className="relative w-4 h-3 rounded-sm overflow-hidden shadow-sm border border-gray-200">
+                  <Image
+                    src={countryFlag}
+                    alt="country flag"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <span className="text-xs font-medium text-gray-700 capitalize">
+                  {country}
+                </span>
+              </div>
+            )}
+          </div>
           <p className="flex text-center text-base text-gray-600 ">{website}</p>
           <div className="space-x-3 flex w-32 ">
             <Button text="Contact" type="secondary" size="small" />

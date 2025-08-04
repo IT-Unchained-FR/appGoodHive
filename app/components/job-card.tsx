@@ -189,15 +189,42 @@ export const JobCard: FC<Props> = ({
               />
             </div>
             <div className="mt-5">
-              <p className="font-semibold text-xl  text-gray-800 ">
-                {postedBy}
-              </p>
+              <div className="flex items-center gap-2 mb-2">
+                {/* Modern Country Flag Display */}
+                {countryFlag && (
+                  <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 border border-gray-200/60 shadow-sm">
+                    <div className="relative w-4 h-3 rounded-sm overflow-hidden shadow-sm border border-gray-200">
+                      <Image
+                        src={countryFlag}
+                        alt={`${country} flag`}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <span className="text-xs font-medium text-gray-700 capitalize">
+                      {country}
+                    </span>
+                  </div>
+                )}
+              </div>
+
               <p className="text-base text-gray-600">
                 {typeEngagementMsg} - {budget} USD {projectType}
               </p>
               <p className="text-base text-gray-600">{durationMsg}</p>
-              <div className="flex flex-row">
-                <p className="text-base text-gray-600 mb-5">
+              <div className="flex items-center gap-1.5 mb-5">
+                <svg
+                  className="w-4 h-4 text-gray-400"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <p className="text-base text-gray-600">
                   {city}, {country}
                 </p>
               </div>
@@ -229,7 +256,7 @@ export const JobCard: FC<Props> = ({
                 {skills.map((skill, index) => (
                   <div
                     key={index}
-                    className="px-2 py-1 mb-2 mr-2 rounded-full bg-amber-100"
+                    className="px-2 py-1 mb-2 mr-2 rounded-full bg-gray-100"
                   >
                     <span className="flex text-sm items-center">{skill}</span>
                   </div>

@@ -1,5 +1,5 @@
-import Image from "next/image";
 import "@/app/styles/rich-text.css";
+import Image from "next/image";
 
 import { FC } from "react";
 
@@ -44,21 +44,26 @@ export const OfferCard: FC<Props> = ({
                 <Image src={image} alt="avatar" width={157} height={166} />
               )}
             </div>
-            <div className="md:ml-2 pl-8 pt-7">
-              <p className="font-semibold text-xl text-gray-800">{title}</p>
+            <div className="md:ml-2 pl-8 pt-7 flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <p className="font-semibold text-xl text-gray-800">{title}</p>
+
+                {/* Modern Country Flag Display */}
+                {countryFlag && (
+                  <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 border border-gray-200/60 shadow-sm">
+                    <div className="relative w-4 h-3 rounded-sm overflow-hidden shadow-sm border border-gray-200">
+                      <Image
+                        src={countryFlag}
+                        alt="country flag"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
               <p className="text-base text-gray-600">{postedBy}</p>
               <p className="text-base text-gray-600 mb-5">{postedOn}</p>
-            </div>
-            <div className="pt-7 flex flex-row grow justify-end md:ml-5">
-              <div className="flex flex-col items-end">
-                <Image
-                  className="mt-1 h-5 w-8 mb-1"
-                  src={countryFlag}
-                  alt="country"
-                  width={34}
-                  height={23}
-                />
-              </div>
             </div>
           </div>
           <div>
