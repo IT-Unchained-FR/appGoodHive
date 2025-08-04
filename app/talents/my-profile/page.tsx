@@ -245,9 +245,13 @@ export default function ProfilePage() {
           if (data.skills) {
             setSelectedSkills(data.skills.split(","));
           }
-          // Initialize rich text editor content
-          setDescriptionContent(data.description || "");
-          setAboutWorkContent(data.about_work || "");
+          // Initialize rich text editor content with decoded values
+          setDescriptionContent(
+            decodeBase64HtmlWrappedInPTags(data.description || ""),
+          );
+          setAboutWorkContent(
+            decodeBase64HtmlWrappedInPTags(data.about_work || ""),
+          );
           isInitialMount.current = false;
         }
       }
