@@ -33,7 +33,7 @@ export default async function SearchTalentsPage({
 
   return (
     <div className="mb-12">
-      <h1 className="pt-16 text-xl font-bold">
+      <h1 className="pt-16 text-xl font-bold mb-4">
         Search Results
         <span className="text-base font-normal">- Talent Search</span>
       </h1>
