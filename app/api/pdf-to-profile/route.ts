@@ -33,6 +33,8 @@ const createProfileWithChatGPT = async (pdfText: string) => {
       }),
     });
 
+    console.log(response, "response from ai...");
+
     if (!response.ok) {
       throw new Error(`OpenAI API error: ${response.status}`);
     }
