@@ -1,13 +1,12 @@
-import React from "react";
 import { SearchFilters } from "@/app/components/search-filters";
+import React from "react";
 
 export default function SearchTalentsLayout({
   children,
 }: React.PropsWithChildren) {
   return (
-    <main className="container mx-auto">
+    <main className="">
       <SearchFilters isSearchTalent />
-
       {children}
     </main>
   );

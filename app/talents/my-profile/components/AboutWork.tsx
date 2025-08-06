@@ -54,7 +54,7 @@ export const AboutWork = ({
       >
         About your Work*
       </label>
-      <div style={{ borderRadius: "9999px", overflow: "hidden" }}>
+      <div style={{ borderRadius: "16px", overflow: "hidden" }}>
         <ReactQuill
           theme="snow"
           modules={quillModules}
