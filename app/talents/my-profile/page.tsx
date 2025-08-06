@@ -604,6 +604,14 @@ export default function ProfilePage() {
         education: generatedData.education || prev.education,
       }));
 
+      // Update the rich text editor content state variables
+      if (generatedData.description) {
+        setDescriptionContent(generatedData.description);
+      }
+      if (generatedData.about_work) {
+        setAboutWorkContent(generatedData.about_work);
+      }
+
       // Set generated skills if available
       if (generatedData.skills) {
         const skillsArray = generatedData.skills
