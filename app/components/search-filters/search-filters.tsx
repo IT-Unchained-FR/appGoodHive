@@ -2,12 +2,12 @@
 
 import { Input } from "@/app/components/input";
 import { LinkButton } from "@/app/components/link-button";
-import addIcon from "@/public/icons/add.svg";
-import searchIcon from "@/public/icons/search.svg";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { FC, useState } from "react";
+import React, { FC, useCallback, useEffect, useState } from "react";
 import { CitySuggestion } from "../city-suggestor/city-suggestor";
-import { InputClasses, TRANSLATIONS } from "./search-filters.constants";
+import { SkillsSuggestion } from "../skills-suggestor/skills-suggestor";
+import { ToggleSwitch } from "../toggle-switch/toggle-switch";
+import { TRANSLATIONS } from "./search-filters.constants";
 import type { SearchFiltersProps } from "./search-filters.types";
 
 export const SearchFilters: FC<SearchFiltersProps> = (props) => {
@@ -16,6 +16,26 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
 
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [location, setLocation] = useState(searchParams.get("location") || "");
+  const [companyName, setCompanyName] = useState(
+    searchParams.get("name") || "",
+  );
+
+  // Filter switches for jobs and talents
+  const [openToRecruiter, setOpenToRecruiter] = useState(
+    searchParams.get("recruiter") === "true",
+  );
+  const [openToMentor, setOpenToMentor] = useState(
+    searchParams.get("mentor") === "true",
+  );
+  const [onlyTalent, setOnlyTalent] = useState(
+    searchParams.get("onlyTalent") === "true",
+  );
+  const [onlyMentor, setOnlyMentor] = useState(
+    searchParams.get("onlyMentor") === "true",
+  );
+  const [onlyRecruiter, setOnlyRecruiter] = useState(
+    searchParams.get("onlyRecruiter") === "true",
+  );
 
   const { isSearchTalent = false } = props;
 
@@ -23,100 +43,298 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
     ? TRANSLATIONS.talentSearchTitle
     : TRANSLATIONS.jobSearchTitle;
 
+  // Real-time search with debouncing
+  const performSearch = useCallback(
+    (skills: string, loc: string, company: string, filters: any = {}) => {
+      const params = new URLSearchParams(searchParams);
+
+      // Clear page parameter when searching
+      params.delete("page");
+
+      if (skills.trim()) {
+        params.set("search", skills.trim());
+      } else {
+        params.delete("search");
+      }
+
+      if (loc.trim()) {
+        params.set("location", loc.trim());
+      } else {
+        params.delete("location");
+      }
+
+      if (company.trim() && !isSearchTalent) {
+        params.set("name", company.trim());
+      } else {
+        params.delete("name");
+      }
+
+      // Handle filter switches
+      const currentFilters = {
+        openToRecruiter:
+          filters.openToRecruiter !== undefined
+            ? filters.openToRecruiter
+            : openToRecruiter,
+        openToMentor:
+          filters.openToMentor !== undefined
+            ? filters.openToMentor
+            : openToMentor,
+        onlyTalent:
+          filters.onlyTalent !== undefined ? filters.onlyTalent : onlyTalent,
+        onlyMentor:
+          filters.onlyMentor !== undefined ? filters.onlyMentor : onlyMentor,
+        onlyRecruiter:
+          filters.onlyRecruiter !== undefined
+            ? filters.onlyRecruiter
+            : onlyRecruiter,
+      };
+
+      if (isSearchTalent) {
+        // For talent search
+        if (currentFilters.onlyTalent) params.set("onlyTalent", "true");
+        else params.delete("onlyTalent");
+        if (currentFilters.onlyMentor) params.set("onlyMentor", "true");
+        else params.delete("onlyMentor");
+        if (currentFilters.onlyRecruiter) params.set("onlyRecruiter", "true");
+        else params.delete("onlyRecruiter");
+      } else {
+        // For job search
+        if (currentFilters.openToRecruiter) params.set("recruiter", "true");
+        else params.delete("recruiter");
+        if (currentFilters.openToMentor) params.set("mentor", "true");
+        else params.delete("mentor");
+      }
+
+      const path = isSearchTalent
+        ? "/companies/search-talents"
+        : "/talents/job-search";
+
+      router.replace(`${path}?${params.toString()}`);
+    },
+    [
+      router,
+      searchParams,
+      isSearchTalent,
+      openToRecruiter,
+      openToMentor,
+      onlyTalent,
+      onlyMentor,
+      onlyRecruiter,
+    ],
+  );
+
+  // Debounce the search function
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      performSearch(search, location, companyName);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [search, location, companyName, performSearch]);
+
   const handleSearch = () => {
-    const params = new URLSearchParams();
-
-    if (search) params.append("search", search);
-    if (location) params.append("location", location);
-
-    const path = isSearchTalent
-      ? "/companies/search-talents"
-      : "/talents/job-search";
-    router.push(`${path}?${params.toString()}`);
+    // Immediate search when clicking button
+    performSearch(search, location, companyName);
   };
 
   const handleClearFilters = (e: React.MouseEvent) => {
     e.preventDefault();
     setSearch("");
     setLocation("");
+    setCompanyName("");
+    setOpenToRecruiter(false);
+    setOpenToMentor(false);
+    setOnlyTalent(false);
+    setOnlyMentor(false);
+    setOnlyRecruiter(false);
 
     const path = isSearchTalent
       ? "/companies/search-talents"
       : "/talents/job-search";
-    router.push(path);
+    router.replace(path);
   };
 
   return (
-    <div className="bg-gradient-to-r from-amber-50/60 via-white to-yellow-50/40 backdrop-blur-sm border-b border-amber-200/60">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
-            {title}
-          </h1>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Search Skills */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700">
-                Skills & Technologies
-              </label>
-              <Input
-                placeholder="Try Solidity, React, Rust, C++..."
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                classes={InputClasses.join(" ")}
-              />
+    <div className="w-full">
+      {/* Full width background wrapper */}
+      <div className="w-full bg-gradient-to-r from-amber-50/80 via-yellow-50/60 to-amber-50/80 min-h-[400px]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {/* Header */}
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-2xl mb-6 shadow-lg">
+              <span className="text-2xl">{isSearchTalent ? "👥" : "💼"}</span>
             </div>
-
-            {/* Location */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700">
-                Location
-              </label>
-              <CitySuggestion
-                classes={InputClasses.join(" ")}
-                onCitySelect={(address: { name: string }) =>
-                  setLocation(address.name)
-                }
-              />
-            </div>
+            <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+              {title}
+            </h1>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              {isSearchTalent
+                ? "Find the perfect talent for your next project"
+                : "Discover amazing opportunities in Web3 and blockchain"}
+            </p>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row justify-between gap-4">
-            <div className="flex gap-3">
-              <LinkButton
-                href="#"
-                icon={searchIcon}
-                iconSize="medium"
-                variant="primary"
-                onClick={handleSearch}
-              >
-                {isSearchTalent ? "Search Talent" : "Search Jobs"}
-              </LinkButton>
+          {/* Search Form */}
+          <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-amber-100/50">
+            {/* First Row - Search Fields */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              {/* Left Side - Search Fields */}
+              <div className="space-y-6">
+                {/* Skills */}
+                <div className="space-y-3">
+                  <label className="text-sm font-bold text-gray-800 flex items-center">
+                    <span className="w-2 h-2 bg-amber-500 rounded-full mr-2"></span>
+                    Skills & Technologies
+                  </label>
+                  <SkillsSuggestion
+                    placeholder="e.g. Solidity, React, Rust, Python..."
+                    value={search}
+                    onSkillsChange={(skills) => setSearch(skills)}
+                    classes="w-full px-4 py-3 rounded-xl border-2 border-amber-100 focus:border-amber-400 focus:ring-0 bg-white/80 text-gray-800 placeholder-gray-500 font-medium shadow-sm hover:shadow-md transition-all duration-200"
+                  />
+                </div>
 
-              <LinkButton
-                href="#"
-                icon={false as any}
-                iconSize="medium"
-                variant="secondary"
-                onClick={handleClearFilters}
-              >
-                Clear Filters
-              </LinkButton>
+                {/* Location */}
+                <div className="space-y-3">
+                  <label className="text-sm font-bold text-gray-800 flex items-center">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                    Location
+                  </label>
+                  <CitySuggestion
+                    classes="w-full px-4 py-3 rounded-xl border-2 border-amber-100 focus:border-amber-400 focus:ring-0 bg-white/80 text-gray-800 placeholder-gray-500 font-medium shadow-sm hover:shadow-md transition-all duration-200"
+                    onCitySelect={(address: { name: string }) =>
+                      setLocation(address.name)
+                    }
+                    value={location}
+                    key={location}
+                  />
+                </div>
+
+                {/* Company/Talent Name */}
+                <div className="space-y-3">
+                  <label className="text-sm font-bold text-gray-800 flex items-center">
+                    <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                    {isSearchTalent ? "Talent Name" : "Company Name"}
+                  </label>
+                  <Input
+                    placeholder={
+                      isSearchTalent
+                        ? "Search by talent name..."
+                        : "Search by company name..."
+                    }
+                    type="text"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    classes="w-full px-4 py-3 rounded-xl border-2 border-amber-100 focus:border-amber-400 focus:ring-0 bg-white/80 text-gray-800 placeholder-gray-500 font-medium shadow-sm hover:shadow-md transition-all duration-200"
+                  />
+                </div>
+              </div>
+
+              {/* Right Side - Filters */}
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <label className="text-sm font-bold text-gray-800 flex items-center">
+                    <span className="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
+                    Advanced Filters
+                  </label>
+                  <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-2xl p-6 border border-amber-200/50">
+                    <div className="space-y-4">
+                      {!isSearchTalent ? (
+                        // Job search filters
+                        <>
+                          <ToggleSwitch
+                            id="openToRecruiter"
+                            label="Open to Recruiters"
+                            checked={openToRecruiter}
+                            onChange={(checked) => {
+                              setOpenToRecruiter(checked);
+                              performSearch(search, location, companyName, {
+                                openToRecruiter: checked,
+                              });
+                            }}
+                          />
+                          <ToggleSwitch
+                            id="openToMentor"
+                            label="Open to Mentors"
+                            checked={openToMentor}
+                            onChange={(checked) => {
+                              setOpenToMentor(checked);
+                              performSearch(search, location, companyName, {
+                                openToMentor: checked,
+                              });
+                            }}
+                          />
+                        </>
+                      ) : (
+                        // Talent search filters
+                        <>
+                          <ToggleSwitch
+                            id="onlyTalent"
+                            label="Talent Only"
+                            checked={onlyTalent}
+                            onChange={(checked) => {
+                              setOnlyTalent(checked);
+                              performSearch(search, location, companyName, {
+                                onlyTalent: checked,
+                              });
+                            }}
+                          />
+                          <ToggleSwitch
+                            id="onlyMentor"
+                            label="Mentor Only"
+                            checked={onlyMentor}
+                            onChange={(checked) => {
+                              setOnlyMentor(checked);
+                              performSearch(search, location, companyName, {
+                                onlyMentor: checked,
+                              });
+                            }}
+                          />
+                          <ToggleSwitch
+                            id="onlyRecruiter"
+                            label="Recruiter Only"
+                            checked={onlyRecruiter}
+                            onChange={(checked) => {
+                              setOnlyRecruiter(checked);
+                              performSearch(search, location, companyName, {
+                                onlyRecruiter: checked,
+                              });
+                            }}
+                          />
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <LinkButton
-              href={
-                isSearchTalent ? "/companies/create-job" : "/talents/my-profile"
-              }
-              icon={addIcon}
-              iconSize="medium"
-              variant="secondary"
-            >
-              {isSearchTalent ? "Create Job" : "My Talent Profile"}
-            </LinkButton>
+            {/* Action Buttons Row */}
+            <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-amber-100">
+              <div className="flex flex-wrap items-center gap-3">
+                <LinkButton
+                  href="#"
+                  icon={false as any}
+                  iconSize="medium"
+                  variant="secondary"
+                  onClick={handleClearFilters}
+                >
+                  🗂️ Clear Filters
+                </LinkButton>
+              </div>
+
+              <LinkButton
+                href={
+                  isSearchTalent
+                    ? "/companies/create-job"
+                    : "/talents/my-profile"
+                }
+                iconSize="medium"
+                variant="primary"
+              >
+                {isSearchTalent ? "✨ Create Job" : "🎯 My Profile"}
+              </LinkButton>
+            </div>
           </div>
         </div>
       </div>

@@ -48,29 +48,62 @@ export async function fetchTalents({
   onlyRecruiter?: string;
 }) {
   try {
-    const countCursor = await sql`
-    SELECT COUNT(*)
-    FROM goodhive.talents
-    `;
+    // Build dynamic WHERE conditions
+    let whereConditions = ["approved = true"];
+    let params: any[] = [];
+    let paramIndex = 0;
 
-    const count = countCursor[0].count as number;
+    // Skills search
+    if (search) {
+      whereConditions.push(`LOWER(skills) LIKE $${++paramIndex}`);
+      params.push(contains(search));
+    }
+
+    // Name search (first name or last name)
+    if (name) {
+      whereConditions.push(`(LOWER(first_name) LIKE $${++paramIndex} OR LOWER(last_name) LIKE $${paramIndex})`);
+      params.push(contains(name));
+    }
+
+    // Location search
+    if (location) {
+      whereConditions.push(`(LOWER(city) LIKE $${++paramIndex} OR LOWER(country) LIKE $${paramIndex})`);
+      params.push(contains(location));
+    }
+
+    // Role filters
+    if (onlyTalent === "true") {
+      whereConditions.push("talent = true");
+    }
+
+    if (onlyRecruiter === "true") {
+      whereConditions.push("recruiter = true");
+    }
+
+    if (onlyMentor === "true") {
+      whereConditions.push("mentor = true");
+    }
+
+    const whereClause = whereConditions.join(" AND ");
+
+    console.log("WHERE clause:", whereClause);
+    console.log("Parameters:", params);
+
+    // Count query
+    const countQuery = `SELECT COUNT(*) FROM goodhive.talents WHERE ${whereClause}`;
+    const countResult = await sql.unsafe(countQuery, params);
+    const count = countResult[0].count as number;
+
+    console.log("Total count:", count);
 
     const limit = Number(items);
     const offset = limit * (Number(page) - 1);
 
-    const talentsCursor = await sql`
-      SELECT *
-      FROM goodhive.talents
-      WHERE (${search} = '' OR LOWER(skills) LIKE ${contains(search)})
-      AND (${name} = '' OR LOWER(first_name) LIKE ${contains(name)} OR LOWER(last_name) LIKE ${contains(name)})
-      AND (${location} = '' OR LOWER(city) LIKE ${contains(location)})
-      AND (${onlyTalent} != 'true' OR talent = true)
-      AND (${onlyRecruiter} != 'true' OR recruiter = true)
-      AND (${onlyMentor} != 'true' OR mentor = true)
-      AND approved = true
-      LIMIT ${limit}
-      OFFSET ${offset}
-    `;
+    // Main query
+    const talentsQuery = `SELECT * FROM goodhive.talents WHERE ${whereClause} ORDER BY last_active DESC LIMIT $${++paramIndex} OFFSET $${++paramIndex}`;
+    const talentsCursor = await sql.unsafe(talentsQuery, [...params, limit, offset]);
+
+    console.log("Talents found:", talentsCursor.length);
 
     const talents: any[] = talentsCursor.map((talent) => {
       return {

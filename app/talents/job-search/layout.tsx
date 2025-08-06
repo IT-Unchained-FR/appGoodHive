@@ -13,9 +13,8 @@ export const metadata: Metadata = {
 export default function JobSearchLayout({ children }: React.PropsWithChildren) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-amber-50/40 to-yellow-50/30">
-      <main className="container mx-auto">
+      <main className="">
         <SearchFilters />
-
         {children}
       </main>
     </div>

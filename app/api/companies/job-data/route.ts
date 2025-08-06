@@ -1,7 +1,6 @@
 import postgres from "postgres";
 
 import type { NextRequest } from "next/server";
-import { user } from "@nextui-org/theme";
 
 export async function GET(request: NextRequest) {
   const searchParamsEntries = request.nextUrl.searchParams.entries();

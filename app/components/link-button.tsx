@@ -1,12 +1,12 @@
-import Link from "next/link";
-import { type LinkProps } from "next/dist/client/link.js";
-import { type StaticImport } from "next/dist/shared/lib/get-img-props";
 import clsx from "clsx";
 import { Route } from "next";
+import { type LinkProps } from "next/dist/client/link.js";
+import { type StaticImport } from "next/dist/shared/lib/get-img-props";
 import Image from "next/image";
+import Link from "next/link";
 
 type Props = LinkProps<Route> & {
-  icon: string | StaticImport;
+  icon?: string | StaticImport;
   iconSize: "medium" | "large";
   variant: "primary" | "secondary";
 } & React.PropsWithChildren;
