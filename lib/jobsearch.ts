@@ -8,6 +8,10 @@ type FetchJobsProps = {
   page: number;
   recruiter?: string;
   mentor?: string;
+  projectType?: string;
+  budgetRange?: string;
+  experienceLevel?: string;
+  skills?: string;
 };
 
 const sql = postgres(process.env.DATABASE_URL || "", {
@@ -30,53 +34,101 @@ export async function fetchJobs({
   page = 1,
   recruiter = "",
   mentor = "",
+  projectType = "",
+  budgetRange = "",
+  experienceLevel = "",
+  skills = "",
 }: FetchJobsProps) {
   try {
-    const countJobs = await sql`
-        SELECT COUNT(*)
-        FROM goodhive.job_offers
-        WHERE
-          (LOWER(title) LIKE ${contains(
-      search,
-    )} OR LOWER(skills) LIKE ${contains(search)})
-            AND 
-            (LOWER(city) LIKE ${contains(
-      location,
-    )} OR LOWER(country) LIKE ${contains(location)})
-            AND
-            (LOWER(company_name) LIKE ${contains(name)})
-            ${recruiter === "true" ? sql`AND recruiter = 'true'` : sql``}
-            ${mentor === "true" ? sql`AND mentor = 'true'` : sql``}
-            AND published = true
-        `;
+    // Build dynamic WHERE conditions
+    let whereConditions = ["published = true"];
+    let params: any[] = [];
+    let paramIndex = 0;
 
+    // Search in title, skills, and company name
+    if (search) {
+      whereConditions.push(
+        `(LOWER(title) LIKE $${++paramIndex} OR LOWER(skills) LIKE $${paramIndex} OR LOWER(company_name) LIKE $${paramIndex})`,
+      );
+      params.push(contains(search));
+    }
+
+    // Location search
+    if (location) {
+      whereConditions.push(
+        `(LOWER(city) LIKE $${++paramIndex} OR LOWER(country) LIKE $${paramIndex})`,
+      );
+      params.push(contains(location));
+    }
+
+    // Company name search (separate from general search)
+    if (name) {
+      whereConditions.push(`LOWER(company_name) LIKE $${++paramIndex}`);
+      params.push(contains(name));
+    }
+
+    // Recruiter filter
+    if (recruiter === "true") {
+      whereConditions.push("recruiter = 'true'");
+    }
+
+    // Mentor filter
+    if (mentor === "true") {
+      whereConditions.push("mentor = 'true'");
+    }
+
+    // Project type filter
+    if (projectType) {
+      whereConditions.push(`project_type = $${++paramIndex}`);
+      params.push(projectType);
+    }
+
+    // Budget range filter
+    if (budgetRange) {
+      const [minBudget, maxBudget] = budgetRange.split("-").map(Number);
+      if (maxBudget) {
+        whereConditions.push(
+          `CAST(budget AS INTEGER) BETWEEN $${++paramIndex} AND $${++paramIndex}`,
+        );
+        params.push(minBudget, maxBudget);
+      } else {
+        whereConditions.push(`CAST(budget AS INTEGER) >= $${++paramIndex}`);
+        params.push(minBudget);
+      }
+    }
+
+    // Skills filter
+    if (skills) {
+      const skillsArray = skills.split(",").map((s) => s.trim());
+      const skillsConditions = skillsArray.map(
+        () => `LOWER(skills) LIKE $${++paramIndex}`,
+      );
+      whereConditions.push(`(${skillsConditions.join(" OR ")})`);
+      skillsArray.forEach((skill) => params.push(contains(skill)));
+    }
+
+    const whereClause = whereConditions.join(" AND ");
+
+    console.log("WHERE clause:", whereClause);
+    console.log("Parameters:", params);
+
+    // Count query
+    const countQuery = `SELECT COUNT(*) FROM goodhive.job_offers WHERE ${whereClause}`;
+    const countJobs = await sql.unsafe(countQuery, params);
     const count = countJobs[0].count as number;
+
+    console.log("Total count:", count);
 
     const limit = Number(items);
     const offset = limit * (Number(page) - 1);
 
-    const jobsQuery = await sql`
-      SELECT *
-      FROM goodhive.job_offers
-      WHERE
-      (LOWER(title) LIKE ${contains(search)} OR LOWER(skills) LIKE ${contains(
-      search,
-    )})
-      AND
-      (LOWER(city) LIKE ${contains(location)} OR LOWER(country) LIKE ${contains(
-      location,
-    )})
-      AND
-      (LOWER(company_name) LIKE ${contains(name)})
-      ${recruiter === "true" ? sql`AND recruiter = 'true'` : sql``}
-      ${mentor === "true" ? sql`AND mentor = 'true'` : sql``}
-      AND published = true
-      ORDER BY id DESC
-      LIMIT ${limit}
-      OFFSET ${offset}
-      `;
+    // Main query
+    const jobsQuery = `SELECT * FROM goodhive.job_offers WHERE ${whereClause} ORDER BY id DESC LIMIT $${++paramIndex} OFFSET $${++paramIndex}`;
+    const jobsResult = await sql.unsafe(jobsQuery, [...params, limit, offset]);
 
-    const jobs = jobsQuery.map((item) => ({
+    console.log("Jobs found:", jobsResult.length);
+
+    const jobs = jobsResult.map((item) => ({
       id: item.id,
       user_id: item.user_id,
       title: item.title,

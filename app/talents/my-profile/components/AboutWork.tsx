@@ -1,3 +1,4 @@
+import "@/app/styles/rich-text.css";
 import dynamic from "next/dynamic";
 import { ProfileData } from "../types";
 
@@ -49,23 +50,25 @@ export const AboutWork = ({
     <div className="mt-4">
       <label
         htmlFor="about_work"
-        className="inline-block ml-3 text-base text-black form-label"
+        className="inline-block ml-3 text-base text-black form-label mb-2"
       >
         About your Work*
       </label>
-      <ReactQuill
-        theme="snow"
-        modules={quillModules}
-        className="quill-editor"
-        value={decodeBase64HtmlWrappedInPTags(profileData?.about_work || "")}
-        onChange={(content) => onInputChange("about_work", content)}
-        placeholder="What you are looking for?"
-        style={{
-          fontSize: "26px",
-          height: "200px",
-          marginBottom: "40px",
-        }}
-      />
+      <div style={{ borderRadius: "9999px", overflow: "hidden" }}>
+        <ReactQuill
+          theme="snow"
+          modules={quillModules}
+          className="quill-editor"
+          value={decodeBase64HtmlWrappedInPTags(profileData?.about_work || "")}
+          onChange={(content) => onInputChange("about_work", content)}
+          placeholder="What you are looking for?"
+          style={{
+            fontSize: "1rem",
+            height: "260px", // Increased by 30% from 200px
+            marginBottom: "40px",
+          }}
+        />
+      </div>
       {errors.about_work && (
         <p className="text-red-500 text-sm mt-1">{errors.about_work}</p>
       )}

@@ -1,40 +1,21 @@
 "use client";
 
-import React, { FC, useState } from "react";
-
 import { Input } from "@/app/components/input";
 import { LinkButton } from "@/app/components/link-button";
-
-import type {
-  SearchFiltersProps,
-  SearchQueryProps,
-} from "./search-filters.types";
-import { InputClasses, TRANSLATIONS } from "./search-filters.constants";
-import searchIcon from "@/public/icons/search.svg";
 import addIcon from "@/public/icons/add.svg";
-import { skills } from "@constants/skills";
-import { AutoSuggestInput } from "@components/autosuggest-input";
-import { ToggleButton } from "../toggle-button";
+import searchIcon from "@/public/icons/search.svg";
+import { useRouter, useSearchParams } from "next/navigation";
+import React, { FC, useState } from "react";
 import { CitySuggestion } from "../city-suggestor/city-suggestor";
+import { InputClasses, TRANSLATIONS } from "./search-filters.constants";
+import type { SearchFiltersProps } from "./search-filters.types";
 
 export const SearchFilters: FC<SearchFiltersProps> = (props) => {
-  const initialQuery: SearchQueryProps = {
-    search: "",
-    location: "",
-    name: "",
-    recruiter: false,
-    mentor: false,
-    onlyTalent: false,
-    onlyMentor: false,
-    onlyRecruiter: false,
-  };
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const [query, setQuery] = useState<SearchQueryProps>(initialQuery);
-  const [toggleValues, setToggleValues] = useState({
-    onlyTalent: false,
-    onlyMentor: false,
-    onlyRecruiter: false,
-  });
+  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [location, setLocation] = useState(searchParams.get("location") || "");
 
   const { isSearchTalent = false } = props;
 
@@ -42,140 +23,75 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
     ? TRANSLATIONS.talentSearchTitle
     : TRANSLATIONS.jobSearchTitle;
 
-  const handleSearchChange = (skills: string[]) => {
-    setQuery((q) => ({ ...q, search: skills[0] }));
-  };
+  const handleSearch = () => {
+    const params = new URLSearchParams();
 
-  const handleLocationChange = (address: { name: string }) => {
-    setQuery((q) => ({ ...q, location: address.name }));
-  };
+    if (search) params.append("search", search);
+    if (location) params.append("location", location);
 
-  const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery((q) => ({ ...q, name: event.target.value }));
-  };
-
-  const handleOpenToRecruiterChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setQuery((q) => ({ ...q, recruiter: event.target.checked }));
-  };
-
-  const handleOpenToMentorChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setQuery((q) => ({ ...q, mentor: event.target.checked }));
+    const path = isSearchTalent
+      ? "/companies/search-talents"
+      : "/talents/job-search";
+    router.push(`${path}?${params.toString()}`);
   };
 
   const handleClearFilters = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent navigation
+    e.preventDefault();
+    setSearch("");
+    setLocation("");
 
-    // Reset query and toggle states
-    setQuery(initialQuery);
-    setToggleValues({
-      onlyTalent: false,
-      onlyMentor: false,
-      onlyRecruiter: false,
-    });
+    const path = isSearchTalent
+      ? "/companies/search-talents"
+      : "/talents/job-search";
+    router.push(path);
   };
 
   return (
-    <div className="bg-gradient-to-r from-amber-50/60 via-white to-yellow-50/40 backdrop-blur-sm">
-      <div className="border-b border-amber-200/60 pb-6 mb-8">
-        <h1 className="my-6 font-bold text-2xl text-gray-900">{title}</h1>
-        <div className="relative pt-12 space-y-6 w-full max-w-2xl">
-          <div className="absolute w-full top-0 left-0">
-            <AutoSuggestInput
-              classes={InputClasses.join(" ")}
-              placeholder={TRANSLATIONS.searchPlaceholder}
-              inputs={skills}
-              selectedInputs={[query.search]}
-              setSelectedInputs={handleSearchChange}
-              isSingleInput
-            />
+    <div className="bg-gradient-to-r from-amber-50/60 via-white to-yellow-50/40 backdrop-blur-sm border-b border-amber-200/60">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+            {title}
+          </h1>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Search Skills */}
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-gray-700">
+                Skills & Technologies
+              </label>
+              <Input
+                placeholder="Try Solidity, React, Rust, C++..."
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                classes={InputClasses.join(" ")}
+              />
+            </div>
+
+            {/* Location */}
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-gray-700">
+                Location
+              </label>
+              <CitySuggestion
+                classes={InputClasses.join(" ")}
+                onCitySelect={(address: { name: string }) =>
+                  setLocation(address.name)
+                }
+              />
+            </div>
           </div>
 
-          <CitySuggestion
-            classes={InputClasses.join(" ")}
-            onCitySelect={handleLocationChange as any}
-          />
-
-          <Input
-            placeholder={
-              isSearchTalent
-                ? TRANSLATIONS.searchByDeveloperName
-                : TRANSLATIONS.searchByCompanyName
-            }
-            type="text"
-            value={query.name}
-            onChange={handleNameChange}
-            classes={InputClasses.join(" ")}
-          />
-
-          {isSearchTalent ? (
-            <div className="flex gap-6 my-6 px-1 sm:flex-col sm:gap-4">
-              <ToggleButton
-                label={TRANSLATIONS.onlyTalent}
-                name="onlyTalent"
-                checked={toggleValues.onlyTalent}
-                setValue={(name: string, value: boolean) => {
-                  setToggleValues((prev) => ({
-                    ...prev,
-                    [name]: value,
-                  }));
-                }}
-              />
-              <ToggleButton
-                label={TRANSLATIONS.onlyMentor}
-                name="onlyMentor"
-                checked={toggleValues.onlyMentor}
-                setValue={(name: string, value: boolean) => {
-                  setToggleValues((prev) => ({
-                    ...prev,
-                    [name]: value,
-                  }));
-                }}
-              />
-              <ToggleButton
-                label={TRANSLATIONS.onlyRecruiter}
-                name="onlyRecruiter"
-                checked={toggleValues.onlyRecruiter}
-                setValue={(name: string, value: boolean) => {
-                  setToggleValues((prev) => ({
-                    ...prev,
-                    [name]: value,
-                  }));
-                }}
-              />
-            </div>
-          ) : (
-            <div className="flex gap-6 sm:flex-col sm:gap-4">
-              <ToggleButton
-                label={TRANSLATIONS.openToRecruiter}
-                name="openToRecruiter"
-                checked={query.recruiter}
-                onChange={handleOpenToRecruiterChange}
-              />
-              <ToggleButton
-                label={TRANSLATIONS.openToMentor}
-                name="openToMentor"
-                checked={query.mentor}
-                onChange={handleOpenToMentorChange}
-              />
-            </div>
-          )}
-
-          <div className="flex justify-between gap-4 pt-4">
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row justify-between gap-4">
             <div className="flex gap-3">
               <LinkButton
-                href={{
-                  pathname: isSearchTalent
-                    ? "/companies/search-talents"
-                    : "/talents/job-search",
-                  query: { ...query, ...toggleValues },
-                }}
+                href="#"
                 icon={searchIcon}
                 iconSize="medium"
                 variant="primary"
+                onClick={handleSearch}
               >
                 {isSearchTalent ? "Search Talent" : "Search Jobs"}
               </LinkButton>
