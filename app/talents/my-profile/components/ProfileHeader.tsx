@@ -1,3 +1,4 @@
+import "@/app/styles/rich-text.css";
 import dynamic from "next/dynamic";
 import { ProfileData } from "../types";
 
@@ -50,7 +51,7 @@ export const ProfileHeader = ({
       <div>
         <label
           htmlFor="title"
-          className="inline-block ml-3 text-base text-black form-label"
+          className="inline-block ml-3 text-base text-black form-label mb-2"
         >
           Profile header *
         </label>
@@ -71,23 +72,27 @@ export const ProfileHeader = ({
       <div className="mt-5 ml-0">
         <label
           htmlFor="description"
-          className="inline-block ml-3 text-base text-black form-label"
+          className="inline-block ml-3 text-base text-black form-label mb-2"
         >
           Description *
         </label>
-        <ReactQuill
-          theme="snow"
-          modules={quillModules}
-          className="quill-editor"
-          value={decodeBase64HtmlWrappedInPTags(profileData?.description || "")}
-          onChange={(content) => onInputChange("description", content)}
-          placeholder="Describe your skills and experience in a few words*"
-          style={{
-            fontSize: "26px",
-            height: "200px",
-            marginBottom: "40px",
-          }}
-        />
+        <div style={{ borderRadius: "9999px", overflow: "hidden" }}>
+          <ReactQuill
+            theme="snow"
+            modules={quillModules}
+            className="quill-editor"
+            value={decodeBase64HtmlWrappedInPTags(
+              profileData?.description || "",
+            )}
+            onChange={(content) => onInputChange("description", content)}
+            placeholder="Describe your skills and experience in a few words*"
+            style={{
+              fontSize: "1rem",
+              height: "260px", // Increased by 30% from 200px
+              marginBottom: "40px",
+            }}
+          />
+        </div>
         {errors.description && (
           <p className="text-red-500 text-sm mt-1">{errors.description}</p>
         )}

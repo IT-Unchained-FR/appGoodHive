@@ -4,7 +4,7 @@ import LabelOption from "@interfaces/label-option";
 interface Props {
   labelText?: string;
   name?: string;
-  required: boolean;
+  required?: boolean;
   disabled?: boolean;
   inputValue: LabelOption | null;
   setInputValue: (option: LabelOption | null) => void;
@@ -15,7 +15,7 @@ interface Props {
 
 export const SearchableSelectInput: FC<Props> = ({
   labelText,
-  required,
+  required = false,
   disabled,
   inputValue,
   options,
@@ -97,10 +97,12 @@ export const SearchableSelectInput: FC<Props> = ({
 
   return (
     <div className="relative w-full" ref={dropdownRef}>
-      <label className="inline-block ml-3 text-base text-black form-label">
-        {labelText}
-        {required && <span>*</span>}
-      </label>
+      {labelText && (
+        <label className="inline-block ml-3 text-base text-black form-label">
+          {labelText}
+          {required && <span>*</span>}
+        </label>
+      )}
       <div className="flex items-center">
         <p
           className={selectStyle}
@@ -112,7 +114,7 @@ export const SearchableSelectInput: FC<Props> = ({
                 : "gray",
           }}
         >
-          {inputValue ? inputValue.label : "Select on options"}
+          {inputValue ? inputValue.label : placeholder}
         </p>
         <div className="absolute pointer-events-none right-6">
           <svg
