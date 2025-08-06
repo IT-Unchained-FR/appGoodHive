@@ -347,21 +347,23 @@ export default function MyProfile() {
               </label>
             </div>
             <div>
-              <ReactQuill
-                theme="snow"
-                modules={quillModules}
-                className="quill-editor"
-                value={profileData.headline || ""}
-                onChange={(content) =>
-                  setProfileData({ ...profileData, headline: content })
-                }
-                placeholder="Describe your company in a few words?"
-                style={{
-                  height: "200px",
-                  marginBottom: "40px",
-                  borderRadius: "10px",
-                }}
-              />
+              <div style={{ borderRadius: "9999px", overflow: "hidden" }}>
+                <ReactQuill
+                  theme="snow"
+                  modules={quillModules}
+                  className="quill-editor"
+                  value={profileData.headline || ""}
+                  onChange={(content) =>
+                    setProfileData({ ...profileData, headline: content })
+                  }
+                  placeholder="Describe your company in a few words?"
+                  style={{
+                    fontSize: "1rem",
+                    height: "260px", // Increased by 30% from 200px
+                    marginBottom: "40px",
+                  }}
+                />
+              </div>
               {errors.headline && (
                 <p className="text-red-500 text-sm mt-1">
                   {errors.headline as string}
@@ -380,7 +382,7 @@ export default function MyProfile() {
               <div className="flex-1">
                 <label
                   htmlFor="email"
-                  className="inline-block ml-3 text-base text-black form-label"
+                  className="inline-block ml-3 text-base text-black form-label mb-2"
                 >
                   Email*
                 </label>
@@ -405,7 +407,7 @@ export default function MyProfile() {
               <div className="flex-1">
                 <label
                   htmlFor="address"
-                  className="inline-block ml-3 text-base text-black form-label"
+                  className="inline-block ml-3 text-base text-black form-label mb-2"
                 >
                   Address*
                 </label>
