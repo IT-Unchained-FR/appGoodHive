@@ -915,7 +915,7 @@ export default function ProfilePage() {
             >
               Description *
             </label>
-            <div style={{ borderRadius: "16px", overflow: "hidden" }}>
+            <div style={{ borderRadius: "16px" }}>
               <ReactQuill
                 theme="snow"
                 modules={quillModules}
@@ -928,7 +928,7 @@ export default function ProfilePage() {
                 placeholder="Describe your skills and experience in a few words*"
                 style={{
                   fontSize: "1rem",
-                  height: "260px", // Increased by 30% from 200px
+                  height: "520px", // Double the current height
                   marginBottom: "40px",
                 }}
               />
@@ -1152,7 +1152,7 @@ export default function ProfilePage() {
             >
               About your Work*
             </label>
-            <div style={{ borderRadius: "16px", overflow: "hidden" }}>
+            <div style={{ borderRadius: "16px" }}>
               <ReactQuill
                 theme="snow"
                 modules={quillModules}
@@ -1165,7 +1165,7 @@ export default function ProfilePage() {
                 placeholder="What you are looking for?"
                 style={{
                   fontSize: "1rem",
-                  height: "260px", // Increased by 30% from 200px
+                  height: "520px", // Double the current height
                   marginBottom: "40px",
                 }}
               />
