@@ -243,7 +243,7 @@ const Login = () => {
                   toast.error("Google login failed. Please try again.");
                 }}
                 auto_select={false}
-                useOneTap
+                useOneTap={process.env.NODE_ENV === "production"}
                 theme="outline"
                 width="400px"
                 text="signin_with"
