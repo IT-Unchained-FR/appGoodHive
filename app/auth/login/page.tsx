@@ -14,6 +14,7 @@ import styles from "./login.module.scss";
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -39,6 +40,7 @@ const Login = () => {
   //
   useEffect(() => {
     const clearSession = async () => {
+      // Only clear session on initial mount, not when oktoClient changes
       localStorage.clear();
       document.cookie.split(";").forEach(function (c) {
         document.cookie = c
@@ -54,8 +56,13 @@ const Login = () => {
         }
       }
     };
-    clearSession();
-  }, [oktoClient]);
+    
+    // Only clear session once on mount, don't trigger on oktoClient changes
+    // which could interfere with the OTP flow
+    if (oktoClient) {
+      clearSession();
+    }
+  }, []); // Remove oktoClient from dependency array
 
   const handleSlideChange = (index: number) => {
     if (isAnimating || index === currentSlide) return;
@@ -263,7 +270,7 @@ const Login = () => {
             <span>or continue with email</span>
           </div>
 
-          <OktoOTPLogin setIsLoading={setIsLoading} isLoading={isLoading} />
+          <OktoOTPLogin setIsLoading={setOtpLoading} isLoading={otpLoading} />
 
           <div className={styles.divider}>
             <span>or continue with your wallet</span>

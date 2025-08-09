@@ -33,6 +33,8 @@ interface Props {
   escrowAmount?: string;
   walletAddress: string;
   user_id?: string;
+  mentor?: boolean;
+  recruiter?: boolean;
 }
 
 export const JobCard: FC<Props> = ({
@@ -54,6 +56,8 @@ export const JobCard: FC<Props> = ({
   walletAddress,
   escrowAmount,
   user_id,
+  mentor,
+  recruiter,
 }) => {
   const owner_userId = Cookies.get("user_id");
   const logged_in_user_id = Cookies.get("user_id");
@@ -212,6 +216,28 @@ export const JobCard: FC<Props> = ({
                 {typeEngagementMsg} - {budget} USD {projectType}
               </p>
               <p className="text-base text-gray-600">{durationMsg}</p>
+              
+              {/* Open to mentor/recruiter status */}
+              {(mentor || recruiter) && (
+                <div className="flex items-center gap-1.5 mb-2">
+                  <svg
+                    className="w-4 h-4 text-blue-600"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
+                  </svg>
+                  <p className="text-sm text-blue-600 font-medium">
+                    {mentor && recruiter 
+                      ? "Open to Mentors & Recruiters"
+                      : mentor 
+                        ? "Open to Mentors"
+                        : "Open to Recruiters"
+                    }
+                  </p>
+                </div>
+              )}
+              
               <div className="flex items-center gap-1.5 mb-5">
                 <svg
                   className="w-4 h-4 text-gray-400"

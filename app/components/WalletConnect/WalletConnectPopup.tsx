@@ -697,26 +697,29 @@ export const WalletConnectPopup = ({
                 </div>
               )}
 
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={handleSkip}
-                  disabled={isLoading}
-                  className="flex-1 px-4 py-3 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 transition-colors"
-                >
-                  Skip for now
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    toast("Please use the Google sign-in button above")
-                  }
-                  disabled={isLoading}
-                  className="flex-1 px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-amber-500 to-yellow-500 rounded-lg hover:from-amber-600 hover:to-yellow-600 disabled:opacity-50 transition-all"
-                >
-                  Continue
-                </button>
-              </div>
+              {/* Only show Skip and Continue buttons when not in email OTP flow */}
+              {!showEmailOTP && (
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={handleSkip}
+                    disabled={isLoading}
+                    className="flex-1 px-4 py-3 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 transition-colors"
+                  >
+                    Skip for now
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      toast("Please use the Google sign-in button above")
+                    }
+                    disabled={isLoading}
+                    className="flex-1 px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-amber-500 to-yellow-500 rounded-lg hover:from-amber-600 hover:to-yellow-600 disabled:opacity-50 transition-all"
+                  >
+                    Continue
+                  </button>
+                </div>
+              )}
 
               {isLoading && (
                 <div className="text-center">
