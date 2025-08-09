@@ -2,7 +2,7 @@ import { checkUserLoginMethod } from "@/lib/auth/checkUserLoginMethod";
 import { useOkto } from "@okto_web3/react-sdk";
 import Cookies from "js-cookie";
 import { Mail } from "lucide-react";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import styles from "./OktoOTPLogin.module.scss";
 
@@ -19,6 +19,30 @@ const OktoOTPLogin = ({
   const [otpValues, setOtpValues] = useState(["", "", "", "", "", ""]);
   const [token, setToken] = useState("");
   const [showOtpInput, setShowOtpInput] = useState(false);
+
+  // Debug logging
+  useEffect(() => {
+    console.log("OktoOTPLogin component mounted", { isLoading });
+
+    // Reset loading state on mount to ensure it's not stuck
+    if (isLoading) {
+      console.log("Resetting loading state on mount");
+      setIsLoading(false);
+    }
+
+    return () => {
+      console.log("OktoOTPLogin component unmounted");
+    };
+  }, []);
+
+  useEffect(() => {
+    console.log("OktoOTPLogin state changed:", {
+      email,
+      showOtpInput,
+      token: !!token,
+      isLoading,
+    });
+  }, [email, showOtpInput, token, isLoading]);
 
   // Refs for OTP inputs
   const otpRefs = [
@@ -68,7 +92,12 @@ const OktoOTPLogin = ({
     }
   };
 
-  async function handleSendOTP() {
+  async function handleSendOTP(e?: React.MouseEvent) {
+    e?.preventDefault();
+    e?.stopPropagation();
+
+    console.log("handleSendOTP called", { email, isLoading });
+
     if (!email) {
       toast.error("Please enter your email address");
       return;
@@ -79,28 +108,50 @@ const OktoOTPLogin = ({
 
       const accountData = await checkUserLoginMethod(email);
 
+      console.log("accountData", accountData);
       // If the account is already associated with Google login, show an error
       if (accountData.loginMethod === "google") {
         toast.error(
           "You already have an account with Google login. Please use Google login instead.",
         );
+        setIsLoading(false);
         return;
       }
 
+      console.log("Sending OTP to:", email);
       const response = await oktoClient.sendOTP(email, "email");
       console.log("OTP Sent:", response);
-      setToken(response.token);
-      setShowOtpInput(true);
-      toast.success("OTP sent to your email!");
+
+      console.log("📋 OTP Response received:", response);
+
+      if (response && response.token) {
+        console.log("✅ Valid response with token, setting up OTP input");
+        setToken(response.token);
+
+        // Set OTP input state
+        setShowOtpInput(true);
+        console.log("🔄 State after setting showOtpInput:", {
+          token: response.token,
+          showOtpInput: true,
+        });
+
+        // Reset loading state after UI update
+        setIsLoading(false);
+
+        toast.success("OTP sent to your email!");
+      } else {
+        console.log("❌ Invalid response:", response);
+        throw new Error("Invalid response from OTP service");
+      }
     } catch (error) {
       console.error("Error sending OTP:", error);
       toast.error("Failed to send OTP. Please try again.");
-    } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Reset loading on error
     }
   }
 
-  async function handleResendOTP() {
+  async function handleResendOTP(e?: React.MouseEvent) {
+    e?.preventDefault();
     if (!email || !token) {
       toast.error("Please request a new OTP first");
       return;
@@ -122,7 +173,8 @@ const OktoOTPLogin = ({
     }
   }
 
-  async function handleVerifyOTP() {
+  async function handleVerifyOTP(e?: React.MouseEvent) {
+    e?.preventDefault();
     const otp = otpValues.join("");
 
     if (!email || otp.length !== 6 || !token) {
@@ -178,11 +230,43 @@ const OktoOTPLogin = ({
   }
 
   return (
-    <div className={styles.otpLoginContainer}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "1.5rem",
+        width: "100%",
+        position: "relative",
+      }}
+    >
+      {/* Loading overlay */}
+      {isLoading && (
+        <div className={styles.loadingOverlay}>
+          <div className={styles.loadingContent}>
+            <div className={styles.spinner} />
+            {showOtpInput ? "Verifying..." : "Sending OTP..."}
+          </div>
+        </div>
+      )}
       {!showOtpInput ? (
-        <div className={styles.inputGroup}>
-          <label htmlFor="email">Email</label>
-          <div className="relative">
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem",
+          }}
+        >
+          <label
+            htmlFor="email"
+            style={{
+              fontSize: "0.875rem",
+              fontWeight: "500",
+              color: "#374151",
+            }}
+          >
+            Email
+          </label>
+          <div style={{ position: "relative" }}>
             <input
               type="email"
               id="email"
@@ -191,27 +275,82 @@ const OktoOTPLogin = ({
               onChange={(e) => setEmail(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
+                  e.preventDefault();
                   handleSendOTP();
                 }
               }}
               disabled={isLoading}
+              style={{
+                width: "100%",
+                padding: "0.75rem 3rem 0.75rem 1rem",
+                border: "1px solid #d1d5db",
+                borderRadius: "0.5rem",
+                fontSize: "1rem",
+                transition: "all 0.2s",
+                background: "white",
+                outline: "none",
+              }}
             />
             <Mail
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              style={{
+                position: "absolute",
+                right: "12px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "#9ca3af",
+              }}
               size={20}
             />
           </div>
         </div>
       ) : (
-        <div className={styles.otpSection}>
-          <div className={styles.otpHeader}>
-            <h2>Verify Your Email Address</h2>
-            <p>
-              Please enter the 6-digit code we sent to <strong>{email}</strong>.
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "1.5rem",
+            textAlign: "center",
+          }}
+        >
+          <div>
+            <h2
+              style={{
+                fontSize: "1.5rem",
+                fontWeight: "600",
+                color: "#111827",
+                marginBottom: "0.5rem",
+              }}
+            >
+              Verify Your Email Address
+            </h2>
+            <p
+              style={{
+                fontSize: "0.875rem",
+                color: "#6b7280",
+                lineHeight: "1.5",
+              }}
+            >
+              Please enter the 6-digit code we sent to{" "}
+              <strong
+                style={{
+                  color: "#111827",
+                  textDecoration: "underline",
+                }}
+              >
+                {email}
+              </strong>
+              .
             </p>
           </div>
 
-          <div className={styles.otpInputContainer}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "0.75rem",
+              margin: "1rem 0",
+            }}
+          >
             {otpValues.map((value, index) => (
               <input
                 key={index}
@@ -223,18 +362,41 @@ const OktoOTPLogin = ({
                 value={value}
                 onChange={(e) => handleOtpChange(index, e.target.value)}
                 onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                className={styles.otpInput}
                 disabled={isLoading}
                 aria-label={`OTP digit ${index + 1}`}
                 title={`Enter digit ${index + 1} of verification code`}
+                style={{
+                  width: "3rem",
+                  height: "3rem",
+                  border: "1px solid #d1d5db",
+                  borderRadius: "0.5rem",
+                  textAlign: "center",
+                  fontSize: "1.25rem",
+                  fontWeight: "600",
+                  color: "#111827",
+                  background: "white",
+                  transition: "all 0.2s",
+                  outline: "none",
+                }}
               />
             ))}
           </div>
 
           <button
+            type="button"
             onClick={handleResendOTP}
             disabled={isLoading}
-            className={styles.resendButton}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#f59e0b",
+              fontSize: "0.875rem",
+              fontWeight: "500",
+              cursor: isLoading ? "not-allowed" : "pointer",
+              padding: "0.5rem",
+              transition: "color 0.2s",
+              textDecoration: "underline",
+            }}
           >
             Send Again
           </button>
@@ -242,17 +404,52 @@ const OktoOTPLogin = ({
       )}
 
       <button
-        onClick={!showOtpInput ? handleSendOTP : handleVerifyOTP}
-        disabled={isLoading}
-        className={styles.submitButton}
+        type="button"
+        onClick={(e) => {
+          console.log("🔴 BUTTON CLICKED!", {
+            showOtpInput,
+            isLoading,
+            email,
+            buttonDisabled: isLoading || (!showOtpInput && !email.trim()),
+          });
+          e.preventDefault();
+          e.stopPropagation();
+
+          if (!showOtpInput) {
+            console.log("📧 Calling handleSendOTP");
+            handleSendOTP(e);
+          } else {
+            console.log("🔐 Calling handleVerifyOTP");
+            handleVerifyOTP(e);
+          }
+        }}
+        disabled={isLoading || (!showOtpInput && !email.trim())}
+        style={{
+          width: "100%",
+          background: "linear-gradient(135deg, #ffc905 0%, #ffb300 100%)",
+          color: "#111",
+          border: "none",
+          borderRadius: "0.5rem",
+          padding: "0.875rem 1.5rem",
+          fontSize: "1rem",
+          fontWeight: "600",
+          cursor:
+            isLoading || (!showOtpInput && !email.trim())
+              ? "not-allowed"
+              : "pointer",
+          transition: "all 0.2s",
+          boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+          opacity: isLoading || (!showOtpInput && !email.trim()) ? 0.6 : 1,
+          position: "relative",
+          zIndex: 10,
+        }}
       >
-        {isLoading
-          ? !showOtpInput
-            ? "Sending..."
-            : "Verifying..."
-          : !showOtpInput
-            ? "Send OTP"
-            : "Verify & Login"}
+        {(() => {
+          if (isLoading) {
+            return showOtpInput ? "Verifying..." : "Sending...";
+          }
+          return showOtpInput ? "Verify & Login" : "Send OTP";
+        })()}
       </button>
     </div>
   );
