@@ -295,6 +295,8 @@ export default function CompanyProfilePage(
                   companyEmail={email}
                   escrowAmount={singleJob.escrowAmount}
                   user_id={singleJob.user_id}
+                  mentor={singleJob.mentor || false}
+                  recruiter={singleJob.recruiter || false}
                 />
               </div>
             </div>
@@ -364,8 +366,8 @@ export default function CompanyProfilePage(
                     <div key={id} className="transform transition-all duration-200 hover:scale-[1.02]">
                       <Card
                         uniqueId={userId}
-                        mentor={job.mentor === "true"}
-                        recruiter={job.recruiter === "true"}
+                        mentor={job.mentor || false}
+                        recruiter={job.recruiter || false}
                         jobId={id}
                         blockId={job.block_id}
                         type="company"
