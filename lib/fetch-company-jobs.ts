@@ -34,8 +34,9 @@ export async function getCompanyJobs(userId: string) {
       image_url: item.image_url,
       walletAddress: item.wallet_address,
       escrowAmount: item.escrow_amount,
-      mentor: item.mentor,
-      recruiter: item.recruiter,
+      mentor: item.mentor === "true" || item.mentor === true,
+      recruiter: item.recruiter === "true" || item.recruiter === true,
+      talent: item.talent === "true" || item.talent === true,
       postedAt: item.posted_at,
     }));
 

@@ -5,7 +5,7 @@ import { LinkButton } from "@/app/components/link-button";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { FC, useCallback, useEffect, useState } from "react";
 import { CitySuggestion } from "../city-suggestor/city-suggestor";
-import { SkillsSuggestion } from "../skills-suggestor/skills-suggestor";
+import { SkillsSuggestionMulti } from "../skills-suggestor/skills-suggestor-multi";
 import { ToggleSwitch } from "../toggle-switch/toggle-switch";
 import { TRANSLATIONS } from "./search-filters.constants";
 import type { SearchFiltersProps } from "./search-filters.types";
@@ -14,7 +14,9 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [selectedSkills, setSelectedSkills] = useState<string[]>(
+    searchParams.get("search") ? searchParams.get("search")!.split(",").map(s => s.trim()).filter(s => s) : []
+  );
   const [location, setLocation] = useState(searchParams.get("location") || "");
   const [companyName, setCompanyName] = useState(
     searchParams.get("name") || "",
@@ -45,14 +47,14 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
 
   // Real-time search with debouncing
   const performSearch = useCallback(
-    (skills: string, loc: string, company: string, filters: any = {}) => {
+    (skills: string[], loc: string, company: string, filters: any = {}) => {
       const params = new URLSearchParams(searchParams);
 
       // Clear page parameter when searching
       params.delete("page");
 
-      if (skills.trim()) {
-        params.set("search", skills.trim());
+      if (skills.length > 0) {
+        params.set("search", skills.join(","));
       } else {
         params.delete("search");
       }
@@ -126,20 +128,20 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
   // Debounce the search function
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      performSearch(search, location, companyName);
+      performSearch(selectedSkills, location, companyName);
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [search, location, companyName, performSearch]);
+  }, [selectedSkills, location, companyName, performSearch]);
 
   const handleSearch = () => {
     // Immediate search when clicking button
-    performSearch(search, location, companyName);
+    performSearch(selectedSkills, location, companyName);
   };
 
   const handleClearFilters = (e: React.MouseEvent) => {
     e.preventDefault();
-    setSearch("");
+    setSelectedSkills([]);
     setLocation("");
     setCompanyName("");
     setOpenToRecruiter(false);
@@ -186,11 +188,11 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
                     <span className="w-2 h-2 bg-amber-500 rounded-full mr-2"></span>
                     Skills & Technologies
                   </label>
-                  <SkillsSuggestion
+                  <SkillsSuggestionMulti
                     placeholder="e.g. Solidity, React, Rust, Python..."
-                    value={search}
-                    onSkillsChange={(skills) => setSearch(skills)}
-                    classes="w-full px-4 py-3 rounded-xl border-2 border-amber-100 focus:border-amber-400 focus:ring-0 bg-white/80 text-gray-800 placeholder-gray-500 font-medium shadow-sm hover:shadow-md transition-all duration-200"
+                    value={selectedSkills}
+                    onSkillsChange={(skills) => setSelectedSkills(skills)}
+                    classes="w-full rounded-xl border-2 border-amber-100 focus-within:border-amber-400 bg-white/80 text-gray-800 placeholder-gray-500 font-medium shadow-sm hover:shadow-md transition-all duration-200"
                   />
                 </div>
 
@@ -248,7 +250,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
                             checked={openToRecruiter}
                             onChange={(checked) => {
                               setOpenToRecruiter(checked);
-                              performSearch(search, location, companyName, {
+                              performSearch(selectedSkills, location, companyName, {
                                 openToRecruiter: checked,
                               });
                             }}
@@ -259,7 +261,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
                             checked={openToMentor}
                             onChange={(checked) => {
                               setOpenToMentor(checked);
-                              performSearch(search, location, companyName, {
+                              performSearch(selectedSkills, location, companyName, {
                                 openToMentor: checked,
                               });
                             }}
@@ -274,7 +276,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
                             checked={onlyTalent}
                             onChange={(checked) => {
                               setOnlyTalent(checked);
-                              performSearch(search, location, companyName, {
+                              performSearch(selectedSkills, location, companyName, {
                                 onlyTalent: checked,
                               });
                             }}
@@ -285,7 +287,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
                             checked={onlyMentor}
                             onChange={(checked) => {
                               setOnlyMentor(checked);
-                              performSearch(search, location, companyName, {
+                              performSearch(selectedSkills, location, companyName, {
                                 onlyMentor: checked,
                               });
                             }}
@@ -296,7 +298,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
                             checked={onlyRecruiter}
                             onChange={(checked) => {
                               setOnlyRecruiter(checked);
-                              performSearch(search, location, companyName, {
+                              performSearch(selectedSkills, location, companyName, {
                                 onlyRecruiter: checked,
                               });
                             }}
