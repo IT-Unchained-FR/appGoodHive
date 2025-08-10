@@ -8,6 +8,7 @@ type FetchJobsProps = {
   page: number;
   recruiter?: string;
   mentor?: string;
+  talent?: string;
   projectType?: string;
   budgetRange?: string;
   experienceLevel?: string;
@@ -34,6 +35,7 @@ export async function fetchJobs({
   page = 1,
   recruiter = "",
   mentor = "",
+  talent = "",
   projectType = "",
   budgetRange = "",
   experienceLevel = "",
@@ -69,12 +71,17 @@ export async function fetchJobs({
 
     // Recruiter filter
     if (recruiter === "true") {
-      whereConditions.push("recruiter = 'true'");
+      whereConditions.push("(recruiter = 'true' OR recruiter = true)");
     }
 
     // Mentor filter
     if (mentor === "true") {
-      whereConditions.push("mentor = 'true'");
+      whereConditions.push("(mentor = 'true' OR mentor = true)");
+    }
+
+    // Talent filter
+    if (talent === "true") {
+      whereConditions.push("(talent = 'true' OR talent = true)");
     }
 
     // Project type filter
@@ -143,8 +150,9 @@ export async function fetchJobs({
       city: item.city,
       walletAddress: item.wallet_address,
       image_url: item.image_url,
-      mentor: item.mentor ? true : false,
-      recruiter: item.recruiter ? true : false,
+      talent: item.talent === "true" || item.talent === true,
+      mentor: item.mentor === "true" || item.mentor === true,
+      recruiter: item.recruiter === "true" || item.recruiter === true,
       escrowAmount: item.escrow_amount,
       posted_at: item.posted_at,
       in_saving_stage: item.in_saving_stage,

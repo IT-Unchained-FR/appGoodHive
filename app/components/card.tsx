@@ -63,15 +63,40 @@ export const Card: FC<Props> = ({
   availability,
   type,
 }) => {
-  console.log(talent, mentor, recruiter, "talent member and recruiter");
+  console.log(
+    "Card props - type:",
+    type,
+    "talent:",
+    talent,
+    "mentor:",
+    mentor,
+    "recruiter:",
+    recruiter,
+    "title:",
+    title,
+    "jobId:",
+    jobId,
+  );
   // Function to generate dynamic "Open to" text
   const getOpenToText = () => {
     const openToTypes = [];
     if (talent) openToTypes.push("Talents");
     if (mentor) openToTypes.push("Mentors");
     if (recruiter) openToTypes.push("Recruiters");
+    console.log(
+      "Open to types for",
+      title,
+      ":",
+      openToTypes,
+      "talent:",
+      talent,
+      "mentor:",
+      mentor,
+      "recruiter:",
+      recruiter,
+    );
 
-    if (openToTypes.length === 0) return null;
+    if (openToTypes.length === 0) return "Open to All"; // Changed from null to "Open to All"
     if (openToTypes.length === 1) return `Open to ${openToTypes[0]}`;
     if (openToTypes.length === 2) return `Open to ${openToTypes.join(" & ")}`;
     if (openToTypes.length === 3)
@@ -79,6 +104,8 @@ export const Card: FC<Props> = ({
 
     return `Open to ${openToTypes.slice(0, -1).join(", ")} & ${openToTypes[openToTypes.length - 1]}`;
   };
+
+  console.log(getOpenToText(), "getOpenToText", title, "title", jobId, "jobId");
 
   // Rate formatting
   // const rate =
@@ -280,21 +307,19 @@ export const Card: FC<Props> = ({
 
             {/* Open to status */}
             <div className="flex items-center gap-1 text-xs">
-              {jobId ? (
-                <>
-                  {(talent || mentor || recruiter) && (
-                    <span className="text-blue-600 flex items-center gap-1 truncate">
-                      <svg
-                        className="w-3 h-3 flex-shrink-0"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
-                      </svg>
-                      <span className="truncate">{getOpenToText()}</span>
-                    </span>
-                  )}
-                </>
+              {type === "company" ? (
+                <span className="text-blue-600 flex items-center gap-1 truncate bg-blue-50 px-2 py-1 rounded-md border border-blue-200">
+                  <svg
+                    className="w-3 h-3 flex-shrink-0"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
+                  </svg>
+                  <span className="truncate font-medium">
+                    {getOpenToText()}
+                  </span>
+                </span>
               ) : (
                 <>
                   {freelancer && remote ? (
