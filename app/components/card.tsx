@@ -31,6 +31,7 @@ interface Props {
   walletAddress?: string;
   mentor?: boolean;
   recruiter?: boolean;
+  talent?: boolean;
   freelancer?: boolean;
   remote?: boolean;
   availability?: boolean;
@@ -56,11 +57,29 @@ export const Card: FC<Props> = ({
   walletAddress,
   mentor,
   recruiter,
+  talent,
   freelancer,
   remote,
   availability,
   type,
 }) => {
+  console.log(talent, mentor, recruiter, "talent member and recruiter");
+  // Function to generate dynamic "Open to" text
+  const getOpenToText = () => {
+    const openToTypes = [];
+    if (talent) openToTypes.push("Talents");
+    if (mentor) openToTypes.push("Mentors");
+    if (recruiter) openToTypes.push("Recruiters");
+
+    if (openToTypes.length === 0) return null;
+    if (openToTypes.length === 1) return `Open to ${openToTypes[0]}`;
+    if (openToTypes.length === 2) return `Open to ${openToTypes.join(" & ")}`;
+    if (openToTypes.length === 3)
+      return `Open to ${openToTypes[0]}, ${openToTypes[1]} & ${openToTypes[2]}`;
+
+    return `Open to ${openToTypes.slice(0, -1).join(", ")} & ${openToTypes[openToTypes.length - 1]}`;
+  };
+
   // Rate formatting
   // const rate =
   //   budget && currency
@@ -263,7 +282,7 @@ export const Card: FC<Props> = ({
             <div className="flex items-center gap-1 text-xs">
               {jobId ? (
                 <>
-                  {mentor && recruiter ? (
+                  {(talent || mentor || recruiter) && (
                     <span className="text-blue-600 flex items-center gap-1 truncate">
                       <svg
                         className="w-3 h-3 flex-shrink-0"
@@ -272,31 +291,9 @@ export const Card: FC<Props> = ({
                       >
                         <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
                       </svg>
-                      <span className="truncate">Mentors & Recruiters</span>
+                      <span className="truncate">{getOpenToText()}</span>
                     </span>
-                  ) : mentor ? (
-                    <span className="text-blue-600 flex items-center gap-1">
-                      <svg
-                        className="w-3 h-3"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
-                      </svg>
-                      Open to Mentors
-                    </span>
-                  ) : recruiter ? (
-                    <span className="text-blue-600 flex items-center gap-1">
-                      <svg
-                        className="w-3 h-3"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
-                      </svg>
-                      Open to Recruiters
-                    </span>
-                  ) : null}
+                  )}
                 </>
               ) : (
                 <>
