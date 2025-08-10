@@ -49,9 +49,7 @@ async function fetchSingleJob(jobId: number) {
   return await response.json();
 }
 
-export default function CompanyProfilePage(
-  context: CompanyProfilePageProps,
-) {
+export default function CompanyProfilePage(context: CompanyProfilePageProps) {
   const { userId } = context.params;
   const { id: jobId } = context.searchParams;
 
@@ -87,7 +85,9 @@ export default function CompanyProfilePage(
       // Fetch single job with error handling
       if (jobId) {
         try {
-          const singleJobResult = await fetchSingleJob(jobId as unknown as number);
+          const singleJobResult = await fetchSingleJob(
+            jobId as unknown as number,
+          );
           setSingleJob(singleJobResult);
         } catch (error) {
           console.error("Failed to fetch single job:", error);
@@ -161,8 +161,20 @@ export default function CompanyProfilePage(
         <div className="absolute top-0 right-0 w-40 h-32 opacity-20">
           <svg viewBox="0 0 100 100" className="w-full h-full">
             <defs>
-              <pattern id="honeycomb" x="0" y="0" width="20" height="17.32" patternUnits="userSpaceOnUse">
-                <polygon points="10,0 20,5.77 20,11.55 10,17.32 0,11.55 0,5.77" fill="none" stroke="white" strokeWidth="0.5" />
+              <pattern
+                id="honeycomb"
+                x="0"
+                y="0"
+                width="20"
+                height="17.32"
+                patternUnits="userSpaceOnUse"
+              >
+                <polygon
+                  points="10,0 20,5.77 20,11.55 10,17.32 0,11.55 0,5.77"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="0.5"
+                />
               </pattern>
             </defs>
             <rect width="100" height="100" fill="url(#honeycomb)" />
@@ -179,7 +191,8 @@ export default function CompanyProfilePage(
               <div
                 className="relative h-[180px] w-[180px] flex items-center justify-center cursor-pointer bg-gradient-to-br from-yellow-100 to-amber-100 border-4 border-white shadow-lg"
                 style={{
-                  clipPath: "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)",
+                  clipPath:
+                    "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)",
                 }}
               >
                 <Image
@@ -201,10 +214,20 @@ export default function CompanyProfilePage(
                 {designation || "Company Name"}
               </h1>
               <div className="flex items-center justify-center gap-2 text-gray-600">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                    clipRule="evenodd"
+                  />
                 </svg>
-                <span className="text-base">{city}, {country}</span>
+                <span className="text-base">
+                  {city}, {country}
+                </span>
               </div>
             </div>
 
@@ -267,9 +290,11 @@ export default function CompanyProfilePage(
                   </div>
                 ) : (
                   <div className="mb-3 flex items-center gap-2 text-sm">
-                    <span className="font-semibold text-green-700">💰 Escrow Balance:</span>
+                    <span className="font-semibold text-green-700">
+                      💰 Escrow Balance:
+                    </span>
                     <span className="text-green-600 font-bold">
-                      ${jobBalances[singleJob.id]?.toFixed(2) || '0.00'} USDC
+                      ${jobBalances[singleJob.id]?.toFixed(2) || "0.00"} USDC
                     </span>
                   </div>
                 )}
@@ -295,8 +320,9 @@ export default function CompanyProfilePage(
                   companyEmail={email}
                   escrowAmount={singleJob.escrowAmount}
                   user_id={singleJob.user_id}
-                  mentor={singleJob.mentor || false}
-                  recruiter={singleJob.recruiter || false}
+                  talent={singleJob.talent}
+                  mentor={singleJob.mentor}
+                  recruiter={singleJob.recruiter}
                 />
               </div>
             </div>
@@ -311,7 +337,7 @@ export default function CompanyProfilePage(
               <h2 className="text-2xl font-bold text-gray-800 bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text">
                 All Job Listings
                 <span className="ml-2 text-sm font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                  {jobs.length} {jobs.length === 1 ? 'position' : 'positions'}
+                  {jobs.length} {jobs.length === 1 ? "position" : "positions"}
                 </span>
               </h2>
             </div>
@@ -363,11 +389,15 @@ export default function CompanyProfilePage(
                   };
 
                   return (
-                    <div key={id} className="transform transition-all duration-200 hover:scale-[1.02]">
+                    <div
+                      key={id}
+                      className="transform transition-all duration-200 hover:scale-[1.02]"
+                    >
                       <Card
                         uniqueId={userId}
-                        mentor={job.mentor || false}
-                        recruiter={job.recruiter || false}
+                        talent={job.talent}
+                        mentor={job.mentor}
+                        recruiter={job.recruiter}
                         jobId={id}
                         blockId={job.block_id}
                         type="company"
@@ -393,13 +423,26 @@ export default function CompanyProfilePage(
             ) : (
               <div className="text-center py-12">
                 <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                  <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0H8m8 0v2a2 2 0 01-2 2H10a2 2 0 01-2-2V6m8 0H8" />
+                  <svg
+                    className="w-12 h-12 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0H8m8 0v2a2 2 0 01-2 2H10a2 2 0 01-2-2V6m8 0H8"
+                    />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Jobs Available</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No Jobs Available
+                </h3>
                 <p className="text-gray-500 max-w-sm mx-auto">
-                  This company hasn't posted any job listings yet. Check back later for new opportunities!
+                  This company hasn't posted any job listings yet. Check back
+                  later for new opportunities!
                 </p>
               </div>
             )}

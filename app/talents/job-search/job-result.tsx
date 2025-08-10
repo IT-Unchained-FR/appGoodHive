@@ -18,6 +18,7 @@ export interface ApiJobOffer {
   jobDescription: string;
   skills: string[];
   walletAddress?: string;
+  talent: boolean;
   mentor: boolean;
   recruiter: boolean;
   escrowAmount: boolean;
@@ -112,8 +113,9 @@ export default function JobResult({ jobOffers }: { jobOffers: ApiJobOffer[] }) {
               }
               buttonText="Apply"
               walletAddress={jobOffer.walletAddress}
-              mentor={jobOffer.mentor || false}
-              recruiter={jobOffer.recruiter || false}
+              talent={jobOffer.talent}
+              mentor={jobOffer.mentor}
+              recruiter={jobOffer.recruiter}
               escrowAmount={jobOffer.escrowAmount || false}
             />
 
@@ -125,7 +127,7 @@ export default function JobResult({ jobOffers }: { jobOffers: ApiJobOffer[] }) {
 
       {/* Quick Stats */}
       <div className="mt-8 pt-6 border-t border-amber-200/30">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
           <div className="bg-white/50 rounded-lg p-4 border border-amber-200/20">
             <div className="text-2xl font-bold text-amber-600">
               {filteredJobs.length}
@@ -133,16 +135,22 @@ export default function JobResult({ jobOffers }: { jobOffers: ApiJobOffer[] }) {
             <div className="text-sm text-gray-600">Total Jobs</div>
           </div>
           <div className="bg-white/50 rounded-lg p-4 border border-amber-200/20">
+            <div className="text-2xl font-bold text-orange-600">
+              {filteredJobs.filter((job) => job.talent).length}
+            </div>
+            <div className="text-sm text-gray-600">Open to Talents</div>
+          </div>
+          <div className="bg-white/50 rounded-lg p-4 border border-amber-200/20">
             <div className="text-2xl font-bold text-blue-600">
               {filteredJobs.filter((job) => job.mentor).length}
             </div>
-            <div className="text-sm text-gray-600">With Mentors</div>
+            <div className="text-sm text-gray-600">Open to Mentors</div>
           </div>
           <div className="bg-white/50 rounded-lg p-4 border border-amber-200/20">
             <div className="text-2xl font-bold text-green-600">
               {filteredJobs.filter((job) => job.recruiter).length}
             </div>
-            <div className="text-sm text-gray-600">With Recruiters</div>
+            <div className="text-sm text-gray-600">Open to Recruiters</div>
           </div>
           <div className="bg-white/50 rounded-lg p-4 border border-amber-200/20">
             <div className="text-2xl font-bold text-purple-600">

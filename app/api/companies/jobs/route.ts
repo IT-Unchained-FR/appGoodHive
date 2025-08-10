@@ -29,6 +29,8 @@ export async function GET(request: NextRequest) {
       WHERE user_id = ${userId}
     `;
 
+    console.log(jobsQuery, "jobsQuery result...");
+
     const jobs = jobsQuery.map((item) => ({
       id: item.id,
       title: item.title,
@@ -46,8 +48,9 @@ export async function GET(request: NextRequest) {
       image_url: item.image_url,
       walletAddress: item.wallet_address,
       escrowAmount: item.escrow_amount,
-      mentor: item.mentor,
-      recruiter: item.recruiter,
+      mentor: item.mentor ? true : false,
+      recruiter: item.recruiter ? true : false,
+      talent: item.talent ? true : false,
       postedAt: item.posted_at,
       block_id: item.block_id,
     }));
@@ -55,11 +58,8 @@ export async function GET(request: NextRequest) {
     return new Response(JSON.stringify(jobs), { status: 200 });
   } catch (error) {
     console.error("Error retrieving jobs:", error);
-    return new Response(
-      JSON.stringify({ message: "Error retrieving jobs" }),
-      {
-        status: 500,
-      },
-    );
+    return new Response(JSON.stringify({ message: "Error retrieving jobs" }), {
+      status: 500,
+    });
   }
-} 
+}
