@@ -48,9 +48,9 @@ export async function GET(request: NextRequest) {
       image_url: item.image_url,
       walletAddress: item.wallet_address,
       escrowAmount: item.escrow_amount,
-      mentor: item.mentor ? true : false,
-      recruiter: item.recruiter ? true : false,
-      talent: item.talent ? true : false,
+      mentor: item.mentor === "true" || item.mentor === true,
+      recruiter: item.recruiter === "true" || item.recruiter === true,
+      talent: item.talent === "true" || item.talent === true,
       postedAt: item.posted_at,
       block_id: item.block_id,
     }));

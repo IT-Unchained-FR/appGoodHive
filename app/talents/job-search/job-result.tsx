@@ -52,7 +52,18 @@ export interface JobOffer {
 }
 
 export default function JobResult({ jobOffers }: { jobOffers: ApiJobOffer[] }) {
-  console.log(jobOffers[1], "jobOffers...job-result");
+  console.log("Job offers received:", jobOffers.length);
+  console.log("Sample job offer:", jobOffers[0]);
+  console.log(
+    "Talent/Mentor/Recruiter values:",
+    jobOffers.map((job) => ({
+      id: job.id,
+      title: job.title,
+      talent: job.talent,
+      mentor: job.mentor,
+      recruiter: job.recruiter,
+    })),
+  );
 
   const filteredJobs = jobOffers.filter((job) => !job.in_saving_stage);
 
@@ -86,43 +97,52 @@ export default function JobResult({ jobOffers }: { jobOffers: ApiJobOffer[] }) {
 
       {/* Job Cards Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-1 gap-6">
-        {filteredJobs.map((jobOffer, index) => (
-          <div key={`job-${jobOffer.id}-${index}`} className="group relative">
-            <Card
-              uniqueId={jobOffer?.user_id}
-              jobId={Number(jobOffer.id) || index}
-              blockId={jobOffer.block_id}
-              type="company"
-              title={jobOffer.title || "Job Position"}
-              postedBy={jobOffer.companyName || "Company"}
-              postedOn={`Posted ${moment(jobOffer.posted_at).fromNow()}`}
-              image={jobOffer.image_url || "/img/company_img.png"}
-              country={jobOffer.country || ""}
-              city={jobOffer.city || "Remote"}
-              budget={Number(jobOffer.budget) || 0}
-              projectType={jobOffer.projectType || "hourly"}
-              currency={jobOffer.currency || "€"}
-              description={
-                jobOffer.jobDescription ||
-                "No description available for this position."
-              }
-              skills={
-                jobOffer.skills && Array.isArray(jobOffer.skills)
-                  ? jobOffer.skills
-                  : []
-              }
-              buttonText="Apply"
-              walletAddress={jobOffer.walletAddress}
-              talent={jobOffer.talent}
-              mentor={jobOffer.mentor}
-              recruiter={jobOffer.recruiter}
-              escrowAmount={jobOffer.escrowAmount || false}
-            />
+        {filteredJobs.map((jobOffer, index) => {
+          console.log("Job Offer", jobOffer.id, ":", {
+            title: jobOffer.title,
+            talent: jobOffer.talent,
+            mentor: jobOffer.mentor,
+            recruiter: jobOffer.recruiter,
+            type: typeof jobOffer.talent,
+          });
+          return (
+            <div key={`job-${jobOffer.id}-${index}`} className="group relative">
+              <Card
+                uniqueId={jobOffer?.user_id}
+                jobId={Number(jobOffer.id) || index}
+                blockId={jobOffer.block_id}
+                type="company"
+                title={jobOffer.title || "Job Position"}
+                postedBy={jobOffer.companyName || "Company"}
+                postedOn={`Posted ${moment(jobOffer.posted_at).fromNow()}`}
+                image={jobOffer.image_url || "/img/company_img.png"}
+                country={jobOffer.country || ""}
+                city={jobOffer.city || "Remote"}
+                budget={Number(jobOffer.budget) || 0}
+                projectType={jobOffer.projectType || "hourly"}
+                currency={jobOffer.currency || "€"}
+                description={
+                  jobOffer.jobDescription ||
+                  "No description available for this position."
+                }
+                skills={
+                  jobOffer.skills && Array.isArray(jobOffer.skills)
+                    ? jobOffer.skills
+                    : []
+                }
+                buttonText="Apply"
+                walletAddress={jobOffer.walletAddress}
+                talent={jobOffer.talent}
+                mentor={jobOffer.mentor}
+                recruiter={jobOffer.recruiter}
+                escrowAmount={jobOffer.escrowAmount || false}
+              />
 
-            {/* Hover Effect Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl pointer-events-none"></div>
-          </div>
-        ))}
+              {/* Hover Effect Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl pointer-events-none"></div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Quick Stats */}
