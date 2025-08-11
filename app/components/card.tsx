@@ -115,7 +115,7 @@ export const Card: FC<Props> = ({
 
   // Title and description with consistent truncation
   const croppedTitle =
-    title.length > 32 ? title.substring(0, 29) + "..." : title;
+    title.length > 40 ? title.substring(0, 37) + "..." : title;
 
   // Function to strip HTML tags and crop text
   const stripHtmlAndCrop = (html: string, maxLength: number) => {
