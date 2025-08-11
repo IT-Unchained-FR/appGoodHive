@@ -338,16 +338,14 @@ export default function MyProfile() {
               )}
             </div>
 
-            <div>
+            <div className="mt-5 ml-0">
               <label
                 htmlFor="headline"
                 className="inline-block ml-3 text-base text-black form-label mb-2"
               >
                 Describe your company in a few words?*
               </label>
-            </div>
-            <div>
-              <div style={{ borderRadius: "16px", overflow: "hidden" }}>
+              <div style={{ borderRadius: "16px" }}>
                 <ReactQuill
                   theme="snow"
                   modules={quillModules}
@@ -359,7 +357,7 @@ export default function MyProfile() {
                   placeholder="Describe your company in a few words?"
                   style={{
                     fontSize: "1rem",
-                    height: "260px", // Increased by 30% from 200px
+                    height: "520px", // Double the current height to match talent profile
                     marginBottom: "40px",
                   }}
                 />
