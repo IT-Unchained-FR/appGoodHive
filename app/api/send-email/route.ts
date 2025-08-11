@@ -1,13 +1,14 @@
-import { Resend } from "resend";
 import * as React from "react";
+import { Resend } from "resend";
 
-import JobAppliedTemplate from "@/app/email-templates/job-applied";
-import ContactTalentTemplate from "@/app/email-templates/contact-talent";
 import ContactCompanyTemplate from "@/app/email-templates/contact-company";
+import ContactTalentTemplate from "@/app/email-templates/contact-talent";
 import ContactUsTemplate from "@/app/email-templates/contact-us";
-import { GoodHiveContractEmail } from "@constants/common";
-import TalentRegistrationTemplate from "@/app/email-templates/new-talent-user";
+import ContactUsConfirmationTemplate from "@/app/email-templates/contact-us-confirmation";
+import JobAppliedTemplate from "@/app/email-templates/job-applied";
 import CompanyRegistrationTemplate from "@/app/email-templates/new-company-user";
+import TalentRegistrationTemplate from "@/app/email-templates/new-talent-user";
+import { GoodHiveContractEmail } from "@constants/common";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -16,6 +17,7 @@ const TEMPLATES = {
   "job-applied": JobAppliedTemplate,
   "contact-company": ContactCompanyTemplate,
   "contact-us": ContactUsTemplate,
+  "contact-us-confirmation": ContactUsConfirmationTemplate,
   "new-talent": TalentRegistrationTemplate,
   "new-company": CompanyRegistrationTemplate,
 };
@@ -24,7 +26,14 @@ interface RequestContentType {
   name: string;
   toUserName?: string;
   email: string;
-  type: "contact-talent" | "job-applied" | "contact-us";
+  type:
+    | "contact-talent"
+    | "job-applied"
+    | "contact-company"
+    | "contact-us"
+    | "contact-us-confirmation"
+    | "new-talent"
+    | "new-company";
   subject: string;
   userEmail?: string;
   message: string;
@@ -45,6 +54,7 @@ export async function POST(request: Request) {
     userProfile,
     jobLink,
   }: RequestContentType = await request.json();
+
   console.log(
     email,
     type,
@@ -55,28 +65,79 @@ export async function POST(request: Request) {
     userProfile,
     "send-email-body",
   );
-  try {
-    // For contact-us emails, send to GoodHive team instead of user
-    const recipient = type === "contact-us" ? GoodHiveContractEmail : [email];
-    
-    const { data, error } = await resend.emails.send({
-      from: "GoodHive <no-reply@goodhive.io>",
-      to: recipient,
-      subject,
-      bcc: type !== "contact-us" ? GoodHiveContractEmail : undefined,
-      react: TEMPLATES[type]({
-        name,
-        toUserName,
-        email: type === "contact-us" ? email : undefined,
-        message,
-        userProfile,
-        jobLink,
-      }) as React.ReactElement,
-    });
 
-    if (error) {
-      console.error("Resend error >>", error);
+  try {
+    if (type === "contact-us") {
+      // Send email to GoodHive team
+      const teamEmailResult = await resend.emails.send({
+        from: "GoodHive <no-reply@goodhive.io>",
+        to: GoodHiveContractEmail,
+        subject,
+        react: TEMPLATES[type]({ name, email, message }) as React.ReactElement,
+      });
+
+      // Send confirmation email to user
+      const userEmailResult = await resend.emails.send({
+        from: "GoodHive <no-reply@goodhive.io>",
+        to: email,
+        subject: "🍯 Thank you for contacting GoodHive!",
+        react: TEMPLATES["contact-us-confirmation"]({
+          name,
+          email,
+          message,
+        }) as React.ReactElement,
+      });
+
+      if (teamEmailResult.error || userEmailResult.error) {
+        console.error("Email sending errors:", {
+          teamEmail: teamEmailResult.error,
+          userEmail: userEmailResult.error,
+        });
+        return new Response(
+          JSON.stringify({
+            message: "Error sending email",
+            errors: {
+              teamEmail: teamEmailResult.error,
+              userEmail: userEmailResult.error,
+            },
+          }),
+          {
+            status: 500,
+          },
+        );
+      }
+    } else {
+      // Handle other email types as before
+      const recipient = [email];
+      const result = await resend.emails.send({
+        from: "GoodHive <no-reply@goodhive.io>",
+        to: recipient,
+        subject,
+        bcc: GoodHiveContractEmail,
+        react: TEMPLATES[type]({
+          name,
+          toUserName,
+          message,
+          userProfile,
+          jobLink,
+          email: userEmail || email,
+        }) as React.ReactElement,
+      });
+
+      if (result.error) {
+        console.error("Resend error >>", result.error);
+        return new Response(
+          JSON.stringify({
+            message: "Error sending email",
+            error: result.error,
+          }),
+          {
+            status: 500,
+          },
+        );
+      }
     }
+
     return new Response(JSON.stringify({ message: "Email sent" }), {
       status: 200,
     });
