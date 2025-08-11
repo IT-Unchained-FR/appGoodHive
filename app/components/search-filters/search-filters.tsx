@@ -47,11 +47,13 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
 
   // Real-time search with debouncing
   const performSearch = useCallback(
-    (skills: string[], loc: string, company: string, filters: any = {}) => {
+    (skills: string[], loc: string, company: string, filters: any = {}, resetPage = true) => {
       const params = new URLSearchParams(searchParams);
 
-      // Clear page parameter when searching
-      params.delete("page");
+      // Clear page parameter only when actually searching (not on initial load)
+      if (resetPage) {
+        params.delete("page");
+      }
 
       if (skills.length > 0) {
         params.set("search", skills.join(","));
@@ -128,11 +130,23 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
   // Debounce the search function
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      performSearch(selectedSkills, location, companyName);
+      // Check if we have URL params that match current state (initial load scenario)
+      const currentSearch = searchParams.get("search")?.split(",").map(s => s.trim()).filter(s => s) || [];
+      const currentLocation = searchParams.get("location") || "";
+      const currentName = searchParams.get("name") || "";
+      
+      // Only trigger search if values actually changed (not initial load)
+      const searchChanged = JSON.stringify(selectedSkills.sort()) !== JSON.stringify(currentSearch.sort());
+      const locationChanged = location !== currentLocation;
+      const nameChanged = companyName !== currentName;
+      
+      if (searchChanged || locationChanged || nameChanged) {
+        performSearch(selectedSkills, location, companyName, {}, true);
+      }
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [selectedSkills, location, companyName, performSearch]);
+  }, [selectedSkills, location, companyName, performSearch, searchParams]);
 
   const handleSearch = () => {
     // Immediate search when clicking button
@@ -252,7 +266,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
                               setOpenToRecruiter(checked);
                               performSearch(selectedSkills, location, companyName, {
                                 openToRecruiter: checked,
-                              });
+                              }, false);
                             }}
                           />
                           <ToggleSwitch
@@ -263,7 +277,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
                               setOpenToMentor(checked);
                               performSearch(selectedSkills, location, companyName, {
                                 openToMentor: checked,
-                              });
+                              }, false);
                             }}
                           />
                         </>
@@ -278,7 +292,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
                               setOnlyTalent(checked);
                               performSearch(selectedSkills, location, companyName, {
                                 onlyTalent: checked,
-                              });
+                              }, false);
                             }}
                           />
                           <ToggleSwitch
@@ -289,7 +303,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
                               setOnlyMentor(checked);
                               performSearch(selectedSkills, location, companyName, {
                                 onlyMentor: checked,
-                              });
+                              }, false);
                             }}
                           />
                           <ToggleSwitch
@@ -300,7 +314,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
                               setOnlyRecruiter(checked);
                               performSearch(selectedSkills, location, companyName, {
                                 onlyRecruiter: checked,
-                              });
+                              }, false);
                             }}
                           />
                         </>
