@@ -1,5 +1,5 @@
 export const TRANSLATION = {
   title: "Reach Us",
   description:
-    "Have questions or need help with GoodHive? Just email us or book a call for a friendly, easy chat. Our team is eager to assist you with any queries and ensure a smooth GoodHive experience. Reach out today and let's talk!",
+    "Buzzing with questions about GoodHive? Drop us a sweet message or schedule a hive call! Our worker bees are ready to help you navigate the Web3 talent ecosystem. Let's create some honey magic together!",
 };
