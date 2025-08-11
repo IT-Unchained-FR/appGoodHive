@@ -48,7 +48,13 @@ export const Pagination: FC<PaginationProps> = (props) => {
         <Link
           href={`${isSearchTalent
               ? "/companies/search-talents"
-              : "/talents/job-search"}?${new URLSearchParams({ ...query, page: (activePage - 1).toString() }).toString()}`}
+              : "/talents/job-search"}?${new URLSearchParams(
+                Object.fromEntries(
+                  Object.entries({ ...query, page: (activePage - 1).toString() })
+                    .filter(([_, value]) => value !== undefined && value !== null && value !== '')
+                    .map(([key, value]) => [key, String(value)])
+                )
+              ).toString()}`}
           className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-amber-200 rounded-xl hover:bg-amber-50 hover:border-amber-300 transition-all duration-200 shadow-sm hover:shadow-md"
         >
           <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,7 +89,13 @@ export const Pagination: FC<PaginationProps> = (props) => {
               )}
               href={`${isSearchTalent
                   ? "/companies/search-talents"
-                  : "/talents/job-search"}?${new URLSearchParams({ ...query, page: pageNum.toString() }).toString()}`}
+                  : "/talents/job-search"}?${new URLSearchParams(
+                    Object.fromEntries(
+                      Object.entries({ ...query, page: pageNum.toString() })
+                        .filter(([_, value]) => value !== undefined && value !== null && value !== '')
+                        .map(([key, value]) => [key, String(value)])
+                    )
+                  ).toString()}`}
             >
               {pageNum}
             </Link>
@@ -96,7 +108,13 @@ export const Pagination: FC<PaginationProps> = (props) => {
         <Link
           href={`${isSearchTalent
               ? "/companies/search-talents"
-              : "/talents/job-search"}?${new URLSearchParams({ ...query, page: (activePage + 1).toString() }).toString()}`}
+              : "/talents/job-search"}?${new URLSearchParams(
+                Object.fromEntries(
+                  Object.entries({ ...query, page: (activePage + 1).toString() })
+                    .filter(([_, value]) => value !== undefined && value !== null && value !== '')
+                    .map(([key, value]) => [key, String(value)])
+                )
+              ).toString()}`}
           className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-amber-200 rounded-xl hover:bg-amber-50 hover:border-amber-300 transition-all duration-200 shadow-sm hover:shadow-md"
         >
           Next
