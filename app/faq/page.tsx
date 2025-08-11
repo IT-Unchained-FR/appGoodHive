@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { Faq } from "@components/faq";
 
 export const metadata: Metadata = {
   title: "FAQ - Frequently Asked Questions | GoodHive",
@@ -9,9 +10,5 @@ export const metadata: Metadata = {
 };
 
 export default function FaqPage() {
-  return (
-    <div className="flex w-full h-full justify-center items-center">
-      <h2>Under construction</h2>
-    </div>
-  );
+  return <Faq />;
 }
