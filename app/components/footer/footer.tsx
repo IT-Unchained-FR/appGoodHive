@@ -163,7 +163,6 @@ export const Footer = () => {
             <div className="text-amber-200 text-sm flex items-center justify-center">
               <span className="text-lg mr-2">🐝</span>
               &copy; {new Date().getFullYear()} GoodHive. All rights reserved.
-              Made with honey 🍯
             </div>
           </div>
         </div>
