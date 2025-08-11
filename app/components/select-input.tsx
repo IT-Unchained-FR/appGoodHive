@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useEffect, useRef, useState } from "react";
 
 import LabelOption from "@interfaces/label-option";
 
@@ -26,16 +26,24 @@ export const SelectInput: FC<Props> = ({
   const [selectedValue, setSelectedValue] = useState<LabelOption | null>(
     defaultValue || null
   );
+  const [searchTerm, setSearchTerm] = useState('');
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleInputClickAndCloseOptions = (option: LabelOption) => {
     setInputValue(option);
     setIsOptionsOpen(false);
+    setSearchTerm('');
   };
 
-  const renderOptions = options.map((option) => (
+  // Filter options based on search term
+  const filteredOptions = options.filter(option =>
+    option.label.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const renderOptions = filteredOptions.map((option) => (
     <div
       key={option.value}
-      className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+      className="px-4 py-2 cursor-pointer hover:bg-amber-50 hover:text-amber-800 transition-colors duration-200"
       onClick={() => handleInputClickAndCloseOptions(option)}
     >
       {option.label}
@@ -43,10 +51,10 @@ export const SelectInput: FC<Props> = ({
   ));
 
   let selectStyle =
-    "block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none";
+    "block w-full px-4 py-3 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-amber-300 rounded-xl hover:shadow-md transition ease-in-out m-0 cursor-pointer focus:text-black focus:bg-white";
   if (disabled) {
     selectStyle =
-      "form-control pointer-events-none block w-full px-4 py-2 text-base font-light text-gray-200 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full";
+      "form-control pointer-events-none block w-full px-4 py-3 text-base font-light text-gray-200 bg-white bg-clip-padding border border-solid border-amber-300 rounded-xl";
   }
 
   useEffect(() => {
@@ -55,15 +63,33 @@ export const SelectInput: FC<Props> = ({
     }
   }, [defaultValue]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOptionsOpen(false);
+        setSearchTerm('');
+      }
+    };
+
+    if (isOptionsOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOptionsOpen]);
+
   return (
-    <div className="relative w-full">
-      <label className="inline-block ml-3 text-base text-black form-label">
+    <div className="relative w-full" ref={dropdownRef}>
+      <label className="inline-block ml-3 text-base text-gray-800 form-label mb-2 font-medium">
         {labelText}
         {required && <span>*</span>}
       </label>
       <div className="flex items-center">
         <p
-          className={selectStyle}
+          className={`${selectStyle} ${isOptionsOpen ? 'border-amber-500' : ''}`}
           onClick={() => setIsOptionsOpen(() => !isOptionsOpen)}
           style={{
             color:
@@ -90,8 +116,38 @@ export const SelectInput: FC<Props> = ({
         </div>
       </div>
       {isOptionsOpen && (
-        <div className="absolute z-10 w-full mt-2 overflow-y-auto bg-white rounded-md shadow-md max-h-48">
-          {renderOptions}
+        <div className="absolute z-10 w-full mt-2 bg-white border border-amber-300 rounded-xl shadow-lg max-h-80">
+          {/* Search Input */}
+          <div className="p-3 border-b border-amber-200">
+            <input
+              type="text"
+              placeholder="Search countries..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && filteredOptions.length > 0) {
+                  handleInputClickAndCloseOptions(filteredOptions[0]);
+                }
+                if (e.key === 'Escape') {
+                  setIsOptionsOpen(false);
+                  setSearchTerm('');
+                }
+              }}
+              className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg focus:border-amber-500 focus:outline-none"
+              autoFocus
+            />
+          </div>
+          
+          {/* Options List */}
+          <div className="overflow-y-auto max-h-64">
+            {filteredOptions.length > 0 ? (
+              renderOptions
+            ) : (
+              <div className="px-4 py-3 text-gray-500 text-center">
+                No countries found
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
