@@ -43,7 +43,7 @@ export const SocialLink: FC<SocialLinkProps> = (props) => {
       </div>
       <div className="w-full">
         <input
-          className="form-control block w-full px-4 py-2 ml-3 text-base font-normal text-gray-600 bg-white bg-clip-padding border-b border-solid hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:outline-none"
+          className="form-control block w-full px-4 py-3 ml-3 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-amber-300 rounded-xl hover:shadow-md transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-amber-500 focus:outline-none"
           placeholder={placeholder}
           type="text"
           name={name}
