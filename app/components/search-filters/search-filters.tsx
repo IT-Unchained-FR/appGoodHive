@@ -65,7 +65,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
         params.delete("location");
       }
 
-      if (company.trim() && !isSearchTalent) {
+      if (company.trim()) {
         params.set("name", company.trim());
       } else {
         params.delete("name");
