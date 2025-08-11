@@ -1,0 +1,235 @@
+# GoodHive Web Development Rules
+
+## Project Overview
+GoodHive is a Next.js 14 web application for connecting talents with companies using blockchain technology. It features Web3 wallet integration, job posting/searching, user profiles, and admin management.
+
+## Tech Stack
+- **Framework**: Next.js 14 with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS with CSS Modules
+- **UI Components**: Radix UI, NextUI, custom components
+- **Forms**: React Hook Form with Yup/Zod validation
+- **Database**: PostgreSQL with raw SQL queries
+- **Authentication**: JWT, Iron Session, Okto Web3 SDK
+- **Blockchain**: Ethers.js, Wagmi, Rainbow Kit
+- **File Storage**: AWS S3 (Backblaze B2)
+- **Email**: Resend
+- **Payment**: Custom escrow contract
+- **AI**: OpenAI API
+
+## Code Standards
+
+### File Structure
+- Use App Router (`app/` directory)
+- Components in `app/components/` with index exports
+- API routes in `app/api/`
+- Utilities in `app/utils/` and `utils/`
+- Interfaces in `interfaces/`
+- Constants in `app/constants/`
+
+### Naming Conventions
+- Files: kebab-case for components, camelCase for utilities
+- Components: PascalCase
+- Variables/functions: camelCase
+- Constants: UPPER_SNAKE_CASE
+- Types/Interfaces: PascalCase
+
+### TypeScript
+- Use strict TypeScript settings
+- Define interfaces in `interfaces/` directory
+- Prefer explicit return types for functions
+- Use proper typing for API responses
+- Avoid `any` type
+
+### React/Next.js
+- Use Server Components by default, Client Components when needed
+- Mark client components with 'use client' directive
+- Use App Router patterns for routing and layouts
+- Implement proper error boundaries
+- Use Next.js Image component for images
+- Prefer functional components with hooks
+
+### Styling
+- Use Tailwind CSS for styling
+- CSS Modules for component-specific styles (`.module.scss`)
+- Follow existing color scheme and spacing
+- Responsive design with mobile-first approach
+- Use CSS custom properties for theming
+
+### State Management
+- React Hook Form for form state
+- React hooks for local state
+- Context API for shared state
+- Iron Session for server-side sessions
+
+### API Design
+- RESTful API routes in `app/api/`
+- Proper HTTP status codes
+- Error handling with try-catch
+- Input validation with Yup/Zod
+- Rate limiting middleware
+- CORS configuration for development
+
+### Database
+- Use PostgreSQL with proper types
+- Raw SQL queries with proper escaping
+- Connection pooling
+- Migration files in `app/db/migrations/`
+
+### Security
+- Input validation on all user inputs
+- SQL injection prevention
+- XSS protection
+- CSRF protection
+- Secure headers configuration
+- Never commit secrets to repository
+- Use environment variables for sensitive data
+
+### Performance
+- Image optimization with Next.js Image
+- Code splitting with dynamic imports
+- Proper loading states and skeletons
+- Bundle size monitoring
+- Memory management for large lists
+
+## Development Workflow
+
+### File Creation
+- Always check existing patterns before creating new files
+- Use existing component structures as templates
+- Include proper TypeScript types
+- Add error boundaries where appropriate
+
+### Code Quality
+- Follow existing code patterns
+- Use descriptive variable names
+- Add JSDoc comments for complex functions
+- Keep functions small and focused
+- Avoid deep nesting
+
+### Testing
+- Run `npm run build` to check for build errors
+- Test forms and user interactions
+- Verify responsive design
+- Check accessibility
+
+### Git Practices
+- Use descriptive commit messages
+- Reference issue numbers where applicable
+- Keep commits focused and atomic
+
+## Common Patterns
+
+### Component Structure
+```typescript
+'use client' // Only if needed
+
+import { useState } from 'react'
+import type { ComponentProps } from './types'
+
+interface Props extends ComponentProps {
+  // Define props
+}
+
+export default function ComponentName({ prop1, prop2 }: Props) {
+  // Component logic
+  return (
+    <div className="tailwind-classes">
+      {/* JSX */}
+    </div>
+  )
+}
+```
+
+### API Route Structure
+```typescript
+import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+
+const schema = z.object({
+  // Define validation schema
+})
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json()
+    const data = schema.parse(body)
+    
+    // Business logic
+    
+    return NextResponse.json({ success: true, data })
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Error message' },
+      { status: 400 }
+    )
+  }
+}
+```
+
+### Form Handling
+```typescript
+import { useForm } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
+
+const schema = yup.object({
+  // Define validation
+})
+
+export default function FormComponent() {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors }
+  } = useForm({
+    resolver: yupResolver(schema)
+  })
+
+  const onSubmit = async (data: FormData) => {
+    // Handle form submission
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      {/* Form fields */}
+    </form>
+  )
+}
+```
+
+## Important Notes
+
+### Path Aliases
+Use configured path aliases:
+- `@/*` for root directory
+- `@interfaces/*` for interfaces
+- `@components/*` for app/components
+- `@hooks/*` for app/hooks
+- `@constants/*` for app/constants
+- `@utils/*` for app/utils
+
+### Environment Variables
+- Use Next.js environment variable conventions
+- Prefix client-side variables with `NEXT_PUBLIC_`
+- Store sensitive data in server-side env vars only
+
+### Build Configuration
+- TypeScript build errors are ignored (fix when possible)
+- ESLint errors are ignored during builds
+- SWC minification enabled
+- Standalone output for deployment
+
+### Web3 Integration
+- Use Wagmi for wallet connections
+- Ethers.js for contract interactions
+- Proper error handling for blockchain operations
+- Gas estimation and optimization
+
+### Performance Considerations
+- Use React.memo for expensive components
+- Implement proper loading states
+- Optimize images and assets
+- Monitor bundle size
+
+Always prioritize user experience, security, and maintainability in all development decisions.
