@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     "Web3 jobs, blockchain jobs, crypto jobs, decentralized jobs, tech recruitment, remote jobs, freelance opportunities",
 };
 
-const itemsPerPage = 9;
+const itemsPerPage = 10;
 
 export const revalidate = 0;
 

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     "search Web3 developers, blockchain talent, crypto professionals, decentralized experts, smart contract developers, DeFi talent search",
 };
 
-const itemsPerPage = 9;
+const itemsPerPage = 10;
 
 export const revalidate = 0;
 
@@ -192,6 +192,7 @@ export default async function SearchTalentsPage({
                   totalItems={count}
                   query={query}
                   activePage={Number(searchParams.page) || 1}
+                  isSearchTalent={true}
                 />
               </div>
             </div>
