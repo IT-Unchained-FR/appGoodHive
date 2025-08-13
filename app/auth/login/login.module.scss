@@ -125,15 +125,30 @@
 .formWrapper {
   width: 440px;
   max-width: 100%;
+  margin: 0 auto;
+}
+
+// Elevate the left form section into a modern card
+.formCard {
+  width: 100%;
+  max-width: 560px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #eef0f3;
+  box-shadow: 0 10px 30px rgba(16, 24, 40, 0.06);
+  padding: 32px 28px;
 }
 
 .logo {
   margin-bottom: 2rem;
   // animation: float 6s ease-in-out infinite;
+  display: flex;
+  justify-content: center;
 }
 
 .header {
   margin-bottom: 2rem;
+  text-align: center;
 
   h1 {
     font-size: 2rem;
@@ -333,7 +348,7 @@
   width: 50%;
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   overflow: hidden;
   background: linear-gradient(
@@ -464,6 +479,67 @@
   }
 }
 
+// New right-side video section
+.videoSection {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 3rem 2rem;
+  color: #fff;
+  text-align: center;
+
+  h2 {
+    font-size: 2.25rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    font-size: 1.1rem;
+    opacity: 0.95;
+    margin-bottom: 1.25rem;
+  }
+}
+
+.videoWrapper {
+  width: 100%;
+  max-width: 720px;
+  aspect-ratio: 16 / 9;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+
+  iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+}
+
+.benefitsList {
+  margin-top: 1.25rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 720px;
+
+  li {
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+  }
+}
+
 .honeycombGrid {
   position: absolute;
   width: 100%;
@@ -564,7 +640,11 @@
   }
 
   .showcaseSection {
-    min-height: 400px;
+    min-height: 520px;
+  }
+
+  .benefitsList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -578,6 +658,14 @@
   }
 
   .socialButtons {
+    grid-template-columns: 1fr;
+  }
+
+  .videoSection {
+    padding: 2rem 1rem 2.5rem;
+  }
+
+  .benefitsList {
     grid-template-columns: 1fr;
   }
 }
