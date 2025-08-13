@@ -4,11 +4,11 @@ export const pageLinks = [
     url: "/",
   },
   {
-    name: "Talent",
+    name: "Jobs",
     url: "/talents/job-search",
   },
   {
-    name: "Companies",
+    name: "Talents",
     url: "/companies/search-talents",
   },
   {
