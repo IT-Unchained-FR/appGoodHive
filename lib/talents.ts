@@ -53,10 +53,23 @@ export async function fetchTalents({
     let params: any[] = [];
     let paramIndex = 0;
 
-    // Skills search
+    // Skills search - handle multiple skills with AND logic
     if (search) {
-      whereConditions.push(`LOWER(skills) LIKE $${++paramIndex}`);
-      params.push(contains(search));
+      // Decode URL-encoded search string and split by comma
+      const decodedSearch = decodeURIComponent(search);
+      const searchSkills = decodedSearch.split(',').map(skill => skill.trim()).filter(skill => skill.length > 0);
+      
+      if (searchSkills.length > 0) {
+        const skillConditions: string[] = [];
+        
+        searchSkills.forEach((skill) => {
+          skillConditions.push(`LOWER(skills) LIKE $${++paramIndex}`);
+          params.push(contains(skill));
+        });
+        
+        // Use AND logic: talent must have ALL searched skills
+        whereConditions.push(`(${skillConditions.join(' AND ')})`);
+      }
     }
 
     // Name search (first name or last name)

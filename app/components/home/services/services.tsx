@@ -1,5 +1,6 @@
 "use client";
 
+import Cookies from "js-cookie";
 import {
   ArrowRight,
   Building2,
@@ -11,7 +12,6 @@ import {
   Zap,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import Cookies from "js-cookie";
 import { useEffect, useState } from "react";
 
 import { TRANSLATION, allServices } from "./services.constants";
@@ -48,7 +48,7 @@ export const Services = () => {
     } else if (id === "companies") {
       return "Visit your company profile";
     }
-    
+
     return "Create your profile";
   };
 
@@ -194,7 +194,18 @@ export const Services = () => {
 
                     {/* CTA Button */}
                     <button
-                      onClick={() => onCtaClickHandler(id)}
+                      onClick={() => {
+                        console.log(isLoggedIn, id, "hehe");
+                        if (!isLoggedIn) {
+                          return router.push("/auth/login");
+                        }
+
+                        if (id === "talent") {
+                          return router.push("/talents/my-profile");
+                        } else if (id === "companies") {
+                          return router.push("/companies/my-profile");
+                        }
+                      }}
                       className={`group/btn relative w-full px-6 py-4 bg-gradient-to-r ${
                         isForTalent
                           ? "from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600"
