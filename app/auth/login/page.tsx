@@ -15,27 +15,13 @@ import styles from "./login.module.scss";
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [otpLoading, setOtpLoading] = useState(false);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
+  // UI state
 
   const oktoClient = useOkto();
 
-  const slides = [
-    {
-      title: "Connect with every hive member",
-      description:
-        "Join our buzzing community of professionals and grow together.",
-    },
-    {
-      title: "Build your honey network",
-      description:
-        "Create meaningful connections in our collaborative ecosystem.",
-    },
-    {
-      title: "Sweet opportunities await",
-      description: "Discover and share valuable opportunities within the hive.",
-    },
-  ];
+  // Onboarding video
+  const onboardingVideoUrl =
+    "https://www.youtube-nocookie.com/embed/soSiYLg6KnA?rel=0&modestbranding=1";
 
   //
   useEffect(() => {
@@ -64,52 +50,7 @@ const Login = () => {
     }
   }, []); // Remove oktoClient from dependency array
 
-  const handleSlideChange = (index: number) => {
-    if (isAnimating || index === currentSlide) return;
-
-    setIsAnimating(true);
-
-    // Start exit animation
-    const content = document.querySelector(`.${styles.showcaseContent}`);
-    const title = content?.querySelector("h2");
-    const description = content?.querySelector("p");
-
-    if (title && description) {
-      title.classList.add(styles.exiting);
-      description.classList.add(styles.exiting);
-    }
-
-    // Wait for exit animation to complete
-    setTimeout(() => {
-      setCurrentSlide(index);
-
-      // Remove exit classes and add enter classes
-      if (title && description) {
-        title.classList.remove(styles.exiting);
-        description.classList.remove(styles.exiting);
-        title.classList.add(styles.entering);
-        description.classList.add(styles.entering);
-      }
-
-      // Remove enter classes after animation completes
-      setTimeout(() => {
-        if (title && description) {
-          title.classList.remove(styles.entering);
-          description.classList.remove(styles.entering);
-        }
-        setIsAnimating(false);
-      }, 1200);
-    }, 600);
-  };
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const nextSlide = (currentSlide + 1) % slides.length;
-      handleSlideChange(nextSlide);
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [currentSlide, isAnimating]);
+  // No slides anymore; right panel shows onboarding video
 
   const handleGoogleLogin = async (credentialResponse: any) => {
     console.log(credentialResponse, "credentialResponse...goodhive");
@@ -220,7 +161,8 @@ const Login = () => {
   return (
     <div className={styles.loginContainer}>
       <div className={styles.formSection}>
-        <div className={styles.formWrapper}>
+        <div className={styles.formCard}>
+          <div className={styles.formWrapper}>
           <div className={styles.logo}>
             <Image
               src="/img/goodhive_light_logo.png"
@@ -279,6 +221,7 @@ const Login = () => {
           <div className={styles.walletWrapper}>
             <WalletConnect />
           </div>
+          </div>
         </div>
       </div>
 
@@ -299,41 +242,24 @@ const Login = () => {
             />
           </svg>
         </div>
-
-        <div className={styles.showcaseContent}>
-          <h2 className={styles.entering}>{slides[currentSlide].title}</h2>
-          <p className={styles.entering}>{slides[currentSlide].description}</p>
-
-          <div className={styles.features}>
-            <div className={styles.feature}>
-              <h3>Professional Network</h3>
-              <p>Connect with industry experts and grow your career</p>
-            </div>
-            <div className={styles.feature}>
-              <h3>Collaboration Hub</h3>
-              <p>Work together on innovative projects</p>
-            </div>
-            <div className={styles.feature}>
-              <h3>Knowledge Sharing</h3>
-              <p>Learn from the best in your field</p>
-            </div>
-            <div className={styles.feature}>
-              <h3>Career Growth</h3>
-              <p>Find opportunities that match your expertise</p>
-            </div>
+        <div className={styles.videoSection}>
+          <h2>Get started in minutes</h2>
+          <p>Watch how to create your GoodHive profile and use the platform.</p>
+          <div className={styles.videoWrapper}>
+            <iframe
+              src={onboardingVideoUrl}
+              title="GoodHive Onboarding"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+              loading="lazy"
+            />
           </div>
-
-          <div className={styles.dotsNavigation}>
-            {slides.map((_, index) => (
-              <button
-                key={index}
-                className={`${styles.dot} ${currentSlide === index ? styles.active : ""}`}
-                onClick={() => handleSlideChange(index)}
-                disabled={isAnimating}
-                aria-label={`Go to slide ${index + 1}`}
-              />
-            ))}
-          </div>
+          <ul className={styles.benefitsList}>
+            <li>Sign in with Google, email OTP, or wallet</li>
+            <li>Set up your talent or company profile</li>
+            <li>Start hiring or get hired on-chain</li>
+          </ul>
         </div>
       </div>
     </div>
