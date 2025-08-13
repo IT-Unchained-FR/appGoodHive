@@ -1,0 +1,265 @@
+/* Responsive Enhancements for GoodHive Homepage */
+
+/* Mobile-first responsive utilities */
+@media (max-width: 640px) {
+  /* Hero Section Mobile Improvements */
+  .hero-title {
+    font-size: 2.5rem !important;
+    line-height: 1.1;
+  }
+  
+  .hero-subtitle {
+    font-size: 1rem !important;
+    margin-bottom: 2rem;
+  }
+  
+  .hero-buttons {
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+  }
+  
+  .hero-button {
+    width: 100%;
+    padding: 1rem 1.5rem !important;
+    font-size: 1rem !important;
+  }
+  
+  /* Services Section Mobile */
+  .service-card {
+    padding: 1.5rem !important;
+    margin-bottom: 1rem;
+  }
+  
+  .service-icon {
+    width: 3rem !important;
+    height: 3rem !important;
+  }
+  
+  .service-title {
+    font-size: 1.25rem !important;
+  }
+  
+  /* How It Works Mobile */
+  .steps-container {
+    gap: 1.5rem !important;
+  }
+  
+  .step-card {
+    padding: 1.5rem !important;
+    text-align: center;
+  }
+  
+  .step-number {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    margin: 0 auto 1rem auto;
+  }
+  
+  /* Video responsive */
+  .video-container {
+    padding: 0.75rem !important;
+  }
+  
+  .video-container iframe {
+    height: 200px !important;
+  }
+  
+  /* Background animations - reduce on mobile */
+  .honeycomb-bg {
+    opacity: 0.02 !important;
+  }
+  
+  .floating-bee {
+    font-size: 1rem !important;
+  }
+  
+  /* Typography scaling */
+  .section-title {
+    font-size: 2rem !important;
+  }
+  
+  .section-subtitle {
+    font-size: 1rem !important;
+  }
+}
+
+/* Tablet improvements */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .hero-title {
+    font-size: 3.5rem !important;
+  }
+  
+  .service-grid {
+    grid-template-columns: 1fr !important;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .steps-grid {
+    grid-template-columns: 1fr !important;
+    gap: 2rem;
+  }
+  
+  .step-arrow {
+    display: none !important;
+  }
+  
+  .video-container iframe {
+    height: 300px !important;
+  }
+}
+
+/* Large screen optimizations */
+@media (min-width: 1441px) {
+  .container {
+    max-width: 1400px !important;
+  }
+  
+  .hero-title {
+    font-size: 4.5rem !important;
+  }
+  
+  .section-title {
+    font-size: 3.5rem !important;
+  }
+  
+  .floating-elements {
+    scale: 1.2;
+  }
+}
+
+/* Enhanced touch targets for mobile */
+@media (pointer: coarse) {
+  button,
+  .clickable {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .card:hover {
+    transform: none !important;
+  }
+  
+  .card:active {
+    transform: scale(0.98);
+  }
+}
+
+/* High DPI screen optimizations */
+@media (min-resolution: 192dpi) {
+  .hero-logo img,
+  .service-icon img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Landscape phone orientation */
+@media (max-width: 896px) and (orientation: landscape) {
+  .hero-container {
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
+  }
+  
+  .hero-title {
+    font-size: 2rem !important;
+  }
+  
+  .section-padding {
+    padding-top: 3rem !important;
+    padding-bottom: 3rem !important;
+  }
+}
+
+/* Focus and accessibility improvements */
+@media (prefers-reduced-motion: no-preference) {
+  .smooth-scroll {
+    scroll-behavior: smooth;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .parallax,
+  .floating-animation {
+    transform: none !important;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .gradient-text {
+    color: #000 !important;
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    background-clip: unset !important;
+  }
+  
+  .card {
+    border: 2px solid #000 !important;
+  }
+  
+  .button-primary {
+    background: #000 !important;
+    color: #fff !important;
+    border: 2px solid #000 !important;
+  }
+  
+  .button-secondary {
+    background: #fff !important;
+    color: #000 !important;
+    border: 2px solid #000 !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  .hero-background,
+  .floating-elements,
+  .background-decoration {
+    display: none !important;
+  }
+  
+  .video-container {
+    display: none !important;
+  }
+  
+  .button {
+    border: 1px solid #000 !important;
+    background: none !important;
+    color: #000 !important;
+  }
+  
+  .page-break {
+    page-break-before: always;
+  }
+}
+
+/* Container queries for component-based responsive design */
+@container (max-width: 400px) {
+  .card-content {
+    padding: 1rem !important;
+  }
+  
+  .card-title {
+    font-size: 1.125rem !important;
+  }
+}
+
+@container (max-width: 300px) {
+  .card-content {
+    padding: 0.75rem !important;
+  }
+  
+  .icon-large {
+    width: 2rem !important;
+    height: 2rem !important;
+  }
+}
