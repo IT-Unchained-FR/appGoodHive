@@ -4,16 +4,20 @@ import Cookies from "js-cookie";
 import {
   Briefcase,
   CircleUserRound,
+  Copy,
   GraduationCap,
   Mail,
   Shield,
   User,
   Users,
   Wallet,
+  CheckCircle,
+  Clock,
+  XCircle,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { HoneybeeSpinner } from "../components/spinners/honey-bee-spinner/honey-bee-spinner";
+import BeeHiveSpinner from "../components/spinners/bee-hive-spinner";
 
 export interface UserProfile {
   id: number;
@@ -67,207 +71,339 @@ export default function UserProfilePage() {
   };
 
   if (!userProfile) {
-    return <HoneybeeSpinner message={"Loading Your User Profile..."} />;
+    return <BeeHiveSpinner size="large" />;
   }
 
   return (
-    <div className="bg-white flex items-center justify-center p-4 py-14 min-h-[calc(100vh-4rem)]">
-      {/* <ConnectEmailPopup
-        isOpen={showConnectEmailPopup}
-        onClose={() => setShowConnectEmailPopup(false)}
-        setUserProfile={setUserProfile}
-      /> */}
-      <div className="w-full max-w-4xl bg-white shadow-xl rounded-xl overflow-hidden border border-gray-200 animate-fade-in-up">
-        <div className="bg-[#FFC905] p-6 flex gap-4 items-center justify-center">
-          <CircleUserRound
-            className="
-            w-10 h-10 text-white
-            animate-bounce-in-down animate-bounce-in-down-1s
-          "
-          />
-          <h1 className="text-3xl font-bold text-center text-white">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50/30 via-yellow-50/20 to-orange-50/30">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Header Section */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-3xl mb-6 shadow-lg">
+            <CircleUserRound className="w-10 h-10 text-white" />
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4 leading-tight">
             User Profile
           </h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Manage your GoodHive account and track your status across all roles
+          </p>
         </div>
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <ProfileItem
-              icon={Mail}
-              label="Email"
-              value={
-                <StatusBadge
-                  firstCaseLower
-                  color="green"
-                  status={userProfile.email || "No Email Connected"}
+
+        {/* Profile Cards Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 mb-12">
+          {/* Account Information */}
+          <div className="lg:col-span-2 xl:col-span-1">
+            <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-amber-100/50 h-full">
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-blue-500 rounded-2xl flex items-center justify-center mr-4">
+                  <User className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900">Account Info</h2>
+              </div>
+              
+              <div className="space-y-6">
+                <InfoItem
+                  icon={Mail}
+                  label="Email Address"
+                  value={userProfile.email || "No Email Connected"}
+                  status={userProfile.email ? "connected" : "disconnected"}
                 />
-              }
+                <InfoItem
+                  icon={User}
+                  label="User ID"
+                  value={userProfile.userid}
+                  copyable
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Role Status */}
+          <div className="lg:col-span-2 xl:col-span-1">
+            <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-amber-100/50 h-full">
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 bg-gradient-to-r from-purple-400 to-purple-500 rounded-2xl flex items-center justify-center mr-4">
+                  <Users className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900">Role Status</h2>
+              </div>
+              
+              <div className="space-y-4">
+                <RoleStatusCard
+                  icon={Briefcase}
+                  title="Talent"
+                  status={userProfile.talent_status}
+                  description="Access to job opportunities"
+                />
+                <RoleStatusCard
+                  icon={GraduationCap}
+                  title="Mentor"
+                  status={userProfile.mentor_status}
+                  description="Guide and support others"
+                />
+                <RoleStatusCard
+                  icon={Users}
+                  title="Recruiter"
+                  status={userProfile.recruiter_status}
+                  description="Post jobs and find talent"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Wallet Connections */}
+          <div className="lg:col-span-2 xl:col-span-1">
+            <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-amber-100/50 h-full">
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-green-500 rounded-2xl flex items-center justify-center mr-4">
+                  <Wallet className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900">Wallets</h2>
+              </div>
+              
+              <div className="space-y-6">
+                <WalletItem
+                  icon={Wallet}
+                  label="External Wallet"
+                  address={userProfile.wallet_address}
+                  description="Your connected external wallet"
+                />
+                <WalletItem
+                  icon={Shield}
+                  label="GoodHive Wallet"
+                  address={userProfile.okto_wallet_address}
+                  description="Your secure GoodHive wallet"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Statistics Overview */}
+        <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-amber-100/50">
+          <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">Account Overview</h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <StatCard
+              value={userProfile.email ? "1" : "0"}
+              label="Connected Accounts"
+              color="blue"
             />
-            <ProfileItem
-              icon={User}
-              label="User ID"
-              value={userProfile?.userid}
+            <StatCard
+              value={[userProfile.talent_status, userProfile.mentor_status, userProfile.recruiter_status].filter(s => s === "approved").length.toString()}
+              label="Approved Roles"
+              color="green"
             />
-            <ProfileItem
-              icon={Briefcase}
-              label="Talent Status"
-              value={
-                <StatusBadge status={userProfile?.talent_status as string} />
-              }
+            <StatCard
+              value={[userProfile.talent_status, userProfile.mentor_status, userProfile.recruiter_status].filter(s => s === "pending").length.toString()}
+              label="Pending Approvals"
+              color="yellow"
             />
-            <ProfileItem
-              icon={GraduationCap}
-              label="Mentor Status"
-              value={
-                <StatusBadge status={userProfile?.mentor_status as string} />
-              }
-            />
-            <ProfileItem
-              icon={Users}
-              label="Recruiter Status"
-              value={
-                <StatusBadge status={userProfile?.recruiter_status as string} />
-              }
-            />
-            <ProfileItem
-              icon={Wallet}
-              label="External Wallet Address"
-              value={userProfile?.wallet_address || "Not Connected"}
-              cropped
-            />
-            <ProfileItem
-              icon={Shield}
-              label="GoodHive Wallet Address"
-              value={userProfile?.okto_wallet_address || "Not Connected"}
-              cropped
+            <StatCard
+              value={[userProfile.wallet_address, userProfile.okto_wallet_address].filter(Boolean).length.toString()}
+              label="Connected Wallets"
+              color="purple"
             />
           </div>
-          {/* <>
-            {!userProfile.email && (
-              <div className="mt-8 flex justify-center">
-                <button
-                  onClick={handleConnect}
-                  disabled={isConnecting}
-                  className="flex bg-[#FFC905] text-[#ffffff] font-bold py-3 px-6 rounded-full transition-all duration-200 shadow-lg shadow-yellow-300/50 hover:shadow-yellow-400/70"
-                >
-                  {isConnecting ? (
-                    <div className="flex items-center ">
-                      <svg
-                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      <span className="drop-shadow-[0_1px_1px_rgba(0,0,0,0.2)]">
-                        Connecting...
-                      </span>
-                    </div>
-                  ) : (
-                    <span className="flex items-center drop-shadow-[0_1px_1px_rgba(0,0,0,0.2)]">
-                      <Link className="mr-2 h-5 w-5" />
-                      Connect Email and Password Login
-                    </span>
-                  )}
-                </button>
-              </div>
-            )}
-          </> */}
         </div>
       </div>
     </div>
   );
 }
 
-interface ProfileItemProps {
+// Component Interfaces
+interface InfoItemProps {
   icon: React.ElementType;
   label: string;
-  value: React.ReactNode;
-  cropped?: boolean;
+  value: string;
+  status?: "connected" | "disconnected";
+  copyable?: boolean;
 }
 
-function ProfileItem({ icon: Icon, label, value, cropped }: ProfileItemProps) {
+interface RoleStatusCardProps {
+  icon: React.ElementType;
+  title: string;
+  status: "pending" | "approved";
+  description: string;
+}
+
+interface WalletItemProps {
+  icon: React.ElementType;
+  label: string;
+  address?: string;
+  description: string;
+}
+
+interface StatCardProps {
+  value: string;
+  label: string;
+  color: "blue" | "green" | "yellow" | "purple";
+}
+
+// InfoItem Component
+function InfoItem({ icon: Icon, label, value, status, copyable }: InfoItemProps) {
   const handleCopy = () => {
-    if (typeof value === "string") {
+    navigator.clipboard
+      .writeText(value)
+      .then(() =>
+        toast.success("Copied to clipboard!", {
+          icon: "📋",
+        }),
+      )
+      .catch((err) => console.error("Failed to copy:", err));
+  };
+
+  return (
+    <div className="flex items-center justify-between p-4 bg-gray-50/50 rounded-2xl border border-gray-100">
+      <div className="flex items-center space-x-3">
+        <div className="w-10 h-10 bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl flex items-center justify-center">
+          <Icon className="w-5 h-5 text-gray-600" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-gray-500">{label}</p>
+          <p className="text-sm font-semibold text-gray-900 mt-1">{value}</p>
+        </div>
+      </div>
+      <div className="flex items-center space-x-2">
+        {status && (
+          <div className="flex items-center">
+            {status === "connected" ? (
+              <CheckCircle className="w-4 h-4 text-green-500" />
+            ) : (
+              <XCircle className="w-4 h-4 text-red-500" />
+            )}
+          </div>
+        )}
+        {copyable && (
+          <button
+            onClick={handleCopy}
+            className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+            title="Copy to clipboard"
+          >
+            <Copy className="w-4 h-4 text-gray-500" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// RoleStatusCard Component
+function RoleStatusCard({ icon: Icon, title, status, description }: RoleStatusCardProps) {
+  const getStatusColor = () => {
+    return status === "approved" 
+      ? "from-green-400 to-green-500" 
+      : "from-yellow-400 to-yellow-500";
+  };
+
+  const getStatusIcon = () => {
+    return status === "approved" ? CheckCircle : Clock;
+  };
+
+  const StatusIcon = getStatusIcon();
+
+  return (
+    <div className="flex items-center p-4 bg-gradient-to-r from-gray-50 to-gray-100/50 rounded-2xl border border-gray-100 hover:shadow-md transition-all duration-200">
+      <div className={`w-12 h-12 bg-gradient-to-r ${getStatusColor()} rounded-2xl flex items-center justify-center mr-4 shadow-lg`}>
+        <Icon className="w-6 h-6 text-white" />
+      </div>
+      <div className="flex-1">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-gray-900">{title}</h3>
+          <div className="flex items-center space-x-2">
+            <StatusIcon className={`w-4 h-4 ${status === "approved" ? "text-green-500" : "text-yellow-500"}`} />
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+              status === "approved" 
+                ? "bg-green-100 text-green-800" 
+                : "bg-yellow-100 text-yellow-800"
+            }`}>
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </span>
+          </div>
+        </div>
+        <p className="text-sm text-gray-600 mt-1">{description}</p>
+      </div>
+    </div>
+  );
+}
+
+// WalletItem Component
+function WalletItem({ icon: Icon, label, address, description }: WalletItemProps) {
+  const handleCopy = () => {
+    if (address) {
       navigator.clipboard
-        .writeText(value)
+        .writeText(address)
         .then(() =>
-          toast.success("Copied to clipboard!", {
-            icon: "📋",
+          toast.success("Address copied to clipboard!", {
+            icon: "🔗",
           }),
         )
         .catch((err) => console.error("Failed to copy:", err));
     }
   };
 
+  const formatAddress = (addr: string) => {
+    // Don't truncate if there's space - let CSS handle overflow if needed
+    return addr;
+  };
+
   return (
-    <div className="flex items-center space-x-4 bg-gray-50 p-4 rounded-lg shadow-sm transition-all duration-200 hover:scale-105">
-      <Icon className="w-6 h-6 text-yellow-500" />
-      <div className="flex-grow">
-        <p className="text-sm font-medium text-gray-500">{label}</p>
-        <div className="text-sm mt-2 font-semibold text-gray-800">
-          {cropped && typeof value === "string" && value.length > 20
-            ? `${value.slice(0, 10)}...${value.slice(-20)}`
-            : value}
+    <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100/50 rounded-2xl border border-gray-100">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 bg-gradient-to-r from-green-100 to-green-200 rounded-xl flex items-center justify-center">
+            <Icon className="w-5 h-5 text-green-600" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-gray-900">{label}</h3>
+            <p className="text-xs text-gray-600">{description}</p>
+          </div>
         </div>
+        {address && (
+          <div className="flex items-center space-x-2">
+            <CheckCircle className="w-4 h-4 text-green-500" />
+            <button
+              onClick={handleCopy}
+              className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+              title="Copy address"
+            >
+              <Copy className="w-4 h-4 text-gray-500" />
+            </button>
+          </div>
+        )}
       </div>
-      {typeof value === "string" && (
-        <button
-          onClick={handleCopy}
-          className="p-2 hover:bg-gray-200 rounded-full"
-          title="Copy to clipboard"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 text-gray-500"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
-            <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
-          </svg>
-        </button>
-      )}
+      <div className="text-sm font-mono bg-white/50 p-3 rounded-xl border border-gray-200 break-all">
+        {address ? (
+          <span className="block w-full">{formatAddress(address)}</span>
+        ) : (
+          <span className="text-gray-500 flex items-center">
+            <XCircle className="w-4 h-4 mr-2" />
+            Not Connected
+          </span>
+        )}
+      </div>
     </div>
   );
 }
 
-function StatusBadge({
-  firstCaseLower,
-  status,
-  color,
-}: {
-  firstCaseLower?: boolean;
-  status: "pending" | "approved" | string;
-  color?: "green" | "yellow" | "none";
-}) {
-  let badgeThemeColor;
-  if (status === "approved" || color === "green") {
-    badgeThemeColor = "bg-green-100 text-green-800";
-  } else if (status === "pending" || color === "yellow") {
-    badgeThemeColor = "bg-yellow-100 text-yellow-600";
-  } else {
-    badgeThemeColor = "";
-  }
+// StatCard Component
+function StatCard({ value, label, color }: StatCardProps) {
+  const getColorClasses = () => {
+    const colors = {
+      blue: "from-blue-400 to-blue-500",
+      green: "from-green-400 to-green-500", 
+      yellow: "from-yellow-400 to-yellow-500",
+      purple: "from-purple-400 to-purple-500",
+    };
+    return colors[color];
+  };
+
   return (
-    <span
-      className={`${badgeThemeColor} text-sm font-medium px-2 py-1 rounded-full`}
-    >
-      {firstCaseLower
-        ? status
-        : status?.charAt(0).toUpperCase() + status?.slice(1)}
-    </span>
+    <div className="text-center p-6 bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-100 hover:shadow-lg transition-all duration-200">
+      <div className={`w-16 h-16 bg-gradient-to-r ${getColorClasses()} rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg`}>
+        <span className="text-2xl font-bold text-white">{value}</span>
+      </div>
+      <p className="text-sm font-medium text-gray-600">{label}</p>
+    </div>
   );
 }
