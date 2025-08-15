@@ -8,7 +8,7 @@ import { TalentProfileData } from "./types";
 import { generateAvailabilityStatus } from "./utils";
 import ProfileAboutWork from "@/app/components/talents/ProfileAboutWork";
 import TalentsCVSection from "@/app/components/talents/TalentsCVSection";
-import GoodHiveSpinner from "@/app/components/spinners/hoodhive-spinner/goodhive-spinner";
+import BeeHiveSpinner from "@/app/components/spinners/bee-hive-spinner";
 import LastActiveStatus from "@/app/components/LastActiveStatus";
 import "react-quill/dist/quill.snow.css";
 import "@/app/styles/rich-text.css";
@@ -51,7 +51,7 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
   }
 
   if (isLoading || !profileData) {
-    return <GoodHiveSpinner size="large" />;
+    return <BeeHiveSpinner size="large" />;
   }
 
   const {
