@@ -35,6 +35,50 @@ export default function UserProfilePage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [showConnectEmailPopup, setShowConnectEmailPopup] = useState(false);
 
+  // Add custom animations
+  const animationStyles = `
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(5deg); }
+    }
+    @keyframes floatReverse {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(10px) rotate(-5deg); }
+    }
+    @keyframes honeycombShift {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 60px; }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.05); }
+    }
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .animate-float { animation: float 6s ease-in-out infinite; }
+    .animate-float-reverse { animation: floatReverse 8s ease-in-out infinite; }
+    .animate-honeycomb { animation: honeycombShift 20s linear infinite; }
+    .animate-pulse-custom { animation: pulse 4s ease-in-out infinite; }
+    .animate-fade-in-up { animation: fadeInUp 0.8s ease-out; }
+    .animate-shimmer {
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+      background-size: 200% 100%;
+      animation: shimmer 2s ease-in-out infinite;
+    }
+  `;
+
   const user_id = Cookies.get("user_id");
 
   const fetchUserProfile = useCallback(async () => {
@@ -71,30 +115,91 @@ export default function UserProfilePage() {
   };
 
   if (!userProfile) {
-    return <BeeHiveSpinner size="large" />;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 flex flex-col items-center justify-center">
+        <BeeHiveSpinner size="large" />
+        <p className="mt-6 text-xl font-semibold text-amber-700">Loading User Profile</p>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50/30 via-yellow-50/20 to-orange-50/30">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 relative overflow-hidden">
+      <style dangerouslySetInnerHTML={{__html: animationStyles}} />
+      
+      {/* Animated Honeycomb Background Pattern */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute inset-0 animate-honeycomb" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23F59E0B' fill-opacity='0.4'%3E%3Cpath d='m36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          backgroundSize: '60px 60px'
+        }}></div>
+      </div>
+      
+      {/* Floating Hexagon Decorations with Animation */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-8 h-8 rotate-12 opacity-20 animate-float">
+          <div className="w-full h-full bg-amber-400 transform rotate-45" style={{clipPath: 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)'}}></div>
+        </div>
+        <div className="absolute top-40 right-20 w-6 h-6 rotate-45 opacity-15 animate-float-reverse" style={{animationDelay: '1s'}}>
+          <div className="w-full h-full bg-yellow-500 transform rotate-45" style={{clipPath: 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)'}}></div>
+        </div>
+        <div className="absolute bottom-32 left-1/4 w-10 h-10 rotate-12 opacity-10 animate-float" style={{animationDelay: '2s'}}>
+          <div className="w-full h-full bg-orange-400 transform rotate-45" style={{clipPath: 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)'}}></div>
+        </div>
+        <div className="absolute top-1/3 right-10 w-4 h-4 rotate-90 opacity-25 animate-float-reverse" style={{animationDelay: '3s'}}>
+          <div className="w-full h-full bg-amber-300 transform rotate-45" style={{clipPath: 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)'}}></div>
+        </div>
+        {/* Additional floating elements */}
+        <div className="absolute top-60 left-20 w-5 h-5 rotate-30 opacity-15 animate-float" style={{animationDelay: '4s'}}>
+          <div className="w-full h-full bg-yellow-400 transform rotate-45" style={{clipPath: 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)'}}></div>
+        </div>
+        <div className="absolute bottom-20 right-1/3 w-7 h-7 rotate-60 opacity-20 animate-float-reverse" style={{animationDelay: '5s'}}>
+          <div className="w-full h-full bg-amber-500 transform rotate-45" style={{clipPath: 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)'}}></div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8 max-w-7xl relative z-10">
         {/* Header Section */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-3xl mb-6 shadow-lg">
-            <CircleUserRound className="w-10 h-10 text-white" />
+        <div className="text-center mb-12 relative">
+          {/* Decorative honeycomb elements around header with pulsing animation */}
+          <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 -translate-y-8 opacity-10">
+            <div className="flex space-x-2">
+              <div className="w-3 h-3 bg-amber-400 transform rotate-45 animate-pulse-custom" style={{clipPath: 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)', animationDelay: '0s'}}></div>
+              <div className="w-3 h-3 bg-yellow-400 transform rotate-45 animate-pulse-custom" style={{clipPath: 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)', animationDelay: '1s'}}></div>
+              <div className="w-3 h-3 bg-amber-400 transform rotate-45 animate-pulse-custom" style={{clipPath: 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)', animationDelay: '2s'}}></div>
+            </div>
           </div>
-          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+          
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-amber-400 via-yellow-500 to-orange-400 rounded-3xl mb-6 shadow-lg relative hover:scale-105 transition-transform duration-300 group">
+            <CircleUserRound className="w-10 h-10 text-white group-hover:scale-105 transition-transform duration-300" />
+            {/* Subtle hexagon pattern on avatar with shimmer effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 rounded-3xl group-hover:animate-shimmer" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23FFFFFF' fill-opacity='0.1'%3E%3Cpolygon points='10,1 4,5 4,15 10,19 16,15 16,5'/%3E%3C/g%3E%3C/svg%3E")`,
+            }}></div>
+          </div>
+          
+          <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-amber-700 via-yellow-700 to-orange-700 bg-clip-text text-transparent mb-4 leading-tight">
             User Profile
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Manage your GoodHive account and track your status across all roles
+          <p className="text-xl text-gray-700 max-w-2xl mx-auto">
+            Manage your 🐝 <span className="font-semibold text-amber-700">GoodHive</span> account and track your status across all roles
           </p>
+          
+          {/* Subtle decorative elements with staggered pulse */}
+          <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 opacity-10">
+            <div className="flex space-x-1">
+              <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse-custom" style={{animationDelay: '0s'}}></div>
+              <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse-custom" style={{animationDelay: '1s'}}></div>
+              <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse-custom" style={{animationDelay: '2s'}}></div>
+            </div>
+          </div>
         </div>
 
         {/* Profile Cards Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 mb-12">
           {/* Account Information */}
           <div className="lg:col-span-2 xl:col-span-1">
-            <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-amber-100/50 h-full">
+            <div className="bg-white/95 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-amber-200/60 h-full hover:shadow-xl hover:shadow-amber-200/50 transition-all duration-300 hover:border-amber-300/70 hover:scale-102 hover:bg-white group animate-fade-in-up" style={{animationDelay: '0.1s'}}>
               <div className="flex items-center mb-6">
                 <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-blue-500 rounded-2xl flex items-center justify-center mr-4">
                   <User className="w-6 h-6 text-white" />
@@ -121,7 +226,7 @@ export default function UserProfilePage() {
 
           {/* Role Status */}
           <div className="lg:col-span-2 xl:col-span-1">
-            <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-amber-100/50 h-full">
+            <div className="bg-white/95 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-amber-200/60 h-full hover:shadow-xl hover:shadow-amber-200/50 transition-all duration-300 hover:border-amber-300/70 hover:scale-102 hover:bg-white group animate-fade-in-up" style={{animationDelay: '0.3s'}}>
               <div className="flex items-center mb-6">
                 <div className="w-12 h-12 bg-gradient-to-r from-purple-400 to-purple-500 rounded-2xl flex items-center justify-center mr-4">
                   <Users className="w-6 h-6 text-white" />
@@ -154,7 +259,7 @@ export default function UserProfilePage() {
 
           {/* Wallet Connections */}
           <div className="lg:col-span-2 xl:col-span-1">
-            <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-amber-100/50 h-full">
+            <div className="bg-white/95 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-amber-200/60 h-full hover:shadow-xl hover:shadow-amber-200/50 transition-all duration-300 hover:border-amber-300/70 hover:scale-102 hover:bg-white group animate-fade-in-up" style={{animationDelay: '0.5s'}}>
               <div className="flex items-center mb-6">
                 <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-green-500 rounded-2xl flex items-center justify-center mr-4">
                   <Wallet className="w-6 h-6 text-white" />
@@ -181,9 +286,9 @@ export default function UserProfilePage() {
         </div>
 
         {/* Statistics Overview */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-amber-100/50">
+        <div className="bg-white/95 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-amber-200/60 hover:shadow-xl hover:shadow-amber-200/50 transition-all duration-300 hover:border-amber-300/70 hover:scale-105 hover:bg-white animate-fade-in-up" style={{animationDelay: '0.6s'}}>
           <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">Account Overview</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <StatCard
               value={userProfile.email ? "1" : "0"}
               label="Connected Accounts"
@@ -399,11 +504,11 @@ function StatCard({ value, label, color }: StatCardProps) {
   };
 
   return (
-    <div className="text-center p-6 bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-100 hover:shadow-lg transition-all duration-200">
-      <div className={`w-16 h-16 bg-gradient-to-r ${getColorClasses()} rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg`}>
+    <div className="text-center p-6 bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-100 hover:shadow-lg hover:shadow-amber-100/50 transition-all duration-300 hover:scale-102 hover:bg-white/80 group animate-fade-in-up">
+      <div className={`w-16 h-16 bg-gradient-to-r ${getColorClasses()} rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300`}>
         <span className="text-2xl font-bold text-white">{value}</span>
       </div>
-      <p className="text-sm font-medium text-gray-600">{label}</p>
+      <p className="text-sm font-medium text-gray-600 group-hover:text-gray-800 transition-colors duration-300">{label}</p>
     </div>
   );
 }
