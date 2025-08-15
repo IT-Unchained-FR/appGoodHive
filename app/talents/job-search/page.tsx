@@ -25,6 +25,8 @@ export default async function JobSearchPage({
     page: number;
     recruiter?: string;
     mentor?: string;
+    // New "Open to" filters
+    openToTalents?: string;
   };
 }) {
   console.log("Search params received:", searchParams);
@@ -115,6 +117,11 @@ export default async function JobSearchPage({
                 {searchParams.mentor === "true" && (
                   <span className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 text-purple-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm">
                     <span className="mr-1">🎓</span> Open to Mentors
+                  </span>
+                )}
+                {searchParams.openToTalents === "true" && (
+                  <span className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 text-green-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm">
+                    <span className="mr-1">👤</span> Open to Talents
                   </span>
                 )}
               </div>

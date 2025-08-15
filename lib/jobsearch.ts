@@ -13,6 +13,8 @@ type FetchJobsProps = {
   budgetRange?: string;
   experienceLevel?: string;
   skills?: string;
+  // New "Open to" filters
+  openToTalents?: string;
 };
 
 const sql = postgres(process.env.DATABASE_URL || "", {
@@ -40,6 +42,8 @@ export async function fetchJobs({
   budgetRange = "",
   experienceLevel = "",
   skills = "",
+  // New "Open to" filters
+  openToTalents = "",
 }: FetchJobsProps) {
   try {
     // Build dynamic WHERE conditions
@@ -50,7 +54,7 @@ export async function fetchJobs({
     // Search in title, skills, and company name
     if (search) {
       whereConditions.push(
-        `(LOWER(title) LIKE $${++paramIndex} OR LOWER(skills) LIKE $${paramIndex} OR LOWER(company_name) LIKE $${paramIndex})`,
+        `(LOWER(title) LIKE $${++paramIndex} OR LOWER(COALESCE(skills, '')) LIKE $${paramIndex} OR LOWER(company_name) LIKE $${paramIndex})`,
       );
       params.push(contains(search));
     }
@@ -71,17 +75,22 @@ export async function fetchJobs({
 
     // Recruiter filter
     if (recruiter === "true") {
-      whereConditions.push("(recruiter = 'true' OR recruiter = true)");
+      whereConditions.push("recruiter::text = 'true'");
     }
 
     // Mentor filter
     if (mentor === "true") {
-      whereConditions.push("(mentor = 'true' OR mentor = true)");
+      whereConditions.push("mentor::text = 'true'");
     }
 
     // Talent filter
     if (talent === "true") {
-      whereConditions.push("(talent = 'true' OR talent = true)");
+      whereConditions.push("talent::text = 'true'");
+    }
+
+    // New "Open to" filters
+    if (openToTalents === "true") {
+      whereConditions.push("talent::text = 'true'");
     }
 
     // Project type filter
@@ -108,7 +117,7 @@ export async function fetchJobs({
     if (skills) {
       const skillsArray = skills.split(",").map((s) => s.trim());
       const skillsConditions = skillsArray.map(
-        () => `LOWER(skills) LIKE $${++paramIndex}`,
+        () => `LOWER(COALESCE(skills, '')) LIKE $${++paramIndex}`,
       );
       whereConditions.push(`(${skillsConditions.join(" OR ")})`);
       skillsArray.forEach((skill) => params.push(contains(skill)));
@@ -145,14 +154,14 @@ export async function fetchJobs({
       duration: item.duration,
       budget: item.budget,
       projectType: item.project_type,
-      skills: item.skills.split(","),
+      skills: item.skills ? item.skills.split(",") : [],
       country: item.country,
       city: item.city,
       walletAddress: item.wallet_address,
       image_url: item.image_url,
-      talent: item.talent === "true" || item.talent === true,
-      mentor: item.mentor === "true" || item.mentor === true,
-      recruiter: item.recruiter === "true" || item.recruiter === true,
+      talent: item.talent === "true" || item.talent === true || item.talent === 1,
+      mentor: item.mentor === "true" || item.mentor === true || item.mentor === 1,
+      recruiter: item.recruiter === "true" || item.recruiter === true || item.recruiter === 1,
       escrowAmount: item.escrow_amount,
       posted_at: item.posted_at,
       in_saving_stage: item.in_saving_stage,

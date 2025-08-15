@@ -39,6 +39,11 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
     searchParams.get("onlyRecruiter") === "true",
   );
 
+  // New filter state for "Open to" filters
+  const [openToTalents, setOpenToTalents] = useState(
+    searchParams.get("openToTalents") === "true",
+  );
+
   const { isSearchTalent = false } = props;
 
   const title = isSearchTalent
@@ -91,6 +96,11 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
           filters.onlyRecruiter !== undefined
             ? filters.onlyRecruiter
             : onlyRecruiter,
+        // New "Open to" filters
+        openToTalents:
+          filters.openToTalents !== undefined
+            ? filters.openToTalents
+            : openToTalents,
       };
 
       if (isSearchTalent) {
@@ -109,6 +119,10 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
         else params.delete("mentor");
       }
 
+      // Handle new "Open to" filters for both job and talent search
+      if (currentFilters.openToTalents) params.set("openToTalents", "true");
+      else params.delete("openToTalents");
+
       const path = isSearchTalent
         ? "/companies/search-talents"
         : "/talents/job-search";
@@ -124,6 +138,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
       onlyTalent,
       onlyMentor,
       onlyRecruiter,
+      openToTalents,
     ],
   );
 
@@ -163,6 +178,7 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
     setOnlyTalent(false);
     setOnlyMentor(false);
     setOnlyRecruiter(false);
+    setOpenToTalents(false);
 
     const path = isSearchTalent
       ? "/companies/search-talents"
@@ -277,6 +293,19 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
                               setOpenToMentor(checked);
                               performSearch(selectedSkills, location, companyName, {
                                 openToMentor: checked,
+                              }, false);
+                            }}
+                          />
+                          
+                          {/* New "Open to" filters */}
+                          <ToggleSwitch
+                            id="openToTalents"
+                            label="Open to Talents"
+                            checked={openToTalents}
+                            onChange={(checked) => {
+                              setOpenToTalents(checked);
+                              performSearch(selectedSkills, location, companyName, {
+                                openToTalents: checked,
                               }, false);
                             }}
                           />
