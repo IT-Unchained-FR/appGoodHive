@@ -136,6 +136,24 @@ export async function POST(request: Request) {
   }
 }
 
+// Helper function to safely decode base64 or return original string
+function safeBase64Decode(value: string | null | undefined): string {
+  if (!value) return "";
+
+  try {
+    // Check if the string looks like base64 (contains only base64 characters)
+    const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+    if (base64Regex.test(value)) {
+      return Buffer.from(value, "base64").toString("utf-8");
+    }
+    // If it doesn't look like base64, return as is
+    return value;
+  } catch (error) {
+    console.error("Error decoding base64:", error);
+    return value || "";
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Get user_id from query parameters
@@ -181,7 +199,8 @@ export async function GET(request: NextRequest) {
         availability,
         approved,
         inReview,
-        user_id
+        user_id,
+        last_active
       FROM goodhive.talents 
       WHERE user_id = ${user_id}
     `;
@@ -190,9 +209,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
-    const profileData = talents[0];
+    const talent = talents[0];
 
-    // No need to decode - fields are stored as character varying in the database
+    // Get approved roles from users table
+    const users = await sql`
+      SELECT approved_roles
+      FROM goodhive.users 
+      WHERE userid = ${user_id}
+    `;
+
+    const profileData = {
+      ...talent,
+      description: safeBase64Decode(talent.description),
+      about_work: safeBase64Decode(talent.about_work),
+      approved_roles: users.length > 0 ? users[0].approved_roles : [],
+    };
 
     return NextResponse.json(profileData);
   } catch (error) {
