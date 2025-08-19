@@ -8,6 +8,7 @@ import { useOkto } from "@okto_web3/react-sdk";
 import { GoogleLogin } from "@react-oauth/google";
 import Cookies from "js-cookie";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import styles from "./login.module.scss";
@@ -17,7 +18,21 @@ const Login = () => {
   const [otpLoading, setOtpLoading] = useState(false);
   // UI state
 
+  const router = useRouter();
   const oktoClient = useOkto();
+
+  // Check if user is already authenticated and redirect
+  useEffect(() => {
+    const loggedInUserId = Cookies.get("user_id");
+    if (loggedInUserId) {
+      // User is already logged in, redirect to their profile
+      router.push("/talents/my-profile");
+      return;
+    }
+    
+    // Clear localStorage if not logged in (as requested)
+    localStorage.clear();
+  }, [router]);
 
   // Onboarding video
   const onboardingVideoUrl =
@@ -208,11 +223,14 @@ const Login = () => {
             </div>
           </div>
 
+          {/* Okto login section commented out as requested */}
+          {/*
           <div className={styles.divider}>
             <span>or continue with email</span>
           </div>
 
           <OktoOTPLogin setIsLoading={setOtpLoading} isLoading={otpLoading} />
+          */}
 
           <div className={styles.divider}>
             <span>or continue with your wallet</span>
