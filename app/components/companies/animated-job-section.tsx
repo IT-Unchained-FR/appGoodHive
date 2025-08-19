@@ -82,43 +82,75 @@ export const AnimatedJobSection = ({
 
   return (
     <div className={className}>
-      {/* Featured Job Section */}
+      {/* Featured Position Section - Honey Bee Themed */}
       {featuredJob && (
-        <div className={`featured-job-enhanced ${isVisible ? "fade-in-up" : "opacity-0"}`}>
-          <div className="modern-card-enhanced p-6">
-            <div className="section-header-enhanced">
-              <div className="section-icon-enhanced" style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%)' }}>
-                <Star className="w-6 h-6 text-white" />
+        <div className={`featured-position-section ${isVisible ? "fade-in-up" : "opacity-0"}`}>
+          <div className="featured-position-container">
+            {/* Header with Honey Bee Theme */}
+            <div className="featured-position-header">
+              <div className="header-content">
+                <div className="honey-crown">
+                  <div className="crown-icon">
+                    <span className="crown-emoji">👑</span>
+                    <div className="floating-bees">
+                      <span className="bee bee-1">🐝</span>
+                      <span className="bee bee-2">🐝</span>
+                      <span className="bee bee-3">🐝</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="header-text">
+                  <h2 className="featured-title">
+                    🍯 Featured Position
+                    <div className="title-underline"></div>
+                  </h2>
+                  <p className="featured-subtitle">
+                    Our premium honey-sweet opportunity awaits you!
+                  </p>
+                </div>
               </div>
-              <div className="section-title">
-                <h2>Featured Position</h2>
-                <p>Our highlighted opportunity</p>
+              
+              {/* Decorative Honeycomb Pattern */}
+              <div className="honeycomb-decoration">
+                <div className="hexagon hex-1"></div>
+                <div className="hexagon hex-2"></div>
+                <div className="hexagon hex-3"></div>
+                <div className="hexagon hex-4"></div>
               </div>
             </div>
 
-            <div className="relative mt-6">
-              {/* Escrow Balance Display */}
+            {/* Escrow Balance with Honey Theme */}
+            <div className="escrow-balance-honey">
               {isLoadingBalances ? (
-                <div className="mb-4 flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#FFC905]"></div>
-                  <span>Loading escrow balance...</span>
+                <div className="balance-loading">
+                  <div className="honey-spinner">
+                    <span className="spinning-bee">🐝</span>
+                  </div>
+                  <span>Loading honey pot balance...</span>
                 </div>
               ) : (
-                <div className="mb-4 flex items-center gap-2 text-sm bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-3 border border-green-200">
-                  <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full flex items-center justify-center">
-                    <DollarSign className="w-4 h-4 text-white" />
+                <div className="balance-display">
+                  <div className="honey-pot-icon">
+                    <span>🍯</span>
                   </div>
-                  <div>
-                    <p className="font-semibold text-green-700">
-                      Escrow Balance: ${jobBalances[featuredJob.id]?.toFixed(2) || "0.00"} USDC
+                  <div className="balance-info">
+                    <p className="balance-amount">
+                      Honey Pot: ${jobBalances[featuredJob.id]?.toFixed(2) || "0.00"} USDC
                     </p>
-                    <p className="text-xs text-green-600">Funds secured and ready</p>
+                    <p className="balance-subtitle">Sweet rewards secured & ready</p>
+                  </div>
+                  <div className="balance-bees">
+                    <span className="guard-bee">🐝</span>
                   </div>
                 </div>
               )}
+            </div>
 
-              <div className="featured-wrapper">
-                <div className="featured-content">
+            {/* Featured Job Card with Enhanced Styling */}
+            <div className="featured-job-wrapper">
+              <div className="featured-job-glow"></div>
+              <div className="featured-job-border">
+                <div className="featured-job-content">
                   <JobCard
                     key={featuredJob.id}
                     id={featuredJob.id}
@@ -136,7 +168,7 @@ export const AnimatedJobSection = ({
                     projectType={featuredJob.projectType}
                     budget={featuredJob.budget}
                     skills={featuredJob.skills}
-                    buttonText="Apply Now"
+                    buttonText="🍯 Apply Now"
                     walletAddress={featuredJob.walletAddress}
                     companyEmail={companyEmail}
                     escrowAmount={featuredJob.escrowAmount}
@@ -145,6 +177,29 @@ export const AnimatedJobSection = ({
                     mentor={featuredJob.mentor}
                     recruiter={featuredJob.recruiter}
                   />
+                </div>
+              </div>
+              
+              {/* Floating Elements */}
+              <div className="floating-elements">
+                <span className="float-honey float-1">🍯</span>
+                <span className="float-bee float-2">🐝</span>
+                <span className="float-flower float-3">🌻</span>
+                <span className="float-honey float-4">🍯</span>
+              </div>
+            </div>
+
+            {/* Call to Action Banner */}
+            <div className="featured-cta-banner">
+              <div className="cta-content">
+                <span className="cta-bee">🐝</span>
+                <p className="cta-text">
+                  Don't miss this sweet opportunity! Join our hive and make it yours.
+                </p>
+                <div className="cta-sparkles">
+                  <span className="sparkle">✨</span>
+                  <span className="sparkle">✨</span>
+                  <span className="sparkle">✨</span>
                 </div>
               </div>
             </div>

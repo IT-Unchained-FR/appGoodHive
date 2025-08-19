@@ -81,7 +81,7 @@ export const CompanyStatsCard = ({
           <div className="bg-yellow-400 hover:bg-yellow-500 rounded-full p-3 mr-4 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12 group-hover:shadow-lg">
             <BarChart className="w-6 h-6 text-white transition-transform duration-300 group-hover:scale-110" />
           </div>
-          <h3 className="text-3xl font-bold text-yellow-600/80 hover:text-yellow-500 transition-all duration-300 group-hover:translate-x-1">Company Insights</h3>
+          <h3 className="text-3xl font-bold text-amber-700 hover:text-amber-600 transition-all duration-300 group-hover:translate-x-1">Company Insights</h3>
         </div>
 
         {/* Stats Grid */}
