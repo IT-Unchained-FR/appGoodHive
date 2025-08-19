@@ -128,6 +128,9 @@ importers:
       convertapi-js:
         specifier: ^1.0.8
         version: 1.0.8
+      country-flag-icons:
+        specifier: ^1.5.19
+        version: 1.5.19
       crypto:
         specifier: ^1.0.1
         version: 1.0.1
@@ -5111,6 +5114,9 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
+
+  country-flag-icons@1.5.19:
+    resolution: {integrity: sha512-D/ZkRyj+ywJC6b2IrAN3/tpbReMUqmuRLlcKFoY/o0+EPQN9Ev/e8tV+D3+9scvu/tarxwLErNwS73C3yzxs/g==}
 
   crc-32@1.2.2:
     resolution: {integrity: sha512-ROmzCKrTnOwybPcJApAA6WBWij23HVfGVNKqqrZpuyZOHqK2CwHSvpGuyt/UNNvaIjEd8X5IFGp4Mh+Ie1IHJQ==}
@@ -16014,6 +16020,8 @@ snapshots:
       parse-json: 5.2.0
     optionalDependencies:
       typescript: 5.0.4
+
+  country-flag-icons@1.5.19: {}
 
   crc-32@1.2.2: {}
 
