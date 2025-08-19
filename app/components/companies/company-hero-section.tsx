@@ -1,5 +1,6 @@
 "use client";
 
+import { generateCountryFlag } from "@/app/utils/generate-country-flag";
 import { Sparkles, MapPin, Users, Briefcase } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -135,8 +136,23 @@ export const CompanyHeroSection = ({
               </h1>
               
               <div className="flex items-center justify-center lg:justify-start gap-2 mb-3">
+                <div className="flex items-center gap-1.5 bg-white/80 backdrop-blur-sm rounded-lg px-2 py-1 border border-gray-200/60 shadow-sm">
+                  <div className="relative w-4 h-3 rounded-sm overflow-hidden shadow-sm border border-gray-200">
+                    <Image
+                      src={generateCountryFlag(country) as string}
+                      alt={`${country} flag`}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <span className="text-xs font-medium text-gray-700 capitalize">
+                    {country}
+                  </span>
+                </div>
                 <MapPin className="w-5 h-5 text-gray-600" />
-                <span className="text-gray-600 text-lg">{city}, {country}</span>
+                <span className="text-gray-600 text-lg">
+                  {city}
+                </span>
               </div>
 
               
