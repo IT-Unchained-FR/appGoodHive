@@ -77,36 +77,36 @@ export const CompanySocialMediaAndContact: FC<Props> = (props) => {
   }, [user_id]);
 
   const socialLinks = [
-    { href: linkedin, icon: "/icons/linkedin.svg", alt: "LinkedIn" },
-    { href: `https://t.me/${telegram}`, icon: "/icons/telegram.svg", alt: "Telegram", show: isShowDetails },
-    { href: github, icon: "/icons/github.svg", alt: "GitHub" },
-    { href: stackoverflow, icon: "/icons/stackoverflow.svg", alt: "Stack Overflow" },
-    { href: twitter, icon: "/icons/twitter.jpg", alt: "Twitter" },
-    { href: portfolio, icon: "/icons/portfolio.svg", alt: "Portfolio" },
+    { href: linkedin, icon: "/icons/linkedin.svg", alt: "LinkedIn", brandColor: "#0A66C2" },
+    { href: `https://t.me/${telegram}`, icon: "/icons/telegram.svg", alt: "Telegram", show: isShowDetails, brandColor: "#24A1DE" },
+    { href: github, icon: "/icons/github.svg", alt: "GitHub", brandColor: "#181717" },
+    { href: stackoverflow, icon: "/icons/stackoverflow.svg", alt: "Stack Overflow", brandColor: "#F58025" },
+    { href: twitter, icon: "/icons/twitter.jpg", alt: "Twitter", brandColor: "#1DA1F2" },
+    { href: portfolio, icon: "/icons/portfolio.svg", alt: "Portfolio", brandColor: "#8A3FFC" },
   ].filter(link => link.href && (link.show === undefined || link.show));
 
   return (
-    <div className="space-y-6">
+    <div className="bg-gradient-to-br from-yellow-50 to-amber-100 p-6 rounded-2xl shadow-inner space-y-8">
       {/* Social Media Section */}
-      <div>
-        <h4 className="text-lg font-semibold text-gray-700 mb-3">Social Media</h4>
-        <div className="flex flex-wrap gap-4">
+      <div className="bg-white/60 backdrop-blur-sm p-6 rounded-xl shadow-md">
+        <h4 className="text-xl font-bold text-gray-800 mb-4">Follow Our Journey</h4>
+        <div className="flex flex-wrap gap-5 justify-center">
           {socialLinks.map((social) => (
-            <SocialLink key={social.alt} href={social.href} iconSrc={social.icon} alt={social.alt} />
+            <SocialLink key={social.alt} href={social.href} iconSrc={social.icon} alt={social.alt} brandColor={social.brandColor} />
           ))}
         </div>
       </div>
 
       {/* Contact Info Section */}
-      <div>
-        <h4 className="text-lg font-semibold text-gray-700 mb-3">Contact Info</h4>
+      <div className="bg-white/60 backdrop-blur-sm p-6 rounded-xl shadow-md">
+        <h4 className="text-xl font-bold text-gray-800 mb-4">Get in Touch</h4>
         {!isShowDetails ? (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center text-yellow-800">
-            <p className="font-semibold">Access Restricted</p>
-            <p className="text-sm">Contact details are only visible to validated talents.</p>
+          <div className="bg-amber-100 border-l-4 border-amber-500 text-amber-800 p-4 rounded-r-lg text-center">
+            <p className="font-bold">Access Restricted</p>
+            <p className="text-sm">Contact details are available to validated talents.</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-5">
             <ContactInfo
               label="Email"
               value={email}
