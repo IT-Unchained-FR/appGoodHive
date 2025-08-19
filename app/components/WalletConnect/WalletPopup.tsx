@@ -1,6 +1,7 @@
 import { getPortfolio, useOkto } from "@okto_web3/react-sdk";
 import Cookies from "js-cookie";
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useAccount } from "wagmi";
 import { WalletTab } from "./WalletTab";
 
@@ -26,7 +27,7 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({
   const [loading, setLoading] = useState(false);
   const [portfolio, setPortfolio] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"okto" | "external">("okto");
+  const [activeTab, setActiveTab] = useState<"okto" | "external">("external");
   const [externalWalletAddress, setExternalWalletAddress] = useState<
     string | null
   >(null);
@@ -117,17 +118,16 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({
 
   const currentWallet = getCurrentWalletInfo();
 
-  return (
+  const popupContent = (
     <div
-      className="absolute top-full right-0 mt-4 z-50 min-w-[340px] max-w-[95vw] bg-white rounded-2xl border border-[#FFC905] shadow-2xl p-0"
+      className="fixed top-4 right-4 min-w-[340px] max-w-[95vw] bg-white rounded-2xl border border-[#FFC905] shadow-2xl p-0"
       ref={anchorRef}
       style={{
         boxShadow: "0 8px 32px 0 rgba(255, 201, 5, 0.18)",
-        right: "-24px", // move a bit to the left
+        zIndex: 9999,
       }}
     >
-      {/* Arrow */}
-      <div className="absolute -top-2 right-10 w-0 h-0 border-l-8 border-r-8 border-b-8 border-transparent border-b-white"></div>
+      {/* Arrow removed since popup is now at top of screen */}
       <div className="p-6 pb-4 flex flex-col items-center min-h-[350px] w-[425px]">
         {/* Wallet header */}
         <div className="flex items-center gap-3 w-full">
@@ -159,7 +159,8 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({
           </button>
         </div>
 
-        {/* Tab Navigation */}
+        {/* Tab Navigation - Commented out as requested */}
+        {/* 
         <div className="flex w-full mt-4 mb-2 bg-gray-100 rounded-xl p-1">
           <button
             className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition ${
@@ -182,26 +183,19 @@ export const WalletPopup: React.FC<WalletPopupProps> = ({
             External Wallet
           </button>
         </div>
+        */}
 
-        {/* Tab Content */}
-        {activeTab === "okto" ? (
-          <WalletTab
-            walletType="okto"
-            walletAddress={oktoWalletAddress}
-            balance={balance}
-            coins={coins}
-            loading={loading}
-            error={error}
-          />
-        ) : (
-          <WalletTab
-            walletType="external"
-            walletAddress={externalWalletAddress}
-            loading={false}
-            error={null}
-          />
-        )}
+        {/* Tab Content - Only showing External Wallet as requested */}
+        <WalletTab
+          walletType="external"
+          walletAddress={externalWalletAddress}
+          loading={false}
+          error={null}
+        />
       </div>
     </div>
   );
+
+  // Use portal to render popup at the top level of the DOM
+  return typeof window !== 'undefined' ? createPortal(popupContent, document.body) : null;
 };
