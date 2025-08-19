@@ -1,19 +1,16 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useState } from "react";
+import "@/app/styles/company-profile-enhanced.scss";
 
-import { Card } from "@/app/components/card";
+import { AnimatedJobSection } from "@/app/components/companies/animated-job-section";
 import { CompanyBio } from "@/app/components/companies/company-bio-section";
 import { CompanyContactBtn } from "@/app/components/companies/company-contact-btn";
-import { CompanySocialMediaAndContact } from "@/app/components/companies/profile-social-media-and-contact";
 import { CompanyHeroSection } from "@/app/components/companies/company-hero-section";
-import { CompanyStatsCard } from "@/app/components/companies/company-stats-card";
-import { AnimatedJobSection } from "@/app/components/companies/animated-job-section";
 import { CompanyLoadingSpinner } from "@/app/components/companies/company-loading-spinner";
+import { CompanyStatsCard } from "@/app/components/companies/company-stats-card";
+import { CompanySocialMediaAndContact } from "@/app/components/companies/profile-social-media-and-contact";
 import { getJobBalance } from "@/app/lib/blockchain/contracts/GoodhiveJobContract";
-import { generateCountryFlag } from "@/app/utils/generate-country-flag";
-import { JobCard } from "@components/job-card";
 
 export const revalidate = 0;
 
@@ -151,7 +148,7 @@ export default function CompanyProfilePage(context: CompanyProfilePageProps) {
 
   if (isLoading) {
     return (
-      <CompanyLoadingSpinner 
+      <CompanyLoadingSpinner
         size="large"
         message="Loading company profile..."
         subMessage="Gathering the sweetest details"
@@ -160,7 +157,7 @@ export default function CompanyProfilePage(context: CompanyProfilePageProps) {
   }
 
   return (
-    <main className="relative min-h-screen bg-white">
+    <main className="company-profile-main">
       {/* Enhanced Hero Section */}
       <CompanyHeroSection
         companyName={designation || "Company Name"}
@@ -177,22 +174,28 @@ export default function CompanyProfilePage(context: CompanyProfilePageProps) {
         {/* Company Statistics */}
         <CompanyStatsCard
           totalJobs={jobs.length}
-          activeJobs={jobs.filter(job => job.id !== singleJob?.id).length + (singleJob ? 1 : 0)}
-          completedJobs={Math.floor(jobs.length * 0.7)} // Estimated completed jobs
+          activeJobs={
+            jobs.filter((job) => job.id !== singleJob?.id).length +
+            (singleJob ? 1 : 0)
+          }
+          completedJobs={Math.floor(jobs.length * 0.7)}
           averageRating={4.8}
           responseTime="< 2h"
+          className="fade-in-up"
         />
 
         {/* Company Information Card */}
-        <div className="modern-card p-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="modern-card-enhanced p-8 fade-in-up delay-200">
+          <div className="company-info-grid">
             {/* Company Bio */}
-            <div className="lg:col-span-2 space-y-6">
-              <div className="section-header">
-                <div className="section-icon">
+            <div className="bio-section">
+              <div className="section-header-enhanced">
+                <div className="section-icon-enhanced">
                   <span className="text-white text-lg">🍯</span>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-800">About Company</h3>
+                <h3 className="text-2xl font-bold text-gray-800">
+                  About Company
+                </h3>
               </div>
               <div className="prose prose-lg text-gray-700">
                 <CompanyBio text={headline} />
@@ -200,14 +203,14 @@ export default function CompanyProfilePage(context: CompanyProfilePageProps) {
             </div>
 
             {/* Contact & Actions */}
-            <div className="space-y-6">
+            <div className="contact-section">
               {/* Contact Button */}
-              <div className="text-center">
+              <div className="contact-button-container">
                 <CompanyContactBtn toEmail={email} toUserName={designation} />
               </div>
 
               {/* Contact & Social Media */}
-              <div>
+              <div className="social-contact-section">
                 <h4 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-800">
                   <span className="text-[#FFC905]">📞</span>
                   Connect With Us
@@ -230,14 +233,16 @@ export default function CompanyProfilePage(context: CompanyProfilePageProps) {
         </div>
 
         {/* Enhanced Job Listings */}
-        <AnimatedJobSection
-          jobs={jobs}
-          featuredJob={singleJob}
-          companyEmail={email}
-          userId={userId}
-          jobBalances={jobBalances}
-          isLoadingBalances={isLoadingBalances}
-        />
+        <div className="fade-in-up delay-400">
+          <AnimatedJobSection
+            jobs={jobs}
+            featuredJob={singleJob}
+            companyEmail={email}
+            userId={userId}
+            jobBalances={jobBalances}
+            isLoadingBalances={isLoadingBalances}
+          />
+        </div>
       </div>
     </main>
   );

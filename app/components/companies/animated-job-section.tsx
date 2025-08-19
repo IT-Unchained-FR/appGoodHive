@@ -81,33 +81,22 @@ export const AnimatedJobSection = ({
   };
 
   return (
-    <div className={`w-full space-y-8 ${className}`}>
+    <div className={className}>
       {/* Featured Job Section */}
       {featuredJob && (
-        <div
-          className={`w-full ${
-            isVisible ? "animate-slide-in-up" : "opacity-0"
-          }`}
-        >
-          <div className="modern-card p-6 relative overflow-hidden">
-            {/* Decorative Background */}
-            <div className="absolute top-0 right-0 w-32 h-32 opacity-5">
-              <div className="honeycomb-pattern w-full h-full animate-float-slow"></div>
-            </div>
-            
-            {/* Section Header */}
-            <div className="section-header">
-              <div className="section-icon bg-gradient-to-r from-amber-500 to-yellow-500">
-                <Star className="w-6 h-6 text-white fill-current" />
+        <div className={`featured-job-enhanced ${isVisible ? "fade-in-up" : "opacity-0"}`}>
+          <div className="modern-card-enhanced p-6">
+            <div className="section-header-enhanced">
+              <div className="section-icon-enhanced" style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%)' }}>
+                <Star className="w-6 h-6 text-white" />
               </div>
-              <div>
-                <h2 className="text-2xl font-bold text-gray-800">Featured Position</h2>
-                <p className="text-sm text-gray-600 mt-1">Our highlighted opportunity</p>
+              <div className="section-title">
+                <h2>Featured Position</h2>
+                <p>Our highlighted opportunity</p>
               </div>
             </div>
 
-            {/* Featured Job Content */}
-            <div className="relative">
+            <div className="relative mt-6">
               {/* Escrow Balance Display */}
               {isLoadingBalances ? (
                 <div className="mb-4 flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
@@ -128,9 +117,8 @@ export const AnimatedJobSection = ({
                 </div>
               )}
 
-              {/* Enhanced Featured Job Card */}
-              <div className="relative p-1 bg-gradient-to-r from-amber-200 via-yellow-200 to-orange-200 rounded-3xl animate-honeycomb-glow">
-                <div className="bg-white rounded-3xl p-6">
+              <div className="featured-wrapper">
+                <div className="featured-content">
                   <JobCard
                     key={featuredJob.id}
                     id={featuredJob.id}
@@ -160,96 +148,60 @@ export const AnimatedJobSection = ({
                 </div>
               </div>
             </div>
-
-            {/* Floating decorative elements */}
-            <div className="absolute top-4 right-4 opacity-20">
-              <span className="text-3xl animate-float">🌟</span>
-            </div>
           </div>
         </div>
       )}
 
       {/* All Jobs Section */}
-      <div
-        className={`w-full ${
-          isVisible ? "animate-slide-in-up delay-300" : "opacity-0"
-        }`}
-      >
-        <div className="modern-card p-6 relative">
-          {/* Section Header */}
-          <div className="section-header">
-            <div className="section-icon bg-gradient-to-r from-blue-500 to-indigo-600">
+      <div className={`mt-8 ${isVisible ? "fade-in-up delay-200" : "opacity-0"}`}>
+        <div className="modern-card-enhanced p-6">
+          <div className="section-header-enhanced">
+            <div className="section-icon-enhanced" style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)' }}>
               <Briefcase className="w-6 h-6 text-white" />
             </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800">
+            <div className="section-title">
+              <h2>
                 All Open Positions
                 <span className="ml-3 text-sm font-normal text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
                   {jobs.length} {jobs.length === 1 ? "opportunity" : "opportunities"}
                 </span>
               </h2>
-              <p className="text-sm text-gray-600 mt-1">Explore all available positions</p>
+              <p>Explore all available positions</p>
             </div>
           </div>
 
           {jobs.length > 0 ? (
-            <div className="grid w-full grid-cols-1 xl:grid-cols-2 gap-6">
+            <div className="jobs-grid-enhanced mt-6">
               {jobs.map((job, index) => {
-                // Skip the featured job to avoid duplication
                 if (job.id === featuredJob?.id) return null;
-
                 return (
                   <div
                     key={job.id}
-                    className={`group transform transition-all duration-300 hover-lift ${
-                      isVisible ? "animate-scale-in-center" : "opacity-0"
-                    }`}
-                    style={{
-                      animationDelay: `${(index + 1) * 0.1}s`,
-                    }}
+                    className={`scale-in delay-${(index % 5) * 100}`}
                   >
-                    {/* Job Card with Enhanced Styling */}
-                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white to-gray-50 border-2 border-gray-100 group-hover:border-amber-200 transition-all duration-300">
-                      {/* Background Pattern */}
-                      <div className="absolute top-0 right-0 w-20 h-20 opacity-5 group-hover:opacity-10 transition-opacity duration-300">
-                        <div className="honeycomb-pattern w-full h-full"></div>
-                      </div>
-
-                      {/* Enhanced Card Content */}
-                      <div className="relative z-10 p-1">
-                        <Card
-                          uniqueId={userId}
-                          talent={job.talent}
-                          mentor={job.mentor}
-                          recruiter={job.recruiter}
-                          jobId={job.id}
-                          blockId={job.block_id}
-                          type="company"
-                          title={job.title}
-                          postedBy={job.companyName}
-                          postedOn={getRelativeTime(job.postedAt)}
-                          image={job.image_url || "/img/company_img.png"}
-                          country={job.country}
-                          city={job.city}
-                          budget={job.budget}
-                          projectType={job.projectType}
-                          currency={job.currency}
-                          description={job.description}
-                          skills={job.skills}
-                          buttonText="View Details"
-                          walletAddress={job.walletAddress}
-                          escrowAmount={job.escrowAmount}
-                        />
-                      </div>
-
-                      {/* Hover Effect Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-amber-50/50 to-yellow-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
-                      
-                      {/* Floating bee on hover */}
-                      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-60 transition-all duration-300">
-                        <div className="bee-particle animate-float"></div>
-                      </div>
-                    </div>
+                    <Card
+                      uniqueId={userId}
+                      talent={job.talent}
+                      mentor={job.mentor}
+                      recruiter={job.recruiter}
+                      jobId={job.id}
+                      blockId={job.block_id}
+                      type="company"
+                      title={job.title}
+                      postedBy={job.companyName}
+                      postedOn={getRelativeTime(job.postedAt)}
+                      image={job.image_url || "/img/company_img.png"}
+                      country={job.country}
+                      city={job.city}
+                      budget={job.budget}
+                      projectType={job.projectType}
+                      currency={job.currency}
+                      description={job.description}
+                      skills={job.skills}
+                      buttonText="View Details"
+                      walletAddress={job.walletAddress}
+                      escrowAmount={job.escrowAmount}
+                    />
                   </div>
                 );
               })}
