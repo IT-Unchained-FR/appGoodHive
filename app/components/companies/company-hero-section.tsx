@@ -139,11 +139,7 @@ export const CompanyHeroSection = ({
                 <span className="text-gray-600 text-lg">{city}, {country}</span>
               </div>
 
-              {headline && (
-                <p className="text-gray-700 text-lg max-w-2xl leading-relaxed">
-                  {headline}
-                </p>
-              )}
+              
             </div>
           </div>
 
