@@ -1,6 +1,6 @@
 "use client";
 
-import { Briefcase, Users, Star, Clock } from "lucide-react";
+import { Briefcase, Users, Star, Clock, BarChart } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface CompanyStatsCardProps {
@@ -77,12 +77,11 @@ export const CompanyStatsCard = ({
           isVisible ? "animate-slide-in-up" : "opacity-0"
         }`}
       >
-        {/* Header */}
-        <div className="section-header">
-          <div className="section-icon">
-            <span className="text-white text-lg">📊</span>
+        <div className="flex items-center mb-6">
+          <div className="bg-yellow-400 rounded-full p-3 mr-4">
+            <BarChart className="w-6 h-6 text-white" />
           </div>
-          <h3 className="text-2xl font-bold text-gray-800">Company Insights</h3>
+          <h3 className="text-3xl font-bold text-yellow-400">Company Insights</h3>
         </div>
 
         {/* Stats Grid */}
@@ -92,7 +91,7 @@ export const CompanyStatsCard = ({
               key={stat.id}
               className={`stat-card stat-${stat.id} ${
                 isVisible ? "scale-in" : "opacity-0"
-              } delay-${(index + 1) * 100}`}
+              } delay-${(index + 1) * 100} transform hover:scale-105 transition-transform duration-300`}
             >
               {/* Content */}
               <div className="stat-icon">
