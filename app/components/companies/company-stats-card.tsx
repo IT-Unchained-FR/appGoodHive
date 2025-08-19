@@ -73,15 +73,15 @@ export const CompanyStatsCard = ({
   return (
     <div className={`w-full ${className}`}>
       <div
-        className={`modern-card p-6 ${
+        className={`modern-card p-6 hover:shadow-2xl hover:scale-[1.01] transition-all duration-500 cursor-pointer ${
           isVisible ? "animate-slide-in-up" : "opacity-0"
         }`}
       >
-        <div className="flex items-center mb-6">
-          <div className="bg-yellow-400 rounded-full p-3 mr-4">
-            <BarChart className="w-6 h-6 text-white" />
+        <div className="flex items-center mb-6 group">
+          <div className="bg-yellow-400 hover:bg-yellow-500 rounded-full p-3 mr-4 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12 group-hover:shadow-lg">
+            <BarChart className="w-6 h-6 text-white transition-transform duration-300 group-hover:scale-110" />
           </div>
-          <h3 className="text-3xl font-bold text-yellow-400">Company Insights</h3>
+          <h3 className="text-3xl font-bold text-yellow-600/80 hover:text-yellow-500 transition-all duration-300 group-hover:translate-x-1">Company Insights</h3>
         </div>
 
         {/* Stats Grid */}
@@ -157,9 +157,9 @@ export const CompanyStatsCard = ({
         )}
 
         {/* Decorative Elements */}
-        <div className="absolute top-4 right-4 opacity-10">
-          <div className="w-8 h-8 animate-float-slow">
-            <span className="text-2xl">🍯</span>
+        <div className="absolute top-4 right-4 opacity-10 hover:opacity-30 transition-opacity duration-300">
+          <div className="w-8 h-8 animate-float-slow hover:animate-pulse cursor-pointer">
+            <span className="text-2xl hover:scale-125 transition-transform duration-300 inline-block">🍯</span>
           </div>
         </div>
       </div>
