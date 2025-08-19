@@ -2,8 +2,9 @@
 
 import { Button } from "@components/button";
 import { MessageBoxModal } from "@components/message-box-modal";
+import { Mail, MessageCircle, Sparkles } from "lucide-react";
 import Cookies from "js-cookie";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 
 interface Props {
@@ -14,7 +15,12 @@ interface Props {
 export const CompanyContactBtn = ({ toEmail, toUserName }: Props) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isPopupModal, setIsPopupModal] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const user_id = Cookies.get("user_id");
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
 
   const onContactMeBtnClickHandler = async () => {
     setIsLoading(true);
@@ -93,14 +99,63 @@ export const CompanyContactBtn = ({ toEmail, toUserName }: Props) => {
   };
 
   return (
-    <div className="flex w-full justify-center gap-5 mb-12">
-      <Button
-        onClickHandler={onContactMeBtnClickHandler}
-        text="Contact"
-        type="secondary"
-        size="medium"
-        loading={isLoading}
-      ></Button>
+    <div className={`w-full space-y-4 ${isVisible ? 'animate-slide-in-up delay-300' : 'opacity-0'}`}>
+      {/* Enhanced Contact Button */}
+      <div className="relative group">
+        <button
+          onClick={onContactMeBtnClickHandler}
+          disabled={isLoading}
+          className="relative w-full px-8 py-4 bg-gradient-to-r from-amber-500 via-[#FFC905] to-yellow-500 text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 overflow-hidden group disabled:opacity-70 disabled:cursor-not-allowed"
+        >
+          {/* Background Animation */}
+          <div className="absolute inset-0 bg-gradient-to-r from-amber-600 via-yellow-600 to-orange-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          
+          {/* Honey Drip Effect */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-amber-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-honey-drip"></div>
+          
+          {/* Button Content */}
+          <div className="relative z-10 flex items-center justify-center gap-3">
+            {isLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                <span>Connecting...</span>
+              </>
+            ) : (
+              <>
+                <Mail className="w-5 h-5 group-hover:animate-bounce" />
+                <span className="text-lg">Contact Company</span>
+                <Sparkles className="w-4 h-4 group-hover:animate-pulse" />
+              </>
+            )}
+          </div>
+          
+          {/* Floating Bees */}
+          <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-80 transition-opacity duration-300">
+            <div className="bee-particle animate-float"></div>
+          </div>
+          <div className="absolute -bottom-1 -left-1 opacity-0 group-hover:opacity-60 transition-opacity duration-500">
+            <div className="bee-particle animate-float-slow"></div>
+          </div>
+        </button>
+        
+        {/* Glow Effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-yellow-400 rounded-2xl opacity-0 group-hover:opacity-30 blur-xl transition-opacity duration-300 -z-10"></div>
+      </div>
+      
+      {/* Additional Info */}
+      <div className="text-center space-y-2">
+        <p className="text-sm text-gray-600 flex items-center justify-center gap-2">
+          <MessageCircle className="w-4 h-4 text-amber-500" />
+          <span>Start a conversation with the hive</span>
+          <span className="text-lg">🐝</span>
+        </p>
+        <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+          <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+          <span>Usually responds within 24 hours</span>
+        </div>
+      </div>
+      
+      {/* Enhanced Modal */}
       {isPopupModal && (
         <MessageBoxModal
           title="Write your message:"
