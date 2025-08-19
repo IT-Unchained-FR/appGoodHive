@@ -4,6 +4,7 @@
 
 @import url("https://fonts.googleapis.com/css2?family=Montserrat");
 @import "./styles/rich-text.css";
+@import "./styles/company-animations.css";
 
 .logo-svg {
   width: 31px;
