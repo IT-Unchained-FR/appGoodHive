@@ -209,7 +209,7 @@ export default function CompanyProfilePage(context: CompanyProfilePageProps) {
                 About Company
               </h3>
             </div>
-            <div className="prose prose-lg text-gray-600 max-w-none">
+            <div className="text-gray-600 max-w-none">
               <CompanyBio text={headline} />
             </div>
           </div>
