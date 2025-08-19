@@ -184,35 +184,63 @@ export default function CompanyProfilePage(context: CompanyProfilePageProps) {
           className="fade-in-up"
         />
 
-        {/* Company Information Card */}
-        <div className="modern-card-enhanced p-8 fade-in-up delay-200">
-          <div className="company-info-grid">
-            {/* Company Bio */}
-            <div className="bio-section">
-              <div className="section-header-enhanced">
-                <div className="section-icon-enhanced">
-                  <span className="text-white text-lg">🍯</span>
-                </div>
-                <h3 className="text-2xl font-bold text-gray-800">
-                  About Company
-                </h3>
+        {/* About and Contact Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 fade-in-up delay-200">
+          {/* Left Column: About Company */}
+          <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg p-8 hover-shadow-lift transition-shadow duration-300">
+            <div className="flex items-center mb-6">
+              <div className="bg-yellow-400 rounded-full p-3 mr-4">
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  ></path>
+                </svg>
               </div>
-              <div className="prose prose-lg text-gray-700">
-                <CompanyBio text={headline} />
+              <h3 className="text-3xl font-bold text-gray-800">
+                About Company
+              </h3>
+            </div>
+            <div className="prose prose-lg text-gray-600 max-w-none">
+              <CompanyBio text={headline} />
+            </div>
+          </div>
+
+          {/* Right Column: Contact & Socials */}
+          <div className="bg-white rounded-2xl shadow-lg p-8 hover-shadow-lift transition-shadow duration-300">
+            <div className="flex items-center mb-6">
+              <div className="bg-yellow-400 rounded-full p-3 mr-4">
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  ></path>
+                </svg>
               </div>
+              <h3 className="text-3xl font-bold text-gray-800">Contact</h3>
             </div>
 
-            {/* Contact & Actions */}
-            <div className="contact-section">
-              {/* Contact Button */}
-              <div className="contact-button-container">
-                <CompanyContactBtn toEmail={email} toUserName={designation} />
-              </div>
+            <div className="space-y-6">
+              <CompanyContactBtn toEmail={email} toUserName={designation} />
 
-              {/* Contact & Social Media */}
-              <div className="social-contact-section">
-                <h4 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-800">
-                  <span className="text-[#FFC905]">📞</span>
+              <div className="border-t border-gray-200 pt-6">
+                <h4 className="text-xl font-semibold text-gray-700 mb-4">
                   Connect With Us
                 </h4>
                 <CompanySocialMediaAndContact
