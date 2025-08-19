@@ -86,48 +86,24 @@ export const CompanyStatsCard = ({
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-4 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="stats-grid-enhanced">
           {stats.map((stat, index) => (
             <div
               key={stat.id}
-              className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${stat.bgColor} p-6 hover-lift hover-glow transition-all duration-300 cursor-pointer ${
-                isVisible ? "animate-scale-in-center" : "opacity-0"
-              }`}
-              style={{
-                animationDelay: `${(index + 1) * 0.1}s`,
-              }}
+              className={`stat-card stat-${stat.id} ${
+                isVisible ? "scale-in" : "opacity-0"
+              } delay-${(index + 1) * 100}`}
             >
-              {/* Background Pattern */}
-              <div className="absolute inset-0 opacity-5">
-                <div className="honeycomb-pattern w-full h-full"></div>
-              </div>
-
               {/* Content */}
-              <div className="relative z-10">
-                <div
-                  className={`${stat.color} mb-4 group-hover:scale-110 transition-transform duration-300`}
-                >
-                  {stat.icon}
-                </div>
-
-                <div className="space-y-1">
-                  <p
-                    className={`text-3xl font-bold ${stat.color} group-hover:animate-pulse`}
-                  >
-                    {stat.value}
-                  </p>
-                  <p className="text-sm text-gray-600 font-medium leading-relaxed">
-                    {stat.label}
-                  </p>
-                </div>
+              <div className="stat-icon">
+                {stat.icon}
               </div>
 
-              {/* Hover Effect Overlay */}
-              <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
-
-              {/* Floating Bee Particle on Hover */}
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-60 transition-opacity duration-300">
-                <div className="bee-particle animate-float"></div>
+              <div className="stat-value">
+                {stat.value}
+              </div>
+              <div className="stat-label">
+                {stat.label}
               </div>
             </div>
           ))}
