@@ -144,8 +144,9 @@ export async function middleware(req: NextRequest) {
       }
     }
 
-    // Add security headers
-    return addSecurityHeaders(response);
+    // Add security headers (temporarily disabled for Thirdweb development)
+    // return addSecurityHeaders(response);
+    return response;
   } catch (error) {
     console.error("Middleware error:", error);
     return NextResponse.redirect(new URL("/auth/login", req.url));

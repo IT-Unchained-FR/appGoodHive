@@ -1,13 +1,17 @@
 "use client";
 
 import Cookies from "js-cookie";
+import { ConnectButton, useActiveAccount } from "thirdweb/react";
+
+import { thirdwebClient } from "@/clients";
 import { CircleUserRound } from "lucide-react";
 import { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import React, { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
+import { inAppWallet } from "thirdweb/wallets";
 
 const commonLinks = [
   { href: "/talents/job-search", label: "Find a Job" },
@@ -24,14 +28,12 @@ const companiesLinks = [
   { href: "/companies/my-profile", label: "My Company Profile" },
 ];
 
-
 export const NavBar = () => {
   const [isOpenMobileMenu, setIsOpenMobileMenu] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
   const loggedIn_user_id = Cookies.get("user_id");
-
 
   const links = pathname.startsWith("/talents")
     ? talentsLinks
@@ -51,7 +53,22 @@ export const NavBar = () => {
       toast.error("Failed to logout. Please try again.");
     }
   };
+  const account = useActiveAccount();
+  console.log("connected to:", account?.address);
 
+  const walletWithAuth = inAppWallet({
+    auth: { options: ["google"] },
+    metadata: {
+      name: "My App",
+      icon: "https://example.com/icon.png",
+      image: {
+        src: "https://example.com/logo.png",
+        alt: "My logo",
+        width: 100,
+        height: 100,
+      },
+    },
+  });
   return (
     <header
       aria-label="Site Header"
@@ -116,15 +133,11 @@ export const NavBar = () => {
                 Logout
               </button>
             ) : (
-              <button
-                className="my-2 text-base font-semibold bg-[#FFC905] h-10 w-40 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
-                type="submit"
-                onClick={() => router.push("/auth/login")}
-              >
-                Login
-              </button>
+              <ConnectButton
+                client={thirdwebClient}
+                wallets={[walletWithAuth]}
+              />
             )}
-
 
             {loggedIn_user_id && (
               <Link href="/user-profile" className="group">
