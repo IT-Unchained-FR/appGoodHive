@@ -17,7 +17,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { inAppWallet } from "thirdweb/wallets";
+import { inAppWallet, createWallet } from "thirdweb/wallets";
 
 const commonLinks = [
   { href: "/talents/job-search", label: "Find a Job" },
@@ -110,19 +110,33 @@ export const NavBar = () => {
     console.log("connected to:", account?.address);
   };
 
-  const walletWithAuth = inAppWallet({
+  // Configure multiple wallet options
+  const googleWallet = inAppWallet({
     auth: { options: ["google"] },
     metadata: {
-      name: "My App",
-      icon: "https://example.com/icon.png",
+      name: "GoodHive",
+      icon: "https://goodhive.io/img/goodhive-logo.png",
       image: {
-        src: "https://example.com/logo.png",
-        alt: "My logo",
-        width: 100,
-        height: 100,
+        src: "https://goodhive.io/img/goodhive-logo.png",
+        alt: "GoodHive Logo",
+        width: 120,
+        height: 29,
       },
     },
   });
+
+  // Create external wallet options
+  const metamaskWallet = createWallet("io.metamask");
+  const walletConnectWallet = createWallet("walletConnect");
+  const coinbaseWallet = createWallet("com.coinbase.wallet");
+
+  // Array of all supported wallets
+  const supportedWallets = [
+    googleWallet,      // Google sign-in (embedded wallet)
+    metamaskWallet,    // MetaMask browser extension
+    walletConnectWallet, // WalletConnect for mobile wallets
+    coinbaseWallet     // Coinbase Wallet
+  ];
   return (
     <header
       aria-label="Site Header"
@@ -181,7 +195,7 @@ export const NavBar = () => {
             {/* Always show ConnectButton - it adapts based on wallet state */}
             <ConnectButton
               client={thirdwebClient}
-              wallets={[walletWithAuth]}
+              wallets={supportedWallets}
               onDisconnect={handleWalletDisconnect}
               theme="light"
               connectButton={{
@@ -191,6 +205,7 @@ export const NavBar = () => {
               connectModal={{
                 title: "Connect to GoodHive",
                 size: "wide",
+                showThirdwebBranding: false,
               }}
             />
 
