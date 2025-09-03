@@ -103,22 +103,44 @@ export function isWalletAuthenticated(): boolean {
 }
 
 /**
- * Logs out wallet user
+ * Logs out wallet user and clears all session data
  */
 export async function logoutWalletUser(): Promise<void> {
   try {
-    await fetch("/api/auth/logout", {
+    const response = await fetch("/api/auth/logout", {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
+
+    if (!response.ok) {
+      throw new Error("Logout request failed");
+    }
   } catch (error) {
-    console.error("Logout error:", error);
+    console.error("Logout API error:", error);
   }
 
-  // Clear cookies manually as fallback
+  // Clear cookies manually as fallback to ensure cleanup
   if (typeof window !== "undefined") {
-    document.cookie = "session_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-    document.cookie = "user_id=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-    document.cookie = "user_email=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-    document.cookie = "loggedIn_user=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+    const cookiesToClear = [
+      "session_token",
+      "user_id", 
+      "user_email",
+      "loggedIn_user",
+      "user_address"
+    ];
+
+    cookiesToClear.forEach(cookieName => {
+      document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Strict`;
+    });
+
+    // Also clear localStorage if used
+    try {
+      localStorage.removeItem("walletconnect");
+      localStorage.removeItem("thirdweb:active-wallet");
+    } catch (e) {
+      // Ignore localStorage errors
+    }
   }
 }
