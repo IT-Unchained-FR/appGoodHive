@@ -1,5 +1,6 @@
 import Modal from "@components/modal";
-import { PopupModal } from "./PopupModal";
+// PopupModal component removed - will be replaced with Thirdweb integration
+const PopupModal = () => null;
 
 interface JobModalsProps {
   isManageFundsModalOpen: boolean;

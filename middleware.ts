@@ -18,10 +18,6 @@ const PUBLIC_PATHS = [
   "/api/auth/login",
   "/api/auth/signup",
   "/api/auth/admin/login",
-  "/api/auth/nonce",
-  "/api/auth/verify",
-  "/api/auth/verify-wallet",
-  "/api/auth/check-wallet",
   "/api/auth/logout",
   "/api/auth/me",
 ];

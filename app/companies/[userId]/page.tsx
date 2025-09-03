@@ -10,7 +10,6 @@ import { CompanyHeroSection } from "@/app/components/companies/company-hero-sect
 import { CompanyLoadingSpinner } from "@/app/components/companies/company-loading-spinner";
 import { CompanyStatsCard } from "@/app/components/companies/company-stats-card";
 import { CompanySocialMediaAndContact } from "@/app/components/companies/profile-social-media-and-contact";
-import { getJobBalance } from "@/app/lib/blockchain/contracts/GoodhiveJobContract";
 
 export const revalidate = 0;
 
