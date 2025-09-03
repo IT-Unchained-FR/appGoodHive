@@ -5,6 +5,7 @@ import { ConnectButton, useActiveAccount } from "thirdweb/react";
 
 import { useAuth } from "@/app/contexts/AuthContext";
 import { thirdwebClient } from "@/clients";
+import { activeChain } from "@/config/chains";
 import {
   authenticateWithWallet,
   extractWalletAuthData,
@@ -14,7 +15,7 @@ import { CircleUserRound } from "lucide-react";
 import { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { inAppWallet, createWallet } from "thirdweb/wallets";
@@ -38,6 +39,7 @@ export const NavBar = () => {
   const [isOpenMobileMenu, setIsOpenMobileMenu] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const account = useActiveAccount();
   const { user, isAuthenticated, login } = useAuth();
 
@@ -74,6 +76,9 @@ export const NavBar = () => {
 
             // Update auth context
             login(authResult.user);
+            
+            // Redirect to profile page after successful login
+            router.push("/talents/my-profile");
           } else {
             toast.error(authResult.error || "Authentication failed");
           }
@@ -87,7 +92,7 @@ export const NavBar = () => {
     };
 
     handleWalletAuth();
-  }, [account, loggedIn_user_id, isAuthenticating]);
+  }, [account, loggedIn_user_id, isAuthenticating, login, router]);
 
   const handleWalletDisconnect = async () => {
     try {
@@ -110,9 +115,17 @@ export const NavBar = () => {
     console.log("connected to:", account?.address);
   };
 
-  // Configure multiple wallet options
-  const googleWallet = inAppWallet({
-    auth: { options: ["google"] },
+  // Configure embedded wallet with multiple authentication options
+  const socialAndEmailWallet = inAppWallet({
+    auth: { 
+      options: [
+        "email",      // Email with OTP verification
+        "google",     // Google OAuth
+        "apple",      // Apple Sign In
+        "facebook",   // Facebook OAuth
+        "x"           // X (Twitter) OAuth
+      ] 
+    },
     metadata: {
       name: "GoodHive",
       icon: "https://goodhive.io/img/goodhive-logo.png",
@@ -132,10 +145,10 @@ export const NavBar = () => {
 
   // Array of all supported wallets
   const supportedWallets = [
-    googleWallet,      // Google sign-in (embedded wallet)
-    metamaskWallet,    // MetaMask browser extension
-    walletConnectWallet, // WalletConnect for mobile wallets
-    coinbaseWallet     // Coinbase Wallet
+    socialAndEmailWallet,  // Multi-auth embedded wallet (Email, Google, Apple, Facebook, X)
+    metamaskWallet,        // MetaMask browser extension
+    walletConnectWallet,   // WalletConnect for mobile wallets
+    coinbaseWallet         // Coinbase Wallet
   ];
   return (
     <header
@@ -196,6 +209,7 @@ export const NavBar = () => {
             <ConnectButton
               client={thirdwebClient}
               wallets={supportedWallets}
+              chain={activeChain}
               onDisconnect={handleWalletDisconnect}
               theme="light"
               connectButton={{
