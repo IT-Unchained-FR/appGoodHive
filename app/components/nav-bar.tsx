@@ -3,6 +3,7 @@
 import Cookies from "js-cookie";
 import { ConnectButton, useActiveAccount } from "thirdweb/react";
 
+import { useAuth } from "@/app/contexts/AuthContext";
 import { thirdwebClient } from "@/clients";
 import {
   authenticateWithWallet,
@@ -38,6 +39,7 @@ export const NavBar = () => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const pathname = usePathname();
   const account = useActiveAccount();
+  const { user, isAuthenticated, login } = useAuth();
 
   const loggedIn_user_id = Cookies.get("user_id");
 
@@ -70,8 +72,8 @@ export const NavBar = () => {
                 : "Welcome back!",
             );
 
-            // Refresh the page to update UI state
-            window.location.reload();
+            // Update auth context
+            login(authResult.user);
           } else {
             toast.error(authResult.error || "Authentication failed");
           }
@@ -87,15 +89,25 @@ export const NavBar = () => {
     handleWalletAuth();
   }, [account, loggedIn_user_id, isAuthenticating]);
 
-  const handleLogout = async () => {
+  const handleWalletDisconnect = async () => {
     try {
+      // Clear backend session
       await logoutWalletUser();
-      toast.success("Successfully logged out");
-      window.location.href = "/auth/login";
+
+      toast.success("Successfully disconnected");
+
+      // Refresh page to reset auth state
+      window.location.reload();
     } catch (error) {
-      console.error("Logout failed:", error);
-      toast.error("Failed to logout. Please try again.");
+      console.error("Disconnect failed:", error);
+      toast.error("Failed to disconnect. Please try again.");
     }
+  };
+
+  const handleOnConnect = (account: any) => {
+    console.log(account.getAccount(), "account...");
+    console.log(account, "Account...");
+    console.log("connected to:", account?.address);
   };
 
   const walletWithAuth = inAppWallet({
@@ -165,24 +177,26 @@ export const NavBar = () => {
             </ul>
           </nav>
 
-          <div className="flex items-center gap-5">
-            {loggedIn_user_id ? (
-              <button
-                className="my-2 text-base font-semibold bg-[#FFC905] h-10 w-40 rounded-full hover:bg-opacity-80 active:shadow-md transition duration-150 ease-in-out"
-                type="submit"
-                onClick={handleLogout}
-              >
-                Logout
-              </button>
-            ) : (
-              <ConnectButton
-                client={thirdwebClient}
-                wallets={[walletWithAuth]}
-              />
-            )}
+          <div className="flex items-center gap-4">
+            {/* Always show ConnectButton - it adapts based on wallet state */}
+            <ConnectButton
+              client={thirdwebClient}
+              wallets={[walletWithAuth]}
+              onDisconnect={handleWalletDisconnect}
+              theme="light"
+              connectButton={{
+                label: "Connect Wallet",
+              }}
+              onConnect={handleOnConnect}
+              connectModal={{
+                title: "Connect to GoodHive",
+                size: "wide",
+              }}
+            />
 
-            {loggedIn_user_id && (
-              <Link href="/user-profile" className="group">
+            {/* Show profile icon when user is authenticated */}
+            {(isAuthenticated || loggedIn_user_id) && (
+              <Link href="/user-profile" className="group" title="Profile">
                 <CircleUserRound
                   size={36}
                   className="cursor-pointer text-gray-600 hover:text-amber-700 transition-all duration-300 group-hover:scale-110"
