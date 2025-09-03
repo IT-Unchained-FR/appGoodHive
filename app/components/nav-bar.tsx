@@ -4,12 +4,17 @@ import Cookies from "js-cookie";
 import { ConnectButton, useActiveAccount } from "thirdweb/react";
 
 import { thirdwebClient } from "@/clients";
+import {
+  authenticateWithWallet,
+  extractWalletAuthData,
+  logoutWalletUser,
+} from "@/lib/auth/thirdwebAuth";
 import { CircleUserRound } from "lucide-react";
 import { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { inAppWallet } from "thirdweb/wallets";
 
@@ -30,8 +35,9 @@ const companiesLinks = [
 
 export const NavBar = () => {
   const [isOpenMobileMenu, setIsOpenMobileMenu] = useState(false);
-  const router = useRouter();
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
   const pathname = usePathname();
+  const account = useActiveAccount();
 
   const loggedIn_user_id = Cookies.get("user_id");
 
@@ -41,11 +47,49 @@ export const NavBar = () => {
       ? companiesLinks
       : commonLinks;
 
+  // Handle wallet connection/disconnection
+  useEffect(() => {
+    const handleWalletAuth = async () => {
+      if (account?.address && !loggedIn_user_id && !isAuthenticating) {
+        setIsAuthenticating(true);
+
+        try {
+          // Extract wallet data
+          const walletData = extractWalletAuthData(account);
+          if (!walletData) {
+            throw new Error("Failed to extract wallet data");
+          }
+
+          // Authenticate with backend
+          const authResult = await authenticateWithWallet(walletData);
+
+          if (authResult.success) {
+            toast.success(
+              authResult.isNewUser
+                ? "Welcome to GoodHive! Account created successfully."
+                : "Welcome back!",
+            );
+
+            // Refresh the page to update UI state
+            window.location.reload();
+          } else {
+            toast.error(authResult.error || "Authentication failed");
+          }
+        } catch (error) {
+          console.error("Wallet authentication error:", error);
+          toast.error("Failed to authenticate wallet");
+        } finally {
+          setIsAuthenticating(false);
+        }
+      }
+    };
+
+    handleWalletAuth();
+  }, [account, loggedIn_user_id, isAuthenticating]);
+
   const handleLogout = async () => {
     try {
-      Cookies.remove("user_id");
-      Cookies.remove("loggedIn_user");
-
+      await logoutWalletUser();
       toast.success("Successfully logged out");
       window.location.href = "/auth/login";
     } catch (error) {
@@ -53,8 +97,6 @@ export const NavBar = () => {
       toast.error("Failed to logout. Please try again.");
     }
   };
-  const account = useActiveAccount();
-  console.log("connected to:", account?.address);
 
   const walletWithAuth = inAppWallet({
     auth: { options: ["google"] },

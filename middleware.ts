@@ -18,6 +18,7 @@ const PUBLIC_PATHS = [
   "/api/auth/login",
   "/api/auth/signup",
   "/api/auth/admin/login",
+  "/api/auth/thirdweb-login",
   "/api/auth/logout",
   "/api/auth/me",
 ];
