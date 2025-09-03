@@ -17,11 +17,6 @@ import {
   typeEngagements,
 } from "@constants/common";
 import { skills } from "@constants/skills";
-import {
-  ethereumTokens,
-  gnosisChainTokens,
-} from "@constants/token-list/index.js";
-import { polygonMainnetTokens } from "@constants/token-list/polygon";
 import LabelOption from "@interfaces/label-option";
 import { Tooltip } from "@nextui-org/tooltip";
 import dynamic from "next/dynamic";

@@ -1,17 +1,13 @@
 "use client";
 
-import { getAccount, useOkto } from "@okto_web3/react-sdk";
-import { googleLogout } from "@react-oauth/google";
 import Cookies from "js-cookie";
-import { CircleUserRound, Wallet } from "lucide-react";
+import { CircleUserRound } from "lucide-react";
 import { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount, useDisconnect } from "wagmi";
-import { WalletPopup } from "./WalletConnect/WalletPopup";
 
 const commonLinks = [
   { href: "/talents/job-search", label: "Find a Job" },
@@ -28,87 +24,14 @@ const companiesLinks = [
   { href: "/companies/my-profile", label: "My Company Profile" },
 ];
 
-// Add usePrevious hook
-function usePrevious<T>(value: T): T | undefined {
-  const ref = React.useRef<T>();
-  useEffect(() => {
-    ref.current = value;
-  }, [value]);
-  return ref.current;
-}
 
 export const NavBar = () => {
-  const { disconnect } = useDisconnect();
-  const oktoClient = useOkto();
   const [isOpenMobileMenu, setIsOpenMobileMenu] = useState(false);
-  const [isOpenWalletPopup, setIsOpenWalletPopup] = useState(false);
-  const [oktoWalletAddress, setOktoWalletAddress] = useState<string | null>(
-    null,
-  );
-  const walletButtonRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
-  const { address: wagmiAddress, isConnected } = useAccount();
-  const prevIsConnected = usePrevious(isConnected);
 
   const loggedIn_user_id = Cookies.get("user_id");
 
-  const POLYGON_CAIP2_ID = "eip155:137";
-
-  // Fetch Okto wallet address
-  useEffect(() => {
-    const fetchUserWallet = async () => {
-      if (!oktoClient || !loggedIn_user_id) {
-        setOktoWalletAddress(null);
-        return;
-      }
-
-      try {
-        const accounts = await getAccount(oktoClient);
-        console.log(accounts, "accounts...goodhive");
-        const polygonAccount = accounts.find(
-          (account: any) => account.caipId === POLYGON_CAIP2_ID,
-        );
-        if (polygonAccount) {
-          setOktoWalletAddress(polygonAccount?.address);
-        } else {
-          setOktoWalletAddress(null);
-        }
-      } catch (error: any) {
-        console.error("Error fetching user wallet:", error);
-        setOktoWalletAddress(null);
-      }
-    };
-
-    fetchUserWallet();
-  }, [oktoClient, loggedIn_user_id]);
-
-  // Close wallet popup when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        walletButtonRef.current &&
-        !walletButtonRef.current.contains(event.target as Node)
-      ) {
-        setIsOpenWalletPopup(false);
-      }
-    };
-
-    if (isOpenWalletPopup) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpenWalletPopup]);
-
-  // Ensure WalletPopup stays open after wallet connect
-  /* useEffect(() => {
-    if (!prevIsConnected && isConnected) {
-      setIsOpenWalletPopup(true);
-    }
-  }, [isConnected, prevIsConnected]); */
 
   const links = pathname.startsWith("/talents")
     ? talentsLinks
@@ -118,13 +41,8 @@ export const NavBar = () => {
 
   const handleLogout = async () => {
     try {
-      googleLogout();
-      oktoClient.sessionClear();
-
       Cookies.remove("user_id");
       Cookies.remove("loggedIn_user");
-
-      disconnect();
 
       toast.success("Successfully logged out");
       window.location.href = "/auth/login";
@@ -207,32 +125,6 @@ export const NavBar = () => {
               </button>
             )}
 
-            {/* Wallet Button - Only show when logged in */}
-            {loggedIn_user_id && (
-              <div className="relative" ref={walletButtonRef}>
-                <button
-                  className="relative group flex items-center justify-center px-6 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-white rounded-full hover:from-amber-600 hover:to-yellow-600 transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-amber-500/25 h-10"
-                  onClick={() => setIsOpenWalletPopup(!isOpenWalletPopup)}
-                >
-                  <Wallet
-                    size={20}
-                    className="mr-2 transition-all duration-300 group-hover:rotate-12"
-                  />
-                  <span className="font-semibold text-sm sm:text-base">
-                    Wallet
-                  </span>
-                  {/* Glow effect on hover */}
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-400 to-yellow-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-sm"></div>
-                </button>
-                {/* Wallet Popup (refactored) */}
-                <WalletPopup
-                  isOpen={isOpenWalletPopup}
-                  anchorRef={walletButtonRef}
-                  onClose={() => setIsOpenWalletPopup(false)}
-                  oktoWalletAddress={oktoWalletAddress}
-                />
-              </div>
-            )}
 
             {loggedIn_user_id && (
               <Link href="/user-profile" className="group">

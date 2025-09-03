@@ -3,7 +3,6 @@
 import Cookies from "js-cookie";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
 
 import { Button } from "@/app/components/button";
 import ProfileImageUpload from "@/app/components/profile-image-upload";
