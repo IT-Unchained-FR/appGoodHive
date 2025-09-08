@@ -4,6 +4,7 @@ import { AutoSuggestInput } from "@/app/components/autosuggest-input";
 import ProfileImageUpload from "@/app/components/profile-image-upload";
 import { ReferralSection } from "@/app/components/referral/referral-section";
 import { SearchableSelectInput } from "@/app/components/searchable-select-input";
+import { ProfileAuthManager } from "@/app/components/ProfileAuthManager/ProfileAuthManager";
 import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/honey-bee-spinner";
 import { ToggleButton } from "@/app/components/toggle-button";
 import { createJobServices } from "@/app/constants/common";
@@ -752,6 +753,11 @@ export default function ProfilePage() {
   return (
     <div className="container mx-auto px-4 py-8 pt-0">
       <ProfileStatus profileData={profileData} />
+
+      {/* Authentication Methods Management */}
+      <div className="mt-6 md:mt-8 max-w-3xl">
+        <ProfileAuthManager />
+      </div>
 
       <form className="space-y-6 mt-6 md:mt-8">
         {/* Profile Image */}
