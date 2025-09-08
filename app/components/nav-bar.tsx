@@ -9,6 +9,7 @@ import { activeChain } from "@/config/chains";
 import {
   authenticateWithWallet,
   extractWalletAuthData,
+  detectWalletType,
   logoutWalletUser,
 } from "@/lib/auth/thirdwebAuth";
 import { CircleUserRound } from "lucide-react";
@@ -58,10 +59,18 @@ export const NavBar = () => {
         setIsAuthenticating(true);
 
         try {
-          // Extract wallet data
+          // Extract wallet data with type detection
           const walletData = extractWalletAuthData(account);
           if (!walletData) {
             throw new Error("Failed to extract wallet data");
+          }
+
+          // For in-app wallets, try to detect additional info
+          if (walletData.isThirdwebWallet) {
+            const typeInfo = await detectWalletType(account.address);
+            if (typeInfo.userInfo?.primaryEmail) {
+              walletData.email = typeInfo.userInfo.primaryEmail;
+            }
           }
 
           // Authenticate with backend
