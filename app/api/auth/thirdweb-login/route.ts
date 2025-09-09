@@ -29,7 +29,15 @@ export async function POST(req: Request) {
     let duplicateAccounts = [];
     let extractedEmail = email;
 
-    // If it's a Thirdweb in-app wallet, try to extract email from Thirdweb API
+    // Log incoming data for debugging
+    console.log("Thirdweb login request:", {
+      walletAddress: normalizedAddress,
+      email: extractedEmail,
+      isThirdwebWallet,
+      walletType
+    });
+
+    // If it's a Thirdweb in-app wallet and no email provided, try to extract from API
     if (isThirdwebWallet && !extractedEmail) {
       try {
         const thirdwebResponse = await fetch(`${req.url.split('/api')[0]}/api/auth/thirdweb-user-info?walletAddress=${normalizedAddress}`, {
@@ -43,34 +51,54 @@ export async function POST(req: Request) {
           const thirdwebData = await thirdwebResponse.json();
           if (thirdwebData.userInfo?.primaryEmail) {
             extractedEmail = thirdwebData.userInfo.primaryEmail;
+            console.log("Email extracted from Thirdweb API:", extractedEmail);
           }
         }
       } catch (error) {
-        console.error("Failed to fetch email from Thirdweb:", error);
+        console.error("Failed to fetch email from Thirdweb API:", error);
       }
     }
 
     try {
-      // Search by appropriate wallet field based on type
       let existingUser = [];
       
-      if (isThirdwebWallet) {
-        // Search by thirdweb_wallet_address first
+      // PRIORITY 1: If we have an email (from social login), search by email FIRST
+      // This ensures users logging in with social accounts always get their existing account
+      if (extractedEmail) {
+        console.log("Searching for user by email first:", extractedEmail);
         existingUser = await sql`
-          SELECT * FROM goodhive.users 
-          WHERE LOWER(thirdweb_wallet_address) = ${normalizedAddress}
-            AND (is_deleted IS NULL OR is_deleted = FALSE)
+          SELECT * FROM goodhive.users
+          WHERE LOWER(email) = ${extractedEmail.toLowerCase()}
+          AND (is_deleted IS NULL OR is_deleted = FALSE)
         `;
-      } else {
-        // Search by external wallet_address first
-        existingUser = await sql`
-          SELECT * FROM goodhive.users 
-          WHERE LOWER(wallet_address) = ${normalizedAddress}
-            AND (is_deleted IS NULL OR is_deleted = FALSE)
-        `;
+        
+        if (existingUser.length > 0) {
+          console.log("Found existing user by email:", existingUser[0].userid);
+        }
+      }
+      
+      // PRIORITY 2: If no user found by email, search by wallet address
+      if (existingUser.length === 0) {
+        console.log("No user found by email, searching by wallet address:", normalizedAddress);
+        
+        if (isThirdwebWallet) {
+          // Search by thirdweb_wallet_address
+          existingUser = await sql`
+            SELECT * FROM goodhive.users 
+            WHERE LOWER(thirdweb_wallet_address) = ${normalizedAddress}
+              AND (is_deleted IS NULL OR is_deleted = FALSE)
+          `;
+        } else {
+          // Search by external wallet_address
+          existingUser = await sql`
+            SELECT * FROM goodhive.users 
+            WHERE LOWER(wallet_address) = ${normalizedAddress}
+              AND (is_deleted IS NULL OR is_deleted = FALSE)
+          `;
+        }
       }
 
-      // If not found, check merged wallets
+      // PRIORITY 3: If still not found, check merged wallets
       if (existingUser.length === 0) {
         existingUser = await sql`
           SELECT * FROM goodhive.users 
@@ -99,8 +127,9 @@ export async function POST(req: Request) {
           hasDuplicates = duplicateAccounts.length > 0;
         }
 
-        // Update wallet address in correct field if needed
-        if (isThirdwebWallet && !user.thirdweb_wallet_address) {
+        // Update wallet address if it's different (common with social wallets that generate new addresses)
+        // Or add wallet address if user doesn't have one yet
+        if (isThirdwebWallet && (!user.thirdweb_wallet_address || user.thirdweb_wallet_address !== normalizedAddress)) {
           await sql`
             UPDATE goodhive.users
             SET 
@@ -109,8 +138,7 @@ export async function POST(req: Request) {
                 WHEN wallet_address IS NOT NULL THEN 'both'
                 ELSE 'in-app'
               END,
-              email = COALESCE(email, ${extractedEmail}),
-              updated_at = NOW()
+              email = COALESCE(email, ${extractedEmail})
             WHERE userid = ${user.userid}
           `;
           
@@ -127,8 +155,7 @@ export async function POST(req: Request) {
               wallet_type = CASE
                 WHEN thirdweb_wallet_address IS NOT NULL THEN 'both'
                 ELSE 'external'
-              END,
-              updated_at = NOW()
+              END
             WHERE userid = ${user.userid}
           `;
           
@@ -163,8 +190,7 @@ export async function POST(req: Request) {
                   auth_method = CASE
                     WHEN wallet_address IS NOT NULL THEN 'hybrid'
                     ELSE 'email'
-                  END,
-                  updated_at = NOW()
+                  END
                 WHERE userid = ${user.userid}
               `;
             } else {
@@ -176,29 +202,40 @@ export async function POST(req: Request) {
                     WHEN thirdweb_wallet_address IS NOT NULL THEN 'both'
                     ELSE 'external'
                   END,
-                  auth_method = 'hybrid',
-                  updated_at = NOW()
+                  auth_method = 'hybrid'
                 WHERE userid = ${user.userid}
               `;
             }
           }
         }
         
-        // If still no user, create new one
+        // If still no user, check if it's a Thirdweb wallet without email
         if (!user) {
+          // For Thirdweb wallets, require email verification first
+          if (isThirdwebWallet && !extractedEmail) {
+            return NextResponse.json({
+              requiresEmailVerification: true,
+              message: "Email verification required",
+              walletAddress: normalizedAddress,
+            });
+          }
+          
+          // Create new user only if we have email or it's external wallet
           const insertResult = await sql`
             INSERT INTO goodhive.users (
               wallet_address,
               thirdweb_wallet_address,
               wallet_type,
               auth_method,
-              email
+              email,
+              email_verified
             ) VALUES (
               ${isThirdwebWallet ? null : normalizedAddress},
               ${isThirdwebWallet ? normalizedAddress : null},
               ${isThirdwebWallet ? 'in-app' : 'external'},
               ${extractedEmail ? 'hybrid' : 'wallet'},
-              ${extractedEmail || null}
+              ${extractedEmail || null},
+              ${extractedEmail ? false : null}
             )
             RETURNING *
           `;
