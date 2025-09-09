@@ -1,4 +1,6 @@
 import { isAddress } from "thirdweb";
+import { getUserEmail } from "thirdweb/wallets/in-app";
+import type { ThirdwebClient } from "thirdweb";
 
 export interface WalletAuthData {
   address: string;
@@ -58,6 +60,19 @@ export async function detectWalletType(walletAddress: string): Promise<{
 }
 
 /**
+ * Extracts email from Thirdweb in-app wallet
+ */
+export async function getEmailFromInAppWallet(client: ThirdwebClient): Promise<string | undefined> {
+  try {
+    const email = await getUserEmail({ client });
+    return email;
+  } catch (error) {
+    console.error("Failed to get email from in-app wallet:", error);
+    return undefined;
+  }
+}
+
+/**
  * Extracts wallet data from Thirdweb account
  */
 export function extractWalletAuthData(account: any, email?: string, isThirdwebWallet?: boolean): WalletAuthData | null {
@@ -71,16 +86,30 @@ export function extractWalletAuthData(account: any, email?: string, isThirdwebWa
 
   // Try to determine wallet type from account object
   let walletType = 'external';
+  
+  // Check various ways to identify in-app/social wallets
   if (account.wallet?.id) {
+    const walletId = account.wallet.id.toLowerCase();
     // In-app wallet IDs typically include "inApp" or specific auth method
-    if (account.wallet.id.includes('inApp') || 
-        account.wallet.id.includes('google') || 
-        account.wallet.id.includes('email') ||
-        account.wallet.id.includes('apple') ||
-        account.wallet.id.includes('facebook') ||
-        account.wallet.id.includes('x')) {
+    if (walletId.includes('inapp') || 
+        walletId.includes('google') || 
+        walletId.includes('email') ||
+        walletId.includes('apple') ||
+        walletId.includes('facebook') ||
+        walletId.includes('social') ||
+        walletId.includes('x')) {
       walletType = 'in-app';
     }
+  }
+  
+  // Also check if it's the socialAndEmailWallet type
+  if (account.wallet?.walletId === 'inApp' || account.wallet?.connector?.id === 'inApp') {
+    walletType = 'in-app';
+  }
+  
+  // Check for Thirdweb's embedded wallet signature
+  if (account.client?.clientId || account.wallet?.getChain) {
+    walletType = 'in-app';
   }
 
   return {
@@ -101,6 +130,7 @@ export async function authenticateWithWallet(
   user?: any;
   error?: string;
   isNewUser?: boolean;
+  requiresEmailVerification?: boolean;
 }> {
   try {
     const response = await fetch("/api/auth/thirdweb-login", {
@@ -122,6 +152,14 @@ export async function authenticateWithWallet(
       return {
         success: false,
         error: data.error || "Authentication failed",
+      };
+    }
+
+    // Check if email verification is required
+    if (data.requiresEmailVerification) {
+      return {
+        success: false,
+        requiresEmailVerification: true,
       };
     }
 

@@ -11,6 +11,7 @@ import {
   extractWalletAuthData,
   detectWalletType,
   logoutWalletUser,
+  getEmailFromInAppWallet,
 } from "@/lib/auth/thirdwebAuth";
 import { CircleUserRound } from "lucide-react";
 import { Route } from "next";
@@ -20,6 +21,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { inAppWallet, createWallet } from "thirdweb/wallets";
+import EmailVerificationModal from "./EmailVerificationModal";
 
 const commonLinks = [
   { href: "/talents/job-search", label: "Find a Job" },
@@ -39,6 +41,8 @@ const companiesLinks = [
 export const NavBar = () => {
   const [isOpenMobileMenu, setIsOpenMobileMenu] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const [walletAddressToVerify, setWalletAddressToVerify] = useState("");
   const pathname = usePathname();
   const router = useRouter();
   const account = useActiveAccount();
@@ -59,19 +63,61 @@ export const NavBar = () => {
         setIsAuthenticating(true);
 
         try {
-          // Extract wallet data with type detection
-          const walletData = extractWalletAuthData(account);
+          // Debug the account object structure
+          console.log("Account in handleWalletAuth:", account);
+          
+          // IMPORTANT: For Thirdweb social wallets, the account from useActiveAccount()
+          // doesn't have wallet property, but we can detect it's a social wallet
+          // by trying to get the email first
+          let extractedEmail: string | undefined;
+          let isThirdwebSocialWallet = false;
+          
+          // Try to get email from Thirdweb SDK first
+          try {
+            const email = await getEmailFromInAppWallet(thirdwebClient);
+            if (email) {
+              extractedEmail = email;
+              isThirdwebSocialWallet = true;
+              console.log("Successfully detected Thirdweb social wallet with email:", email);
+            }
+          } catch (error) {
+            console.log("Not a Thirdweb social wallet or email not available");
+          }
+          
+          // Extract wallet data with the detected information
+          const walletData = extractWalletAuthData(account, extractedEmail, isThirdwebSocialWallet);
           if (!walletData) {
             throw new Error("Failed to extract wallet data");
           }
+          
+          // Override with correct values if we detected a social wallet
+          if (isThirdwebSocialWallet) {
+            walletData.isThirdwebWallet = true;
+            walletData.walletType = 'in-app';
+            walletData.email = extractedEmail;
+          }
 
-          // For in-app wallets, try to detect additional info
-          if (walletData.isThirdwebWallet) {
-            const typeInfo = await detectWalletType(account.address);
-            if (typeInfo.userInfo?.primaryEmail) {
-              walletData.email = typeInfo.userInfo.primaryEmail;
+          // For in-app wallets without email, try API fallback
+          if (walletData.isThirdwebWallet && !walletData.email) {
+            try {
+              console.log("Trying API fallback to get email");
+              const typeInfo = await detectWalletType(account.address);
+              if (typeInfo.userInfo?.primaryEmail) {
+                walletData.email = typeInfo.userInfo.primaryEmail;
+                console.log("Got email from API:", walletData.email);
+              }
+            } catch (error) {
+              console.log("API fallback also failed:", error);
             }
           }
+
+          // Log wallet data for debugging
+          console.log("Wallet authentication data:", {
+            address: walletData.address,
+            email: walletData.email,
+            isThirdwebWallet: walletData.isThirdwebWallet,
+            walletType: walletData.walletType
+          });
 
           // Authenticate with backend
           const authResult = await authenticateWithWallet(walletData);
@@ -86,8 +132,21 @@ export const NavBar = () => {
             // Update auth context
             login(authResult.user);
             
+            // If no email was captured, show a notification
+            if (walletData.isThirdwebWallet && !walletData.email) {
+              toast("Consider adding your email in profile settings for account recovery", {
+                icon: "ℹ️",
+                duration: 5000,
+              });
+            }
+            
             // Redirect to profile page after successful login
             router.push("/talents/my-profile");
+          } else if (authResult.requiresEmailVerification) {
+            // User doesn't exist - need email verification
+            console.log("Email verification required for wallet:", walletData.address);
+            setWalletAddressToVerify(walletData.address);
+            setShowEmailVerification(true);
           } else {
             toast.error(authResult.error || "Authentication failed");
           }
@@ -102,6 +161,18 @@ export const NavBar = () => {
 
     handleWalletAuth();
   }, [account, loggedIn_user_id, isAuthenticating, login, router]);
+
+  const handleEmailVerificationSuccess = (user: any) => {
+    // Update auth context with verified user
+    login(user);
+    setShowEmailVerification(false);
+    setWalletAddressToVerify("");
+    
+    toast.success("Email verified successfully! Welcome to GoodHive!");
+    
+    // Redirect to profile page
+    router.push("/talents/my-profile");
+  };
 
   const handleWalletDisconnect = async () => {
     try {
@@ -118,10 +189,37 @@ export const NavBar = () => {
     }
   };
 
-  const handleOnConnect = (account: any) => {
-    console.log(account.getAccount(), "account...");
-    console.log(account, "Account...");
-    console.log("connected to:", account?.address);
+  const handleOnConnect = async (wallet: any) => {
+    console.log("=== WALLET CONNECTION DEBUG ===");
+    console.log("Full wallet object:", wallet);
+    console.log("Wallet ID:", wallet.id);
+    console.log("Wallet walletId:", wallet.walletId);
+    console.log("Wallet type:", wallet.type);
+    console.log("Wallet connector:", wallet.connector);
+    
+    const account = await wallet.getAccount();
+    console.log("Account object:", account);
+    console.log("Account address:", account?.address);
+    
+    // Check if this is a social/in-app wallet
+    const isSocialWallet = wallet.id === 'inApp' || 
+                          wallet.walletId === 'inApp' ||
+                          wallet.id?.includes('social') ||
+                          wallet.id?.includes('email') ||
+                          wallet.id?.includes('google');
+    
+    console.log("Is social wallet?", isSocialWallet);
+    
+    // Try to get email immediately after connection for in-app wallets
+    if (isSocialWallet) {
+      try {
+        const email = await getEmailFromInAppWallet(thirdwebClient);
+        console.log("Email from in-app wallet:", email);
+      } catch (error) {
+        console.log("Could not get email immediately after connection:", error);
+      }
+    }
+    console.log("=== END WALLET DEBUG ===");
   };
 
   // Configure embedded wallet with multiple authentication options
@@ -159,11 +257,23 @@ export const NavBar = () => {
     walletConnectWallet,   // WalletConnect for mobile wallets
     coinbaseWallet         // Coinbase Wallet
   ];
+  
   return (
-    <header
-      aria-label="Site Header"
-      className="bg-gradient-to-r from-amber-100 via-amber-50 to-yellow-100 shadow-lg border-b border-amber-200 backdrop-blur-sm"
-    >
+    <>
+      <EmailVerificationModal
+        open={showEmailVerification}
+        onClose={() => {
+          setShowEmailVerification(false);
+          setWalletAddressToVerify("");
+        }}
+        walletAddress={walletAddressToVerify}
+        onVerificationSuccess={handleEmailVerificationSuccess}
+      />
+      
+      <header
+        aria-label="Site Header"
+        className="bg-gradient-to-r from-amber-100 via-amber-50 to-yellow-100 shadow-lg border-b border-amber-200 backdrop-blur-sm"
+      >
       <div className="flex items-center h-16 gap-8 px-8 mx-auto sm:px-6">
         <Link className="block group" href="/">
           <span className="sr-only">Home</span>
@@ -293,5 +403,6 @@ export const NavBar = () => {
         </div>
       )}
     </header>
+    </>
   );
 };
