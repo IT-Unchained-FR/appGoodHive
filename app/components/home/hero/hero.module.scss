@@ -158,6 +158,18 @@
   }
 }
 
+// Bottom-left hexagon cluster
+.bottomLeftCluster {
+  @extend .hexagonCluster;
+  left: -60px;
+  bottom: 20px;
+
+  svg {
+    width: 350px;
+    height: 350px;
+  }
+}
+
 .midLeftHex {
   position: absolute;
   top: 50%;
