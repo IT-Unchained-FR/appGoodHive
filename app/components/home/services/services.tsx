@@ -35,7 +35,7 @@ export const Services = () => {
   };
 
   const getButtonText = (id: string) => {
-    if (!isLoggedIn) {
+    if (!isAuthenticated) {
       return "Create your profile";
     }
 
