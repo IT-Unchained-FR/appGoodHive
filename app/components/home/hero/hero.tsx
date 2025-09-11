@@ -54,82 +54,96 @@ export const Hero = () => {
         }}
       />
 
-      {/* Left Side Minimalistic Hexagon Cluster */}
-      <div className="absolute left-0 top-1/4 -translate-x-1/3 hidden lg:block">
-        <svg className="w-64 h-80 opacity-[0.15]" viewBox="0 0 250 320">
-          {/* Large hexagon - outline only */}
+      {/* Left Side Hexagon Cluster */}
+      <div className="absolute left-0 top-1/3 -translate-x-1/2 hidden lg:block">
+        <svg className="w-96 h-96 opacity-[0.08]" viewBox="0 0 400 400">
+          {/* Main large hexagon */}
           <polygon 
-            points="125,30 175,55 175,105 125,130 75,105 75,55" 
+            points="200,50 270,85 270,155 200,190 130,155 130,85" 
             fill="none" 
             stroke="#d97706" 
+            strokeWidth="2"
+          />
+          {/* Medium hexagon - top left */}
+          <polygon 
+            points="120,120 155,138 155,174 120,192 85,174 85,138" 
+            fill="#fbbf24" 
+            fillOpacity="0.15"
+            stroke="#f59e0b" 
             strokeWidth="1.5"
           />
-          {/* Medium hexagon - partially filled */}
+          {/* Medium hexagon - bottom right */}
           <polygon 
-            points="100,140 135,158 135,194 100,212 65,194 65,158" 
-            fill="#fbbf24" 
-            fillOpacity="0.08"
-            stroke="#f59e0b" 
-            strokeWidth="1"
-          />
-          {/* Small hexagon */}
-          <polygon 
-            points="180,160 205,173 205,199 180,212 155,199 155,173" 
+            points="280,200 315,218 315,254 280,272 245,254 245,218" 
             fill="none" 
             stroke="#fcd34d" 
-            strokeWidth="1.2"
+            strokeWidth="1.8"
           />
-          {/* Tiny accent hexagon */}
+          {/* Small accent hexagons */}
           <polygon 
-            points="75,240 90,248 90,264 75,272 60,264 60,248" 
-            fill="#fbbf24" 
+            points="160,280 180,290 180,310 160,320 140,310 140,290" 
+            fill="#f59e0b" 
             fillOpacity="0.12"
+          />
+          <polygon 
+            points="320,100 335,108 335,124 320,132 305,124 305,108" 
+            fill="none" 
+            stroke="#d97706" 
+            strokeWidth="1"
+          />
+          {/* Tiny details */}
+          <polygon 
+            points="90,320 100,325 100,335 90,340 80,335 80,325" 
+            fill="#fcd34d" 
+            fillOpacity="0.2"
           />
         </svg>
       </div>
 
-      {/* Right Side Minimalistic Hexagon Cluster */}
-      <div className="absolute right-0 top-1/2 translate-x-1/3 hidden lg:block">
-        <svg className="w-72 h-96 opacity-[0.12]" viewBox="0 0 280 380">
-          {/* Large central hexagon */}
+      {/* Right Side Hexagon Cluster */}
+      <div className="absolute right-0 top-1/2 translate-x-1/2 hidden lg:block">
+        <svg className="w-80 h-80 opacity-[0.08]" viewBox="0 0 350 350">
+          {/* Main central hexagon */}
           <polygon 
-            points="140,50 190,75 190,125 140,150 90,125 90,75" 
+            points="175,40 230,70 230,130 175,160 120,130 120,70" 
             fill="#fbbf24" 
-            fillOpacity="0.06"
+            fillOpacity="0.1"
             stroke="#d97706" 
-            strokeWidth="1.2"
+            strokeWidth="2"
           />
           {/* Medium hexagon - top right */}
           <polygon 
-            points="210,100 235,113 235,139 210,152 185,139 185,113" 
+            points="270,90 300,106 300,138 270,154 240,138 240,106" 
             fill="none" 
             stroke="#f59e0b" 
-            strokeWidth="1"
+            strokeWidth="1.5"
           />
           {/* Medium hexagon - bottom left */}
           <polygon 
-            points="70,180 95,193 95,219 70,232 45,219 45,193" 
+            points="80,170 110,186 110,218 80,234 50,218 50,186" 
             fill="none" 
             stroke="#fcd34d" 
-            strokeWidth="1"
+            strokeWidth="1.8"
           />
-          {/* Small hexagon - center bottom */}
+          {/* Small hexagons */}
           <polygon 
-            points="160,220 180,230 180,250 160,260 140,250 140,230" 
+            points="200,220 225,233 225,259 200,272 175,259 175,233" 
             fill="#f59e0b" 
             fillOpacity="0.08"
+            stroke="#d97706" 
+            strokeWidth="1"
           />
-          {/* Tiny hexagons for detail */}
           <polygon 
-            points="240,180 250,185 250,195 240,200 230,195 230,185" 
+            points="310,200 325,208 325,224 310,232 295,224 295,208" 
+            fill="none" 
+            stroke="#fbbf24" 
+            strokeWidth="1.2"
+          />
+          {/* Tiny accent */}
+          <polygon 
+            points="120,280 130,285 130,295 120,300 110,295 110,285" 
             fill="#fcd34d" 
             fillOpacity="0.15"
-          />
-          <polygon 
-            points="120,300 135,308 135,322 120,330 105,322 105,308" 
-            fill="none" 
-            stroke="#d97706" 
-            strokeWidth="0.8"
           />
         </svg>
       </div>
