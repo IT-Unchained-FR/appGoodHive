@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 import { GoodhiveQuestLink } from "@/app/constants/common";
+import styles from "./hero.module.scss";
 
 export const Hero = () => {
   const router = useRouter();
@@ -23,176 +24,457 @@ export const Hero = () => {
   };
 
   return (
-    <section className="relative min-h-[700px] w-full overflow-hidden">
+    <section className={styles.hero}>
       {/* Minimalist Background with Subtle Gradient */}
-      <div 
-        className="absolute inset-0"
-        style={{
-          background: `
-            radial-gradient(at 40% 20%, hsla(45, 100%, 74%, 0.08) 0px, transparent 50%),
-            radial-gradient(at 80% 0%, hsla(35, 100%, 70%, 0.06) 0px, transparent 50%),
-            radial-gradient(at 0% 50%, hsla(50, 100%, 80%, 0.04) 0px, transparent 50%),
-            linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%)
-          `
-        }}
-      />
-      
-      {/* Subtle Honeycomb Pattern Overlay */}
-      <div 
-        className="absolute inset-0 opacity-[0.02]"
-        style={{
-          backgroundImage: `
-            linear-gradient(30deg, #d97706 12%, transparent 12.5%, transparent 87%, #d97706 87.5%, #d97706),
-            linear-gradient(150deg, #d97706 12%, transparent 12.5%, transparent 87%, #d97706 87.5%, #d97706),
-            linear-gradient(30deg, #d97706 12%, transparent 12.5%, transparent 87%, #d97706 87.5%, #d97706),
-            linear-gradient(150deg, #d97706 12%, transparent 12.5%, transparent 87%, #d97706 87.5%, #d97706),
-            linear-gradient(60deg, #dc2626 25%, transparent 25.5%, transparent 75%, #dc2626 75%, #dc2626),
-            linear-gradient(60deg, #dc2626 25%, transparent 25.5%, transparent 75%, #dc2626 75%, #dc2626)
-          `,
-          backgroundSize: '40px 70px',
-          backgroundPosition: '0 0, 0 0, 20px 35px, 20px 35px, 0 0, 20px 35px'
-        }}
-      />
+      <div className={styles.background} />
 
-      {/* Left Side Hexagon Cluster */}
-      <div className="absolute left-0 top-1/3 -translate-x-1/4 hidden lg:block">
-        <svg className="w-96 h-96 opacity-[0.25]" viewBox="0 0 400 400">
-          {/* Main large hexagon */}
-          <polygon 
-            points="200,50 270,85 270,155 200,190 130,155 130,85" 
-            fill="none" 
-            stroke="#d97706" 
-            strokeWidth="2"
+      {/* Subtle Honeycomb Pattern Overlay */}
+      <div className={styles.honeycombPattern} />
+
+      {/* Top-Left Hexagon Cluster - Modern Design */}
+      <div className={styles.topLeftCluster}>
+        <svg className="w-[450px] h-[450px]" viewBox="0 0 450 450">
+          <defs>
+            <linearGradient
+              id="hexGradient1"
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="100%"
+            >
+              <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.2" />
+              <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.05" />
+            </linearGradient>
+            <linearGradient
+              id="hexGradient2"
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="100%"
+            >
+              <stop offset="0%" stopColor="#d97706" stopOpacity="0.15" />
+              <stop offset="100%" stopColor="#fbbf24" stopOpacity="0.05" />
+            </linearGradient>
+          </defs>
+
+          {/* Large main hexagon - outlined */}
+          <polygon
+            points="200,80 280,125 280,215 200,260 120,215 120,125"
+            fill="none"
+            stroke="#d97706"
+            strokeWidth="2.5"
+            opacity="0.3"
+            strokeDasharray="5 3"
           />
-          {/* Medium hexagon - top left */}
-          <polygon 
-            points="120,120 155,138 155,174 120,192 85,174 85,138" 
-            fill="#fbbf24" 
-            fillOpacity="0.15"
-            stroke="#f59e0b" 
+
+          {/* Large filled hexagon with gradient */}
+          <polygon
+            points="150,150 210,185 210,255 150,290 90,255 90,185"
+            fill="url(#hexGradient1)"
+            stroke="#f59e0b"
             strokeWidth="1.5"
+            opacity="0.25"
           />
-          {/* Medium hexagon - bottom right */}
-          <polygon 
-            points="280,200 315,218 315,254 280,272 245,254 245,218" 
-            fill="none" 
-            stroke="#fcd34d" 
+
+          {/* Medium hexagon - top */}
+          <polygon
+            points="280,60 320,82 320,126 280,148 240,126 240,82"
+            fill="none"
+            stroke="#fbbf24"
+            strokeWidth="2"
+            opacity="0.35"
+          />
+
+          {/* Medium hexagon - center right */}
+          <polygon
+            points="320,180 360,202 360,246 320,268 280,246 280,202"
+            fill="url(#hexGradient2)"
+            stroke="#d97706"
             strokeWidth="1.8"
+            opacity="0.2"
           />
+
           {/* Small accent hexagons */}
-          <polygon 
-            points="160,280 180,290 180,310 160,320 140,310 140,290" 
-            fill="#f59e0b" 
-            fillOpacity="0.12"
+          <polygon
+            points="100,100 125,113 125,139 100,152 75,139 75,113"
+            fill="none"
+            stroke="#f59e0b"
+            strokeWidth="1.5"
+            opacity="0.4"
+            strokeDasharray="3 2"
           />
-          <polygon 
-            points="320,100 335,108 335,124 320,132 305,124 305,108" 
-            fill="none" 
-            stroke="#d97706" 
+
+          <polygon
+            points="240,280 265,293 265,319 240,332 215,319 215,293"
+            fill="#fbbf24"
+            fillOpacity="0.1"
+            stroke="#d97706"
+            strokeWidth="1.2"
+            opacity="0.3"
+          />
+
+          {/* Tiny floating hexagons */}
+          <polygon
+            points="350,120 365,128 365,144 350,152 335,144 335,128"
+            fill="none"
+            stroke="#fcd34d"
             strokeWidth="1"
+            opacity="0.5"
           />
-          {/* Tiny details */}
-          <polygon 
-            points="90,320 100,325 100,335 90,340 80,335 80,325" 
-            fill="#fcd34d" 
-            fillOpacity="0.2"
+
+          <polygon
+            points="60,240 75,248 75,264 60,272 45,264 45,248"
+            fill="#f59e0b"
+            fillOpacity="0.15"
+            opacity="0.35"
+          />
+
+          <polygon
+            points="180,350 195,358 195,374 180,382 165,374 165,358"
+            fill="none"
+            stroke="#d97706"
+            strokeWidth="0.8"
+            opacity="0.3"
+            strokeDasharray="2 2"
           />
         </svg>
       </div>
 
-      {/* Right Side Hexagon Cluster */}
-      <div className="absolute right-0 top-1/2 translate-x-1/4 hidden lg:block">
-        <svg className="w-80 h-80 opacity-[0.25]" viewBox="0 0 350 350">
-          {/* Main central hexagon */}
-          <polygon 
-            points="175,40 230,70 230,130 175,160 120,130 120,70" 
-            fill="#fbbf24" 
-            fillOpacity="0.1"
-            stroke="#d97706" 
-            strokeWidth="2"
+      {/* Top-Right Hexagon Cluster - Bigger Design */}
+      <div className={styles.topRightCluster}>
+        <svg className="w-[400px] h-[400px]" viewBox="0 0 400 400">
+          <defs>
+            <linearGradient
+              id="hexGradient5"
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="100%"
+            >
+              <stop offset="0%" stopColor="#fcd34d" stopOpacity="0.15" />
+              <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.05" />
+            </linearGradient>
+            <linearGradient
+              id="hexGradient6"
+              x1="100%"
+              y1="100%"
+              x2="0%"
+              y2="0%"
+            >
+              <stop offset="0%" stopColor="#d97706" stopOpacity="0.12" />
+              <stop offset="100%" stopColor="#fbbf24" stopOpacity="0.03" />
+            </linearGradient>
+          </defs>
+
+          {/* Large hexagon - top right */}
+          <polygon
+            points="260,70 320,100 320,180 260,210 200,180 200,100"
+            fill="none"
+            stroke="#f59e0b"
+            strokeWidth="2.5"
+            opacity="0.25"
+            strokeDasharray="5 3"
           />
-          {/* Medium hexagon - top right */}
-          <polygon 
-            points="270,90 300,106 300,138 270,154 240,138 240,106" 
-            fill="none" 
-            stroke="#f59e0b" 
-            strokeWidth="1.5"
-          />
-          {/* Medium hexagon - bottom left */}
-          <polygon 
-            points="80,170 110,186 110,218 80,234 50,218 50,186" 
-            fill="none" 
-            stroke="#fcd34d" 
+
+          {/* Large filled hexagon */}
+          <polygon
+            points="200,130 260,160 260,240 200,270 140,240 140,160"
+            fill="url(#hexGradient5)"
+            stroke="#d97706"
             strokeWidth="1.8"
+            opacity="0.2"
           />
-          {/* Small hexagons */}
-          <polygon 
-            points="200,220 225,233 225,259 200,272 175,259 175,233" 
-            fill="#f59e0b" 
-            fillOpacity="0.08"
-            stroke="#d97706" 
-            strokeWidth="1"
+
+          {/* Medium hexagon - center */}
+          <polygon
+            points="300,200 340,220 340,280 300,300 260,280 260,220"
+            fill="none"
+            stroke="#fbbf24"
+            strokeWidth="2"
+            opacity="0.3"
           />
-          <polygon 
-            points="310,200 325,208 325,224 310,232 295,224 295,208" 
-            fill="none" 
-            stroke="#fbbf24" 
+
+          {/* Medium filled hexagon */}
+          <polygon
+            points="160,240 200,260 200,320 160,340 120,320 120,260"
+            fill="url(#hexGradient6)"
+            stroke="#f59e0b"
+            strokeWidth="1.5"
+            opacity="0.18"
+          />
+
+          {/* Small accent hexagons */}
+          <polygon
+            points="100,160 140,180 140,220 100,240 60,220 60,180"
+            fill="none"
+            stroke="#fcd34d"
             strokeWidth="1.2"
+            opacity="0.4"
+            strokeDasharray="3 2"
           />
-          {/* Tiny accent */}
-          <polygon 
-            points="120,280 130,285 130,295 120,300 110,295 110,285" 
-            fill="#fcd34d" 
-            fillOpacity="0.15"
+
+          <polygon
+            points="320,120 360,140 360,180 320,200 280,180 280,140"
+            fill="#f59e0b"
+            fillOpacity="0.08"
+            stroke="#d97706"
+            strokeWidth="1.2"
+            opacity="0.25"
+          />
+
+          {/* Extra small hexagons */}
+          <polygon
+            points="240,300 260,310 260,330 240,340 220,330 220,310"
+            fill="none"
+            stroke="#fbbf24"
+            strokeWidth="1"
+            opacity="0.3"
+          />
+
+          <polygon
+            points="80,280 100,290 100,310 80,320 60,310 60,290"
+            fill="#fcd34d"
+            fillOpacity="0.1"
+            opacity="0.2"
+          />
+
+          {/* Tiny floating hexagons */}
+          <polygon
+            points="340,60 360,70 360,90 340,100 320,90 320,70"
+            fill="none"
+            stroke="#f59e0b"
+            strokeWidth="0.8"
+            opacity="0.35"
+          />
+
+          <polygon
+            points="60,120 80,130 80,150 60,160 40,150 40,130"
+            fill="#fbbf24"
+            fillOpacity="0.06"
+            opacity="0.25"
+          />
+        </svg>
+      </div>
+
+      {/* Bottom-Right Hexagon Cluster - Modern Design */}
+      <div className={styles.bottomRightCluster}>
+        <svg className="w-[500px] h-[500px]" viewBox="0 0 500 500">
+          <defs>
+            <linearGradient
+              id="hexGradient3"
+              x1="100%"
+              y1="100%"
+              x2="0%"
+              y2="0%"
+            >
+              <stop offset="0%" stopColor="#fcd34d" stopOpacity="0.15" />
+              <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.05" />
+            </linearGradient>
+            <linearGradient
+              id="hexGradient4"
+              x1="100%"
+              y1="100%"
+              x2="0%"
+              y2="0%"
+            >
+              <stop offset="0%" stopColor="#d97706" stopOpacity="0.2" />
+              <stop offset="100%" stopColor="#fbbf24" stopOpacity="0.03" />
+            </linearGradient>
+          </defs>
+
+          {/* Large main hexagon - outlined with dash */}
+          <polygon
+            points="300,240 380,285 380,375 300,420 220,375 220,285"
+            fill="none"
+            stroke="#f59e0b"
+            strokeWidth="2.5"
+            opacity="0.3"
+            strokeDasharray="6 4"
+          />
+
+          {/* Large filled hexagon with gradient */}
+          <polygon
+            points="350,170 410,205 410,275 350,310 290,275 290,205"
+            fill="url(#hexGradient3)"
+            stroke="#d97706"
+            strokeWidth="1.8"
+            opacity="0.22"
+          />
+
+          {/* Medium hexagon - bottom */}
+          <polygon
+            points="220,380 260,402 260,446 220,468 180,446 180,402"
+            fill="none"
+            stroke="#fbbf24"
+            strokeWidth="2"
+            opacity="0.35"
+          />
+
+          {/* Medium hexagon - center left */}
+          <polygon
+            points="180,250 220,272 220,316 180,338 140,316 140,272"
+            fill="url(#hexGradient4)"
+            stroke="#f59e0b"
+            strokeWidth="1.5"
+            opacity="0.25"
+          />
+
+          {/* Small accent hexagons */}
+          <polygon
+            points="400,350 425,363 425,389 400,402 375,389 375,363"
+            fill="none"
+            stroke="#d97706"
+            strokeWidth="1.5"
+            opacity="0.4"
+            strokeDasharray="3 2"
+          />
+
+          <polygon
+            points="260,180 285,193 285,219 260,232 235,219 235,193"
+            fill="#fcd34d"
+            fillOpacity="0.12"
+            stroke="#f59e0b"
+            strokeWidth="1.2"
+            opacity="0.3"
+          />
+
+          {/* Tiny floating hexagons */}
+          <polygon
+            points="150,380 165,388 165,404 150,412 135,404 135,388"
+            fill="none"
+            stroke="#fbbf24"
+            strokeWidth="1"
+            opacity="0.45"
+          />
+
+          <polygon
+            points="440,260 455,268 455,284 440,292 425,284 425,268"
+            fill="#d97706"
+            fillOpacity="0.1"
+            opacity="0.35"
+          />
+
+          <polygon
+            points="320,120 335,128 335,144 320,152 305,144 305,128"
+            fill="none"
+            stroke="#fcd34d"
+            strokeWidth="0.8"
+            opacity="0.3"
+            strokeDasharray="2 2"
+          />
+
+          {/* Extra small hexagon */}
+          <polygon
+            points="380,440 390,445 390,455 380,460 370,455 370,445"
+            fill="#f59e0b"
+            fillOpacity="0.2"
+            opacity="0.4"
           />
         </svg>
       </div>
 
       {/* Additional scattered hexagons for depth */}
-      <div className="absolute inset-0 hidden lg:block">
-        {/* Top center small hexagon */}
-        <div className="absolute top-16 left-1/2 -translate-x-1/2 opacity-[0.2]">
-          <svg width="40" height="40" viewBox="0 0 40 40">
-            <polygon 
-              points="20,4 32,10 32,22 20,28 8,22 8,10" 
-              fill="none" 
-              stroke="#f59e0b" 
-              strokeWidth="2"
-            />
-          </svg>
-        </div>
-        
-        {/* Bottom left hexagon */}
-        <div className="absolute bottom-20 left-20 opacity-[0.3]">
-          <svg width="50" height="50" viewBox="0 0 50 50">
-            <polygon 
-              points="25,5 42.5,13.75 42.5,31.25 25,40 7.5,31.25 7.5,13.75" 
-              fill="#fbbf24" 
-              fillOpacity="0.2"
-              stroke="#d97706" 
+      <div className={styles.scatteredHexagons}>
+        {/* Top center floating hexagon */}
+        <div className={styles.topCenterHex}>
+          <svg width="60" height="60" viewBox="0 0 60 60">
+            <polygon
+              points="30,8 46,17 46,33 30,42 14,33 14,17"
+              fill="none"
+              stroke="#f59e0b"
               strokeWidth="1.5"
+              opacity="0.2"
+              strokeDasharray="4 3"
             />
           </svg>
         </div>
-        
-        {/* Bottom right small hexagon */}
-        <div className="absolute bottom-32 right-24 opacity-[0.25]">
+
+        {/* Mid-left floating hexagon */}
+        <div className={styles.midLeftHex}>
+          <svg width="45" height="45" viewBox="0 0 45 45">
+            <polygon
+              points="22.5,6 36,13.5 36,27 22.5,34.5 9,27 9,13.5"
+              fill="#fbbf24"
+              fillOpacity="0.08"
+              stroke="#d97706"
+              strokeWidth="1.2"
+              opacity="0.25"
+            />
+          </svg>
+        </div>
+
+        {/* Mid-right floating hexagon */}
+        <div className={styles.midRightHex}>
+          <svg width="50" height="50" viewBox="0 0 50 50">
+            <polygon
+              points="25,7 40,15.5 40,31 25,39.5 10,31 10,15.5"
+              fill="none"
+              stroke="#fcd34d"
+              strokeWidth="1.8"
+              opacity="0.18"
+              strokeDasharray="3 2"
+            />
+          </svg>
+        </div>
+
+        {/* Bottom center hexagon */}
+        <div className={styles.bottomCenterHex}>
+          <svg width="55" height="55" viewBox="0 0 55 55">
+            <polygon
+              points="27.5,8 42.5,16.5 42.5,32 27.5,40.5 12.5,32 12.5,16.5"
+              fill="#f59e0b"
+              fillOpacity="0.06"
+              stroke="#fbbf24"
+              strokeWidth="1.5"
+              opacity="0.3"
+            />
+          </svg>
+        </div>
+
+        {/* Small accent hexagon - top right */}
+        <div className={styles.topRightHex}>
           <svg width="35" height="35" viewBox="0 0 35 35">
-            <polygon 
-              points="17.5,3 29.75,8.75 29.75,20.25 17.5,26 5.25,20.25 5.25,8.75" 
-              fill="none" 
-              stroke="#fcd34d" 
-              strokeWidth="2"
+            <polygon
+              points="17.5,5 27.5,10.5 27.5,20.5 17.5,26 7.5,20.5 7.5,10.5"
+              fill="none"
+              stroke="#d97706"
+              strokeWidth="1"
+              opacity="0.35"
+            />
+          </svg>
+        </div>
+
+        {/* Tiny hexagon - center */}
+        <div className={styles.centerHex}>
+          <svg width="30" height="30" viewBox="0 0 30 30">
+            <polygon
+              points="15,4 24,8.5 24,17.5 15,22 6,17.5 6,8.5"
+              fill="#fcd34d"
+              fillOpacity="0.1"
+              opacity="0.25"
+            />
+          </svg>
+        </div>
+
+        {/* Extra tiny hexagon - bottom left */}
+        <div className={styles.bottomLeftHex}>
+          <svg width="25" height="25" viewBox="0 0 25 25">
+            <polygon
+              points="12.5,3 20,7 20,14 12.5,18 5,14 5,7"
+              fill="none"
+              stroke="#f59e0b"
+              strokeWidth="0.8"
+              opacity="0.2"
+              strokeDasharray="2 1"
             />
           </svg>
         </div>
       </div>
 
-      <div className="relative container mx-auto px-6 py-24 flex flex-col items-center justify-center min-h-[700px]">
-
+      <div className={styles.content}>
         {/* Clean Logo */}
-        <div className="relative mb-10">
-          <div className="h-20 w-80 relative z-10 sm:h-16 sm:w-64 md:h-18 md:w-72">
+        <div className={styles.logo}>
+          <div className={styles.logoContainer}>
             <Image
               alt="logo"
               src="/img/goodhive-logo.png"
@@ -203,79 +485,65 @@ export const Hero = () => {
         </div>
 
         {/* Typography-First Title */}
-        <div className="text-center mb-8 z-20 relative">
-          <div className="inline-flex items-center bg-amber-50 text-amber-700 px-4 py-1.5 rounded-full text-sm font-medium mb-8 border border-amber-200">
-            <span className="mr-2">✦</span>
+        <div className={styles.typography}>
+          <div className={styles.badge}>
+            <span className={styles.icon}>✦</span>
             Buzzing with Innovation
           </div>
-          <h1 className="text-6xl lg:text-7xl font-bold mb-6 leading-tight tracking-tight">
-            <span className="text-gray-900">The Collaborative</span>
+          <h1 className={styles.title}>
+            <span className={styles.textGray}>The Collaborative</span>
             <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-yellow-600">
-              Recruitment Hive
-            </span>
+            <span className={styles.textGradient}>Recruitment Hive</span>
             <br />
-            <span className="text-gray-900">for Web3 Devs</span>
+            <span className={styles.textGray}>for Web3 Devs</span>
           </h1>
-          <p className="text-lg text-gray-600 font-normal max-w-xl mx-auto">
+          <p className={styles.subtitle}>
             More collaborative, more transparent and fairer than ever.
             <br />
-            <span className="text-amber-600 font-medium">
+            <span className={styles.highlight}>
               Join the sweetest recruitment revolution
             </span>
           </p>
         </div>
 
         {/* Simplified Action Buttons */}
-        <div className="flex gap-4 mb-16 z-20 relative sm:flex-col sm:gap-3 sm:w-full sm:max-w-xs">
-          <button
-            onClick={onFindJobBtnClick}
-            className="px-8 py-3.5 bg-amber-600 text-white font-medium rounded-xl shadow-sm hover:bg-amber-700 transition-colors duration-200"
-          >
+        <div className={styles.actionButtons}>
+          <button onClick={onFindJobBtnClick} className={styles.primaryButton}>
             Find Sweet Jobs
           </button>
 
           <button
             onClick={onFindTalentBtnClick}
-            className="px-8 py-3.5 bg-white text-gray-900 font-medium rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors duration-200"
+            className={styles.secondaryButton}
           >
             Find Top Talent
           </button>
         </div>
 
         {/* Simplified Rewards Section */}
-        <div className="max-w-2xl flex flex-col items-center z-20 relative">
-          <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-center mb-4">
-              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center mr-3">
-                <span className="text-xl">🏆</span>
+        <div className={styles.rewardsSection}>
+          <div className={styles.rewardsCard}>
+            <div className={styles.header}>
+              <div className={styles.icon}>
+                <span>🏆</span>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900">
-                Exclusive Hive Rewards
-              </h3>
+              <h3 className={styles.title}>Exclusive Hive Rewards</h3>
             </div>
-            <p className="text-center text-gray-600 mb-6 text-sm leading-relaxed">
+            <p className={styles.description}>
               Unlock exclusive referral rewards and gain governance power. Enjoy
               privileged access to
-              <span className="font-medium text-amber-600">
-                {" "}
-                Airdrops and Whitelists
-              </span>
+              <span className={styles.highlight}> Airdrops and Whitelists</span>
               , and become an esteemed holder of our{" "}
-              <span className="font-medium text-amber-600">
-                Scout and Pioneer NFTs
-              </span>
-              .
+              <span className={styles.highlight}>Scout and Pioneer NFTs</span>.
             </p>
             <button
               onClick={onJoinQuestsClickHandler}
-              className="px-5 py-2.5 bg-amber-100 text-amber-700 font-medium rounded-lg hover:bg-amber-200 transition-colors duration-200 mx-auto block text-sm"
+              className={styles.questButton}
             >
               Join the Hive Quest
             </button>
           </div>
         </div>
-
       </div>
     </section>
   );
