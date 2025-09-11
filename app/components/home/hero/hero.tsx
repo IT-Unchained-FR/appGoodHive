@@ -55,8 +55,8 @@ export const Hero = () => {
       />
 
       {/* Left Side Hexagon Cluster */}
-      <div className="absolute left-0 top-1/3 -translate-x-1/2 hidden lg:block">
-        <svg className="w-96 h-96 opacity-[0.08]" viewBox="0 0 400 400">
+      <div className="absolute left-0 top-1/3 -translate-x-1/4 hidden lg:block">
+        <svg className="w-96 h-96 opacity-[0.25]" viewBox="0 0 400 400">
           {/* Main large hexagon */}
           <polygon 
             points="200,50 270,85 270,155 200,190 130,155 130,85" 
@@ -101,8 +101,8 @@ export const Hero = () => {
       </div>
 
       {/* Right Side Hexagon Cluster */}
-      <div className="absolute right-0 top-1/2 translate-x-1/2 hidden lg:block">
-        <svg className="w-80 h-80 opacity-[0.08]" viewBox="0 0 350 350">
+      <div className="absolute right-0 top-1/2 translate-x-1/4 hidden lg:block">
+        <svg className="w-80 h-80 opacity-[0.25]" viewBox="0 0 350 350">
           {/* Main central hexagon */}
           <polygon 
             points="175,40 230,70 230,130 175,160 120,130 120,70" 
@@ -151,38 +151,38 @@ export const Hero = () => {
       {/* Additional scattered hexagons for depth */}
       <div className="absolute inset-0 hidden lg:block">
         {/* Top center small hexagon */}
-        <div className="absolute top-16 left-1/2 -translate-x-1/2 opacity-[0.08]">
-          <svg width="30" height="30" viewBox="0 0 30 30">
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 opacity-[0.2]">
+          <svg width="40" height="40" viewBox="0 0 40 40">
             <polygon 
-              points="15,3 24,7.5 24,16.5 15,21 6,16.5 6,7.5" 
+              points="20,4 32,10 32,22 20,28 8,22 8,10" 
               fill="none" 
               stroke="#f59e0b" 
-              strokeWidth="1"
+              strokeWidth="2"
             />
           </svg>
         </div>
         
         {/* Bottom left hexagon */}
-        <div className="absolute bottom-20 left-20 opacity-[0.1]">
-          <svg width="40" height="40" viewBox="0 0 40 40">
+        <div className="absolute bottom-20 left-20 opacity-[0.3]">
+          <svg width="50" height="50" viewBox="0 0 50 50">
             <polygon 
-              points="20,4 32,10 32,22 20,28 8,22 8,10" 
+              points="25,5 42.5,13.75 42.5,31.25 25,40 7.5,31.25 7.5,13.75" 
               fill="#fbbf24" 
-              fillOpacity="0.3"
+              fillOpacity="0.2"
               stroke="#d97706" 
-              strokeWidth="0.8"
+              strokeWidth="1.5"
             />
           </svg>
         </div>
         
         {/* Bottom right small hexagon */}
-        <div className="absolute bottom-32 right-24 opacity-[0.06]">
-          <svg width="25" height="25" viewBox="0 0 25 25">
+        <div className="absolute bottom-32 right-24 opacity-[0.25]">
+          <svg width="35" height="35" viewBox="0 0 35 35">
             <polygon 
-              points="12.5,2 20,5.5 20,12.5 12.5,16 5,12.5 5,5.5" 
+              points="17.5,3 29.75,8.75 29.75,20.25 17.5,26 5.25,20.25 5.25,8.75" 
               fill="none" 
               stroke="#fcd34d" 
-              strokeWidth="1"
+              strokeWidth="2"
             />
           </svg>
         </div>
