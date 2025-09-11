@@ -15,12 +15,22 @@ const PUBLIC_PATHS = [
   "/auth/signup",
   "/admin/login",
   "/",
+  "/talents/job-search",
+  "/companies/search-talents",
+  "/talents/",  // Allow viewing talent profiles
+  "/companies/",  // Allow viewing company profiles
   "/api/auth/login",
   "/api/auth/signup",
   "/api/auth/admin/login",
   "/api/auth/thirdweb-login",
   "/api/auth/logout",
   "/api/auth/me",
+  "/api/talents/job-search",
+  "/api/companies/search-talents",
+  "/api/companies/my-profile",  // For viewing company details
+  "/api/companies/jobs",  // For viewing company jobs
+  "/api/companies/job-data",  // For viewing single job
+  "/api/talents/my-profile",  // For viewing talent details
 ];
 
 // Helper function to check if a path is public

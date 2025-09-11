@@ -6,6 +6,7 @@ import { Mail, MessageCircle, Sparkles } from "lucide-react";
 import Cookies from "js-cookie";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { useAuthCheck } from "@/app/hooks/useAuthCheck";
 
 interface Props {
   toEmail: string;
@@ -16,13 +17,18 @@ export const CompanyContactBtn = ({ toEmail, toUserName }: Props) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isPopupModal, setIsPopupModal] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const user_id = Cookies.get("user_id");
+  const { user_id, checkAuthAndShowConnectPrompt } = useAuthCheck();
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
 
   const onContactMeBtnClickHandler = async () => {
+    // Check if user is authenticated first
+    if (!checkAuthAndShowConnectPrompt("contact this company")) {
+      return;
+    }
+    
     setIsLoading(true);
     const userDataResponse = await fetch(
       `/api/talents/my-profile?user_id=${user_id}`,
@@ -56,7 +62,9 @@ export const CompanyContactBtn = ({ toEmail, toUserName }: Props) => {
       return;
     }
     if (!user_id) {
-      toast.error("Please login to your account first!");
+      // This should not happen if checkAuthAndShowConnectPrompt passed
+      // But keeping as fallback
+      checkAuthAndShowConnectPrompt("send a message");
       return;
     }
     try {
