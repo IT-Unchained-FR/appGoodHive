@@ -13,21 +13,17 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useAuthCheck } from "@/app/hooks/useAuthCheck";
 
 import { TRANSLATION, allServices } from "./services.constants";
 
 export const Services = () => {
   const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    const loggedIn_user_id = Cookies.get("user_id");
-    setIsLoggedIn(!!loggedIn_user_id);
-  }, []);
+  const { isAuthenticated, checkAuthAndShowConnectPrompt } = useAuthCheck();
 
   const onCtaClickHandler = (id: string) => {
-    if (!isLoggedIn) {
-      router.push("/auth/login");
+    if (!isAuthenticated) {
+      checkAuthAndShowConnectPrompt("access this feature");
       return;
     }
 
@@ -195,9 +191,10 @@ export const Services = () => {
                     {/* CTA Button */}
                     <button
                       onClick={() => {
-                        console.log(isLoggedIn, id, "hehe");
-                        if (!isLoggedIn) {
-                          return router.push("/auth/login");
+                        console.log(isAuthenticated, id, "hehe");
+                        if (!isAuthenticated) {
+                          checkAuthAndShowConnectPrompt("access this feature");
+                          return;
                         }
 
                         if (id === "talent") {

@@ -33,7 +33,6 @@ export interface UserProfile {
 export default function UserProfilePage() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [showConnectEmailPopup, setShowConnectEmailPopup] = useState(false);
 
   // Add custom animations
   const animationStyles = `
@@ -110,9 +109,6 @@ export default function UserProfilePage() {
     fetchUserProfile();
   }, [fetchUserProfile]);
 
-  const handleConnect = () => {
-    setShowConnectEmailPopup(true);
-  };
 
   if (!userProfile) {
     return (
