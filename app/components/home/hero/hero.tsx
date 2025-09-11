@@ -256,6 +256,122 @@ export const Hero = () => {
         </svg>
       </div>
 
+      {/* Bottom-Left Hexagon Cluster - Medium Design */}
+      <div className={styles.bottomLeftCluster}>
+        <svg className="w-[350px] h-[350px]" viewBox="0 0 350 350">
+          <defs>
+            <linearGradient
+              id="hexGradient7"
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="100%"
+            >
+              <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.12" />
+              <stop offset="100%" stopColor="#d97706" stopOpacity="0.04" />
+            </linearGradient>
+            <linearGradient
+              id="hexGradient8"
+              x1="100%"
+              y1="100%"
+              x2="0%"
+              y2="0%"
+            >
+              <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.15" />
+              <stop offset="100%" stopColor="#fcd34d" stopOpacity="0.03" />
+            </linearGradient>
+          </defs>
+
+          {/* Large hexagon - bottom left */}
+          <polygon
+            points="200,280 260,310 260,390 200,420 140,390 140,310"
+            fill="none"
+            stroke="#d97706"
+            strokeWidth="2.2"
+            opacity="0.22"
+            strokeDasharray="4 3"
+          />
+
+          {/* Large filled hexagon */}
+          <polygon
+            points="150,200 210,230 210,310 150,340 90,310 90,230"
+            fill="url(#hexGradient7)"
+            stroke="#f59e0b"
+            strokeWidth="1.6"
+            opacity="0.18"
+          />
+
+          {/* Medium hexagon - center */}
+          <polygon
+            points="250,150 290,170 290,230 250,250 210,230 210,170"
+            fill="none"
+            stroke="#fbbf24"
+            strokeWidth="1.8"
+            opacity="0.28"
+          />
+
+          {/* Medium filled hexagon */}
+          <polygon
+            points="100,250 140,270 140,330 100,350 60,330 60,270"
+            fill="url(#hexGradient8)"
+            stroke="#d97706"
+            strokeWidth="1.4"
+            opacity="0.16"
+          />
+
+          {/* Small accent hexagons */}
+          <polygon
+            points="80,180 120,200 120,260 80,280 40,260 40,200"
+            fill="none"
+            stroke="#fcd34d"
+            strokeWidth="1.2"
+            opacity="0.35"
+            strokeDasharray="3 2"
+          />
+
+          <polygon
+            points="280,280 320,300 320,360 280,380 240,360 240,300"
+            fill="#f59e0b"
+            fillOpacity="0.06"
+            stroke="#fbbf24"
+            strokeWidth="1.1"
+            opacity="0.22"
+          />
+
+          {/* Extra small hexagons */}
+          <polygon
+            points="200,120 220,130 220,150 200,160 180,150 180,130"
+            fill="none"
+            stroke="#d97706"
+            strokeWidth="1"
+            opacity="0.3"
+          />
+
+          <polygon
+            points="60,320 80,330 80,350 60,360 40,350 40,330"
+            fill="#fbbf24"
+            fillOpacity="0.08"
+            opacity="0.2"
+          />
+
+          {/* Tiny floating hexagons */}
+          <polygon
+            points="300,80 320,90 320,110 300,120 280,110 280,90"
+            fill="none"
+            stroke="#f59e0b"
+            strokeWidth="0.8"
+            opacity="0.32"
+          />
+
+          <polygon
+            points="40,140 60,150 60,170 40,180 20,170 20,150"
+            fill="#fcd34d"
+            fillOpacity="0.05"
+            opacity="0.18"
+          />
+        </svg>
+      </div>
+
       {/* Bottom-Right Hexagon Cluster - Modern Design */}
       <div className={styles.bottomRightCluster}>
         <svg className="w-[500px] h-[500px]" viewBox="0 0 500 500">
