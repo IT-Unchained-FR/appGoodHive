@@ -209,7 +209,7 @@
   }
 
   .title {
-    font-size: 2.5rem;
+    font-size: 1.5rem;
     font-weight: 700;
     background: linear-gradient(to right, #b45309, #a16207, #c2410c);
     background-clip: text;
@@ -219,7 +219,7 @@
     line-height: 1.1;
 
     @media (min-width: 640px) {
-      font-size: 3rem;
+      font-size: 2rem;
     }
   }
 
@@ -853,11 +853,11 @@
     .title {
       font-size: 2rem;
     }
-    
+
     .cardHeader .title {
       font-size: 2rem;
     }
-    
+
     .statisticsOverview .title {
       font-size: 2rem;
     }
