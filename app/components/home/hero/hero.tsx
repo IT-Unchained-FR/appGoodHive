@@ -617,7 +617,7 @@ export const Hero = () => {
             More collaborative, more transparent and fairer than ever.
             <br />
             <span className={styles.highlight}>
-              Join the sweetest recruitment revolution
+              Join the recruitment revolution where value returns to the people who create it.
             </span>
           </p>
         </div>
@@ -625,14 +625,14 @@ export const Hero = () => {
         {/* Simplified Action Buttons */}
         <div className={styles.actionButtons}>
           <button onClick={onFindJobBtnClick} className={styles.primaryButton}>
-            Find Sweet Jobs
+            Find Opportunities
           </button>
 
           <button
             onClick={onFindTalentBtnClick}
             className={styles.secondaryButton}
           >
-            Find Top Talent
+            Hire Top Talent
           </button>
         </div>
 
