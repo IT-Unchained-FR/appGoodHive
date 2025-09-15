@@ -28,7 +28,7 @@ export interface UserProfile {
   mentor_status: "pending" | "approved";
   recruiter_status: "pending" | "approved";
   wallet_address?: string;
-  okto_wallet_address?: string;
+  thirdweb_wallet_address?: string;
 }
 
 export default function UserProfilePage() {
@@ -258,7 +258,7 @@ export default function UserProfilePage() {
               <WalletItem
                 icon={Shield}
                 label="Thirdweb Wallet"
-                address={userProfile.okto_wallet_address}
+                address={userProfile.thirdweb_wallet_address}
                 description="Your secure Thirdweb wallet"
               />
             </div>
@@ -299,7 +299,7 @@ export default function UserProfilePage() {
             <StatCard
               value={[
                 userProfile.wallet_address,
-                userProfile.okto_wallet_address,
+                userProfile.thirdweb_wallet_address,
               ]
                 .filter(Boolean)
                 .length.toString()}
