@@ -1,8 +1,8 @@
 "use client";
 
 import { Input } from "@/app/components/input";
-import { LinkButton } from "@/app/components/link-button";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import React, { FC, useCallback, useEffect, useState } from "react";
 import { CitySuggestion } from "../city-suggestor/city-suggestor";
 import { SkillsSuggestionMulti } from "../skills-suggestor/skills-suggestor-multi";
@@ -24,8 +24,10 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
   );
 
   // Filter switches for jobs and talents
+  const recruiterParam =
+    searchParams.get("openToRecruiter") ?? searchParams.get("recruiter");
   const [openToRecruiter, setOpenToRecruiter] = useState(
-    searchParams.get("recruiter") === "true",
+    recruiterParam === "true",
   );
   const [openToMentor, setOpenToMentor] = useState(
     searchParams.get("mentor") === "true",
@@ -114,8 +116,9 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
         else params.delete("onlyRecruiter");
       } else {
         // For job search
-        if (currentFilters.openToRecruiter) params.set("recruiter", "true");
-        else params.delete("recruiter");
+        params.delete("recruiter");
+        if (currentFilters.openToRecruiter) params.set("openToRecruiter", "true");
+        else params.delete("openToRecruiter");
         if (currentFilters.openToMentor) params.set("mentor", "true");
         else params.delete("mentor");
       }
@@ -362,29 +365,31 @@ export const SearchFilters: FC<SearchFiltersProps> = (props) => {
             {/* Action Buttons Row */}
             <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-amber-100">
               <div className="flex flex-wrap items-center gap-3">
-                <LinkButton
-                  href="#"
-                  icon={<FolderOpen className="w-4 h-4" />}
-                  iconSize="medium"
-                  variant="secondary"
+                <button
+                  type="button"
                   onClick={handleClearFilters}
+                  className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-white/90 px-5 py-3 text-sm font-semibold text-amber-700 shadow-sm transition-all duration-200 hover:bg-amber-50 hover:text-amber-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400"
                 >
+                  <FolderOpen className="h-4 w-4" />
                   Clear Filters
-                </LinkButton>
+                </button>
               </div>
 
-              <LinkButton
+              <Link
                 href={
                   isSearchTalent
                     ? "/companies/create-job"
                     : "/talents/my-profile"
                 }
-                icon={isSearchTalent ? <Sparkles className="w-4 h-4" /> : <Target className="w-4 h-4" />}
-                iconSize="medium"
-                variant="primary"
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:from-amber-600 hover:to-yellow-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
               >
+                {isSearchTalent ? (
+                  <Sparkles className="h-4 w-4" />
+                ) : (
+                  <Target className="h-4 w-4" />
+                )}
                 {isSearchTalent ? "Create Job" : "My Profile"}
-              </LinkButton>
+              </Link>
             </div>
           </div>
         </div>

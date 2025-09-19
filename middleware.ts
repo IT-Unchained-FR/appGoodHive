@@ -11,7 +11,6 @@ import { rateLimit } from "./middleware/rateLimit";
 
 // Public paths that don't need authentication
 const PUBLIC_PATHS = [
-  "/auth/login",
   "/auth/signup",
   "/admin/login",
   "/",
@@ -55,6 +54,7 @@ async function validateSessionToken(token: string) {
 
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
+  const hasConnectPrompt = req.nextUrl.searchParams.get("connectWallet") === "true";
   let response: NextResponse;
 
   try {
@@ -119,7 +119,14 @@ export async function middleware(req: NextRequest) {
             { status: 401 },
           );
         }
-        return NextResponse.redirect(new URL("/auth/login", req.url));
+        if (!hasConnectPrompt) {
+          const redirectUrl = req.nextUrl.clone();
+          redirectUrl.searchParams.set("connectWallet", "true");
+          return NextResponse.redirect(redirectUrl);
+        }
+
+        response = NextResponse.next();
+        return response;
       }
 
       // Validate the session token
@@ -132,12 +139,31 @@ export async function middleware(req: NextRequest) {
               { error: "Invalid session", code: "INVALID_TOKEN" },
               { status: 401 },
             )
-          : NextResponse.redirect(new URL("/auth/login", req.url));
+          : (() => {
+              if (!hasConnectPrompt) {
+                const redirectUrl = req.nextUrl.clone();
+                redirectUrl.searchParams.set("connectWallet", "true");
+                const redirect = NextResponse.redirect(redirectUrl);
+                redirect.cookies.delete("session_token");
+                redirect.cookies.delete("user_id");
+                redirect.cookies.delete("user_email");
+                redirect.cookies.delete("user_address");
+                return redirect;
+              }
 
-        redirectResponse.cookies.delete("session_token");
-        redirectResponse.cookies.delete("user_id");
-        redirectResponse.cookies.delete("user_email");
-        redirectResponse.cookies.delete("user_address");
+              const next = NextResponse.next();
+              next.cookies.delete("session_token");
+              next.cookies.delete("user_id");
+              next.cookies.delete("user_email");
+              next.cookies.delete("user_address");
+              return next;
+            })();
+        if (path.startsWith("/api/")) {
+          redirectResponse.cookies.delete("session_token");
+          redirectResponse.cookies.delete("user_id");
+          redirectResponse.cookies.delete("user_email");
+          redirectResponse.cookies.delete("user_address");
+        }
         return redirectResponse;
       }
 
@@ -160,7 +186,13 @@ export async function middleware(req: NextRequest) {
     return response;
   } catch (error) {
     console.error("Middleware error:", error);
-    return NextResponse.redirect(new URL("/auth/login", req.url));
+    if (!hasConnectPrompt) {
+      const redirectUrl = req.nextUrl.clone();
+      redirectUrl.searchParams.set("connectWallet", "true");
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    return NextResponse.next();
   }
 }
 

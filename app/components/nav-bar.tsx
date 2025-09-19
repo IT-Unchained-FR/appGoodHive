@@ -1,7 +1,7 @@
 "use client";
 
 import Cookies from "js-cookie";
-import { ConnectButton, useActiveAccount } from "thirdweb/react";
+import { ConnectButton, useActiveAccount, useConnectModal } from "thirdweb/react";
 
 import { useAuth } from "@/app/contexts/AuthContext";
 import { thirdwebClient } from "@/clients";
@@ -13,14 +13,14 @@ import {
   logoutWalletUser,
   getEmailFromInAppWallet,
 } from "@/lib/auth/thirdwebAuth";
+import { supportedWallets, connectModalOptions } from "@/lib/auth/walletConfig";
 import { CircleUserRound } from "lucide-react";
 import { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { inAppWallet, createWallet } from "thirdweb/wallets";
 import EmailVerificationModal from "./EmailVerificationModal";
 
 const commonLinks = [
@@ -44,9 +44,12 @@ export const NavBar = () => {
   const [showEmailVerification, setShowEmailVerification] = useState(false);
   const [walletAddressToVerify, setWalletAddressToVerify] = useState("");
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const account = useActiveAccount();
+  const { connect, isConnecting } = useConnectModal();
   const { user, isAuthenticated, login } = useAuth();
+  const connectModalShownRef = useRef(false);
 
   const loggedIn_user_id = Cookies.get("user_id");
 
@@ -222,41 +225,53 @@ export const NavBar = () => {
     console.log("=== END WALLET DEBUG ===");
   };
 
-  // Configure embedded wallet with multiple authentication options
-  const socialAndEmailWallet = inAppWallet({
-    auth: { 
-      options: [
-        "email",      // Email with OTP verification
-        "google",     // Google OAuth
-        "apple",      // Apple Sign In
-        "facebook",   // Facebook OAuth
-        "x"           // X (Twitter) OAuth
-      ] 
-    },
-    metadata: {
-      name: "GoodHive",
-      icon: "https://goodhive.io/img/goodhive-logo.png",
-      image: {
-        src: "https://goodhive.io/img/goodhive-logo.png",
-        alt: "GoodHive Logo",
-        width: 120,
-        height: 29,
-      },
-    },
-  });
+  useEffect(() => {
+    const promptFromQuery = searchParams?.get("connectWallet") === "true";
+    const shouldPrompt =
+      promptFromQuery &&
+      !connectModalShownRef.current &&
+      !isConnecting &&
+      !isAuthenticated &&
+      !loggedIn_user_id &&
+      !account?.address;
 
-  // Create external wallet options
-  const metamaskWallet = createWallet("io.metamask");
-  const walletConnectWallet = createWallet("walletConnect");
-  const coinbaseWallet = createWallet("com.coinbase.wallet");
+    if (!shouldPrompt) {
+      return;
+    }
 
-  // Array of all supported wallets
-  const supportedWallets = [
-    socialAndEmailWallet,  // Multi-auth embedded wallet (Email, Google, Apple, Facebook, X)
-    metamaskWallet,        // MetaMask browser extension
-    walletConnectWallet,   // WalletConnect for mobile wallets
-    coinbaseWallet         // Coinbase Wallet
-  ];
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    connectModalShownRef.current = true;
+
+    const params = new URLSearchParams(searchParams!.toString());
+    params.delete("connectWallet");
+
+    const newQuery = params.toString();
+    const { pathname: currentPathname, hash } = window.location;
+    const cleanedUrl = `${currentPathname}${newQuery ? `?${newQuery}` : ""}${hash ?? ""}`;
+
+    void connect({
+      client: thirdwebClient,
+      wallets: supportedWallets,
+      chain: activeChain,
+      ...connectModalOptions,
+    }).finally(() => {
+      connectModalShownRef.current = false;
+    });
+
+    // Clean up the query param to avoid repeated prompts on navigation
+    router.replace(cleanedUrl, { scroll: false });
+  }, [
+    account?.address,
+    connect,
+    isAuthenticated,
+    isConnecting,
+    loggedIn_user_id,
+    router,
+    searchParams,
+  ]);
   
   return (
     <>

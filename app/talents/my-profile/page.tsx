@@ -23,6 +23,7 @@ import { resumeUploadSizeLimit } from "./constants";
 import "@/app/styles/rich-text.css";
 import { PDFImportModal } from "./pdf-import-modal";
 import { SocialLink } from "./social-link";
+import { useAuthCheck } from "@/app/hooks/useAuthCheck";
 
 // Dynamically import React Quill to prevent server-side rendering issues
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -135,6 +136,7 @@ export default function ProfilePage() {
 
   // User identifiers
   const user_id = useMemo(() => Cookies.get("user_id"), []);
+  const { checkAuthAndShowConnectPrompt } = useAuthCheck();
 
   // UI state
   const [isProfileDataFetching, setIsProfileDataFetching] = useState(false);
@@ -145,45 +147,42 @@ export default function ProfilePage() {
   // Add proper JWT token verification
   useEffect(() => {
     const verifyToken = async () => {
+      if (!user_id) {
+        checkAuthAndShowConnectPrompt("access your profile");
+        setIsTokenVerifying(false);
+        return;
+      }
+
       try {
-        // Call the /api/auth/me endpoint to verify the session token
         const response = await fetch("/api/auth/me", {
           method: "GET",
-          credentials: "include", // Include cookies
+          credentials: "include",
         });
 
         if (!response.ok) {
-          // Token is invalid or expired, redirect to login
-          router.replace("/auth/login");
+          checkAuthAndShowConnectPrompt("access your profile");
+          setIsTokenVerifying(false);
           return;
         }
 
         const data = await response.json();
 
-        // Verify that the user_id from the token matches the cookie
         if (data.user_id !== user_id) {
-          // Token and cookie mismatch, redirect to login
-          router.replace("/auth/login");
+          checkAuthAndShowConnectPrompt("access your profile");
+          setIsTokenVerifying(false);
           return;
         }
 
-        // Token is valid, stop loading
         setIsTokenVerifying(false);
       } catch (error) {
         console.error("Error verifying token:", error);
-        // Error occurred, redirect to login
-        router.replace("/auth/login");
+        checkAuthAndShowConnectPrompt("access your profile");
+        setIsTokenVerifying(false);
       }
     };
 
-    // Only verify if user_id exists
-    if (user_id) {
-      verifyToken();
-    } else {
-      // No user_id cookie, redirect to login
-      router.replace("/auth/login");
-    }
-  }, [user_id, router]);
+    void verifyToken();
+  }, [checkAuthAndShowConnectPrompt, user_id]);
 
   // Primary state
   const [profileData, setProfileData] = useState<ProfileData>(
