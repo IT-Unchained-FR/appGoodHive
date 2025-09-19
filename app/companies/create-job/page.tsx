@@ -103,7 +103,10 @@ export default function CreateJob() {
 
   const handleCreateJob = async (jobId: string, amount: string) => {
     // Authentication system being updated for Thirdweb integration
-    toast.info("Job creation will be available after Thirdweb integration.");
+    toast("Job creation will be available after Thirdweb integration.", {
+      icon: "🔧",
+      duration: 4000,
+    });
     return false;
   };
 
@@ -163,6 +166,8 @@ export default function CreateJob() {
             popupModalType={popupModalType}
             isManageFundsModalOpen={isManageFundsModalOpen}
             setIsManageFundsModalOpen={setIsManageFundsModalOpen}
+            jobData={jobData}
+            selectedCurrency={selectedCurrency}
           />
         </div>
       </div>

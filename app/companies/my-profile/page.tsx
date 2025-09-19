@@ -59,6 +59,7 @@ export default function MyProfile() {
     referrer: "",
     approved: false,
     inreview: null,
+    wallet_address: "",
   });
 
   console.log(profileData, "Profile Data...");
@@ -81,8 +82,9 @@ export default function MyProfile() {
     null,
   );
 
-  const { address } = useAccount();
-  const walletAddress = address || "";
+  // Wallet address will be handled by Thirdweb integration later
+  // const { address } = useAccount();
+  const walletAddress = profileData?.wallet_address || "";
 
   // Convert countryCodes to LabelOption format for SelectInput
   const phoneCountryCodeOptions: LabelOption[] = countryCodes.map((countryCode) => ({

@@ -15,6 +15,9 @@ import {
   projectDuration,
   projectTypes,
   typeEngagements,
+  ethereumTokens,
+  polygonMainnetTokens,
+  gnosisChainTokens,
 } from "@constants/common";
 import { skills } from "@constants/skills";
 import LabelOption from "@interfaces/label-option";
@@ -40,7 +43,6 @@ const quillModules = {
 
 interface JobFormProps {
   isLoading: boolean;
-  published: boolean;
   companyData: any;
   jobData: any;
   selectedSkills: string[];
@@ -69,10 +71,10 @@ interface JobFormProps {
   setDuration: (duration: LabelOption | null) => void;
   projectType: LabelOption | null;
   setProjectType: (type: LabelOption | null) => void;
-  blockchainBalance: number;
-  onManageFundsClick: () => void;
-  handleCancelJob: () => void;
-  handleSaveJob: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  setIsLoading: (loading: boolean) => void;
+  setIsPopupModalOpen: (open: boolean) => void;
+  setPopupModalType: (type: string) => void;
+  handleCreateJob: (jobId: string, amount: string) => Promise<boolean>;
 }
 
 export const JobForm = ({
@@ -101,10 +103,10 @@ export const JobForm = ({
   setDuration,
   projectType,
   setProjectType,
-  blockchainBalance,
-  onManageFundsClick,
-  handleCancelJob,
-  handleSaveJob,
+  setIsLoading,
+  setIsPopupModalOpen,
+  setPopupModalType,
+  handleCreateJob,
 }: JobFormProps) => {
   const [isCommissionExpanded, setIsCommissionExpanded] = useState(false);
 
@@ -127,6 +129,126 @@ export const JobForm = ({
 
   const onBudgetChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setBudget(event.target.value);
+  };
+
+  // Handle saving/creating a job
+  const handleSaveJob = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+
+    if (!companyData?.user_id) {
+      toast.error("Please complete your company profile first");
+      return;
+    }
+
+    // Validation
+    if (!selectedSkills.length) {
+      toast.error("Please select at least one skill");
+      return;
+    }
+
+    if (!description.trim()) {
+      toast.error("Please provide a job description");
+      return;
+    }
+
+    if (!budget.trim()) {
+      toast.error("Please provide a budget");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const jobPayload = {
+        userId: companyData.user_id,
+        title: jobData?.title || "New Job",
+        typeEngagement: typeEngagement?.value || "freelance",
+        description: description,
+        duration: duration?.value || "moreThanSevenDays",
+        budget: budget,
+        skills: selectedSkills.join(", "),
+        chain: selectedChain?.value || "polygon",
+        currency: selectedCurrency?.value || "USD",
+        walletAddress: companyData.wallet_address || "",
+        city: companyData.city || "",
+        country: companyData.country || "",
+        imageUrl: jobImage || "",
+        jobType: jobType?.value || "remote",
+        companyName: companyData.company_name || "",
+        projectType: projectType?.value || "fixed",
+        talent: jobServices.talent,
+        recruiter: jobServices.recruiter,
+        mentor: jobServices.mentor,
+        in_saving_stage: true, // Save as draft
+      };
+
+      const endpoint = jobData?.id ? "/api/companies/update-job" : "/api/companies/create-job";
+      if (jobData?.id) {
+        (jobPayload as any).id = jobData.id;
+      }
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(jobPayload),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success(jobData?.id ? "Job updated successfully" : "Job saved as draft");
+        // Refresh the page to show updated data
+        window.location.reload();
+      } else {
+        throw new Error(data.message || "Failed to save job");
+      }
+    } catch (error: any) {
+      console.error("Error saving job:", error);
+      toast.error(error.message || "Failed to save job");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle managing funds (show toast for upcoming feature)
+  const onManageFundsClick = () => {
+    toast("Fund management will be available after Web3 integration. Coming soon!", {
+      icon: "💡",
+      duration: 4000,
+    });
+  };
+
+  // Handle canceling/deleting a job
+  const handleCancelJob = async () => {
+    if (!jobData?.id) return;
+
+    if (!confirm("Are you sure you want to cancel this job?")) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/companies/delete-job`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: jobData.id }),
+      });
+
+      if (response.ok) {
+        toast.success("Job cancelled successfully");
+        window.location.href = "/companies/my-profile";
+      } else {
+        const data = await response.json();
+        throw new Error(data.message || "Failed to cancel job");
+      }
+    } catch (error: any) {
+      console.error("Error cancelling job:", error);
+      toast.error(error.message || "Failed to cancel job");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleUnpublishJob = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -646,7 +768,7 @@ export const JobForm = ({
                 className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
                 type="button"
                 onClick={onManageFundsClick}
-                // disabled={isLoading || !companyData?.approved}
+                disabled={isLoading || !companyData?.approved}
               >
                 Manage Funds
               </button>
