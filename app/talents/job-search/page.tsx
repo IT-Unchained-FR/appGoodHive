@@ -8,7 +8,7 @@ import {
   Wrench, 
   MapPin, 
   Building, 
-  UserTie, 
+  UserCheck, 
   GraduationCap, 
   User, 
   Search, 
@@ -36,6 +36,7 @@ export default async function JobSearchPage({
     name?: string;
     page: number;
     recruiter?: string;
+    openToRecruiter?: string;
     mentor?: string;
     // New "Open to" filters
     openToTalents?: string;
@@ -52,6 +53,9 @@ export default async function JobSearchPage({
   console.log("Jobs found:", jobs.length);
   console.log("Total count:", count);
   console.log("First job:", jobs[0]);
+
+  const openToRecruiterFilter =
+    searchParams.openToRecruiter ?? searchParams.recruiter;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 relative overflow-hidden">
@@ -151,9 +155,9 @@ export default async function JobSearchPage({
                     {searchParams.name}
                   </span>
                 )}
-                {searchParams.recruiter === "true" && (
+                {openToRecruiterFilter === "true" && (
                   <span className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 text-red-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
-                    <UserTie className="w-4 h-4 mr-1" /> Open to Recruiters
+                    <UserCheck className="w-4 h-4 mr-1" /> Open to Recruiters
                   </span>
                 )}
                 {searchParams.mentor === "true" && (

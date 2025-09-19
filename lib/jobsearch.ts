@@ -14,6 +14,7 @@ type FetchJobsProps = {
   experienceLevel?: string;
   skills?: string;
   // New "Open to" filters
+  openToRecruiter?: string;
   openToTalents?: string;
 };
 
@@ -27,6 +28,30 @@ function contains(str: string) {
   return "%" + str.toLowerCase() + "%";
 }
 
+function normalizeBooleanFilter(value: string | boolean | undefined | null) {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+
+    if (!normalized || normalized === "undefined" || normalized === "null") {
+      return null;
+    }
+
+    if (["true", "1", "yes", "on"].includes(normalized)) {
+      return true;
+    }
+
+    if (["false", "0", "no", "off"].includes(normalized)) {
+      return false;
+    }
+  }
+
+  return null;
+}
+
 // Force the browser to always fetch the latest data from the server
 /* export const revalidate = 0; */
 export async function fetchJobs({
@@ -35,17 +60,25 @@ export async function fetchJobs({
   name = "",
   items = 9,
   page = 1,
-  recruiter = "",
-  mentor = "",
-  talent = "",
+  recruiter,
+  mentor,
+  talent,
   projectType = "",
   budgetRange = "",
   experienceLevel = "",
   skills = "",
+  openToRecruiter,
   // New "Open to" filters
-  openToTalents = "",
+  openToTalents,
 }: FetchJobsProps) {
   try {
+    const recruiterFlag = normalizeBooleanFilter(
+      recruiter?.trim() ? recruiter : openToRecruiter,
+    );
+    const mentorFlag = normalizeBooleanFilter(mentor);
+    const talentFlag = normalizeBooleanFilter(talent);
+    const openToTalentsFlag = normalizeBooleanFilter(openToTalents);
+
     // Build dynamic WHERE conditions
     let whereConditions = ["published = true"];
     let params: any[] = [];
@@ -74,23 +107,23 @@ export async function fetchJobs({
     }
 
     // Recruiter filter
-    if (recruiter === "true") {
-      whereConditions.push("recruiter::text = 'true'");
+    if (recruiterFlag === true) {
+      whereConditions.push("COALESCE(recruiter::text, 'false') = 'true'");
     }
 
     // Mentor filter
-    if (mentor === "true") {
-      whereConditions.push("mentor::text = 'true'");
+    if (mentorFlag === true) {
+      whereConditions.push("COALESCE(mentor::text, 'false') = 'true'");
     }
 
     // Talent filter
-    if (talent === "true") {
-      whereConditions.push("talent::text = 'true'");
+    if (talentFlag === true) {
+      whereConditions.push("COALESCE(talent::text, 'false') = 'true'");
     }
 
     // New "Open to" filters
-    if (openToTalents === "true") {
-      whereConditions.push("talent::text = 'true'");
+    if (openToTalentsFlag === true) {
+      whereConditions.push("COALESCE(talent::text, 'false') = 'true'");
     }
 
     // Project type filter
