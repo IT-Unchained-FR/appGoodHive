@@ -1,18 +1,18 @@
-import { Card } from "@/app/components/card";
+import TalentResult from "./talent-result";
 import { Pagination } from "@/app/components/pagination";
 import { fetchTalents } from "@/lib/talents";
 import { Metadata } from "next";
-import { 
-  Users, 
-  CheckCircle, 
-  Wrench, 
-  MapPin, 
-  User, 
-  Briefcase, 
-  GraduationCap, 
-  UserTie, 
-  Search, 
-  FolderOpen 
+import {
+  Users,
+  CheckCircle,
+  Wrench,
+  MapPin,
+  User,
+  Briefcase,
+  GraduationCap,
+  UserCheck,
+  Search,
+  FolderOpen
 } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -161,7 +161,7 @@ export default async function SearchTalentsPage({
                 )}
                 {searchParams.onlyRecruiter === "true" && (
                   <span className="bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 text-gray-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
-                    <UserTie className="w-4 h-4 mr-1" /> Recruiter Only
+                    <UserCheck className="w-4 h-4 mr-1" /> Recruiter Only
                   </span>
                 )}
               </div>
@@ -172,35 +172,7 @@ export default async function SearchTalentsPage({
         {/* Talents Section */}
         <div className="p-8">
           {talents.length > 0 ? (
-            <div className="grid grid-cols-2 lg:grid-cols-2 sm:grid-cols-1 gap-6">
-              {talents.map((talent) => (
-                <div key={talent.phoneNumber} className="group relative">
-                  <Card
-                    type="talent"
-                    title={talent.title}
-                    postedBy={`${talent.firstName} ${talent.lastName}`}
-                    postedOn={talent.last_active} // TODO: use real data instead when available
-                    image={talent.imageUrl}
-                    country={talent.country} // TODO: create flag table
-                    city={talent.city}
-                    budget={Number(talent.rate)}
-                    projectType="hourly"
-                    currency={talent.currency}
-                    description={talent.description}
-                    skills={talent.skills}
-                    buttonText="Connect"
-                    walletAddress={talent.walletAddress}
-                    freelancer={talent.freelancer}
-                    remote={talent.remote}
-                    availability={talent.availability}
-                    last_active={talent.last_active}
-                    uniqueId={talent.userId}
-                  />
-                  {/* Hover Effect Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl pointer-events-none"></div>
-                </div>
-              ))}
-            </div>
+            <TalentResult talents={talents} />
           ) : (
             <div className="text-center py-20">
               <div className="max-w-md mx-auto">
