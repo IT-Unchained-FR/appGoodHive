@@ -256,20 +256,6 @@
   transform: rotate(12deg);
 }
 
-.connectButtonShine {
-  position: absolute;
-  inset: 0;
-  top: -0.5rem;
-  left: -0.5rem;
-  background: white;
-  opacity: 0.2;
-  filter: blur(1rem);
-  animation: none;
-}
-
-.connectButton:hover .connectButtonShine {
-  animation: pulse 2s infinite;
-}
 
 .spinner {
   width: 1.5rem;
