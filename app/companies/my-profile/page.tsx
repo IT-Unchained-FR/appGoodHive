@@ -3,7 +3,7 @@
 import Cookies from "js-cookie";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { useConnectModal } from "thirdweb/react";
+import { useConnectModal, useActiveAccount } from "thirdweb/react";
 import { thirdwebClient } from "@/clients";
 import { activeChain } from "@/config/chains";
 import { supportedWallets, connectModalOptions } from "@/lib/auth/walletConfig";
@@ -50,7 +50,8 @@ const quillModules = {
 };
 
 export default function MyProfile() {
-  const userId = Cookies.get("user_id");
+  const [userId, setUserId] = useState<string | undefined>(Cookies.get("user_id"));
+  const activeAccount = useActiveAccount();
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const imageInputValue = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -149,6 +150,24 @@ export default function MyProfile() {
       setNoProfileFound(true);
     }
     setIsLoading(false);
+  }, [userId]);
+
+  // Monitor for wallet connection changes and update userId
+  useEffect(() => {
+    const checkUserIdFromCookies = () => {
+      const currentUserId = Cookies.get("user_id");
+      if (currentUserId && currentUserId !== userId) {
+        setUserId(currentUserId);
+      }
+    };
+
+    // Check immediately
+    checkUserIdFromCookies();
+
+    // Set up an interval to periodically check for userId changes
+    const interval = setInterval(checkUserIdFromCookies, 1000);
+
+    return () => clearInterval(interval);
   }, [userId]);
 
   useEffect(() => {
