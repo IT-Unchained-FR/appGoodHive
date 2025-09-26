@@ -24,6 +24,11 @@ export const activeChain = defineChain({
     },
   ],
   testnet: chainName.includes("amoy") || chainName.includes("testnet") ? true : undefined,
+  // Add custom gas configuration to avoid CORS issues
+  gasPrice: {
+    maxFeePerGas: 35000000000n, // 35 gwei
+    maxPriorityFeePerGas: 35000000000n, // 35 gwei
+  },
 });
 
 // Export chain ID for use in other parts of the app
