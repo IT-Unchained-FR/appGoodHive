@@ -114,7 +114,12 @@ export function useJobManager() {
           }
 
           try {
-            return BigInt(eventDatabaseId as any) === normalizedDatabaseId;
+            const normalizedEventDatabaseId =
+              typeof eventDatabaseId === 'bigint'
+                ? eventDatabaseId
+                : BigInt(eventDatabaseId as any);
+
+            return normalizedEventDatabaseId === normalizedDatabaseId;
           } catch {
             return false;
           }
@@ -122,7 +127,12 @@ export function useJobManager() {
 
         if (jobCreatedEvent && jobCreatedEvent.args && 'jobId' in jobCreatedEvent.args) {
           const eventJobId = jobCreatedEvent.args.jobId as bigint | string | number;
-          blockchainJobId = typeof eventJobId === 'bigint' ? eventJobId.toString() : String(eventJobId);
+          const normalizedEventJobId =
+            typeof eventJobId === 'bigint'
+              ? eventJobId
+              : BigInt(eventJobId as any);
+
+          blockchainJobId = normalizedEventJobId.toString();
         }
       } catch (parseError) {
         console.warn('Failed to parse JobCreated event logs:', parseError);
@@ -131,16 +141,43 @@ export function useJobManager() {
       if (!blockchainJobId) {
         try {
           const userJobIds = await getUserJobs(account.address);
+          let matched = false;
+
           for (const jobId of [...userJobIds].reverse()) {
-            const jobData = await getJob(Number(jobId));
-            if (jobData && jobData.databaseId === normalizedDatabaseId) {
-              blockchainJobId = jobId.toString();
-              break;
+            try {
+              const jobData = await getJob(Number(jobId));
+              if (!jobData) {
+                return;
+              }
+
+              const jobDatabaseId =
+                typeof jobData.databaseId === 'bigint'
+                  ? jobData.databaseId
+                  : BigInt(jobData.databaseId);
+
+              if (jobDatabaseId === normalizedDatabaseId) {
+                blockchainJobId = jobId.toString();
+                matched = true;
+                break;
+              }
+            } catch (innerError) {
+              console.warn(
+                `Failed to load job ${jobId.toString()} for fallback lookup`,
+                innerError
+              );
             }
+          }
+
+          if (!matched && userJobIds.length > 0) {
+            blockchainJobId = userJobIds[userJobIds.length - 1].toString();
           }
         } catch (fallbackError) {
           console.warn('Failed to determine blockchain job ID via fallback', fallbackError);
         }
+      }
+
+      if (!blockchainJobId) {
+        console.warn('Unable to determine blockchain job ID after successful transaction');
       }
 
       toast.success('Job created on blockchain!');
