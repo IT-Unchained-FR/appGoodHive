@@ -10,8 +10,10 @@ import { Loader } from "@components/loader";
 import LabelOption from "@interfaces/label-option";
 import { JobForm } from "./JobForm";
 import { JobModals } from "./JobModals";
+import BlockchainDebug from "@/app/components/BlockchainDebug";
 
 export default function CreateJob() {
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
@@ -54,7 +56,7 @@ export default function CreateJob() {
 
       setIsLoading(true);
       try {
-        const response = await fetch("/api/companies/my-profile", {
+        const response = await fetch(`/api/companies/my-profile?userId=${userId}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -83,6 +85,7 @@ export default function CreateJob() {
             const data = await response.json();
             setJobData(data);
             // Set form fields from job data
+            setTitle(data.title || "");
             setDescription(data.description || "");
             setBudget(data.budget || "");
             setSelectedSkills(data.skills ? data.skills.split(", ") : []);
@@ -127,8 +130,13 @@ export default function CreateJob() {
           <h1 className="text-3xl font-bold text-gray-800 mb-8">
             {id ? "Edit Job" : "Create New Job"}
           </h1>
+
+          {/* Temporary debug component */}
+          <BlockchainDebug />
           
           <JobForm
+            title={title}
+            setTitle={setTitle}
             description={description}
             setDescription={setDescription}
             selectedSkills={selectedSkills}

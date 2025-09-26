@@ -1,3 +1,4 @@
+import FundManager from "@/app/components/FundManager";
 import ProfileImageUpload from "@/app/components/profile-image-upload";
 import "@/app/styles/rich-text.css";
 import {
@@ -5,19 +6,21 @@ import {
   getBudgetLabel,
   getFeeDisplaySuffix,
 } from "@/app/utils/calculate-job-create-fees";
+import { useJobManager } from "@/hooks/contracts/useJobManager";
+import { getSupportedTokensForChain } from "@/lib/contracts/jobManager";
 import { AutoSuggestInput } from "@components/autosuggest-input";
 import { SelectInput } from "@components/select-input";
 import { ToggleButton } from "@components/toggle-button";
 import { chains } from "@constants/chains";
 import {
   createJobServices,
+  ethereumTokens,
+  gnosisChainTokens,
   jobTypes,
+  polygonMainnetTokens,
   projectDuration,
   projectTypes,
   typeEngagements,
-  ethereumTokens,
-  polygonMainnetTokens,
-  gnosisChainTokens,
 } from "@constants/common";
 import { skills } from "@constants/skills";
 import LabelOption from "@interfaces/label-option";
@@ -26,6 +29,7 @@ import dynamic from "next/dynamic";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import "react-quill/dist/quill.snow.css";
+import { useActiveAccount } from "thirdweb/react";
 
 // Dynamically import React Quill to prevent server-side rendering issues
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -45,6 +49,8 @@ interface JobFormProps {
   isLoading: boolean;
   companyData: any;
   jobData: any;
+  title: string;
+  setTitle: (title: string) => void;
   selectedSkills: string[];
   setSelectedSkills: (skills: string[]) => void;
   description: string;
@@ -81,6 +87,8 @@ export const JobForm = ({
   isLoading,
   companyData,
   jobData,
+  title,
+  setTitle,
   selectedSkills,
   setSelectedSkills,
   description,
@@ -109,6 +117,15 @@ export const JobForm = ({
   handleCreateJob,
 }: JobFormProps) => {
   const [isCommissionExpanded, setIsCommissionExpanded] = useState(false);
+  const [showFundManager, setShowFundManager] = useState(false);
+
+  // Web3 integration
+  const account = useActiveAccount();
+  const {
+    createJob: createJobOnChain,
+    isLoading: isBlockchainLoading,
+    error: blockchainError,
+  } = useJobManager();
 
   // Calculate total percentage of selected services
   const getTotalPercentage = () => {
@@ -141,6 +158,11 @@ export const JobForm = ({
     }
 
     // Validation
+    if (!title.trim()) {
+      toast.error("Please provide a job title");
+      return;
+    }
+
     if (!selectedSkills.length) {
       toast.error("Please select at least one skill");
       return;
@@ -161,7 +183,7 @@ export const JobForm = ({
     try {
       const jobPayload = {
         userId: companyData.user_id,
-        title: jobData?.title || "New Job",
+        title: title,
         typeEngagement: typeEngagement?.value || "freelance",
         description: description,
         duration: duration?.value || "moreThanSevenDays",
@@ -182,7 +204,9 @@ export const JobForm = ({
         in_saving_stage: true, // Save as draft
       };
 
-      const endpoint = jobData?.id ? "/api/companies/update-job" : "/api/companies/create-job";
+      const endpoint = jobData?.id
+        ? "/api/companies/update-job"
+        : "/api/companies/create-job";
       if (jobData?.id) {
         (jobPayload as any).id = jobData.id;
       }
@@ -198,9 +222,20 @@ export const JobForm = ({
       const data = await response.json();
 
       if (response.ok) {
-        toast.success(jobData?.id ? "Job updated successfully" : "Job saved as draft");
-        // Refresh the page to show updated data
-        window.location.reload();
+        if (jobData?.id) {
+          // If editing existing job, just reload
+          toast.success("Job updated successfully");
+          window.location.reload();
+        } else {
+          // If creating new job, redirect to edit page with new job ID
+          toast.success("Job saved as draft");
+          const newJobId = data.jobId;
+          if (newJobId) {
+            window.location.href = `/companies/create-job?id=${newJobId}`;
+          } else {
+            window.location.reload();
+          }
+        }
       } else {
         throw new Error(data.message || "Failed to save job");
       }
@@ -212,12 +247,17 @@ export const JobForm = ({
     }
   };
 
-  // Handle managing funds (show toast for upcoming feature)
+  // Handle managing funds
   const onManageFundsClick = () => {
-    toast("Fund management will be available after Web3 integration. Coming soon!", {
-      icon: "💡",
-      duration: 4000,
-    });
+    if (!account) {
+      toast.error("Please connect your wallet to manage funds");
+      return;
+    }
+    if (!jobData?.blockchainJobId) {
+      toast.error("Job not published on blockchain yet");
+      return;
+    }
+    setShowFundManager(true);
   };
 
   // Handle canceling/deleting a job
@@ -279,28 +319,151 @@ export const JobForm = ({
 
   const handlePublishJob = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+
+    if (!companyData?.user_id) {
+      toast.error("Please complete your company profile first");
+      return;
+    }
+
+    // Validation
+    if (!title.trim()) {
+      toast.error("Please provide a job title");
+      return;
+    }
+
+    if (!selectedSkills.length) {
+      toast.error("Please select at least one skill");
+      return;
+    }
+
+    if (!description.trim()) {
+      toast.error("Please provide a job description");
+      return;
+    }
+
+    if (!budget.trim()) {
+      toast.error("Please provide a budget");
+      return;
+    }
+
+    // Web3 validation
+    if (!account) {
+      toast.error("Please connect your wallet to publish jobs");
+      return;
+    }
+
+    setIsLoading(true);
+
     try {
-      const response = await fetch(`/api/companies/manage-job`, {
+      let databaseJobId = jobData?.id as string | undefined;
+
+      if (!databaseJobId) {
+        // Create job in database first
+        const jobPayload = {
+          userId: companyData.user_id,
+          title: title,
+          typeEngagement: typeEngagement?.value || "freelance",
+          description: description,
+          duration: duration?.value || "moreThanSevenDays",
+          budget: budget,
+          skills: selectedSkills.join(", "),
+          chain: selectedChain?.value || "polygon",
+          currency: selectedCurrency?.value || "USD",
+          walletAddress: account.address,
+          city: companyData.city || "",
+          country: companyData.country || "",
+          imageUrl: jobImage || "",
+          jobType: jobType?.value || "remote",
+          companyName: companyData.company_name || "",
+          projectType: projectType?.value || "fixed",
+          talent: jobServices.talent,
+          recruiter: jobServices.recruiter,
+          mentor: jobServices.mentor,
+          in_saving_stage: false,
+        };
+
+        const response = await fetch("/api/companies/create-job", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(jobPayload),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to create job in database");
+        }
+
+        databaseJobId = data.jobId;
+      }
+
+      if (!databaseJobId) {
+        throw new Error("Failed to determine database job ID");
+      }
+
+      // Now create the job on blockchain
+      toast.loading("Creating job on blockchain...");
+
+      const supportedTokens = getSupportedTokensForChain(
+        selectedChain?.value === "polygon" ? 137 : 80002,
+      );
+
+      const tokenAddress =
+        selectedCurrency?.value === "USDC"
+          ? supportedTokens.USDC
+          : supportedTokens.DAI;
+
+      if (!tokenAddress) {
+        throw new Error("Selected token not supported on this chain");
+      }
+
+      const blockchainJobId = await createJobOnChain({
+        databaseId: databaseJobId,
+        tokenAddress,
+        chain: selectedChain?.value || "polygon-amoy",
+        talentService: jobServices.talent,
+        recruiterService: jobServices.recruiter,
+        mentorService: jobServices.mentor,
+      });
+
+      console.log(blockchainJobId, "blockchain Job id");
+
+      toast.dismiss();
+
+      if (!blockchainJobId) {
+        throw new Error("Failed to create job on blockchain");
+      }
+
+      // Update database with blockchain job ID and publish
+      const updateResponse = await fetch(`/api/companies/manage-job`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          jobId: jobData?.id,
+          jobId: databaseJobId,
           publish: true,
           in_saving_stage: false,
+          blockchainJobId: blockchainJobId,
         }),
       });
-      const data = await response.json();
-      if (response.ok) {
-        toast.success("Job published successfully");
-        window.location.reload();
+
+      if (updateResponse.ok) {
+        toast.success("Job created and published on blockchain!");
+        window.location.href = `/companies/create-job?id=${databaseJobId}`;
       } else {
-        throw new Error(data.message || "Failed to publish job");
+        toast.success(
+          "Job created on blockchain but failed to update database",
+        );
+        window.location.reload();
       }
     } catch (error: any) {
       console.error("Error publishing job:", error);
       toast.error(error.message || "Failed to publish job");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -336,7 +499,8 @@ export const JobForm = ({
               type="text"
               required
               maxLength={100}
-              defaultValue={jobData?.title}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
             />
           </div>
           <div className="w-full flex gap-5 justify-between sm:flex-col">
@@ -761,14 +925,51 @@ export const JobForm = ({
           </div>
         </div>
 
+        {/* Wallet Connection Status */}
+        {!account && (
+          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                <span className="text-yellow-600">⚠️</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Wallet Required
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Connect your wallet to publish jobs on the blockchain and
+                  manage funds
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Blockchain Error Display */}
+        {blockchainError && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                <span className="text-red-600">❌</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-red-800">
+                  Blockchain Error
+                </h3>
+                <p className="text-sm text-red-600">{blockchainError}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="mt-12 mb-8 w-full flex justify-end gap-4 text-right">
           {!!jobData?.job_id && (
             <Tooltip content="Provisioning funds boost swift community response to your job offer.">
               <button
-                className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
+                className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out cursor-pointer"
                 type="button"
                 onClick={onManageFundsClick}
-                disabled={isLoading || !companyData?.approved}
+                disabled={isLoading || isBlockchainLoading}
               >
                 Manage Funds
               </button>
@@ -776,49 +977,62 @@ export const JobForm = ({
           )}
           {!!jobData?.job_id && (
             <button
-              className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out"
+              className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out cursor-pointer"
               type="button"
               onClick={handleCancelJob}
-              disabled={isLoading || !companyData?.approved}
+              disabled={isLoading}
             >
               Cancel Job
             </button>
           )}
 
-          {isLoading ? (
+          {isLoading || isBlockchainLoading ? (
             <button
               className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full opacity-50 cursor-not-allowed transition duration-150 ease-in-out"
               type="submit"
               disabled
             >
-              Saving...
+              {isBlockchainLoading
+                ? "Processing on blockchain..."
+                : "Saving..."}
             </button>
           ) : (
             <div className="flex gap-4">
               <button
                 onClick={handleSaveJob}
-                className="my-2 text-base font-semibold bg-transparent h-14 w-56 rounded-full border-2 border-[#FFC905] transition-all duration-300 hover:bg-[#FFC905]"
-                disabled={isLoading || !companyData?.approved}
+                className="my-2 text-base font-semibold bg-transparent h-14 w-56 rounded-full border-2 border-[#FFC905] transition-all duration-300 hover:bg-[#FFC905] cursor-pointer"
+                disabled={
+                  isLoading || isBlockchainLoading || !companyData?.user_id
+                }
               >
                 Save Job
               </button>
 
               {!jobData?.published && (
                 <button
-                  className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full transition-all duration-300 hover:bg-transparent hover:border-2 hover:border-[#FFC905]"
+                  className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full transition-all duration-300 hover:bg-transparent hover:border-2 hover:border-[#FFC905] cursor-pointer"
                   type="button"
                   onClick={handlePublishJob}
-                  disabled={isLoading || !companyData?.approved}
+                  disabled={
+                    isLoading ||
+                    isBlockchainLoading ||
+                    !companyData?.user_id ||
+                    !account
+                  }
                 >
-                  Publish Job
+                  {account
+                    ? "Publish on Blockchain"
+                    : "Connect Wallet to Publish"}
                 </button>
               )}
               {jobData?.published && (
                 <button
-                  className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full transition-all duration-300 hover:bg-transparent hover:border-2 hover:border-[#FFC905]"
+                  className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full transition-all duration-300 hover:bg-transparent hover:border-2 hover:border-[#FFC905] cursor-pointer"
                   type="button"
                   onClick={handleUnpublishJob}
-                  disabled={isLoading || !companyData?.approved}
+                  disabled={
+                    isLoading || isBlockchainLoading || !companyData?.user_id
+                  }
                 >
                   Unpublish Job
                 </button>
@@ -827,6 +1041,24 @@ export const JobForm = ({
           )}
         </div>
       </div>
+
+      {/* Fund Manager Modal */}
+      {showFundManager && jobData?.blockchainJobId && (
+        <FundManager
+          jobId={jobData.blockchainJobId}
+          databaseJobId={jobData.id}
+          tokenAddress={
+            selectedCurrency?.value === "USDC"
+              ? getSupportedTokensForChain(
+                  selectedChain?.value === "polygon" ? 137 : 80002,
+                ).USDC || ""
+              : getSupportedTokensForChain(
+                  selectedChain?.value === "polygon" ? 137 : 80002,
+                ).DAI || ""
+          }
+          onClose={() => setShowFundManager(false)}
+        />
+      )}
     </form>
   );
 };

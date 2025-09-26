@@ -93,45 +93,85 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: NextRequest) {
-  const searchParamsEntries = request.nextUrl.searchParams.entries();
-  const searchParams = Object.fromEntries(searchParamsEntries);
-
-  const { userId } = searchParams;
-
-  const sql = postgres(process.env.DATABASE_URL || "", {
-    ssl: {
-      rejectUnauthorized: false, // This allows connecting to a database with a self-signed certificate
-    },
-  });
-
-  if (!userId) {
-    return new Response(
-      JSON.stringify({ message: "Missing user id parameter" }),
-      {
-        status: 404,
-      },
-    );
-  }
+  let sql: any;
 
   try {
+    const searchParamsEntries = request.nextUrl.searchParams.entries();
+    const searchParams = Object.fromEntries(searchParamsEntries);
+
+    const { userId } = searchParams;
+
+    console.log('API called with userId:', userId);
+
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ message: "Missing user id parameter" }),
+        {
+          status: 404,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+    }
+
+    sql = postgres(process.env.DATABASE_URL || "", {
+      ssl: {
+        rejectUnauthorized: false,
+      },
+    });
+
+    console.log('Database connection established');
+
     const company = await sql`
         SELECT *
         FROM goodhive.companies
         WHERE user_id = ${userId}
       `;
 
+    console.log('Query executed, results:', company.length);
+
     if (company.length === 0) {
-      return new Response(JSON.stringify({ message: "Company not found" }), {
-        status: 404,
-      });
+      return new Response(
+        JSON.stringify({ message: "Company not found", userId: userId }),
+        {
+          status: 404,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
     }
 
-    return new Response(JSON.stringify(company[0]));
-  } catch (error) {
-    console.error("Error retrieving data:", error);
-
-    return new Response(JSON.stringify({ message: "Error retrieving data" }), {
-      status: 500,
+    return new Response(JSON.stringify(company[0]), {
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
+  } catch (error) {
+    console.error("Error retrieving company data:", error);
+    console.error("Error stack:", error.stack);
+
+    return new Response(
+      JSON.stringify({
+        message: "Error retrieving data",
+        error: error.message,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      }),
+      {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+  } finally {
+    if (sql) {
+      try {
+        await sql.end();
+      } catch (error) {
+        console.error('Error closing database connection:', error);
+      }
+    }
   }
 }
