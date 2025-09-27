@@ -287,7 +287,7 @@ export const NavBar = () => {
       
       <header
         aria-label="Site Header"
-        className="bg-gradient-to-r from-amber-100 via-amber-50 to-yellow-100 shadow-lg border-b border-amber-200 backdrop-blur-sm"
+        className="sticky top-0 z-40 bg-gradient-to-r from-amber-100 via-amber-50 to-yellow-100 shadow-lg border-b border-amber-200 backdrop-blur-sm"
       >
       <div className="flex items-center h-16 gap-8 px-8 mx-auto sm:px-6">
         <Link className="block group" href="/">
