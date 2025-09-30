@@ -12,7 +12,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuthCheck } from "@/app/hooks/useAuthCheck";
 
 import { TRANSLATION, allServices } from "./services.constants";
@@ -20,19 +20,8 @@ import { TRANSLATION, allServices } from "./services.constants";
 export const Services = () => {
   const router = useRouter();
   const { isAuthenticated, checkAuthAndShowConnectPrompt } = useAuthCheck();
+  const [activeTab, setActiveTab] = useState("talent");
 
-  const onCtaClickHandler = (id: string) => {
-    if (!isAuthenticated) {
-      checkAuthAndShowConnectPrompt("access this feature");
-      return;
-    }
-
-    if (id === "talent") {
-      router.push("/talents/my-profile");
-    } else if (id === "companies") {
-      router.push("/companies/my-profile");
-    }
-  };
 
   const getButtonText = (id: string) => {
     if (!isAuthenticated) {
@@ -100,15 +89,38 @@ export const Services = () => {
           </p>
         </div>
 
-        {/* Enhanced Service Cards */}
-        <div className="grid grid-cols-2 gap-8 max-w-6xl mx-auto">
-          {allServices.map((service, index) => {
-            const { id, title, description } = service;
-            const isForTalent = id === "talent";
-            const Icon = isForTalent ? Users : Building2;
+        {/* Tab Navigation */}
+        <div className="flex justify-center mb-12">
+          <div className="bg-white rounded-2xl p-2 shadow-lg border border-amber-100">
+            {allServices.map((service) => (
+              <button
+                key={service.id}
+                onClick={() => setActiveTab(service.id)}
+                className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${
+                  activeTab === service.id
+                    ? service.id === "talent"
+                      ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-md"
+                      : "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+              >
+                {service.id === "talent" ? "For Job Seekers / Talent" : "For Companies / Recruiter"}
+              </button>
+            ))}
+          </div>
+        </div>
 
-            return (
-              <div key={id} className="group relative">
+        {/* Enhanced Service Card */}
+        <div className="flex justify-center max-w-2xl mx-auto">
+          {allServices
+            .filter((service) => service.id === activeTab)
+            .map((service) => {
+              const { id, title, description } = service;
+              const isForTalent = id === "talent";
+              const Icon = isForTalent ? Users : Building2;
+
+              return (
+                <div key={id} className="group relative w-full">
                 {/* Card Background with Gradient */}
                 <div className="relative bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-amber-100 hover:border-amber-300">
                   {/* Decorative Top Border */}
@@ -191,7 +203,6 @@ export const Services = () => {
                     {/* CTA Button */}
                     <button
                       onClick={() => {
-                        console.log(isAuthenticated, id, "hehe");
                         if (!isAuthenticated) {
                           checkAuthAndShowConnectPrompt("access this feature");
                           return;
@@ -267,8 +278,8 @@ export const Services = () => {
                   <div className="absolute inset-4 bg-gradient-to-br from-yellow-400 to-amber-400 rounded-full"></div>
                 </div>
               </div>
-            );
-          })}
+              );
+            })}
         </div>
 
         {/* Bottom CTA Section */}
