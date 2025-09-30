@@ -14,6 +14,7 @@ const PUBLIC_PATHS = [
   "/auth/signup",
   "/admin/login",
   "/",
+  "/blog",  // Allow access to blog pages
   "/talents/job-search",
   "/companies/search-talents",
   "/talents/",  // Allow viewing talent profiles
