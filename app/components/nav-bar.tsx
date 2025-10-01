@@ -14,6 +14,8 @@ import {
   getEmailFromInAppWallet,
 } from "@/lib/auth/thirdwebAuth";
 import { supportedWallets, connectModalOptions } from "@/lib/auth/walletConfig";
+import { ReturnUrlManager } from "@/app/utils/returnUrlManager";
+import { useAuthCheck } from "@/app/hooks/useAuthCheck";
 import { CircleUserRound } from "lucide-react";
 import { Route } from "next";
 import Image from "next/image";
@@ -49,6 +51,7 @@ export const NavBar = () => {
   const account = useActiveAccount();
   const { connect, isConnecting } = useConnectModal();
   const { user, isAuthenticated, login } = useAuth();
+  const { setManualConnection } = useAuthCheck();
   const connectModalShownRef = useRef(false);
 
   const loggedIn_user_id = Cookies.get("user_id");
@@ -134,7 +137,7 @@ export const NavBar = () => {
 
             // Update auth context
             login(authResult.user);
-            
+
             // If no email was captured, show a notification
             if (walletData.isThirdwebWallet && !walletData.email) {
               toast("Consider adding your email in profile settings for account recovery", {
@@ -142,9 +145,32 @@ export const NavBar = () => {
                 duration: 5000,
               });
             }
-            
-            // Redirect to profile page after successful login
-            router.push("/talents/my-profile");
+
+            // Handle post-authentication redirect
+            const redirectUrl = ReturnUrlManager.getRedirectUrl();
+            const postAuthAction = ReturnUrlManager.getPostAuthAction();
+
+            if (redirectUrl) {
+              router.push(redirectUrl);
+
+              // Handle post-auth actions
+              if (postAuthAction?.type === 'show-contact-modal') {
+                // This will be handled by the company contact button component
+                // after the page loads and user is authenticated
+                setTimeout(() => {
+                  const event = new CustomEvent('show-contact-modal', {
+                    detail: postAuthAction.data
+                  });
+                  window.dispatchEvent(event);
+                }, 500);
+              }
+            } else {
+              // Fallback to profile page if no redirect URL is set
+              router.push("/talents/my-profile");
+            }
+
+            // Clear auth context after handling
+            ReturnUrlManager.clearAuthContext();
           } else if (authResult.requiresEmailVerification) {
             // User doesn't exist - need email verification
             console.log("Email verification required for wallet:", walletData.address);
@@ -170,11 +196,32 @@ export const NavBar = () => {
     login(user);
     setShowEmailVerification(false);
     setWalletAddressToVerify("");
-    
+
     toast.success("Email verified successfully! Welcome to GoodHive!");
-    
-    // Redirect to profile page
-    router.push("/talents/my-profile");
+
+    // Handle post-authentication redirect (same logic as above)
+    const redirectUrl = ReturnUrlManager.getRedirectUrl();
+    const postAuthAction = ReturnUrlManager.getPostAuthAction();
+
+    if (redirectUrl) {
+      router.push(redirectUrl);
+
+      // Handle post-auth actions
+      if (postAuthAction?.type === 'show-contact-modal') {
+        setTimeout(() => {
+          const event = new CustomEvent('show-contact-modal', {
+            detail: postAuthAction.data
+          });
+          window.dispatchEvent(event);
+        }, 500);
+      }
+    } else {
+      // Fallback to profile page if no redirect URL is set
+      router.push("/talents/my-profile");
+    }
+
+    // Clear auth context after handling
+    ReturnUrlManager.clearAuthContext();
   };
 
   const handleWalletDisconnect = async () => {
@@ -192,6 +239,11 @@ export const NavBar = () => {
     }
   };
 
+  const handleConnectButtonClick = () => {
+    // Set manual connection context before opening modal
+    setManualConnection();
+  };
+
   const handleOnConnect = async (wallet: any) => {
     console.log("=== WALLET CONNECTION DEBUG ===");
     console.log("Full wallet object:", wallet);
@@ -199,20 +251,20 @@ export const NavBar = () => {
     console.log("Wallet walletId:", wallet.walletId);
     console.log("Wallet type:", wallet.type);
     console.log("Wallet connector:", wallet.connector);
-    
+
     const account = await wallet.getAccount();
     console.log("Account object:", account);
     console.log("Account address:", account?.address);
-    
+
     // Check if this is a social/in-app wallet
-    const isSocialWallet = wallet.id === 'inApp' || 
+    const isSocialWallet = wallet.id === 'inApp' ||
                           wallet.walletId === 'inApp' ||
                           wallet.id?.includes('social') ||
                           wallet.id?.includes('email') ||
                           wallet.id?.includes('google');
-    
+
     console.log("Is social wallet?", isSocialWallet);
-    
+
     // Try to get email immediately after connection for in-app wallets
     if (isSocialWallet) {
       try {
@@ -340,22 +392,24 @@ export const NavBar = () => {
 
           <div className="flex items-center gap-4">
             {/* Always show ConnectButton - it adapts based on wallet state */}
-            <ConnectButton
-              client={thirdwebClient}
-              wallets={supportedWallets}
-              chain={activeChain}
-              onDisconnect={handleWalletDisconnect}
-              theme="light"
-              connectButton={{
-                label: "Connect Wallet",
-              }}
-              onConnect={handleOnConnect}
-              connectModal={{
-                title: "Connect to GoodHive",
-                size: "wide",
-                showThirdwebBranding: false,
-              }}
-            />
+            <div onClick={handleConnectButtonClick}>
+              <ConnectButton
+                client={thirdwebClient}
+                wallets={supportedWallets}
+                chain={activeChain}
+                onDisconnect={handleWalletDisconnect}
+                theme="light"
+                connectButton={{
+                  label: "Connect Wallet",
+                }}
+                onConnect={handleOnConnect}
+                connectModal={{
+                  title: "Connect to GoodHive",
+                  size: "wide",
+                  showThirdwebBranding: false,
+                }}
+              />
+            </div>
 
             {/* Show profile icon when user is authenticated */}
             {(isAuthenticated || loggedIn_user_id) && (

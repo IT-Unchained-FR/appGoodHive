@@ -21,11 +21,25 @@ export const CompanyContactBtn = ({ toEmail, toUserName }: Props) => {
 
   useEffect(() => {
     setIsVisible(true);
-  }, []);
+
+    // Listen for post-auth contact modal trigger
+    const handleShowContactModal = (event: CustomEvent) => {
+      if (user_id) {
+        // User is now authenticated, show the contact modal
+        onContactMeBtnClickHandler();
+      }
+    };
+
+    window.addEventListener('show-contact-modal', handleShowContactModal as EventListener);
+
+    return () => {
+      window.removeEventListener('show-contact-modal', handleShowContactModal as EventListener);
+    };
+  }, [user_id]);
 
   const onContactMeBtnClickHandler = async () => {
     // Check if user is authenticated first
-    if (!checkAuthAndShowConnectPrompt("contact this company")) {
+    if (!checkAuthAndShowConnectPrompt("contact this company", "contact", { toEmail, toUserName })) {
       return;
     }
     
