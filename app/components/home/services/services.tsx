@@ -186,7 +186,7 @@ export const Services = () => {
                     <button
                       onClick={() => {
                         if (!isAuthenticated) {
-                          checkAuthAndShowConnectPrompt("access this feature");
+                          checkAuthAndShowConnectPrompt("access this feature", "service-action", { serviceType: id });
                           return;
                         }
 
