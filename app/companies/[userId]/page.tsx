@@ -8,7 +8,6 @@ import { CompanyBio } from "@/app/components/companies/company-bio-section";
 import { CompanyContactBtn } from "@/app/components/companies/company-contact-btn";
 import { CompanyHeroSection } from "@/app/components/companies/company-hero-section";
 import { CompanyLoadingSpinner } from "@/app/components/companies/company-loading-spinner";
-import { CompanyStatsCard } from "@/app/components/companies/company-stats-card";
 import { CompanySocialMediaAndContact } from "@/app/components/companies/profile-social-media-and-contact";
 
 export const revalidate = 0;
@@ -170,18 +169,6 @@ export default function CompanyProfilePage(context: CompanyProfilePageProps) {
 
       {/* Main Content Container */}
       <div className="container mx-auto px-4 py-8 space-y-8">
-        {/* Company Statistics */}
-        <CompanyStatsCard
-          totalJobs={jobs.length}
-          activeJobs={
-            jobs.filter((job) => job.id !== singleJob?.id).length +
-            (singleJob ? 1 : 0)
-          }
-          completedJobs={Math.floor(jobs.length * 0.7)}
-          averageRating={4.8}
-          responseTime="< 2h"
-          className="fade-in-up"
-        />
 
         {/* About and Contact Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 fade-in-up delay-200">
