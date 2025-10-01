@@ -83,28 +83,26 @@ export const HowItWorks = () => {
         {/* Enhanced Community Section */}
         <div className="max-w-4xl mx-auto">
           <div className="bg-white bg-opacity-80 backdrop-blur-sm rounded-3xl p-8 lg:p-12 shadow-xl border border-amber-200">
-            <div className="grid lg:grid-cols-2 gap-8 items-center">
-              {/* Left Content */}
-              <div className="text-center lg:text-left">
-                <div className="flex items-center justify-center lg:justify-start mb-6">
+            <div className="text-center">
+                <div className="flex items-center justify-center mb-6">
                   <div className="w-16 h-16 bg-gradient-to-r from-amber-400 to-yellow-400 rounded-2xl flex items-center justify-center mr-4">
                     <Users className="w-8 h-8 text-white" />
                   </div>
                   <h3 className="text-3xl font-bold text-gray-900">Join the Hive</h3>
                 </div>
-                
+
                 <p className="text-gray-700 mb-6 leading-relaxed">
                   Connect with our buzzing community of developers, recruiters, and Web3 enthusiasts.
                   Get exclusive updates, participate in discussions, and be part of the recruitment revolution!
                 </p>
-                
+
                 {/* Stats */}
-                <div className="grid grid-cols-2 gap-4 mb-8">
-                  <div className="text-center lg:text-left">
+                <div className="grid grid-cols-2 gap-4 mb-8 max-w-md mx-auto">
+                  <div className="text-center">
                     <div className="text-2xl font-bold text-amber-600 mb-1">1000+</div>
                     <div className="text-sm text-gray-600">Community Members</div>
                   </div>
-                  <div className="text-center lg:text-left">
+                  <div className="text-center">
                     <div className="text-2xl font-bold text-amber-600 mb-1">24/7</div>
                     <div className="text-sm text-gray-600">Active Support</div>
                   </div>
@@ -121,62 +119,6 @@ export const HowItWorks = () => {
                   </span>
                   <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </button>
-              </div>
-
-              {/* Right Visual */}
-              <div className="relative">
-                {/* Community Visualization */}
-                <div className="relative max-w-sm mx-auto">
-                  {/* Central Hive */}
-                  <div className="relative bg-gradient-to-br from-amber-300 to-yellow-400 rounded-3xl p-6 shadow-lg">
-                    <div className="bg-white bg-opacity-30 backdrop-blur-sm rounded-2xl p-4">
-                      {/* Honeycomb Grid */}
-                      <div className="grid grid-cols-3 gap-2 mb-4">
-                        {Array.from({ length: 9 }, (_, i) => (
-                          <div
-                            key={i}
-                            className={`aspect-square bg-white bg-opacity-40 rounded-lg flex items-center justify-center ${
-                              i === 4 ? 'bg-opacity-80 scale-110' : ''
-                            } transition-all duration-300`}
-                          >
-                            {i === 4 ? (
-                              <Users className="w-4 h-4 text-amber-600" />
-                            ) : i % 2 === 0 ? (
-                              <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
-                            ) : (
-                              <div className="w-3 h-2 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full"></div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                      
-                      {/* Community Stats */}
-                      <div className="text-center">
-                        <div className="text-sm font-semibold text-amber-800 mb-1">Active Now</div>
-                        <div className="flex justify-center space-x-1">
-                          {Array.from({ length: 5 }, (_, i) => (
-                            <div key={i} className="w-2 h-2 bg-green-400 rounded-full animate-pulse" style={{animationDelay: `${i * 0.2}s`}}></div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Floating Member Avatars */}
-                  <div className="absolute -top-4 -left-4 w-12 h-12 bg-purple-400 rounded-full flex items-center justify-center text-white font-semibold animate-bounce">
-                    👨‍💻
-                  </div>
-                  <div className="absolute -top-4 -right-4 w-12 h-12 bg-indigo-400 rounded-full flex items-center justify-center text-white font-semibold animate-bounce" style={{animationDelay: '0.5s'}}>
-                    👩‍💼
-                  </div>
-                  <div className="absolute -bottom-4 -left-4 w-12 h-12 bg-pink-400 rounded-full flex items-center justify-center text-white font-semibold animate-bounce" style={{animationDelay: '1s'}}>
-                    👨‍🎨
-                  </div>
-                  <div className="absolute -bottom-4 -right-4 w-12 h-12 bg-green-400 rounded-full flex items-center justify-center text-white font-semibold animate-bounce" style={{animationDelay: '1.5s'}}>
-                    👩‍🔬
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>

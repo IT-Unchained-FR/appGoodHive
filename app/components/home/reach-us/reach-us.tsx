@@ -220,32 +220,6 @@ export const ReachUs = () => {
                   {/* Main Hive Structure */}
                   <div className="relative bg-gradient-to-br from-amber-300 to-yellow-400 rounded-3xl p-8 shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-500">
                     <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-2xl p-6">
-                      {/* Honeycomb Grid */}
-                      <div className="grid grid-cols-3 gap-3 mb-6">
-                        {Array.from({ length: 9 }, (_, i) => (
-                          <div
-                            key={i}
-                            className={`aspect-square bg-white bg-opacity-30 rounded-lg flex items-center justify-center ${
-                              i === 4 ? "bg-opacity-60 scale-110" : ""
-                            } transition-all duration-300 relative`}
-                          >
-                            {i === 4 ? (
-                              <div className="w-6 h-6 bg-amber-400 rounded-full relative">
-                                <div className="absolute inset-1 bg-yellow-300 rounded-full"></div>
-                                <div className="absolute inset-2 bg-amber-500 rounded-full animate-pulse"></div>
-                              </div>
-                            ) : i % 3 === 0 ? (
-                              <div className="w-5 h-3 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full relative">
-                                <div className="absolute -top-0.5 left-0.5 w-1 h-1 bg-amber-600 rounded-full"></div>
-                                <div className="absolute -top-0.5 right-0.5 w-1 h-1 bg-amber-600 rounded-full"></div>
-                                <div className="absolute top-0.5 left-1.5 w-2 h-1 bg-amber-600 rounded-sm opacity-70"></div>
-                              </div>
-                            ) : (
-                              <div className="w-4 h-4 border-2 border-amber-400 transform rotate-45"></div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
 
                       {/* Message Preview */}
                       <div className="bg-white bg-opacity-40 backdrop-blur-sm rounded-xl p-4">
