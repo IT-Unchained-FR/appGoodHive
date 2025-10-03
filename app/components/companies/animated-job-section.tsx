@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Card } from "@/app/components/card";
 import { JobCard } from "@components/job-card";
 import { generateCountryFlag } from "@/app/utils/generate-country-flag";
+import styles from "./animated-job-section.module.scss";
 
 interface Job {
   id: number;
@@ -208,29 +209,29 @@ export const AnimatedJobSection = ({
       )}
 
       {/* All Jobs Section */}
-      <div className={`mt-8 ${isVisible ? "fade-in-up delay-200" : "opacity-0"}`}>
-        <div className="jobs-section-pill">
-          <div className="jobs-header-pill">
-            <div className="jobs-title-pill">
-              <Briefcase className="pill-icon" />
+      <div className={`mt-8 ${isVisible ? styles.fadeInUp + " " + styles.delay200 : "opacity-0"}`}>
+        <div className={styles.jobsSectionPill}>
+          <div className={styles.jobsHeaderPill}>
+            <div className={styles.jobsTitlePill}>
+              <Briefcase className={styles.pillIcon} />
               <span>All Open Positions</span>
             </div>
-            <div className="jobs-count-pill">
+            <div className={styles.jobsCountPill}>
               {jobs.length} {jobs.length === 1 ? "opportunity" : "opportunities"}
             </div>
           </div>
-          <div className="jobs-subtitle">
+          <div className={styles.jobsSubtitle}>
             Explore all available positions
           </div>
 
           {jobs.length > 0 ? (
-            <div className="jobs-grid-pill">
+            <div className={styles.jobsGridPill}>
               {jobs.map((job, index) => {
                 if (job.id === featuredJob?.id) return null;
                 return (
                   <div
                     key={job.id}
-                    className={`job-card-container scale-in delay-${(index % 5) * 100}`}
+                    className={`${styles.jobCardContainer} ${styles.scaleIn} ${styles[`delay${(index % 5) * 100}`]}`}
                   >
                     <Card
                       uniqueId={userId}
@@ -260,25 +261,25 @@ export const AnimatedJobSection = ({
               })}
             </div>
           ) : (
-            <div className="jobs-empty-state">
-              <div className="empty-state-pill">
-                <div className="empty-icon-pill">
-                  <Briefcase className="empty-icon" />
+            <div className={styles.jobsEmptyState}>
+              <div className={styles.emptyStatePill}>
+                <div className={styles.emptyIconPill}>
+                  <Briefcase className={styles.emptyIcon} />
                 </div>
 
-                <h3 className="empty-title">
+                <h3 className={styles.emptyTitle}>
                   No Active Positions
                 </h3>
-                <p className="empty-description">
+                <p className={styles.emptyDescription}>
                   This company doesn't have any open positions at the moment.
                   <br />
-                  <span className="empty-cta">
+                  <span className={styles.emptyCta}>
                     🐝 Check back soon for new opportunities!
                   </span>
                 </p>
 
-                <div className="empty-action-pill">
-                  <Users className="action-icon" />
+                <div className={styles.emptyActionPill}>
+                  <Users className={styles.actionIcon} />
                   <span>Stay tuned for updates</span>
                 </div>
               </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import styles from "./company-profile.module.scss";
+import "@/app/styles/company-profile-enhanced.scss";
 
 import { AnimatedJobSection } from "@/app/components/companies/animated-job-section";
 import { CompanyBio } from "@/app/components/companies/company-bio-section";
@@ -255,6 +256,7 @@ export default function CompanyProfilePage(context: CompanyProfilePageProps) {
                   phone_country_code={phone_country_code}
                   phone_number={phone_number}
                   streetAddress={streetAddress}
+                  companyName={designation || "Company"}
                 />
               </div>
             </div>
