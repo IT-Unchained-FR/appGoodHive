@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import "@/app/styles/company-profile-enhanced.scss";
+import styles from "./company-profile.module.scss";
 
 import { AnimatedJobSection } from "@/app/components/companies/animated-job-section";
 import { CompanyBio } from "@/app/components/companies/company-bio-section";
-import { CompanyContactBtn } from "@/app/components/companies/company-contact-btn";
 import { CompanyHeroSection } from "@/app/components/companies/company-hero-section";
 import { CompanyLoadingSpinner } from "@/app/components/companies/company-loading-spinner";
 import { CompanySocialMediaAndContact } from "@/app/components/companies/profile-social-media-and-contact";
+import { getJobBalance } from "@/lib/contracts/jobManager";
 
 export const revalidate = 0;
 
@@ -155,7 +155,15 @@ export default function CompanyProfilePage(context: CompanyProfilePageProps) {
   }
 
   return (
-    <main className="company-profile-main">
+    <main className={styles.companyProfileMain}>
+      {/* Floating Decorative Elements */}
+      <div className={styles.floatingElements}>
+        <div className={styles.floatingBee1}>🐝</div>
+        <div className={styles.floatingBee2}>🐝</div>
+        <div className={styles.floatingHex1}></div>
+        <div className={styles.floatingHex2}></div>
+      </div>
+
       {/* Enhanced Hero Section */}
       <CompanyHeroSection
         companyName={designation || "Company Name"}
@@ -168,67 +176,74 @@ export default function CompanyProfilePage(context: CompanyProfilePageProps) {
       />
 
       {/* Main Content Container */}
-      <div className="container mx-auto px-4 py-8 space-y-8">
-
-        {/* About and Contact Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 fade-in-up delay-200">
-          {/* Left Column: About Company */}
-          <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg p-8 hover-shadow-lift transition-shadow duration-300">
-            <div className="flex items-center mb-6">
-              <div className="bg-yellow-400 rounded-full p-3 mr-4">
-                <svg
-                  className="w-6 h-6 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  ></path>
-                </svg>
+      <div className={styles.container}>
+        {/* Two Column Layout */}
+        <div className={styles.contentGrid}>
+          {/* Main Column - 70% */}
+          <div className={styles.mainColumn}>
+            {/* About Company Section */}
+            <div className={styles.aboutSection}>
+              <div className={styles.sectionHeader}>
+                <div className={styles.titlePill}>
+                  <svg
+                    className={styles.icon}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    ></path>
+                  </svg>
+                  <span>About Company</span>
+                </div>
               </div>
-              <h3 className="text-3xl font-bold text-gray-800">
-                About Company
-              </h3>
+              <div className={styles.bioContent}>
+                <CompanyBio text={headline} />
+              </div>
             </div>
-            <div className="text-gray-600 max-w-none">
-              <CompanyBio text={headline} />
+
+            {/* Enhanced Job Listings */}
+            <div className={styles.jobSection}>
+              <AnimatedJobSection
+                jobs={jobs}
+                featuredJob={singleJob}
+                companyEmail={email}
+                userId={userId}
+                jobBalances={jobBalances}
+                isLoadingBalances={isLoadingBalances}
+              />
             </div>
           </div>
 
-          {/* Right Column: Contact & Socials */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 hover-shadow-lift transition-shadow duration-300">
-            <div className="flex items-center mb-6">
-              <div className="bg-yellow-400 rounded-full p-3 mr-4">
-                <svg
-                  className="w-6 h-6 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                  ></path>
-                </svg>
+          {/* Side Column - 30% */}
+          <div className={styles.sideColumn}>
+            {/* Connect With Us Section */}
+            <div className={styles.connectSection}>
+              <div className={styles.sectionHeader}>
+                <div className={styles.titlePill}>
+                  <svg
+                    className={styles.icon}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                    ></path>
+                  </svg>
+                  <span>Connect With Us</span>
+                </div>
               </div>
-              <h3 className="text-3xl font-bold text-gray-800">Contact</h3>
-            </div>
-
-            <div className="space-y-6">
-              <CompanyContactBtn toEmail={email} toUserName={designation} />
-
-              <div className="border-t border-gray-200 pt-6">
-                <h4 className="text-xl font-semibold text-gray-700 mb-4">
-                  Connect With Us
-                </h4>
+              <div className={styles.connectContent}>
                 <CompanySocialMediaAndContact
                   twitter={twitter}
                   linkedin={linkedin}
@@ -244,18 +259,6 @@ export default function CompanyProfilePage(context: CompanyProfilePageProps) {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Enhanced Job Listings */}
-        <div className="fade-in-up delay-400">
-          <AnimatedJobSection
-            jobs={jobs}
-            featuredJob={singleJob}
-            companyEmail={email}
-            userId={userId}
-            jobBalances={jobBalances}
-            isLoadingBalances={isLoadingBalances}
-          />
         </div>
       </div>
     </main>

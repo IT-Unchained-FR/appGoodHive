@@ -209,30 +209,28 @@ export const AnimatedJobSection = ({
 
       {/* All Jobs Section */}
       <div className={`mt-8 ${isVisible ? "fade-in-up delay-200" : "opacity-0"}`}>
-        <div className="modern-card-enhanced p-6">
-          <div className="section-header-enhanced">
-            <div className="section-icon-enhanced" style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)' }}>
-              <Briefcase className="w-6 h-6 text-white" />
+        <div className="jobs-section-pill">
+          <div className="jobs-header-pill">
+            <div className="jobs-title-pill">
+              <Briefcase className="pill-icon" />
+              <span>All Open Positions</span>
             </div>
-            <div className="section-title">
-              <h2>
-                All Open Positions
-                <span className="ml-3 text-sm font-normal text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                  {jobs.length} {jobs.length === 1 ? "opportunity" : "opportunities"}
-                </span>
-              </h2>
-              <p>Explore all available positions</p>
+            <div className="jobs-count-pill">
+              {jobs.length} {jobs.length === 1 ? "opportunity" : "opportunities"}
             </div>
+          </div>
+          <div className="jobs-subtitle">
+            Explore all available positions
           </div>
 
           {jobs.length > 0 ? (
-            <div className="jobs-grid-enhanced mt-6">
+            <div className="jobs-grid-pill">
               {jobs.map((job, index) => {
                 if (job.id === featuredJob?.id) return null;
                 return (
                   <div
                     key={job.id}
-                    className={`scale-in delay-${(index % 5) * 100}`}
+                    className={`job-card-container scale-in delay-${(index % 5) * 100}`}
                   >
                     <Card
                       uniqueId={userId}
@@ -262,47 +260,30 @@ export const AnimatedJobSection = ({
               })}
             </div>
           ) : (
-            <div
-              className={`text-center py-16 ${
-                isVisible ? "animate-scale-in-center delay-500" : "opacity-0"
-              }`}
-            >
-              <div className="relative inline-block mb-8">
-                <div className="w-32 h-32 mx-auto bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center shadow-inner">
-                  <div className="w-16 h-16 bg-gradient-to-br from-amber-100 to-yellow-100 rounded-full flex items-center justify-center">
-                    <Briefcase className="w-8 h-8 text-gray-400" />
-                  </div>
+            <div className="jobs-empty-state">
+              <div className="empty-state-pill">
+                <div className="empty-icon-pill">
+                  <Briefcase className="empty-icon" />
                 </div>
-                {/* Floating bees around empty state */}
-                <div className="absolute -top-2 -right-2 bee-particle animate-float delay-100"></div>
-                <div className="absolute -bottom-2 -left-2 bee-particle animate-float-slow delay-300"></div>
-              </div>
-              
-              <h3 className="text-xl font-semibold text-gray-800 mb-3">
-                No Active Positions
-              </h3>
-              <p className="text-gray-600 max-w-md mx-auto leading-relaxed">
-                This company doesn't have any open positions at the moment. 
-                <br />
-                <span className="text-amber-600 font-medium">
-                  🐝 Check back soon for new opportunities!
-                </span>
-              </p>
-              
-              {/* Call to Action */}
-              <div className="mt-8">
-                <div className="inline-flex items-center gap-2 bg-amber-50 text-amber-700 px-4 py-2 rounded-full border border-amber-200">
-                  <Users className="w-4 h-4" />
-                  <span className="text-sm font-medium">Stay tuned for updates</span>
+
+                <h3 className="empty-title">
+                  No Active Positions
+                </h3>
+                <p className="empty-description">
+                  This company doesn't have any open positions at the moment.
+                  <br />
+                  <span className="empty-cta">
+                    🐝 Check back soon for new opportunities!
+                  </span>
+                </p>
+
+                <div className="empty-action-pill">
+                  <Users className="action-icon" />
+                  <span>Stay tuned for updates</span>
                 </div>
               </div>
             </div>
           )}
-
-          {/* Decorative Elements */}
-          <div className="absolute bottom-4 left-4 opacity-10">
-            <span className="text-2xl animate-float-slow">🍯</span>
-          </div>
         </div>
       </div>
     </div>
