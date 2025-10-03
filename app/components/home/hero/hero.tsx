@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { PillButton } from "@/app/components/ui/PillButton";
+import { ArrowRight } from "lucide-react";
 
 import { GoodhiveQuestLink } from "@/app/constants/common";
 import styles from "./hero.module.scss";
@@ -624,16 +626,23 @@ export const Hero = () => {
 
         {/* Simplified Action Buttons */}
         <div className={styles.actionButtons}>
-          <button onClick={onFindJobBtnClick} className={styles.primaryButton}>
+          <PillButton
+            onClick={onFindJobBtnClick}
+            variant="primary"
+            size="large"
+            showArrow
+          >
             Find Opportunities
-          </button>
+          </PillButton>
 
-          <button
+          <PillButton
             onClick={onFindTalentBtnClick}
-            className={styles.secondaryButton}
+            variant="outline"
+            size="large"
+            showArrow
           >
             Hire Top Talent
-          </button>
+          </PillButton>
         </div>
 
         {/* Simplified Rewards Section */}
@@ -652,12 +661,14 @@ export const Hero = () => {
               , and become an esteemed holder of our{" "}
               <span className={styles.highlight}>Scout and Pioneer NFTs</span>.
             </p>
-            <button
+            <PillButton
               onClick={onJoinQuestsClickHandler}
-              className={styles.questButton}
+              variant="secondary"
+              size="medium"
+              showArrow
             >
               Join the Hive Quest
-            </button>
+            </PillButton>
           </div>
         </div>
       </div>

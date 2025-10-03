@@ -3,6 +3,7 @@
 import { MessagePopup } from "@components/message-popup";
 import { MessageCircle, Phone, Sparkles } from "lucide-react";
 import { useState } from "react";
+import { PillButton } from "@/app/components/ui/PillButton";
 import { TRANSLATION } from "./reach-us.constants";
 
 export const ReachUs = () => {
@@ -189,28 +190,24 @@ export const ReachUs = () => {
 
                 {/* Action Buttons */}
                 <div className="flex flex-row gap-4 justify-center lg:justify-start">
-                  <button
-                    type="button"
+                  <PillButton
                     onClick={onMessageUsClick}
-                    className="group relative px-8 py-4 bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                    variant="primary"
+                    size="large"
+                    icon={<MessageCircle />}
+                    showArrow
                   >
-                    <span className="relative z-10 flex items-center justify-center">
-                      <MessageCircle className="w-5 h-5 mr-2" />
-                      Send us a Sweet Message
-                    </span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-amber-600 to-yellow-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  </button>
+                    Send us a Sweet Message
+                  </PillButton>
 
-                  <button
-                    type="button"
+                  <PillButton
                     onClick={onContactUsClick}
-                    className="group px-8 py-4 bg-white text-amber-600 font-semibold rounded-2xl border-2 border-amber-200 hover:border-amber-400 hover:bg-amber-50 transform hover:-translate-y-1 transition-all duration-300 shadow-md hover:shadow-lg"
+                    variant="outline"
+                    size="large"
+                    icon={<Phone />}
                   >
-                    <span className="flex items-center justify-center">
-                      <Phone className="w-5 h-5 mr-2" />
-                      Book a Hive Call
-                    </span>
-                  </button>
+                    Book a Hive Call
+                  </PillButton>
                 </div>
               </div>
 

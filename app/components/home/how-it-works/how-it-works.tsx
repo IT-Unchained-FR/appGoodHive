@@ -1,6 +1,7 @@
 "use client";
 
 import { Play, Users, MessageCircle, Sparkles, ArrowRight } from "lucide-react";
+import { PillButton } from "@/app/components/ui/PillButton";
 import { TRANSLATION } from "./how-it-works.constants";
 
 export const HowItWorks = () => {
@@ -108,17 +109,15 @@ export const HowItWorks = () => {
                   </div>
                 </div>
 
-                <button
+                <PillButton
                   onClick={onJoinTodayClick}
-                  className="group relative px-8 py-4 bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                  variant="secondary"
+                  size="large"
+                  icon={<MessageCircle />}
+                  showArrow
                 >
-                  <span className="relative z-10 flex items-center justify-center">
-                    <MessageCircle className="w-5 h-5 mr-2" />
-                    Join our Discord Hive
-                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                </button>
+                  Join our Discord Hive
+                </PillButton>
             </div>
           </div>
         </div>
