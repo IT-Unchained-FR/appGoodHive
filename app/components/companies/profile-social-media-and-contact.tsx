@@ -3,7 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { FC, useEffect, useState } from "react";
+import { MessageCircle, Send } from "lucide-react";
 import styles from "./profile-social-media-and-contact.module.scss";
+import { MessagePopup } from "@components/message-popup";
 
 import Cookies from "js-cookie";
 
@@ -18,6 +20,7 @@ type Props = {
   phone_country_code: string;
   phone_number: string;
   streetAddress: string;
+  companyName: string;
 };
 
 
@@ -53,8 +56,10 @@ export const CompanySocialMediaAndContact: FC<Props> = (props) => {
     phone_country_code,
     phone_number,
     streetAddress,
+    companyName,
   } = props;
   const [isShowDetails, setIsShowDetails] = useState(false);
+  const [isMessagePopupOpen, setIsMessagePopupOpen] = useState(false);
   const user_id = Cookies.get("user_id");
 
   useEffect(() => {
@@ -132,6 +137,29 @@ export const CompanySocialMediaAndContact: FC<Props> = (props) => {
           </div>
         )}
       </div>
+
+      {/* Contact Us Section */}
+      <div className={`${styles.section} ${styles.contactSection}`}>
+        <h4 className={styles.sectionTitle}>Contact GoodHive</h4>
+        <div className={styles.contactUsContainer}>
+          <p className={styles.contactUsDescription}>
+            Have questions about {companyName}? Send us a message and we'll help you connect!
+          </p>
+          <button
+            onClick={() => setIsMessagePopupOpen(true)}
+            className={styles.contactUsButton}
+          >
+            <MessageCircle className={styles.contactUsIcon} />
+            <span>Send us a Sweet Message</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Message Popup Modal */}
+      <MessagePopup
+        isOpen={isMessagePopupOpen}
+        onClose={() => setIsMessagePopupOpen(false)}
+      />
     </div>
   );
 };
