@@ -14,12 +14,14 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuthCheck } from "@/app/hooks/useAuthCheck";
+import { useProtectedNavigation } from "@/app/hooks/useProtectedNavigation";
 
 import { TRANSLATION, allServices } from "./services.constants";
 import styles from "./services.module.scss";
 
 export const Services = () => {
   const router = useRouter();
+  const { navigate: protectedNavigate } = useProtectedNavigation();
   const { isAuthenticated, checkAuthAndShowConnectPrompt } = useAuthCheck();
   const [activeTab, setActiveTab] = useState("talent");
 
@@ -185,15 +187,18 @@ export const Services = () => {
                     {/* CTA Button */}
                     <button
                       onClick={() => {
-                        if (!isAuthenticated) {
-                          checkAuthAndShowConnectPrompt("access this feature", "service-action", { serviceType: id });
-                          return;
-                        }
-
                         if (id === "talent") {
-                          return router.push("/talents/my-profile");
+                          protectedNavigate("/talents/my-profile", {
+                            authDescription: "access talent features",
+                            intendedAction: 'service-action',
+                            actionData: { serviceType: id }
+                          });
                         } else if (id === "companies") {
-                          return router.push("/companies/my-profile");
+                          protectedNavigate("/companies/my-profile", {
+                            authDescription: "access company features",
+                            intendedAction: 'service-action',
+                            actionData: { serviceType: id }
+                          });
                         }
                       }}
                       className={`${styles.ctaButton} ${

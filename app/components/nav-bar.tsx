@@ -20,24 +20,26 @@ import { CircleUserRound } from "lucide-react";
 import { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { ProtectedLink } from "./ProtectedLink";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useProtectedNavigation } from "@/app/hooks/useProtectedNavigation";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import EmailVerificationModal from "./EmailVerificationModal";
 
 const commonLinks = [
-  { href: "/talents/job-search", label: "Find a Job" },
-  { href: "/companies/search-talents", label: "Find a Talent" },
+  { href: "/talents/job-search", label: "Find a Job", protected: false },
+  { href: "/companies/search-talents", label: "Find a Talent", protected: false },
 ];
 
 const talentsLinks = [
-  { href: "/talents/job-search", label: "Job Search" },
-  { href: "/talents/my-profile", label: "My Talent Profile" },
+  { href: "/talents/job-search", label: "Job Search", protected: false },
+  { href: "/talents/my-profile", label: "My Talent Profile", protected: true },
 ];
 
 const companiesLinks = [
-  { href: "/companies/search-talents", label: "Search Talents" },
-  { href: "/companies/my-profile", label: "My Company Profile" },
+  { href: "/companies/search-talents", label: "Search Talents", protected: false },
+  { href: "/companies/my-profile", label: "My Company Profile", protected: true },
 ];
 
 export const NavBar = () => {
@@ -48,6 +50,7 @@ export const NavBar = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { navigate: protectedNavigate } = useProtectedNavigation();
   const account = useActiveAccount();
   const { connect, isConnecting } = useConnectModal();
   const { user, isAuthenticated, login } = useAuth();
@@ -166,7 +169,7 @@ export const NavBar = () => {
               }
             } else {
               // Fallback to profile page if no redirect URL is set
-              router.push("/talents/my-profile");
+              protectedNavigate("/talents/my-profile");
             }
 
             // Clear auth context after handling
@@ -217,7 +220,7 @@ export const NavBar = () => {
       }
     } else {
       // Fallback to profile page if no redirect URL is set
-      router.push("/talents/my-profile");
+      protectedNavigate("/talents/my-profile");
     }
 
     // Clear auth context after handling
@@ -377,14 +380,24 @@ export const NavBar = () => {
         <div className="flex items-center sm:justify-end flex-1 justify-between">
           <nav aria-label="Site Nav" className="block sm:hidden">
             <ul className="flex items-center gap-6 text-sm">
-              {links.map(({ href, label }) => (
+              {links.map(({ href, label, protected: isProtected }) => (
                 <li key={`${href}${label}`}>
-                  <Link
-                    href={href as Route}
-                    className="text-gray-700 font-medium transition hover:text-amber-700 hover:scale-105 active:scale-95"
-                  >
-                    {label}
-                  </Link>
+                  {isProtected ? (
+                    <ProtectedLink
+                      href={href as Route}
+                      className="text-gray-700 font-medium transition hover:text-amber-700 hover:scale-105 active:scale-95"
+                      authDescription={`access ${label.toLowerCase()}`}
+                    >
+                      {label}
+                    </ProtectedLink>
+                  ) : (
+                    <Link
+                      href={href as Route}
+                      className="text-gray-700 font-medium transition hover:text-amber-700 hover:scale-105 active:scale-95"
+                    >
+                      {label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
@@ -413,12 +426,12 @@ export const NavBar = () => {
 
             {/* Show profile icon when user is authenticated */}
             {(isAuthenticated || loggedIn_user_id) && (
-              <Link href="/user-profile" className="group" title="Profile">
+              <ProtectedLink href="/user-profile" className="group" title="Profile" authDescription="access your profile">
                 <CircleUserRound
                   size={36}
                   className="cursor-pointer text-gray-600 hover:text-amber-700 transition-all duration-300 group-hover:scale-110"
                 />
-              </Link>
+              </ProtectedLink>
             )}
 
             <button
@@ -457,14 +470,24 @@ export const NavBar = () => {
         <div className="bg-gradient-to-b from-amber-50 to-amber-100 border-t border-amber-200 shadow-inner">
           <nav aria-label="Site Nav" className="hidden sm:block">
             <ul className="flex flex-col items-center justify-center gap-4 py-4 text-sm">
-              {links.map(({ href, label }) => (
+              {links.map(({ href, label, protected: isProtected }) => (
                 <li key={`${href}${label}`}>
-                  <Link
-                    href={href as Route}
-                    className="text-gray-700 font-medium transition hover:text-amber-700 hover:scale-105 active:scale-95"
-                  >
-                    {label}
-                  </Link>
+                  {isProtected ? (
+                    <ProtectedLink
+                      href={href as Route}
+                      className="text-gray-700 font-medium transition hover:text-amber-700 hover:scale-105 active:scale-95"
+                      authDescription={`access ${label.toLowerCase()}`}
+                    >
+                      {label}
+                    </ProtectedLink>
+                  ) : (
+                    <Link
+                      href={href as Route}
+                      className="text-gray-700 font-medium transition hover:text-amber-700 hover:scale-105 active:scale-95"
+                    >
+                      {label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
