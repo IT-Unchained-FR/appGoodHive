@@ -41,6 +41,7 @@ export function ProtectedLink({
         e.preventDefault();
 
         // Store the intended destination for post-auth redirect
+        console.log('ProtectedLink: Storing protected route access for:', targetPath);
         ReturnUrlManager.setProtectedRouteAccess(targetPath);
 
         // Show auth modal

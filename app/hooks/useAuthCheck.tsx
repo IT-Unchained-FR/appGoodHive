@@ -57,7 +57,15 @@ export function useAuthCheck() {
         if (intendedAction === 'contact') {
           ReturnUrlManager.setContactAction(currentUrl, actionData);
         } else if (intendedAction === 'access-protected') {
-          ReturnUrlManager.setProtectedRouteAccess(currentUrl);
+          // For access-protected, only set context if none exists
+          // This prevents overwriting context set by ProtectedLink
+          const existingContext = ReturnUrlManager.getAuthContext();
+          if (!existingContext || !existingContext.returnUrl) {
+            console.log('useAuthCheck: Setting protected route access for current URL:', currentUrl);
+            ReturnUrlManager.setProtectedRouteAccess(currentUrl);
+          } else {
+            console.log('useAuthCheck: Keeping existing context:', existingContext);
+          }
         } else if (intendedAction === 'service-action') {
           ReturnUrlManager.setServiceAction(currentUrl, actionData?.serviceType);
         }

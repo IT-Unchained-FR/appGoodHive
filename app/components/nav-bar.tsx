@@ -153,7 +153,10 @@ export const NavBar = () => {
             const redirectUrl = ReturnUrlManager.getRedirectUrl();
             const postAuthAction = ReturnUrlManager.getPostAuthAction();
 
+            console.log('Post-auth redirect - URL:', redirectUrl, 'Action:', postAuthAction);
+
             if (redirectUrl) {
+              console.log('Redirecting to:', redirectUrl);
               router.push(redirectUrl);
 
               // Handle post-auth actions
@@ -168,6 +171,7 @@ export const NavBar = () => {
                 }, 500);
               }
             } else {
+              console.log('No redirect URL found, using fallback');
               // Fallback to profile page if no redirect URL is set
               protectedNavigate("/talents/my-profile");
             }
