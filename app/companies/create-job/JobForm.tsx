@@ -30,6 +30,7 @@ import { useState } from "react";
 import { toast } from "react-hot-toast";
 import "react-quill/dist/quill.snow.css";
 import { useActiveAccount } from "thirdweb/react";
+import { useProtectedNavigation } from "@/app/hooks/useProtectedNavigation";
 
 // Dynamically import React Quill to prevent server-side rendering issues
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -118,6 +119,7 @@ export const JobForm = ({
 }: JobFormProps) => {
   const [isCommissionExpanded, setIsCommissionExpanded] = useState(false);
   const [showFundManager, setShowFundManager] = useState(false);
+  const { navigate: protectedNavigate } = useProtectedNavigation();
 
   // Web3 integration
   const account = useActiveAccount();
@@ -278,7 +280,9 @@ export const JobForm = ({
 
       if (response.ok) {
         toast.success("Job cancelled successfully");
-        window.location.href = "/companies/my-profile";
+        protectedNavigate("/companies/my-profile", {
+          authDescription: "access your company profile"
+        });
       } else {
         const data = await response.json();
         throw new Error(data.message || "Failed to cancel job");

@@ -8,7 +8,7 @@ import { useActiveAccount, useConnectModal } from "thirdweb/react";
 import { ReturnUrlManager } from "@/app/utils/returnUrlManager";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 
 export function useAuthCheck() {
@@ -18,6 +18,7 @@ export function useAuthCheck() {
   const user_id = Cookies.get("user_id");
   const { connect, isConnecting } = useConnectModal();
   const connectInFlightRef = useRef(false);
+  const modalTriggerPathnameRef = useRef<string | null>(null);
 
   const openConnectModal = useCallback(async () => {
     if (connectInFlightRef.current || isConnecting) {
@@ -25,6 +26,7 @@ export function useAuthCheck() {
     }
 
     connectInFlightRef.current = true;
+    modalTriggerPathnameRef.current = pathname;
 
     try {
       await connect({
@@ -37,8 +39,9 @@ export function useAuthCheck() {
       console.debug("Connect modal dismissed", error);
     } finally {
       connectInFlightRef.current = false;
+      modalTriggerPathnameRef.current = null;
     }
-  }, [connect, isConnecting]);
+  }, [connect, isConnecting, pathname]);
 
   const checkAuthAndShowConnectPrompt = useCallback(
     (
@@ -82,6 +85,72 @@ export function useAuthCheck() {
   const setManualConnection = useCallback(() => {
     ReturnUrlManager.setManualConnection();
   }, []);
+
+  // Effect to handle modal cleanup when navigating away
+  useEffect(() => {
+    const closeModal = () => {
+      // Try multiple selectors as Thirdweb's modal structure may vary
+      const closeButtonSelectors = [
+        'button[aria-label="Close"]',
+        'button[aria-label="close"]',
+        'button[data-close]',
+        '[role="dialog"] button:first-child',
+        'button svg[data-testid="close-icon"]',
+        // Look for any button with an X or close icon
+        'div[role="dialog"] button[type="button"]:first-of-type',
+        // Thirdweb specific selectors
+        '[data-tw-modal] button[aria-label="Close"]',
+        '.tw-connected-wallet-modal button[aria-label="Close"]'
+      ];
+
+      let modalClosed = false;
+      for (const selector of closeButtonSelectors) {
+        try {
+          const closeButton = document.querySelector(selector);
+          if (closeButton instanceof HTMLElement) {
+            closeButton.click();
+            modalClosed = true;
+            console.debug('Modal closed using selector:', selector);
+            break;
+          }
+        } catch (e) {
+          // Selector might be invalid, continue to next
+          continue;
+        }
+      }
+
+      // If no close button found, try to press Escape key
+      if (!modalClosed) {
+        const escEvent = new KeyboardEvent('keydown', {
+          key: 'Escape',
+          code: 'Escape',
+          keyCode: 27,
+          which: 27,
+          bubbles: true
+        });
+        document.dispatchEvent(escEvent);
+      }
+
+      return modalClosed;
+    };
+
+    // Always try to close any open modal when pathname changes
+    // This handles both:
+    // 1. Navigation away from a page that triggered the modal
+    // 2. Direct navigation to protected routes then navigating away
+    const modalCheck = setTimeout(() => {
+      const modalPresent = document.querySelector('[role="dialog"], [data-tw-modal], .tw-connected-wallet-modal');
+      if (modalPresent) {
+        // A modal is present, close it
+        closeModal();
+        // Clean up our tracking refs
+        connectInFlightRef.current = false;
+        modalTriggerPathnameRef.current = null;
+      }
+    }, 100);
+
+    return () => clearTimeout(modalCheck);
+  }, [pathname]); // Run whenever pathname changes
 
   return {
     isAuthenticated: isAuthenticated || !!user_id || !!account?.address,
