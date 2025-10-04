@@ -97,6 +97,7 @@ export class ReturnUrlManager {
    * Set context for protected route access
    */
   static setProtectedRouteAccess(protectedUrl: string): void {
+    console.log('ReturnUrlManager: Setting protected route access for:', protectedUrl);
     this.setPromptedAuth(protectedUrl, 'access-protected');
   }
 
@@ -120,6 +121,8 @@ export class ReturnUrlManager {
   static getRedirectUrl(): string | null {
     const context = this.getAuthContext();
 
+    console.log('ReturnUrlManager: getRedirectUrl - context:', context);
+
     if (!context) return null;
 
     // Manual connection should go to profile
@@ -128,6 +131,7 @@ export class ReturnUrlManager {
     }
 
     // Prompted auth should return to intended URL
+    console.log('ReturnUrlManager: Returning URL:', context.returnUrl);
     return context.returnUrl || null;
   }
 
