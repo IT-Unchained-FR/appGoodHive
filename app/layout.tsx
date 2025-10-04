@@ -71,9 +71,10 @@ export default function RootLayout({
       const allStatusesPending =
         isMentorPending && isRecruiterPending && isTalentPending;
 
-      if (allStatusesPending) {
-        setShowOnboarding(true);
-      }
+      // Temporarily disabled - will integrate later with the website
+      // if (allStatusesPending) {
+      //   setShowOnboarding(true);
+      // }
     } catch (error) {
       console.error("Error checking user status for onboarding:", error);
     }

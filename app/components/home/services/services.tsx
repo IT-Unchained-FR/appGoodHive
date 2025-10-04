@@ -187,18 +187,15 @@ export const Services = () => {
                     {/* CTA Button */}
                     <button
                       onClick={() => {
+                        if (!isAuthenticated) {
+                          checkAuthAndShowConnectPrompt("access this feature", "service-action", { serviceType: id });
+                          return;
+                        }
+
                         if (id === "talent") {
-                          protectedNavigate("/talents/my-profile", {
-                            authDescription: "access talent features",
-                            intendedAction: 'service-action',
-                            actionData: { serviceType: id }
-                          });
+                          return router.push("/talents/my-profile");
                         } else if (id === "companies") {
-                          protectedNavigate("/companies/my-profile", {
-                            authDescription: "access company features",
-                            intendedAction: 'service-action',
-                            actionData: { serviceType: id }
-                          });
+                          return router.push("/companies/my-profile");
                         }
                       }}
                       className={`${styles.ctaButton} ${
