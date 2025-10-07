@@ -148,9 +148,9 @@ export const ReachUs = () => {
 
         <div className="relative container mx-auto px-6 py-20 lg:py-24">
           <div className="max-w-6xl mx-auto">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="flex justify-center items-center">
               {/* Left Content */}
-              <div className="text-center lg:text-left">
+              <div className="text-center">
                 {/* Badge */}
                 <div className="inline-flex items-center bg-amber-100 text-amber-800 px-4 py-2 rounded-full text-sm font-semibold mb-6">
                   <Sparkles className="w-4 h-4 mr-2" />
@@ -167,19 +167,19 @@ export const ReachUs = () => {
                 </h2>
 
                 {/* Description */}
-                <p className="text-xl text-gray-700 mb-8 leading-relaxed max-w-lg mx-auto lg:mx-0">
+                <p className="text-xl text-gray-700 mb-8 leading-relaxed max-w-lg mx-auto">
                   {TRANSLATION.description}
                 </p>
 
                 {/* Stats */}
-                <div className="grid grid-cols-2 gap-6 mb-10">
-                  <div className="text-center lg:text-left">
+                <div className="grid grid-cols-2 gap-6 mb-10 max-w-md mx-auto">
+                  <div className="text-center">
                     <div className="text-2xl font-bold text-amber-600 mb-1">
                       24h
                     </div>
                     <div className="text-sm text-gray-600">Response Time</div>
                   </div>
-                  <div className="text-center lg:text-left">
+                  <div className="text-center">
                     <div className="text-2xl font-bold text-amber-600 mb-1">
                       100%
                     </div>
@@ -188,7 +188,7 @@ export const ReachUs = () => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-row gap-4 justify-center lg:justify-start">
+                <div className="flex flex-row gap-4 justify-center">
                   <button
                     type="button"
                     onClick={onMessageUsClick}
@@ -211,53 +211,6 @@ export const ReachUs = () => {
                       Book a Hive Call
                     </span>
                   </button>
-                </div>
-              </div>
-
-              {/* Right Visual */}
-              <div className="relative">
-                <div className="relative z-10 max-w-md mx-auto lg:max-w-none">
-                  {/* Main Hive Structure */}
-                  <div className="relative bg-gradient-to-br from-amber-300 to-yellow-400 rounded-3xl p-8 shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-500">
-                    <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-2xl p-6">
-
-                      {/* Message Preview */}
-                      <div className="bg-white bg-opacity-40 backdrop-blur-sm rounded-xl p-4">
-                        <div className="flex items-center mb-2">
-                          <div className="w-6 h-6 bg-amber-500 rounded-full mr-2 flex items-center justify-center">
-                            <MessageCircle className="w-3 h-3 text-white" />
-                          </div>
-                          <span className="text-sm font-medium text-amber-800">
-                            Your message here
-                          </span>
-                        </div>
-                        <div className="h-2 bg-amber-200 rounded-full mb-2"></div>
-                        <div className="h-2 bg-amber-200 rounded-full w-3/4"></div>
-                      </div>
-                    </div>
-
-                    {/* Floating Elements */}
-                    <div className="absolute -top-4 -right-4 w-16 h-16 bg-white bg-opacity-30 backdrop-blur-sm rounded-full flex items-center justify-center animate-bounce">
-                      <div className="w-8 h-8 relative">
-                        <div className="absolute inset-0 bg-yellow-400 rounded-full"></div>
-                        <div className="absolute inset-1 bg-orange-300 rounded-full"></div>
-                        <div className="absolute inset-2 bg-yellow-200 rounded-full"></div>
-                        <div className="absolute top-1 left-2 w-1 h-3 bg-green-400 rounded-full"></div>
-                      </div>
-                    </div>
-                    <div className="absolute -bottom-2 -left-2 w-12 h-12 bg-white bg-opacity-30 backdrop-blur-sm rounded-full flex items-center justify-center animate-pulse">
-                      <div className="w-6 h-6 bg-amber-400 rounded-full relative">
-                        <div className="absolute inset-1 bg-yellow-300 rounded-full"></div>
-                        <div className="absolute inset-2 bg-amber-500 rounded-full"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Background Decoration */}
-                <div className="absolute inset-0 -z-10">
-                  <div className="absolute top-8 left-8 w-32 h-32 bg-gradient-to-br from-amber-200 to-yellow-300 rounded-full opacity-20 blur-xl"></div>
-                  <div className="absolute bottom-8 right-8 w-24 h-24 bg-gradient-to-br from-orange-200 to-amber-300 rounded-full opacity-20 blur-xl"></div>
                 </div>
               </div>
             </div>

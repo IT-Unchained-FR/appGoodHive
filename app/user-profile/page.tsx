@@ -113,8 +113,7 @@ export default function UserProfilePage() {
   if (!userProfile) {
     return (
       <div className={styles.loadingContainer}>
-        <BeeHiveSpinner size="large" />
-        <p className={styles.loadingText}>Loading User Profile</p>
+        <BeeHiveSpinner size="large" loadingText="Loading User Profile..." />
       </div>
     );
   }
