@@ -53,7 +53,7 @@ export const NavBar = () => {
   const { navigate: protectedNavigate } = useProtectedNavigation();
   const account = useActiveAccount();
   const { connect, isConnecting } = useConnectModal();
-  const { user, isAuthenticated, login } = useAuth();
+  const { user, isAuthenticated, login, logout } = useAuth();
   const { setManualConnection } = useAuthCheck();
   const connectModalShownRef = useRef(false);
 
@@ -172,8 +172,8 @@ export const NavBar = () => {
               }
             } else {
               console.log('No redirect URL found, using fallback');
-              // Fallback to profile page if no redirect URL is set
-              protectedNavigate("/talents/my-profile");
+              // Fallback to homepage if no redirect URL is set
+              router.push("/");
             }
 
             // Clear auth context after handling
@@ -223,8 +223,8 @@ export const NavBar = () => {
         }, 500);
       }
     } else {
-      // Fallback to profile page if no redirect URL is set
-      protectedNavigate("/talents/my-profile");
+      // Fallback to homepage if no redirect URL is set
+      router.push("/");
     }
 
     // Clear auth context after handling
@@ -236,10 +236,14 @@ export const NavBar = () => {
       // Clear backend session
       await logoutWalletUser();
 
+      // Clear client-side auth context and any stored redirects
+      logout();
+      ReturnUrlManager.clearAuthContext();
+
       toast.success("Successfully disconnected");
 
-      // Refresh page to reset auth state
-      window.location.reload();
+      // Redirect to homepage after disconnect
+      router.push("/");
     } catch (error) {
       console.error("Disconnect failed:", error);
       toast.error("Failed to disconnect. Please try again.");
