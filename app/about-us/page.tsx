@@ -1,69 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { ABOUT_CONTENT, TEAM_MEMBERS, VIDEO_CONFIG } from "./about-us.constants";
+import {
+  ABOUT_CONTENT,
+  IMPACT_METRICS,
+  JOURNEY_MOMENTS,
+  TEAM_MEMBERS,
+  VALUE_PILLARS,
+  VIDEO_CONFIG,
+} from "./about-us.constants";
 import styles from "./about-us.module.scss";
-
-const IMPACT_METRICS = [
-  {
-    id: "companies",
-    value: "220+",
-    label: "Partner companies",
-    description: "Web3 teams discovering talent through GoodHive.",
-  },
-  {
-    id: "placements",
-    value: "1.2k",
-    label: "Successful placements",
-    description: "Matches completed across engineering, design, and product.",
-  },
-];
-
-const VALUE_PILLARS = [
-  {
-    id: "philosophy",
-    icon: "🧭",
-    title: ABOUT_CONTENT.philosophy.title,
-    description: ABOUT_CONTENT.philosophy.description,
-  },
-  {
-    id: "mission",
-    icon: "🚀",
-    title: ABOUT_CONTENT.mission.title,
-    description: ABOUT_CONTENT.mission.description,
-  },
-  {
-    id: "community",
-    icon: "🤝",
-    title: "Community First",
-    description:
-      "We build with our ecosystem. Every feature is co-created with founders, contributors, and talent to keep incentives aligned.",
-  },
-];
-
-const JOURNEY_MOMENTS = [
-  {
-    id: "inception",
-    year: "2019",
-    title: "Vision takes shape",
-    description:
-      "A small founding crew left traditional recruitment to design a decentralized alternative focused on trust and transparency.",
-  },
-  {
-    id: "launch",
-    year: "2021",
-    title: "Marketplace launches",
-    description:
-      "GoodHive opens to the public, onboarding the first cohort of DAOs, Web3 studios, and independent builders.",
-  },
-  {
-    id: "growth",
-    year: "2023",
-    title: "Global expansion",
-    description:
-      "We introduce compliance tooling, escrow, and community governance to power cross-border collaboration at scale.",
-  },
-];
 
 export default function AboutUsPage() {
   return (
@@ -83,7 +29,10 @@ export default function AboutUsPage() {
               </span>
               <h1 className={styles.heroTitle}>
                 {ABOUT_CONTENT.hero.title}
-                <span className={styles.titleAccent}> for builders who lead with trust.</span>
+                <span className={styles.titleAccent}>
+                  {" "}
+                  for builders who lead with trust.
+                </span>
               </h1>
               <p className={styles.heroDescription}>
                 {ABOUT_CONTENT.hero.description}
@@ -103,7 +52,9 @@ export default function AboutUsPage() {
                   <div key={metric.id} className={styles.metricCard}>
                     <span className={styles.metricValue}>{metric.value}</span>
                     <span className={styles.metricLabel}>{metric.label}</span>
-                    <p className={styles.metricDescription}>{metric.description}</p>
+                    <p className={styles.metricDescription}>
+                      {metric.description}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -112,7 +63,9 @@ export default function AboutUsPage() {
             <div className={styles.heroMedia}>
               <div className={styles.mediaCard}>
                 <div className={styles.mediaHeader}>
-                  <span className={styles.mediaTag}>Watch GoodHive in action</span>
+                  <span className={styles.mediaTag}>
+                    Watch GoodHive in action
+                  </span>
                   <span className={styles.mediaPulse} />
                 </div>
                 <div className={styles.mediaFrame}>
@@ -130,7 +83,10 @@ export default function AboutUsPage() {
                   </div>
                   <div className={styles.avatarStack}>
                     {new Array(5).fill(null).map((_, index) => (
-                      <span key={`avatar-circle-${index}`} className={styles.avatarCircle}>
+                      <span
+                        key={`avatar-circle-${index}`}
+                        className={styles.avatarCircle}
+                      >
                         GH
                       </span>
                     ))}
@@ -146,20 +102,35 @@ export default function AboutUsPage() {
         <div className={styles.container}>
           <div className={styles.sectionHeader}>
             <span className={styles.sectionEyebrow}>Why GoodHive</span>
-            <h2 className={styles.sectionTitle}>A platform shaped by our values</h2>
+            <h2 className={styles.sectionTitle}>
+              A platform shaped by our values
+            </h2>
             <p className={styles.sectionDescription}>
-              We align incentives between talent, companies, and the broader ecosystem by staying grounded in principles that keep the network healthy.
+              We align incentives between talent, companies, and the broader
+              ecosystem by staying grounded in principles that keep the network
+              healthy.
             </p>
           </div>
 
           <div className={styles.valuesGrid}>
-            {VALUE_PILLARS.map((pillar) => (
-              <article key={pillar.id} className={styles.valueCard}>
-                <div className={styles.valueIcon}>{pillar.icon}</div>
-                <h3 className={styles.valueTitle}>{pillar.title}</h3>
-                <p className={styles.valueDescription}>{pillar.description}</p>
-              </article>
-            ))}
+            {VALUE_PILLARS.map((pillar) => {
+              const Icon = pillar.icon;
+              return (
+                <article key={pillar.id} className={styles.valueCard}>
+                  <div className={styles.valueHoneycomb}>
+                    <div className={styles.valueHexagon} />
+                    <div className={styles.valueHexagon} />
+                  </div>
+                  <div className={styles.valueIcon}>
+                    <Icon size={28} strokeWidth={2} />
+                  </div>
+                  <h3 className={styles.valueTitle}>{pillar.title}</h3>
+                  <p className={styles.valueDescription}>
+                    {pillar.description}
+                  </p>
+                </article>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -168,24 +139,36 @@ export default function AboutUsPage() {
         <div className={styles.container}>
           <div className={styles.sectionHeader}>
             <span className={styles.sectionEyebrow}>Our Journey</span>
-            <h2 className={styles.sectionTitle}>From idea to thriving ecosystem</h2>
+            <h2 className={styles.sectionTitle}>
+              From idea to thriving ecosystem
+            </h2>
             <p className={styles.sectionDescription}>
-              GoodHive keeps shipping new primitives for the future of work. Here&rsquo;s a snapshot of how we got here.
+              GoodHive keeps shipping new primitives for the future of work.
+              Here&rsquo;s a snapshot of how we got here.
             </p>
           </div>
 
           <div className={styles.timeline}>
             {JOURNEY_MOMENTS.map((moment, index) => (
               <div key={moment.id} className={styles.timelineItem}>
-                <div className={styles.timelineMarker}>
-                  <span className={styles.timelineYear}>{moment.year}</span>
-                  {index !== JOURNEY_MOMENTS.length - 1 && (
-                    <span className={styles.timelineConnector} />
-                  )}
-                </div>
                 <div className={styles.timelineContent}>
+                  <div className={styles.honeycombDecor}>
+                    <div className={styles.hexagon} />
+                    <div className={styles.hexagon} />
+                    <div className={styles.hexagon} />
+                  </div>
+                  <div className={styles.timelineLabel}>{moment.label}</div>
                   <h3 className={styles.timelineTitle}>{moment.title}</h3>
-                  <p className={styles.timelineDescription}>{moment.description}</p>
+                  <p className={styles.timelineDescription}>
+                    {moment.description}
+                  </p>
+                  <div className={styles.timelineYear}>{moment.year}</div>
+                </div>
+                <div className={styles.timelineMarker}>
+                  <div className={styles.timelineDot} />
+                  {index !== JOURNEY_MOMENTS.length - 1 && (
+                    <div className={styles.timelineConnector} />
+                  )}
                 </div>
               </div>
             ))}
@@ -197,9 +180,13 @@ export default function AboutUsPage() {
         <div className={styles.container}>
           <div className={styles.sectionHeader}>
             <span className={styles.sectionEyebrow}>The Team</span>
-            <h2 className={styles.sectionTitle}>Meet the people shaping the hive</h2>
+            <h2 className={styles.sectionTitle}>
+              Meet the people shaping the hive
+            </h2>
             <p className={styles.sectionDescription}>
-              From product strategy to research and engineering, our team blends experience from leading Web2 and Web3 companies with a bias for action.
+              From product strategy to research and engineering, our team blends
+              experience from leading Web2 and Web3 companies with a bias for
+              action.
             </p>
           </div>
 
