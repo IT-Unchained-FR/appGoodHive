@@ -1,13 +1,13 @@
 import { Metadata } from "next";
 
 import { Hero } from "@components/home/hero";
-import { Services } from "@components/home/services";
 import { HowItWorks } from "@components/home/how-it-works";
 import { ReachUs } from "@components/home/reach-us";
+import { Services } from "@components/home/services";
 
 export const metadata: Metadata = {
   title:
-    "GoodHive: Decentralized Web3 Recruitment Platform Empowering Tech Talent Collaboration",
+    "GoodHive: Decentralized Web3 Recruitment Platform Emplocalhost_3000_about-us.pngowering Tech Talent Collaboration",
   keywords:
     "Recruitment, Web3 Talent, Crypto Jobs, Blockchain Jobs, Collaborative Recruitment",
   description:
