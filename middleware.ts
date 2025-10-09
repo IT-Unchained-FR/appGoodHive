@@ -55,6 +55,10 @@ async function validateSessionToken(token: string) {
 }
 
 export async function middleware(req: NextRequest) {
+  if (process.env.NODE_ENV === "development") {
+    return NextResponse.next();
+  }
+
   const path = req.nextUrl.pathname;
   const hasConnectPrompt = req.nextUrl.searchParams.get("connectWallet") === "true";
   let response: NextResponse;
