@@ -1,7 +1,7 @@
 "use client";
 
 import Cookies from "js-cookie";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import toast from "react-hot-toast";
 import { useConnectModal, useActiveAccount } from "thirdweb/react";
 import { thirdwebClient } from "@/clients";
@@ -79,7 +79,6 @@ export default function MyProfile() {
     wallet_address: "",
   });
 
-  console.log(profileData, "Profile Data...");
   const unapprovedProfile =
     profileData?.approved === false && profileData.inreview === true;
 
@@ -94,10 +93,9 @@ export default function MyProfile() {
   const [selectedCountry, setSelectedCountry] = useState<LabelOption | null>(
     null,
   );
-  
-  const [selectedPhoneCountryCode, setSelectedPhoneCountryCode] = useState<LabelOption | null>(
-    null,
-  );
+
+  const [selectedPhoneCountryCode, setSelectedPhoneCountryCode] =
+    useState<LabelOption | null>(null);
 
   // Wallet address will be handled by Thirdweb integration later
   // const { address } = useAccount();
@@ -107,10 +105,14 @@ export default function MyProfile() {
   const { connect, isConnecting } = useConnectModal();
 
   // Convert countryCodes to LabelOption format for SelectInput
-  const phoneCountryCodeOptions: LabelOption[] = countryCodes.map((countryCode) => ({
-    label: `${countryCode.name} ${countryCode.dial_code}`,
-    value: countryCode.dial_code,
-  }));
+  const phoneCountryCodeOptions: LabelOption[] = useMemo(
+    () =>
+      countryCodes.map((countryCode) => ({
+        label: `${countryCode.name} ${countryCode.dial_code}`,
+        value: countryCode.dial_code,
+      })),
+    [],
+  );
 
   const handleImageClick = () => {
     setProfileData({ ...profileData, image_url: "" });
@@ -118,15 +120,12 @@ export default function MyProfile() {
 
   const fetchProfile = useCallback(async () => {
     setIsLoading(true);
-    console.log("Fetching profile for userId:", userId);
-
     const profileResponse = await fetch(
       `/api/companies/my-profile?userId=${userId}`,
     );
 
     if (profileResponse.ok) {
       const profileData = await profileResponse.json();
-      console.log("Fetched profile data:", profileData);
 
       setProfileData(profileData);
 
@@ -1036,17 +1035,19 @@ export default function MyProfile() {
               </div>
             </div>
             <div className="w-full flex justify-center gap-4 mb-8">
-              <Link href={`/companies/${userId}`}>
-                <button className="inline-flex items-center px-6 py-3 bg-white bg-opacity-80 text-amber-700 font-semibold rounded-xl border-2 border-amber-200 hover:border-amber-400 hover:bg-amber-50 transform hover:-translate-y-0.5 transition-all duration-300 shadow-md hover:shadow-lg">
-                  👁️ Public View
-                </button>
+              <Link
+                href={`/companies/${userId}`}
+                className="inline-flex items-center px-6 py-3 bg-white bg-opacity-80 text-amber-700 font-semibold rounded-xl border-2 border-amber-200 hover:border-amber-400 hover:bg-amber-50 transform hover:-translate-y-0.5 transition-all duration-300 shadow-md hover:shadow-lg"
+              >
+                👁️ Public View
               </Link>
-              
+
               {!noProfileFound && !unapprovedProfile && (
-                <Link href={`/companies/create-job`}>
-                  <button className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300">
-                    💼 Create Job
-                  </button>
+                <Link
+                  href="/companies/create-job"
+                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
+                >
+                  💼 Create Job
                 </Link>
               )}
             </div>
@@ -1259,7 +1260,10 @@ export default function MyProfile() {
                     inputValue={selectedCountry}
                     setInputValue={(country: any) => {
                       setSelectedCountry(country);
-                      setProfileData({ ...profileData, country });
+                    setProfileData({
+                      ...profileData,
+                      country: country?.value || "",
+                    });
                       // Clear error when country is selected
                       if (errors.country) {
                         setErrors(prev => {
