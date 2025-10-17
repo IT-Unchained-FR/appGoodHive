@@ -58,6 +58,10 @@ export async function GET(request: NextRequest) {
       createdAt: item.posted_at,
       job_id: item.job_id,
       block_id: item.block_id,
+      payment_token_address: item.payment_token_address,
+      blockchain_job_id: item.blockchain_job_id,
+      blockchainJobId:
+        item.blockchain_job_id ?? item.block_id ?? item.job_id ?? null,
       published: item.published,
     }));
 

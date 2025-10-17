@@ -19,7 +19,8 @@ import {
   JobData,
   JOB_MANAGER_CONTRACT_ADDRESS,
   JOB_MANAGER_ABI,
-  normalizeDatabaseId
+  normalizeDatabaseId,
+  DatabaseIdentifier
 } from '@/lib/contracts/jobManager';
 
 import {
@@ -28,7 +29,8 @@ import {
   checkTokenPermissions,
   prepareApproveCall,
   getTokenInfo,
-  formatTokenBalance
+  formatTokenBalance,
+  parseTokenAmount
 } from '@/lib/contracts/erc20';
 
 import { thirdwebClient } from '@/clients/thirdwebClient';
@@ -204,7 +206,7 @@ export function useJobManager() {
 
   // Add funds to a job
   const addFunds = useCallback(async (
-    jobId: number,
+    jobId: DatabaseIdentifier,
     amount: string,
     tokenAddress: string
   ): Promise<boolean> => {
@@ -219,7 +221,7 @@ export function useJobManager() {
     try {
       // Get token info
       const tokenInfo = await getTokenInfo(tokenAddress);
-      const amountWei = BigInt(amount) * BigInt(10 ** tokenInfo.decimals);
+      const amountWei = parseTokenAmount(amount, tokenInfo.decimals);
 
       // Check token permissions
       const permissions = await checkTokenPermissions(
@@ -287,7 +289,7 @@ export function useJobManager() {
 
   // Withdraw funds from a job
   const withdrawFunds = useCallback(async (
-    jobId: number,
+    jobId: DatabaseIdentifier,
     amount: string,
     withdrawAll: boolean = false
   ): Promise<boolean> => {
@@ -308,7 +310,7 @@ export function useJobManager() {
         // For partial withdrawal, we need to get job info to determine token decimals
         const job = await getJob(jobId);
         const tokenInfo = await getTokenInfo(job.tokenAddress);
-        const amountWei = BigInt(amount) * BigInt(10 ** tokenInfo.decimals);
+        const amountWei = parseTokenAmount(amount, tokenInfo.decimals);
 
         transaction = prepareWithdrawFundsCall(jobId, amountWei);
       }
@@ -339,7 +341,7 @@ export function useJobManager() {
 
   // Pay fees for a job
   const payFees = useCallback(async (
-    jobId: number,
+    jobId: DatabaseIdentifier,
     baseAmount: string
   ): Promise<boolean> => {
     if (!account) {
@@ -354,7 +356,7 @@ export function useJobManager() {
       // Get job info to determine token
       const job = await getJob(jobId);
       const tokenInfo = await getTokenInfo(job.tokenAddress);
-      const baseAmountWei = BigInt(baseAmount) * BigInt(10 ** tokenInfo.decimals);
+      const baseAmountWei = parseTokenAmount(baseAmount, tokenInfo.decimals);
 
       // Calculate total fees
       const totalFees = await calculateTotalFees(jobId, baseAmountWei);
@@ -409,14 +411,16 @@ export function useJobManager() {
 }
 
 // Hook for reading job data
-export function useJobData(jobId: number | null) {
+export function useJobData(jobId: DatabaseIdentifier | null) {
   const [jobData, setJobData] = useState<JobData | null>(null);
   const [balance, setBalance] = useState<bigint | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchJobData = useCallback(async () => {
-    if (!jobId) return;
+    if (jobId === null || jobId === undefined || jobId === "") {
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
