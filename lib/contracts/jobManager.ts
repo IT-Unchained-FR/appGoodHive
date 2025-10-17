@@ -319,21 +319,21 @@ export interface JobData {
 }
 
 // Read functions
-export async function getJob(jobId: number): Promise<JobData> {
+export async function getJob(jobId: DatabaseIdentifier): Promise<JobData> {
   const contract = getJobManagerContract();
   return await readContract({
     contract,
     method: "getJob",
-    params: [BigInt(jobId)],
+    params: [normalizeDatabaseId(jobId)],
   });
 }
 
-export async function getJobBalance(jobId: number): Promise<bigint> {
+export async function getJobBalance(jobId: DatabaseIdentifier): Promise<bigint> {
   const contract = getJobManagerContract();
   return await readContract({
     contract,
     method: "getJobBalance",
-    params: [BigInt(jobId)],
+    params: [normalizeDatabaseId(jobId)],
   });
 }
 
@@ -346,12 +346,12 @@ export async function getUserJobs(userAddress: string): Promise<bigint[]> {
   });
 }
 
-export async function calculateTotalFees(jobId: number, baseAmount: bigint): Promise<bigint> {
+export async function calculateTotalFees(jobId: DatabaseIdentifier, baseAmount: bigint): Promise<bigint> {
   const contract = getJobManagerContract();
   return await readContract({
     contract,
     method: "calculateTotalFees",
-    params: [BigInt(jobId), baseAmount],
+    params: [normalizeDatabaseId(jobId), baseAmount],
   });
 }
 
@@ -436,48 +436,48 @@ export function prepareCreateJobCall(params: JobCreationParams) {
   });
 }
 
-export function prepareAddFundsCall(jobId: number, amount: bigint) {
+export function prepareAddFundsCall(jobId: DatabaseIdentifier, amount: bigint) {
   const contract = getJobManagerContract();
   return prepareContractCall({
     contract,
     method: "addFunds",
-    params: [BigInt(jobId), amount],
+    params: [normalizeDatabaseId(jobId), amount],
     gas: 300000n,
     maxFeePerGas: 35000000000n,
     maxPriorityFeePerGas: 35000000000n,
   });
 }
 
-export function prepareWithdrawFundsCall(jobId: number, amount: bigint) {
+export function prepareWithdrawFundsCall(jobId: DatabaseIdentifier, amount: bigint) {
   const contract = getJobManagerContract();
   return prepareContractCall({
     contract,
     method: "withdrawFunds",
-    params: [BigInt(jobId), amount],
+    params: [normalizeDatabaseId(jobId), amount],
     gas: 300000n,
     maxFeePerGas: 35000000000n,
     maxPriorityFeePerGas: 35000000000n,
   });
 }
 
-export function prepareWithdrawAllFundsCall(jobId: number) {
+export function prepareWithdrawAllFundsCall(jobId: DatabaseIdentifier) {
   const contract = getJobManagerContract();
   return prepareContractCall({
     contract,
     method: "withdrawAllFunds",
-    params: [BigInt(jobId)],
+    params: [normalizeDatabaseId(jobId)],
     gas: 300000n,
     maxFeePerGas: 35000000000n,
     maxPriorityFeePerGas: 35000000000n,
   });
 }
 
-export function preparePayFeesCall(jobId: number, baseAmount: bigint) {
+export function preparePayFeesCall(jobId: DatabaseIdentifier, baseAmount: bigint) {
   const contract = getJobManagerContract();
   return prepareContractCall({
     contract,
     method: "payFees",
-    params: [BigInt(jobId), baseAmount],
+    params: [normalizeDatabaseId(jobId), baseAmount],
     gas: 400000n,
     maxFeePerGas: 35000000000n,
     maxPriorityFeePerGas: 35000000000n,

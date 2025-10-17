@@ -26,11 +26,39 @@ import { skills } from "@constants/skills";
 import LabelOption from "@interfaces/label-option";
 import { Tooltip } from "@nextui-org/tooltip";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import "react-quill/dist/quill.snow.css";
 import { useActiveAccount } from "thirdweb/react";
 import { useProtectedNavigation } from "@/app/hooks/useProtectedNavigation";
+import { ACTIVE_CHAIN_ID } from "@/config/chains";
+
+const mapToChainId = (value: unknown): number | null => {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value === "number") {
+    return value;
+  }
+
+  const normalized = value.toString().toLowerCase();
+
+  if (["polygon", "polygon-mainnet", "matic", "matic-mainnet", "polygon_mainnet"].includes(normalized)) {
+    return 137;
+  }
+
+  if (["polygon-amoy", "amoy", "polygon_testnet", "polygon-amoy-testnet", "polygon-mumbai"].includes(normalized)) {
+    return 80002;
+  }
+
+  if (["gnosis", "gnosis-chain", "chiado", "gnosis chain"].includes(normalized)) {
+    return 100;
+  }
+
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? null : parsed;
+};
 
 // Dynamically import React Quill to prevent server-side rendering issues
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -120,6 +148,67 @@ export const JobForm = ({
   const [isCommissionExpanded, setIsCommissionExpanded] = useState(false);
   const [showFundManager, setShowFundManager] = useState(false);
   const { navigate: protectedNavigate } = useProtectedNavigation();
+
+  const jobChainLabel = useMemo(
+    () => jobData?.chain ?? selectedChain?.value ?? null,
+    [jobData?.chain, selectedChain?.value],
+  );
+
+  const jobChainId = useMemo(() => mapToChainId(jobChainLabel), [jobChainLabel]);
+
+  const currentBlockchainJobId = useMemo(() => {
+    if (!jobData) {
+      return null;
+    }
+
+    const rawId =
+      jobData.blockchainJobId ??
+      jobData.blockchain_job_id ??
+      jobData.block_id ??
+      jobData.job_id ??
+      null;
+
+    if (rawId === null || rawId === undefined || rawId === "") {
+      return null;
+    }
+
+    if (typeof rawId === "bigint") {
+      return rawId.toString();
+    }
+
+    if (typeof rawId === "number") {
+      return rawId.toString();
+    }
+
+    return rawId.toString();
+  }, [jobData]);
+
+  const onChainCurrency = useMemo(() => {
+    const currency = selectedCurrency?.value || jobData?.currency;
+    return currency ? currency.toUpperCase() : "";
+  }, [selectedCurrency?.value, jobData?.currency]);
+
+  const fundManagerTokenAddress = useMemo(() => {
+    if (jobData?.payment_token_address) {
+      return jobData.payment_token_address;
+    }
+
+    if (!jobChainId) {
+      return "";
+    }
+
+    const supportedTokens = getSupportedTokensForChain(jobChainId);
+
+    if (onChainCurrency === "USDC" && supportedTokens.USDC) {
+      return supportedTokens.USDC;
+    }
+
+    if (onChainCurrency === "DAI" && supportedTokens.DAI) {
+      return supportedTokens.DAI;
+    }
+
+    return supportedTokens.USDC || supportedTokens.DAI || "";
+  }, [jobData?.payment_token_address, jobChainId, onChainCurrency]);
 
   // Web3 integration
   const account = useActiveAccount();
@@ -255,8 +344,31 @@ export const JobForm = ({
       toast.error("Please connect your wallet to manage funds");
       return;
     }
-    if (!jobData?.blockchainJobId) {
+    if (!currentBlockchainJobId) {
       toast.error("Job not published on blockchain yet");
+      return;
+    }
+    const readableChainName = jobChainLabel
+      ? jobChainLabel.replace(/[-_]/g, " ").replace(/\b\w/g, (char) => char.toUpperCase())
+      : "the correct network";
+    if (jobChainId && jobChainId !== ACTIVE_CHAIN_ID) {
+      toast.error(
+        `This job is published on the ${readableChainName} network. Please switch your wallet to that network to manage funds.`,
+      );
+      return;
+    }
+
+    if (!onChainCurrency || !["USDC", "DAI"].includes(onChainCurrency)) {
+      toast.error(
+        "Funds can only be managed for jobs published with USDC or DAI. Please update the job currency before managing funds.",
+      );
+      return;
+    }
+
+    if (!fundManagerTokenAddress) {
+      toast.error(
+        "Unable to determine the token address for this job. Please republish the job or contact support.",
+      );
       return;
     }
     setShowFundManager(true);
@@ -451,6 +563,7 @@ export const JobForm = ({
           publish: true,
           in_saving_stage: false,
           blockchainJobId: blockchainJobId,
+          paymentTokenAddress: tokenAddress,
         }),
       });
 
@@ -681,7 +794,6 @@ export const JobForm = ({
                 required
                 value={budget}
                 maxLength={100}
-                defaultValue={jobData?.budget}
                 title="Enter budget amount"
                 placeholder="Enter amount"
               />
@@ -973,7 +1085,11 @@ export const JobForm = ({
                 className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out cursor-pointer"
                 type="button"
                 onClick={onManageFundsClick}
-                disabled={isLoading || isBlockchainLoading}
+                disabled={
+                  isLoading ||
+                  isBlockchainLoading ||
+                  !currentBlockchainJobId
+                }
               >
                 Manage Funds
               </button>
@@ -1047,19 +1163,13 @@ export const JobForm = ({
       </div>
 
       {/* Fund Manager Modal */}
-      {showFundManager && jobData?.blockchainJobId && (
+      {showFundManager && currentBlockchainJobId && (
         <FundManager
-          jobId={jobData.blockchainJobId}
+          jobId={currentBlockchainJobId}
           databaseJobId={jobData.id}
-          tokenAddress={
-            selectedCurrency?.value === "USDC"
-              ? getSupportedTokensForChain(
-                  selectedChain?.value === "polygon" ? 137 : 80002,
-                ).USDC || ""
-              : getSupportedTokensForChain(
-                  selectedChain?.value === "polygon" ? 137 : 80002,
-                ).DAI || ""
-          }
+          tokenAddress={fundManagerTokenAddress}
+          jobChainId={jobChainId}
+          jobChainLabel={jobChainLabel ?? undefined}
           onClose={() => setShowFundManager(false)}
         />
       )}

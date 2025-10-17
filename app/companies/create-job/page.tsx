@@ -11,6 +11,16 @@ import LabelOption from "@interfaces/label-option";
 import { JobForm } from "./JobForm";
 import { JobModals } from "./JobModals";
 import BlockchainDebug from "@/app/components/BlockchainDebug";
+import { chains } from "@/app/constants/chains";
+import {
+  typeEngagements,
+  jobTypes,
+  projectDuration,
+  projectTypes,
+  polygonMainnetTokens,
+  ethereumTokens,
+  gnosisChainTokens,
+} from "@/app/constants/common";
 
 export default function CreateJob() {
   const [title, setTitle] = useState("");
@@ -84,13 +94,75 @@ export default function CreateJob() {
           if (response.ok) {
             const data = await response.json();
             setJobData(data);
+
             // Set form fields from job data
             setTitle(data.title || "");
             setDescription(data.description || "");
             setBudget(data.budget || "");
-            setSelectedSkills(data.skills ? data.skills.split(", ") : []);
+
+            const normalizedSkills = Array.isArray(data.skills)
+              ? data.skills.map((skill: string) => skill.trim()).filter(Boolean)
+              : typeof data.skills === "string"
+                ? data.skills
+                    .split(",")
+                    .map((skill: string) => skill.trim())
+                    .filter(Boolean)
+                : [];
+            setSelectedSkills(normalizedSkills);
+
             setJobImage(data.image_url || null);
-            // Set other fields...
+
+            const resolvedChain = chains.find(
+              (chain) => chain.value === data.chain,
+            );
+            setSelectedChain(
+              resolvedChain ||
+                (data.chain
+                  ? { value: data.chain, label: data.chain }
+                  : null),
+            );
+
+            const tokenOptions =
+              data.chain === "ethereum"
+                ? ethereumTokens
+                : data.chain === "gnosis-chain"
+                  ? gnosisChainTokens
+                  : polygonMainnetTokens;
+            const resolvedCurrency = tokenOptions.find(
+              (token) => token.value === data.currency,
+            );
+            setSelectedCurrency(
+              resolvedCurrency ||
+                (data.currency
+                  ? { value: data.currency, label: data.currency }
+                  : null),
+            );
+
+            const resolvedTypeEngagement = typeEngagements.find(
+              (option) => option.value === data.typeEngagement,
+            );
+            setTypeEngagement(resolvedTypeEngagement || null);
+
+            const resolvedJobType = jobTypes.find(
+              (option) => option.value === data.jobType,
+            );
+            setJobType(resolvedJobType || null);
+
+            const resolvedDuration = projectDuration.find(
+              (option) => option.value === data.duration,
+            );
+            setDuration(resolvedDuration || null);
+
+            const resolvedProjectType = projectTypes.find(
+              (option) => option.value === data.projectType,
+            );
+            setProjectType(resolvedProjectType || null);
+
+            setJobServices({
+              talent: Boolean(data.talent),
+              recruiter: Boolean(data.recruiter),
+              mentor: Boolean(data.mentor),
+            });
           }
         } catch (error) {
           console.error("Error fetching job data:", error);

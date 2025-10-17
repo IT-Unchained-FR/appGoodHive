@@ -5,13 +5,16 @@ import { useActiveAccount } from 'thirdweb/react';
 import { toast } from 'react-hot-toast';
 
 import { useJobManager, useJobData } from '@/hooks/contracts/useJobManager';
-import { getTokenInfo, getTokenBalance, formatTokenBalance, parseTokenAmount } from '@/lib/contracts/erc20';
-import { calculateTotalFees } from '@/lib/contracts/jobManager';
+import { getTokenInfo, getTokenBalance, formatTokenBalance } from '@/lib/contracts/erc20';
+import { ACTIVE_CHAIN_ID } from '@/config/chains';
+import type { DatabaseIdentifier } from '@/lib/contracts/jobManager';
 
 interface FundManagerProps {
-  jobId: number;
+  jobId: DatabaseIdentifier;
   databaseJobId: number;
   tokenAddress: string;
+  jobChainId?: number | null;
+  jobChainLabel?: string;
   onClose: () => void;
 }
 
@@ -19,22 +22,39 @@ export default function FundManager({
   jobId,
   databaseJobId,
   tokenAddress,
+  jobChainId,
+  jobChainLabel,
   onClose
 }: FundManagerProps) {
   const account = useActiveAccount();
   const { addFunds, withdrawFunds, payFees, isLoading: isContractLoading } = useJobManager();
-  const { jobData, balance: jobBalance, refetch: refetchJobData } = useJobData(jobId);
+  const {
+    jobData,
+    balance: jobBalance,
+    refetch: refetchJobData,
+    error: jobDataError,
+  } = useJobData(jobId);
 
   const [activeTab, setActiveTab] = useState<'add' | 'withdraw' | 'fees'>('add');
   const [amount, setAmount] = useState('');
   const [tokenInfo, setTokenInfo] = useState<any>(null);
   const [userBalance, setUserBalance] = useState<bigint>(0n);
   const [isLoading, setIsLoading] = useState(false);
+  const [tokenError, setTokenError] = useState<string | null>(null);
+
+  const friendlyChainName = jobChainLabel
+    ? jobChainLabel
+        .replace(/[-_]/g, ' ')
+        .replace(/\b\w/g, (char) => char.toUpperCase())
+    : 'the correct network';
 
   // Load token info and user balance
   useEffect(() => {
     const loadData = async () => {
-      if (!tokenAddress || !account) return;
+      if (!tokenAddress || !account) {
+        setTokenInfo(null);
+        return;
+      }
 
       try {
         setIsLoading(true);
@@ -45,9 +65,11 @@ export default function FundManager({
 
         setTokenInfo(info);
         setUserBalance(balance);
+        setTokenError(null);
       } catch (error) {
         console.error('Failed to load token data:', error);
         toast.error('Failed to load token information');
+        setTokenError('Token information unavailable for this job.');
       } finally {
         setIsLoading(false);
       }
@@ -109,6 +131,15 @@ export default function FundManager({
     setAmount(getMaxAmount());
   };
 
+  const chainMismatch = Boolean(
+    jobChainId !== undefined &&
+      jobChainId !== null &&
+      jobChainId !== ACTIVE_CHAIN_ID,
+  );
+
+  const actionsDisabled =
+    isContractLoading || isLoading || chainMismatch || Boolean(jobDataError);
+
   if (!account) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -117,6 +148,27 @@ export default function FundManager({
             <h2 className="text-xl font-bold mb-4">Wallet Required</h2>
             <p className="text-gray-600 mb-4">
               Please connect your wallet to manage job funds.
+            </p>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!tokenAddress) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="text-center">
+            <h2 className="text-xl font-bold mb-4">Token not available</h2>
+            <p className="text-gray-600 mb-4">
+              We were unable to determine the payment token for this job. Please republish the job or contact support.
             </p>
             <button
               onClick={onClose}
@@ -145,6 +197,25 @@ export default function FundManager({
             ✕
           </button>
         </div>
+
+        {(chainMismatch || tokenError || jobDataError) && (
+          <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
+            {chainMismatch && (
+              <p>
+                This job is deployed on the {friendlyChainName} network. Please
+                switch your wallet to that network to manage funds.
+              </p>
+            )}
+            {tokenError && <p className="mt-2">{tokenError}</p>}
+            {jobDataError && (
+              <p className="mt-2">
+                {jobDataError.includes('Job does not exist')
+                  ? 'We could not find this job on the currently connected network. Confirm you are viewing the correct job ID and network before managing funds.'
+                  : jobDataError}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Job Balance Display */}
         <div className="bg-gray-50 rounded-lg p-4 mb-6">
@@ -241,7 +312,11 @@ export default function FundManager({
               <>
                 <button
                   onClick={handleAddFunds}
-                  disabled={isContractLoading || isLoading || !amount || parseFloat(amount) <= 0}
+                  disabled={
+                    actionsDisabled ||
+                    !amount ||
+                    parseFloat(amount) <= 0
+                  }
                   className="w-full py-3 px-4 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                 >
                   {isContractLoading ? 'Processing...' : 'Add Funds to Job'}
@@ -257,7 +332,11 @@ export default function FundManager({
                 <div className="space-y-2">
                   <button
                     onClick={() => handleWithdrawFunds(false)}
-                    disabled={isContractLoading || isLoading || !amount || parseFloat(amount) <= 0}
+                    disabled={
+                      actionsDisabled ||
+                      !amount ||
+                      parseFloat(amount) <= 0
+                    }
                     className="w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                   >
                     {isContractLoading ? 'Processing...' : 'Withdraw Amount'}
@@ -265,7 +344,11 @@ export default function FundManager({
 
                   <button
                     onClick={() => handleWithdrawFunds(true)}
-                    disabled={isContractLoading || isLoading || !jobBalance || jobBalance === 0n}
+                    disabled={
+                      actionsDisabled ||
+                      !jobBalance ||
+                      jobBalance === 0n
+                    }
                     className="w-full py-2 px-4 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                   >
                     {isContractLoading ? 'Processing...' : 'Withdraw All Funds'}
@@ -281,7 +364,11 @@ export default function FundManager({
               <>
                 <button
                   onClick={handlePayFees}
-                  disabled={isContractLoading || isLoading || !amount || parseFloat(amount) <= 0}
+                  disabled={
+                    actionsDisabled ||
+                    !amount ||
+                    parseFloat(amount) <= 0
+                  }
                   className="w-full py-3 px-4 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                 >
                   {isContractLoading ? 'Processing...' : 'Pay Service Fees'}
