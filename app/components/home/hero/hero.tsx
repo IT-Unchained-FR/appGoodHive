@@ -587,6 +587,7 @@ export const Hero = () => {
         </div>
       </div>
 
+      {/* Main Hero Content - Takes up 100vh */}
       <div className={styles.content}>
         {/* Clean Logo */}
         <div className={styles.logo}>
@@ -635,30 +636,30 @@ export const Hero = () => {
             Hire Top Talent
           </button>
         </div>
+      </div>
 
-        {/* Simplified Rewards Section */}
-        <div className={styles.rewardsSection}>
-          <div className={styles.rewardsCard}>
-            <div className={styles.header}>
-              <div className={styles.icon}>
-                <span>🏆</span>
-              </div>
-              <h3 className={styles.title}>Exclusive Hive Rewards</h3>
+      {/* Rewards Section - Appears after 100vh */}
+      <div className={styles.rewardsSection}>
+        <div className={styles.rewardsCard}>
+          <div className={styles.header}>
+            <div className={styles.icon}>
+              <span>🏆</span>
             </div>
-            <p className={styles.description}>
-              Unlock exclusive referral rewards and gain governance power. Enjoy
-              privileged access to
-              <span className={styles.highlight}> Airdrops and Whitelists</span>
-              , and become an esteemed holder of our{" "}
-              <span className={styles.highlight}>Scout and Pioneer NFTs</span>.
-            </p>
-            <button
-              onClick={onJoinQuestsClickHandler}
-              className={styles.questButton}
-            >
-              Join the Hive Quest
-            </button>
+            <h3 className={styles.title}>Exclusive Hive Rewards</h3>
           </div>
+          <p className={styles.description}>
+            Unlock exclusive referral rewards and gain governance power. Enjoy
+            privileged access to
+            <span className={styles.highlight}> Airdrops and Whitelists</span>
+            , and become an esteemed holder of our{" "}
+            <span className={styles.highlight}>Scout and Pioneer NFTs</span>.
+          </p>
+          <button
+            onClick={onJoinQuestsClickHandler}
+            className={styles.questButton}
+          >
+            Join the Hive Quest
+          </button>
         </div>
       </div>
     </section>
