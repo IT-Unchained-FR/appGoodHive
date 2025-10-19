@@ -13,7 +13,7 @@ export const ABOUT_CONTENT = {
   mission: {
     title: "Our Mission",
     description:
-      "To create the sweetest Web3 talent marketplace where opportunities buzz with potential and every connection leads to meaningful collaboration.",
+      "To create the leading Web3 talent marketplace where opportunities buzz with potential and every connection leads to meaningful collaboration.",
   },
 };
 

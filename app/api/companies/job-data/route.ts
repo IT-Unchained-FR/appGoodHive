@@ -1,4 +1,4 @@
-import postgres from "postgres";
+import sql from "@/lib/db";
 
 import type { NextRequest } from "next/server";
 
@@ -8,13 +8,7 @@ export async function GET(request: NextRequest) {
 
   const { id } = searchParams;
 
-  const sql = postgres(process.env.DATABASE_URL || "", {
-    ssl: {
-      rejectUnauthorized: false, // This allows connecting to a database with a self-signed certificate
-    },
-  });
-
-  if (!id) {
+    if (!id) {
     return new Response(JSON.stringify({ message: "Missing job id" }), {
       status: 404,
     });

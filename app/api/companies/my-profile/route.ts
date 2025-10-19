@@ -1,4 +1,4 @@
-import postgres from "postgres";
+import sql from "@/lib/db";
 import type { NextRequest } from "next/server";
 
 export async function POST(request: Request) {
@@ -23,12 +23,6 @@ export async function POST(request: Request) {
     status,
     inreview,
   } = await request.json();
-
-  const sql = postgres(process.env.DATABASE_URL || "", {
-    ssl: {
-      rejectUnauthorized: false, // This allows connecting to a database with a self-signed certificate
-    },
-  });
 
   const fields = {
     headline,
@@ -93,8 +87,6 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: NextRequest) {
-  let sql: any;
-
   try {
     const searchParamsEntries = request.nextUrl.searchParams.entries();
     const searchParams = Object.fromEntries(searchParamsEntries);
@@ -115,21 +107,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    sql = postgres(process.env.DATABASE_URL || "", {
-      ssl: {
-        rejectUnauthorized: false,
-      },
-    });
-
-    console.log('Database connection established');
-
     const company = await sql`
         SELECT *
         FROM goodhive.companies
         WHERE user_id = ${userId}
       `;
-
-    console.log('Query executed, results:', company.length);
 
     if (company.length === 0) {
       return new Response(
@@ -165,13 +147,5 @@ export async function GET(request: NextRequest) {
         },
       }
     );
-  } finally {
-    if (sql) {
-      try {
-        await sql.end();
-      } catch (error) {
-        console.error('Error closing database connection:', error);
-      }
-    }
   }
 }

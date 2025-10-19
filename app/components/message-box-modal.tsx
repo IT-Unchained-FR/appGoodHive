@@ -88,7 +88,7 @@ export const MessageBoxModal: FC<Props> = (props) => {
                 Contact Company
               </h2>
               <p className={styles.subtitle}>
-                Send a sweet message to the hive
+                Send a message to the hive
               </p>
             </div>
           </div>

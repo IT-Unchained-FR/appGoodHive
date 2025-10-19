@@ -106,7 +106,7 @@ export const AnimatedJobSection = ({
                     <div className="title-underline"></div>
                   </h2>
                   <p className="featured-subtitle">
-                    Our premium honey-sweet opportunity awaits you!
+                    Our premium spotlight opportunity awaits you!
                   </p>
                 </div>
               </div>
@@ -138,7 +138,7 @@ export const AnimatedJobSection = ({
                     <p className="balance-amount">
                       Honey Pot: ${jobBalances[featuredJob.id]?.toFixed(2) || "0.00"} USDC
                     </p>
-                    <p className="balance-subtitle">Sweet rewards secured & ready</p>
+                    <p className="balance-subtitle">Rewards secured & ready</p>
                   </div>
                   <div className="balance-bees">
                     <span className="guard-bee">🐝</span>
@@ -195,7 +195,7 @@ export const AnimatedJobSection = ({
               <div className="cta-content">
                 <span className="cta-bee">🐝</span>
                 <p className="cta-text">
-                  Don't miss this sweet opportunity! Join our hive and make it yours.
+                  Don't miss this exclusive opportunity! Join our hive and make it yours.
                 </p>
                 <div className="cta-sparkles">
                   <span className="sparkle">✨</span>

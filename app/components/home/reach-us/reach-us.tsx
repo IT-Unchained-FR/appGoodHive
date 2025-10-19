@@ -154,7 +154,7 @@ export const ReachUs = () => {
                 {/* Badge */}
                 <div className="inline-flex items-center bg-amber-100 text-amber-800 px-4 py-2 rounded-full text-sm font-semibold mb-6">
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Sweet Communication
+                  Direct Communication
                 </div>
 
                 {/* Title */}
@@ -183,7 +183,7 @@ export const ReachUs = () => {
                     <div className="text-2xl font-bold text-amber-600 mb-1">
                       100%
                     </div>
-                    <div className="text-sm text-gray-600">Sweet Support</div>
+                    <div className="text-sm text-gray-600">Dedicated Support</div>
                   </div>
                 </div>
 
@@ -196,7 +196,7 @@ export const ReachUs = () => {
                   >
                     <span className="relative z-10 flex items-center justify-center">
                       <MessageCircle className="w-5 h-5 mr-2" />
-                      Send us a Sweet Message
+                      Send us a Message
                     </span>
                     <div className="absolute inset-0 bg-gradient-to-r from-amber-600 to-yellow-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </button>

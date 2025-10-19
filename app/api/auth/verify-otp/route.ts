@@ -1,15 +1,9 @@
 import { NextResponse } from "next/server";
-import postgres from "postgres";
+import sql from "@/lib/db";
 import { SignJWT } from "jose";
 import { JWT_SECRET } from "@/lib/auth/jwtConfig";
 import { verifyOTP } from "@/lib/auth/otpService";
 import { sendWelcomeEmail } from "@/lib/email/emailService";
-
-const sql = postgres(process.env.DATABASE_URL || "", {
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
 
 export async function POST(req: Request) {
   try {

@@ -1,4 +1,4 @@
-import postgres from "postgres";
+import sql from "@/lib/db";
 
 export async function POST(request: Request) {
   const {
@@ -23,12 +23,6 @@ export async function POST(request: Request) {
     mentor,
     in_saving_stage,
   } = await request.json();
-
-  const sql = postgres(process.env.DATABASE_URL || "", {
-    ssl: {
-      rejectUnauthorized: false,
-    },
-  });
 
   try {
     const postedAt = new Date().toISOString();
@@ -132,7 +126,5 @@ export async function POST(request: Request) {
       }),
       { status: 500 },
     );
-  } finally {
-    await sql.end();
   }
 }

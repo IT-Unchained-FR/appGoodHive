@@ -155,7 +155,7 @@ export const MessagePopup: React.FC<MessagePopupProps> = ({
               Buzz with Us!
             </h2>
             <p className="text-amber-100 text-sm">
-              Drop us a sweet message and we'll get back to you
+              Drop us a message and we'll get back to you
             </p>
           </div>
         </div>
@@ -172,7 +172,7 @@ export const MessagePopup: React.FC<MessagePopupProps> = ({
               <input
                 {...register("name")}
                 type="text"
-                placeholder="Enter your sweet name..."
+                placeholder="Enter your name..."
                 className="w-full px-4 py-3 border-2 border-amber-100 rounded-xl focus:border-amber-400 focus:ring-0 bg-amber-50/30 text-gray-800 placeholder-gray-500 font-medium transition-all duration-200 hover:bg-amber-50/50"
                 disabled={isSubmitting}
               />

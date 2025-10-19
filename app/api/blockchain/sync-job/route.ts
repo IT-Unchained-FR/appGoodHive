@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import postgres from "postgres";
+import sql from "@/lib/db";
 
 export async function POST(request: NextRequest) {
-  const sql = postgres(process.env.DATABASE_URL || "", {
-    ssl: {
-      rejectUnauthorized: false,
-    },
-  });
-
-  try {
+    try {
     const {
       jobId,
       blockchainJobId,
@@ -90,7 +84,5 @@ export async function POST(request: NextRequest) {
       { error: "Failed to sync job with blockchain" },
       { status: 500 }
     );
-  } finally {
-    await sql.end();
   }
 }
