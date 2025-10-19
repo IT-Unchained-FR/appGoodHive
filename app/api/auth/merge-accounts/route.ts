@@ -1,13 +1,7 @@
-import postgres from "postgres";
+import sql from "@/lib/db";
 import { NextResponse } from "next/server";
 import { jwtVerify, SignJWT } from "jose";
 import { JWT_SECRET } from "@/lib/auth/jwtConfig";
-
-const sql = postgres(process.env.DATABASE_URL || "", {
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
 
 // Merge two user accounts
 export async function POST(req: Request) {

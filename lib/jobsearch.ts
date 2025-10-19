@@ -1,4 +1,4 @@
-import postgres from "postgres";
+import sql from "@/lib/db";
 
 type FetchJobsProps = {
   search?: string;
@@ -17,12 +17,6 @@ type FetchJobsProps = {
   openToRecruiter?: string;
   openToTalents?: string;
 };
-
-const sql = postgres(process.env.DATABASE_URL || "", {
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
 
 function contains(str: string) {
   return "%" + str.toLowerCase() + "%";

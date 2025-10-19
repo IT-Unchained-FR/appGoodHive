@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import postgres from "postgres";
+import sql from "@/lib/db";
 import { 
   generateOTP, 
   storeOTP, 
@@ -7,12 +7,6 @@ import {
   cleanupExpiredOTPs 
 } from "@/lib/auth/otpService";
 import { sendOTPEmail } from "@/lib/email/emailService";
-
-const sql = postgres(process.env.DATABASE_URL || "", {
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
 
 export async function POST(req: Request) {
   try {

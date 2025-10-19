@@ -150,7 +150,7 @@ export default function CompanyProfilePage(context: CompanyProfilePageProps) {
       <CompanyLoadingSpinner
         size="large"
         message="Loading company profile..."
-        subMessage="Gathering the sweetest details"
+        subMessage="Gathering the latest details"
       />
     );
   }

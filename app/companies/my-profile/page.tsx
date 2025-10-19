@@ -661,7 +661,7 @@ export default function MyProfile() {
               </div>
 
               <h1 className={styles.heroTitle}>
-                Join the Sweetest
+                Join the Premier
                 <span className={styles.heroTitleGradient}>
                   Web3 Talent Marketplace
                 </span>

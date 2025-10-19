@@ -1,4 +1,4 @@
-import postgres from "postgres";
+import sql from "@/lib/db";
 
 export async function PATCH(request: Request) {
   const {
@@ -8,12 +8,6 @@ export async function PATCH(request: Request) {
     blockchainJobId,
     paymentTokenAddress,
   } = await request.json();
-
-  const sql = postgres(process.env.DATABASE_URL || "", {
-    ssl: {
-      rejectUnauthorized: false,
-    },
-  });
 
   try {
     // Check if the job exists
@@ -86,7 +80,5 @@ export async function PATCH(request: Request) {
       JSON.stringify({ error: "Failed to update publish status" }),
       { status: 500 },
     );
-  } finally {
-    await sql.end();
   }
 }

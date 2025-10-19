@@ -70,7 +70,7 @@ export const Services = () => {
         <div className={styles.header}>
           <div className={styles.badge}>
             <Crown />
-            Sweet Benefits
+            Key Benefits
           </div>
           <h1 className={styles.title}>
             <span className={styles.titleMain}>Why Choose</span>
@@ -221,7 +221,7 @@ export const Services = () => {
           <div className={styles.ctaBadge}>
             <Sparkles />
             <span>
-              Join the sweetest community in Web3! 🍯
+              Join the leading community in Web3! 🍯
             </span>
           </div>
         </div>

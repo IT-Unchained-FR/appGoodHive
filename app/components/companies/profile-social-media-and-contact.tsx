@@ -150,7 +150,7 @@ export const CompanySocialMediaAndContact: FC<Props> = (props) => {
             className={styles.contactUsButton}
           >
             <MessageCircle className={styles.contactUsIcon} />
-            <span>Send us a Sweet Message</span>
+            <span>Send us a Message</span>
           </button>
         </div>
       </div>
