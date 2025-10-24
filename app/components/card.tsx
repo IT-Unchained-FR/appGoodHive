@@ -76,6 +76,8 @@ export const Card: FC<Props> = ({
     title,
     "jobId:",
     jobId,
+    availability,
+    "availability...",
   );
   // Function to generate dynamic "Open to" text
   const getOpenToText = () => {

@@ -71,7 +71,7 @@ export type ProfileData = {
   recruiter_status?: string;
   hide_contact_details?: boolean;
   referrer?: string;
-  availability?: boolean;
+  availability?: boolean | string;
   approved: boolean;
   user_id?: string;
   inreview?: boolean;
@@ -876,7 +876,7 @@ export default function ProfilePage() {
             label=""
             name="availability"
             tooltip="If Seeking Jobs"
-            checked={profileData.availability}
+            checked={profileData.availability === true || profileData.availability === "Available"}
             setValue={handleToggleChange}
             errorMessage={errors.availability}
           />
