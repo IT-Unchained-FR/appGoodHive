@@ -184,6 +184,7 @@ export const Card: FC<Props> = ({
             jobId={jobId}
             blockId={blockId}
             currency={currency}
+            amount={budget}
           />
         </div>
       )}
