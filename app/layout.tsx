@@ -1,8 +1,13 @@
 import type { ReactNode } from "react";
 
+import Script from "next/script";
+
 import "./globals.css";
 
 import { ClientLayout } from "./client-layout";
+import { GAListener } from "./ga-listener";
+
+const GA_TRACKING_ID = process.env.NEXT_PUBLIC_GA_ID;
 
 export default function RootLayout({
   children,
@@ -12,6 +17,21 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen">
+        {!!GA_TRACKING_ID && (
+          <>
+            <Script
+              strategy="afterInteractive"
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
+            />
+            <Script id="ga-init" strategy="afterInteractive">
+              {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${GA_TRACKING_ID}', { send_page_view: false });`}
+            </Script>
+            <GAListener />
+          </>
+        )}
         <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
