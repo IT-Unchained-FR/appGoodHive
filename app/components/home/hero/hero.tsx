@@ -618,7 +618,8 @@ export const Hero = () => {
             More collaborative, more transparent and fairer than ever.
             <br />
             <span className={styles.highlight}>
-              Join the recruitment revolution where value returns to the people who create it.
+              Join the recruitment revolution where value returns to the people
+              who create it.
             </span>
           </p>
         </div>
@@ -626,7 +627,7 @@ export const Hero = () => {
         {/* Simplified Action Buttons */}
         <div className={styles.actionButtons}>
           <button onClick={onFindJobBtnClick} className={styles.primaryButton}>
-            Find Opportunities
+            Find Web3 Jobs
           </button>
 
           <button
@@ -650,8 +651,8 @@ export const Hero = () => {
           <p className={styles.description}>
             Unlock exclusive referral rewards and gain governance power. Enjoy
             privileged access to
-            <span className={styles.highlight}> Airdrops and Whitelists</span>
-            , and become an esteemed holder of our{" "}
+            <span className={styles.highlight}> Airdrops and Whitelists</span>,
+            and become an esteemed holder of our{" "}
             <span className={styles.highlight}>Scout and Pioneer NFTs</span>.
           </p>
           <button
