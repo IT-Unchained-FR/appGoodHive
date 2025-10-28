@@ -9,11 +9,7 @@ import { GAListener } from "./ga-listener";
 
 const GA_TRACKING_ID = process.env.NEXT_PUBLIC_GA_ID;
 
-export default function RootLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body className="min-h-screen">
