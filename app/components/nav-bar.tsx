@@ -26,6 +26,7 @@ import { useProtectedNavigation } from "@/app/hooks/useProtectedNavigation";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import EmailVerificationModal from "./EmailVerificationModal";
+import { OnboardingPopup } from "./onboarding-popup";
 
 const commonLinks = [
   { href: "/talents/job-search", label: "Find a Job", protected: false },
@@ -47,6 +48,7 @@ export const NavBar = () => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
   const [walletAddressToVerify, setWalletAddressToVerify] = useState("");
+  const [showOnboardingPopup, setShowOnboardingPopup] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -141,6 +143,11 @@ export const NavBar = () => {
             // Update auth context
             login(authResult.user);
 
+            // Show onboarding popup for new users
+            if (authResult.isNewUser) {
+              setShowOnboardingPopup(true);
+            }
+
             // If no email was captured, show a notification
             if (walletData.isThirdwebWallet && !walletData.email) {
               toast("Consider adding your email in profile settings for account recovery", {
@@ -198,13 +205,18 @@ export const NavBar = () => {
     handleWalletAuth();
   }, [account, loggedIn_user_id, isAuthenticating, login, router]);
 
-  const handleEmailVerificationSuccess = (user: any) => {
+  const handleEmailVerificationSuccess = (user: any, isNewUser: boolean = true) => {
     // Update auth context with verified user
     login(user);
     setShowEmailVerification(false);
     setWalletAddressToVerify("");
 
     toast.success("Email verified successfully! Welcome to GoodHive!");
+
+    // Show onboarding popup for new users after email verification
+    if (isNewUser) {
+      setShowOnboardingPopup(true);
+    }
 
     // Handle post-authentication redirect (same logic as above)
     const redirectUrl = ReturnUrlManager.getRedirectUrl();
@@ -229,6 +241,16 @@ export const NavBar = () => {
 
     // Clear auth context after handling
     ReturnUrlManager.clearAuthContext();
+  };
+
+  const handleOnboardingClose = () => {
+    setShowOnboardingPopup(false);
+  };
+
+  const handleOnboardingContinue = () => {
+    setShowOnboardingPopup(false);
+    // Redirect to talents profile page after onboarding
+    router.push("/talents/my-profile");
   };
 
   const handleWalletDisconnect = async () => {
@@ -346,6 +368,12 @@ export const NavBar = () => {
         }}
         walletAddress={walletAddressToVerify}
         onVerificationSuccess={handleEmailVerificationSuccess}
+      />
+
+      <OnboardingPopup
+        isOpen={showOnboardingPopup}
+        onClose={handleOnboardingClose}
+        onContinue={handleOnboardingContinue}
       />
       
       <header
