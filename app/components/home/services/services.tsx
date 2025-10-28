@@ -104,8 +104,8 @@ export const Services = () => {
           </div>
         </div>
 
-        {/* Enhanced Service Card */}
-        <div className={styles.cardContainer}>
+        {/* Modern Two-Card Layout */}
+        <div className={styles.cardsContainer}>
           {allServices.map((service) => {
             const { id, title, description } = service;
             const isForTalent = id === "talent";
@@ -115,101 +115,123 @@ export const Services = () => {
             return (
               <div
                 key={id}
-                className={`${styles.serviceCard} ${isActive ? styles.active : styles.inactive} group`}
+                className={`${styles.serviceSection} ${isActive ? styles.active : styles.inactive}`}
               >
-                {/* Card Background with Gradient */}
-                <div className={styles.cardBackground}>
-                  {/* Gradient Overlay */}
-                  <div className={`${styles.gradientOverlay} ${
-                    isForTalent ? styles.talent : styles.company
-                  }`}></div>
-
-                  {/* Card Content */}
-                  <div className={styles.cardContent}>
-                    {/* Icon and Hexagon Background */}
-                    <div className={styles.iconSection}>
-                      <div className={styles.iconWrapper}>
-                        <div
-                          className={`${styles.iconContainer} ${
-                            isForTalent ? styles.talent : styles.company
-                          }`}
-                        >
-                          <Icon />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Title */}
-                    <h3 className={styles.cardTitle}>
-                      {title}
-                    </h3>
-
-                    {/* Description */}
-                    <p className={styles.cardDescription}>
-                      {description}
-                    </p>
-
-                    {/* Features List */}
-                    <div className={styles.featuresList}>
-                      {isForTalent ? (
-                        <>
-                          <div className={styles.featureItem}>
-                            <Star className={styles.talent} />
-                            <span>100% commission returned</span>
-                          </div>
-                          <div className={styles.featureItem}>
-                            <Trophy className={styles.talent} />
-                            <span>Co-own your platform</span>
-                          </div>
-                          <div className={styles.featureItem}>
-                            <Zap className={styles.talent} />
-                            <span>Earn as recruiter & mentor</span>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className={styles.featureItem}>
-                            <Star className={styles.company} />
-                            <span>Stake-backed recruiters</span>
-                          </div>
-                          <div className={styles.featureItem}>
-                            <Trophy className={styles.company} />
-                            <span>Community mentoring</span>
-                          </div>
-                          <div className={styles.featureItem}>
-                            <Zap className={styles.company} />
-                            <span>Excellence rewards</span>
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    {/* CTA Button */}
-                    <button
-                      onClick={() => {
-                        if (!isAuthenticated) {
-                          checkAuthAndShowConnectPrompt("access this feature", "service-action", { serviceType: id });
-                          return;
-                        }
-
-                        if (id === "talent") {
-                          return router.push("/talents/my-profile");
-                        } else if (id === "companies") {
-                          return router.push("/companies/my-profile");
-                        }
-                      }}
-                      className={`${styles.ctaButton} ${
-                        isForTalent ? styles.talent : styles.company
-                      } group/btn`}
-                    >
-                      <span className={styles.buttonContent}>
-                        <span>{getButtonText(id)}</span>
-                        <ArrowRight />
-                      </span>
-                      <div className={styles.buttonOverlay}></div>
-                    </button>
+                {/* Service Details Card */}
+                <div className={`${styles.serviceCard} ${isForTalent ? styles.talent : styles.company}`}>
+                  {/* Floating Particles */}
+                  <div className={styles.cardFloatingParticles}>
+                    <div className={`${styles.particle} ${styles.particle1}`}>✨</div>
+                    <div className={`${styles.particle} ${styles.particle2}`}>⭐</div>
+                    <div className={`${styles.particle} ${styles.particle3}`}>💫</div>
                   </div>
 
+                  {/* Card Header */}
+                  <div className={styles.cardHeader}>
+                    <div className={styles.iconSection}>
+                      <div className={`${styles.iconContainer} ${isForTalent ? styles.talent : styles.company}`}>
+                        <Icon />
+                      </div>
+                    </div>
+                    <div className={styles.headerText}>
+                      <h3 className={styles.cardTitle}>{title}</h3>
+                      <p className={styles.cardDescription}>{description}</p>
+                    </div>
+                  </div>
+
+                  {/* Features List */}
+                  <div className={styles.featuresList}>
+                    {isForTalent ? (
+                      <>
+                        <div className={styles.featureItem}>
+                          <div className={`${styles.featureIcon} ${styles.talent}`}>
+                            <Star />
+                          </div>
+                          <span>100% commission returned</span>
+                        </div>
+                        <div className={styles.featureItem}>
+                          <div className={`${styles.featureIcon} ${styles.talent}`}>
+                            <Trophy />
+                          </div>
+                          <span>Co-own your platform</span>
+                        </div>
+                        <div className={styles.featureItem}>
+                          <div className={`${styles.featureIcon} ${styles.talent}`}>
+                            <Zap />
+                          </div>
+                          <span>Earn as recruiter & mentor</span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className={styles.featureItem}>
+                          <div className={`${styles.featureIcon} ${styles.company}`}>
+                            <Star />
+                          </div>
+                          <span>Stake-backed recruiters</span>
+                        </div>
+                        <div className={styles.featureItem}>
+                          <div className={`${styles.featureIcon} ${styles.company}`}>
+                            <Trophy />
+                          </div>
+                          <span>Community mentoring</span>
+                        </div>
+                        <div className={styles.featureItem}>
+                          <div className={`${styles.featureIcon} ${styles.company}`}>
+                            <Zap />
+                          </div>
+                          <span>Excellence rewards</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* CTA Button */}
+                  <button
+                    onClick={() => {
+                      if (!isAuthenticated) {
+                        checkAuthAndShowConnectPrompt("access this feature", "service-action", { serviceType: id });
+                        return;
+                      }
+
+                      if (id === "talent") {
+                        return router.push("/talents/my-profile");
+                      } else if (id === "companies") {
+                        return router.push("/companies/my-profile");
+                      }
+                    }}
+                    className={`${styles.ctaButton} ${isForTalent ? styles.talent : styles.company}`}
+                  >
+                    <span className={styles.buttonContent}>
+                      <span>{getButtonText(id)}</span>
+                      <ArrowRight />
+                    </span>
+                  </button>
+                </div>
+
+                {/* Video Card */}
+                <div className={`${styles.videoCard} ${isForTalent ? styles.talent : styles.company}`}>
+                  {/* Floating Particles */}
+                  <div className={styles.cardFloatingParticles}>
+                    <div className={`${styles.particle} ${styles.particle1}`}>🎥</div>
+                    <div className={`${styles.particle} ${styles.particle2}`}>🎬</div>
+                    <div className={`${styles.particle} ${styles.particle3}`}>📺</div>
+                  </div>
+
+                  <div className={styles.videoHeader}>
+                    <h4 className={styles.videoTitle}>Platform Overview</h4>
+                    <p className={styles.videoSubtitle}>See how GoodHive works</p>
+                  </div>
+                  <div className={styles.videoContainer}>
+                    <iframe
+                      src="https://www.youtube.com/embed/4ep_oZ0khzo"
+                      title="GoodHive Platform Overview"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                      className={styles.videoEmbed}
+                    ></iframe>
+                  </div>
                 </div>
               </div>
             );
