@@ -1,14 +1,13 @@
 .wrapper {
-  position: sticky;
-  top: 4rem;
-  z-index: 30;
+  position: static;
+  top: auto;
+  z-index: auto;
 }
 
 .shell {
   border-bottom: 1px solid rgba(252, 211, 77, 0.35);
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(18px);
-  box-shadow: 0 16px 30px -24px rgba(245, 158, 11, 0.6);
+  background: #fefbe9;
+  box-shadow: none;
 }
 
 .inner {
@@ -157,16 +156,21 @@
 
 .filterChip {
   position: relative;
+  display: inline-flex;
 }
 
 .chipPanel {
-  margin-top: 0.65rem;
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  margin-top: 0;
   width: 16rem;
   border-radius: 1.25rem;
   border: 1px solid rgba(252, 211, 77, 0.35);
-  background: #fff;
+  background: #ffffff;
   padding: 1rem;
   box-shadow: 0 22px 45px -24px rgba(15, 23, 42, 0.45);
+  z-index: 10;
 }
 
 .panelList {
