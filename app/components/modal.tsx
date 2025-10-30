@@ -20,10 +20,8 @@ const Modal = ({ open, onClose, children }: ModalProps) => {
     }
   }, [open]);
 
-  const handleOutsideClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === dialogRef.current) {
-      onClose();
-    }
+  const handleOverlayClick = () => {
+    onClose();
   };
 
   return (
@@ -31,11 +29,12 @@ const Modal = ({ open, onClose, children }: ModalProps) => {
       className={`fixed top-0 left-0 w-[100vw] h-[100vh] z-[99999999] rounded bg-black bg-opacity-30 flex items-center justify-center ${
         open ? "block" : "hidden"
       }`}
-      onClick={handleOutsideClick}
+      onClick={handleOverlayClick}
     >
       <dialog
         ref={dialogRef}
         className="relative bg-white rounded-xl shadow-lg border-0 p-0 max-h-[80%] max-w-[80%] z-[9999999]"
+        onClick={(e) => e.stopPropagation()}
       >
         {children}
       </dialog>
