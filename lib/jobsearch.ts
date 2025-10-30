@@ -16,6 +16,10 @@ type FetchJobsProps = {
   // New "Open to" filters
   openToRecruiter?: string;
   openToTalents?: string;
+  jobType?: string;
+  engagement?: string;
+  datePosted?: string;
+  sort?: string;
 };
 
 function contains(str: string) {
@@ -64,6 +68,10 @@ export async function fetchJobs({
   openToRecruiter,
   // New "Open to" filters
   openToTalents,
+  jobType = "",
+  engagement = "",
+  datePosted = "",
+  sort = "latest",
 }: FetchJobsProps) {
   try {
     const recruiterFlag = normalizeBooleanFilter(
@@ -126,6 +134,32 @@ export async function fetchJobs({
       params.push(projectType);
     }
 
+    if (jobType && jobType !== "all") {
+      whereConditions.push(`job_type = $${++paramIndex}`);
+      params.push(jobType);
+    }
+
+    if (engagement && engagement !== "all") {
+      whereConditions.push(`type_engagement = $${++paramIndex}`);
+      params.push(engagement);
+    }
+
+    if (datePosted && datePosted !== "any") {
+      const intervalMap: Record<string, string> = {
+        "1d": "1 day",
+        "3d": "3 days",
+        "7d": "7 days",
+        "14d": "14 days",
+        "30d": "30 days",
+      };
+
+      const interval = intervalMap[datePosted];
+
+      if (interval) {
+        whereConditions.push(`posted_at >= NOW() - INTERVAL '${interval}'`);
+      }
+    }
+
     // Budget range filter
     if (budgetRange) {
       const [minBudget, maxBudget] = budgetRange.split("-").map(Number);
@@ -165,8 +199,21 @@ export async function fetchJobs({
     const limit = Number(items);
     const offset = limit * (Number(page) - 1);
 
+    let orderClause = "ORDER BY posted_at DESC NULLS LAST, id DESC";
+    const normalizedSort = sort?.toLowerCase();
+
+    if (normalizedSort === "oldest") {
+      orderClause = "ORDER BY posted_at ASC NULLS LAST, id ASC";
+    } else if (normalizedSort === "budget_high") {
+      orderClause = "ORDER BY CAST(NULLIF(budget, '') AS INTEGER) DESC NULLS LAST, posted_at DESC";
+    } else if (normalizedSort === "budget_low") {
+      orderClause = "ORDER BY CAST(NULLIF(budget, '') AS INTEGER) ASC NULLS LAST, posted_at DESC";
+    }
+
     // Main query
-    const jobsQuery = `SELECT * FROM goodhive.job_offers WHERE ${whereClause} ORDER BY id DESC LIMIT $${++paramIndex} OFFSET $${++paramIndex}`;
+    const limitIndex = ++paramIndex;
+    const offsetIndex = ++paramIndex;
+    const jobsQuery = `SELECT * FROM goodhive.job_offers WHERE ${whereClause} ${orderClause} LIMIT $${limitIndex} OFFSET $${offsetIndex}`;
     const jobsResult = await sql.unsafe(jobsQuery, [...params, limit, offset]);
 
     console.log("Jobs found:", jobsResult.length);

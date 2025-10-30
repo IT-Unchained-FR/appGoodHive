@@ -31,6 +31,10 @@ export async function fetchTalents({
   onlyTalent = "",
   onlyMentor = "",
   onlyRecruiter = "",
+  availability = "",
+  remoteOnly = "",
+  freelanceOnly = "",
+  sort = "recent",
 }: {
   search?: string;
   location?: string;
@@ -40,6 +44,10 @@ export async function fetchTalents({
   onlyTalent?: string;
   onlyMentor?: string;
   onlyRecruiter?: string;
+  availability?: string;
+  remoteOnly?: string;
+  freelanceOnly?: string;
+  sort?: string;
 }) {
   try {
     // Build dynamic WHERE conditions
@@ -91,6 +99,20 @@ export async function fetchTalents({
       whereConditions.push("mentor = true");
     }
 
+    if (availability === "true") {
+      whereConditions.push(
+        "(availability = true OR LOWER(CAST(availability AS TEXT)) = 'available')",
+      );
+    }
+
+    if (remoteOnly === "true") {
+      whereConditions.push("COALESCE(remote_only::text, 'false') = 'true'");
+    }
+
+    if (freelanceOnly === "true") {
+      whereConditions.push("COALESCE(freelance_only::text, 'false') = 'true'");
+    }
+
     const whereClause = whereConditions.join(" AND ");
 
     console.log("WHERE clause:", whereClause);
@@ -106,8 +128,21 @@ export async function fetchTalents({
     const limit = Number(items);
     const offset = limit * (Number(page) - 1);
 
+    let orderClause = "ORDER BY last_active DESC NULLS LAST";
+    const normalizedSort = sort?.toLowerCase();
+
+    if (normalizedSort === "alphabetical") {
+      orderClause = "ORDER BY LOWER(first_name) ASC NULLS LAST, LOWER(last_name) ASC";
+    } else if (normalizedSort === "rate_high") {
+      orderClause = "ORDER BY CAST(NULLIF(rate, '') AS NUMERIC) DESC NULLS LAST, last_active DESC";
+    } else if (normalizedSort === "rate_low") {
+      orderClause = "ORDER BY CAST(NULLIF(rate, '') AS NUMERIC) ASC NULLS LAST, last_active DESC";
+    }
+
     // Main query
-    const talentsQuery = `SELECT * FROM goodhive.talents WHERE ${whereClause} ORDER BY last_active DESC LIMIT $${++paramIndex} OFFSET $${++paramIndex}`;
+    const limitIndex = ++paramIndex;
+    const offsetIndex = ++paramIndex;
+    const talentsQuery = `SELECT * FROM goodhive.talents WHERE ${whereClause} ${orderClause} LIMIT $${limitIndex} OFFSET $${offsetIndex}`;
     const talentsCursor = await sql.unsafe(talentsQuery, [...params, limit, offset]);
 
     console.log("Talents found:", talentsCursor.length);

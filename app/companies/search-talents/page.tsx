@@ -3,6 +3,7 @@ import { Pagination } from "@/app/components/pagination";
 import { fetchTalents } from "@/lib/talents";
 import { Metadata } from "next";
 import {
+  ArrowDownUp,
   Users,
   CheckCircle,
   Wrench,
@@ -12,8 +13,18 @@ import {
   GraduationCap,
   UserCheck,
   Search,
-  FolderOpen
+  FolderOpen,
+  Clock,
+  Globe2,
+  BriefcaseBusiness,
 } from "lucide-react";
+
+const TALENT_SORT_LABELS: Record<string, string> = {
+  recent: "Recently active",
+  alphabetical: "Name A → Z",
+  rate_high: "Rate high to low",
+  rate_low: "Rate low to high",
+};
 
 export const metadata: Metadata = {
   title: "Search Talents - Find Web3 & Blockchain Professionals | GoodHive",
@@ -39,6 +50,10 @@ export default async function SearchTalentsPage({
     onlyTalent?: string;
     onlyMentor?: string;
     onlyRecruiter?: string;
+    availability?: string;
+    remoteOnly?: string;
+    freelanceOnly?: string;
+    sort?: string;
   };
 }) {
   console.log("Search params received:", searchParams);
@@ -162,6 +177,27 @@ export default async function SearchTalentsPage({
                 {searchParams.onlyRecruiter === "true" && (
                   <span className="bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 text-gray-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
                     <UserCheck className="w-4 h-4 mr-1" /> Recruiter Only
+                  </span>
+                )}
+                {searchParams.availability === "true" && (
+                  <span className="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 text-emerald-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
+                    <Clock className="w-4 h-4 mr-1" /> Available now
+                  </span>
+                )}
+                {searchParams.remoteOnly === "true" && (
+                  <span className="bg-gradient-to-r from-sky-50 to-blue-50 border border-sky-200 text-sky-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
+                    <Globe2 className="w-4 h-4 mr-1" /> Remote Only
+                  </span>
+                )}
+                {searchParams.freelanceOnly === "true" && (
+                  <span className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 text-amber-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
+                    <BriefcaseBusiness className="w-4 h-4 mr-1" /> Freelance Only
+                  </span>
+                )}
+                {searchParams.sort && searchParams.sort !== "recent" && (
+                  <span className="bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-200 text-indigo-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
+                    <ArrowDownUp className="w-4 h-4 mr-1" /> Sort:{" "}
+                    {TALENT_SORT_LABELS[searchParams.sort] ?? searchParams.sort}
                   </span>
                 )}
               </div>
