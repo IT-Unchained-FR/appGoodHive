@@ -22,7 +22,6 @@ import {
 } from "react";
 
 import { jobTypes, typeEngagements } from "@/app/constants/common";
-import { CitySuggestion } from "../city-suggestor/city-suggestor";
 import type { SearchFiltersProps } from "./search-filters.types";
 
 import styles from "./search-filters.module.scss";
@@ -695,12 +694,26 @@ export const SearchFilters = ({
                 <span className={styles.fieldLabel}>Where</span>
                 <div className={styles.fieldControl}>
                   <MapPin className={styles.fieldIcon} />
-                  <CitySuggestion
+                  <input
+                    type="text"
                     value={location}
-                    onCitySelect={(city) => setLocation(city.name)}
-                    onQueryChange={setLocation}
-                    classes={styles.locationInput}
-                    placeholder="Type a city name..."
+                    onChange={(e) => setLocation(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        applyFilters({ location });
+                      }
+                    }}
+                    placeholder="City, state, or country"
+                    name="location"
+                    autoComplete="off"
+                    spellCheck={false}
+                    aria-label="Search location"
+                    data-gramm="false"
+                    data-gramm_editor="false"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    className={styles.locationInput}
                   />
                 </div>
               </div>
