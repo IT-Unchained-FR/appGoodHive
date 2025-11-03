@@ -1,5 +1,6 @@
 import FundManager from "@/app/components/FundManager";
 import ProfileImageUpload from "@/app/components/profile-image-upload";
+import JobSectionsManager from "@/app/components/job-sections-manager/job-sections-manager";
 import "@/app/styles/rich-text.css";
 import {
   calculateJobCreateFees,
@@ -24,6 +25,7 @@ import {
 } from "@constants/common";
 import { skills } from "@constants/skills";
 import LabelOption from "@interfaces/label-option";
+import { IJobSection } from "@interfaces/job-offer";
 import { Tooltip } from "@nextui-org/tooltip";
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
@@ -60,19 +62,7 @@ const mapToChainId = (value: unknown): number | null => {
   return Number.isNaN(parsed) ? null : parsed;
 };
 
-// Dynamically import React Quill to prevent server-side rendering issues
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-
-// Define Quill modules and formats
-const quillModules = {
-  toolbar: [
-    [{ header: [1, 2, 3, 4, 5, 6, false] }],
-    ["bold", "italic", "underline", "strike"],
-    [{ list: "ordered" }, { list: "bullet" }],
-    ["link"],
-    ["clean"],
-  ],
-};
+// Note: ReactQuill is now used within individual JobSectionEditor components
 
 interface JobFormProps {
   isLoading: boolean;
@@ -84,6 +74,8 @@ interface JobFormProps {
   setSelectedSkills: (skills: string[]) => void;
   description: string;
   setDescription: (description: string) => void;
+  jobSections: IJobSection[];
+  setJobSections: (sections: IJobSection[]) => void;
   jobServices: {
     talent: boolean;
     recruiter: boolean;
@@ -122,6 +114,8 @@ export const JobForm = ({
   setSelectedSkills,
   description,
   setDescription,
+  jobSections,
+  setJobSections,
   jobServices,
   setJobServices,
   budget,
@@ -259,9 +253,22 @@ export const JobForm = ({
       return;
     }
 
-    if (!description.trim()) {
-      toast.error("Please provide a job description");
+    // Validate job sections
+    if (!jobSections || jobSections.length === 0) {
+      toast.error("Please add at least one job section");
       return;
+    }
+
+    // Validate each section
+    for (const section of jobSections) {
+      if (!section.heading.trim()) {
+        toast.error("All sections must have a heading");
+        return;
+      }
+      if (!section.content.trim()) {
+        toast.error("All sections must have content");
+        return;
+      }
     }
 
     if (!budget.trim()) {
@@ -293,6 +300,7 @@ export const JobForm = ({
         recruiter: jobServices.recruiter,
         mentor: jobServices.mentor,
         in_saving_stage: true, // Save as draft
+        sections: jobSections,
       };
 
       const endpoint = jobData?.id
@@ -452,9 +460,22 @@ export const JobForm = ({
       return;
     }
 
-    if (!description.trim()) {
-      toast.error("Please provide a job description");
+    // Validate job sections
+    if (!jobSections || jobSections.length === 0) {
+      toast.error("Please add at least one job section");
       return;
+    }
+
+    // Validate each section
+    for (const section of jobSections) {
+      if (!section.heading.trim()) {
+        toast.error("All sections must have a heading");
+        return;
+      }
+      if (!section.content.trim()) {
+        toast.error("All sections must have content");
+        return;
+      }
     }
 
     if (!budget.trim()) {
@@ -496,6 +517,7 @@ export const JobForm = ({
           recruiter: jobServices.recruiter,
           mentor: jobServices.mentor,
           in_saving_stage: false,
+          sections: jobSections,
         };
 
         const response = await fetch("/api/companies/create-job", {
@@ -655,26 +677,10 @@ export const JobForm = ({
           </div>
         </div>
         <div className="flex flex-col w-full mt-4">
-          <label
-            htmlFor="description"
-            className="inline-block ml-3 mb-2 text-base text-black form-label"
-          >
-            Job Description*
-          </label>
-          <div style={{ borderRadius: "16px", overflow: "hidden" }}>
-            <ReactQuill
-              theme="snow"
-              modules={quillModules}
-              value={description}
-              onChange={setDescription}
-              placeholder="Describe the job requirements and responsibilities..."
-              className="quill-editor"
-              style={{
-                fontSize: "1rem",
-                height: "260px", // Increased by 30% from default
-              }}
-            />
-          </div>
+          <JobSectionsManager
+            sections={jobSections}
+            onSectionsChange={setJobSections}
+          />
         </div>
         <div className="relative flex flex-col gap-4 mt-12 mb-10 sm:flex-row">
           <div className="flex-1">
