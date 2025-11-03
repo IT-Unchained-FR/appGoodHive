@@ -259,7 +259,7 @@ export function getCountryCodeFromName(countryName: string): string | null {
   const searchName = countryName.toLowerCase().trim();
 
   for (const [code, names] of Object.entries(COUNTRY_MAPPING)) {
-    if (names.some(name => name === searchName || name.includes(searchName))) {
+    if (names.some(name => name === searchName)) {
       return code;
     }
   }
