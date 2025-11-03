@@ -1,4 +1,5 @@
 import sql from "@/lib/db";
+import { getCountrySearchTerms } from "@/lib/country-mapping";
 
 function contains(str: string) {
   return "%" + str.toLowerCase() + "%";
@@ -86,10 +87,24 @@ export async function fetchTalents({
       params.push(contains(name));
     }
 
-    // Location search
+    // Location search - enhanced to handle country codes and full names
     if (location) {
-      whereConditions.push(`(LOWER(city) LIKE $${++paramIndex} OR LOWER(country) LIKE $${paramIndex})`);
-      params.push(contains(location));
+      const searchTerms = getCountrySearchTerms(location);
+      const locationConditions: string[] = [];
+
+      // For each search term, check both city and country fields
+      searchTerms.forEach((term) => {
+        const termPattern = contains(term);
+        const termParamIndex = ++paramIndex;
+
+        locationConditions.push(
+          `(LOWER(city) LIKE $${termParamIndex} OR LOWER(country) LIKE $${termParamIndex})`
+        );
+        params.push(termPattern);
+      });
+
+      // Use OR logic: location matches if any search term matches
+      whereConditions.push(`(${locationConditions.join(' OR ')})`);
     }
 
     // Role filters
