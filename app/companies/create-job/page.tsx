@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { AuthLayout } from "@/app/components/AuthLayout/AuthLayout";
 import { Loader } from "@components/loader";
 import LabelOption from "@interfaces/label-option";
+import { IJobSection } from "@interfaces/job-offer";
 import { JobForm } from "./JobForm";
 import { JobModals } from "./JobModals";
 import BlockchainDebug from "@/app/components/BlockchainDebug";
@@ -25,6 +26,7 @@ import {
 export default function CreateJob() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [jobSections, setJobSections] = useState<IJobSection[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedCurrency, setSelectedCurrency] = useState<LabelOption | null>(
@@ -99,6 +101,21 @@ export default function CreateJob() {
             setTitle(data.title || "");
             setDescription(data.description || "");
             setBudget(data.budget || "");
+
+            // Set job sections from data or create default from description
+            if (data.sections && Array.isArray(data.sections) && data.sections.length > 0) {
+              setJobSections(data.sections);
+            } else if (data.description && data.description.trim()) {
+              // Convert existing description to first section for backward compatibility
+              setJobSections([{
+                heading: "Job Description",
+                content: data.description,
+                sort_order: 0,
+              }]);
+            } else {
+              // Start with empty sections array
+              setJobSections([]);
+            }
 
             const normalizedSkills = Array.isArray(data.skills)
               ? data.skills.map((skill: string) => skill.trim()).filter(Boolean)
@@ -211,6 +228,8 @@ export default function CreateJob() {
             setTitle={setTitle}
             description={description}
             setDescription={setDescription}
+            jobSections={jobSections}
+            setJobSections={setJobSections}
             selectedSkills={selectedSkills}
             setSelectedSkills={setSelectedSkills}
             selectedCurrency={selectedCurrency}
