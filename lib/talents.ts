@@ -55,22 +55,28 @@ export async function fetchTalents({
     let params: any[] = [];
     let paramIndex = 0;
 
-    // Skills search - handle multiple skills with AND logic
+    // Keyword search - split multi-word queries to match all words (AND logic)
+    // Search across name, skills, description, and about_work fields
     if (search) {
-      // Decode URL-encoded search string and split by comma
-      const decodedSearch = decodeURIComponent(search);
-      const searchSkills = decodedSearch.split(',').map(skill => skill.trim()).filter(skill => skill.length > 0);
+      const searchTerms = search.trim().split(/\s+/).filter(term => term.length > 0);
       
-      if (searchSkills.length > 0) {
-        const skillConditions: string[] = [];
+      if (searchTerms.length > 0) {
+        const searchConditions: string[] = [];
         
-        searchSkills.forEach((skill) => {
-          skillConditions.push(`LOWER(skills) LIKE $${++paramIndex}`);
-          params.push(contains(skill));
+        // For each search term, check if it appears in any of the searchable fields
+        searchTerms.forEach((term) => {
+          const termPattern = contains(term);
+          const termParamIndex = ++paramIndex;
+          
+          // Check first name, last name, skills, description, and about_work
+          searchConditions.push(
+            `(LOWER(first_name) LIKE $${termParamIndex} OR LOWER(last_name) LIKE $${termParamIndex} OR LOWER(COALESCE(skills, '')) LIKE $${termParamIndex} OR LOWER(COALESCE(description, '')) LIKE $${termParamIndex} OR LOWER(COALESCE(about_work, '')) LIKE $${termParamIndex})`
+          );
+          params.push(termPattern);
         });
         
-        // Use AND logic: talent must have ALL searched skills
-        whereConditions.push(`(${skillConditions.join(' AND ')})`);
+        // All terms must match (AND logic)
+        whereConditions.push(`(${searchConditions.join(' AND ')})`);
       }
     }
 
