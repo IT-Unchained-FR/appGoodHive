@@ -86,12 +86,29 @@ export async function fetchJobs({
     let params: any[] = [];
     let paramIndex = 0;
 
-    // Search in title, skills, and company name
+    // Search in title, description, skills, and company name
+    // Split multi-word queries to match all words (AND logic)
     if (search) {
-      whereConditions.push(
-        `(LOWER(title) LIKE $${++paramIndex} OR LOWER(COALESCE(skills, '')) LIKE $${paramIndex} OR LOWER(company_name) LIKE $${paramIndex})`,
-      );
-      params.push(contains(search));
+      const searchTerms = search.trim().split(/\s+/).filter(term => term.length > 0);
+      
+      if (searchTerms.length > 0) {
+        const searchConditions: string[] = [];
+        
+        // For each search term, check if it appears in any of the searchable fields
+        searchTerms.forEach((term) => {
+          const termPattern = contains(term);
+          const termParamIndex = ++paramIndex;
+          
+          // Check title, description, skills, and company name
+          searchConditions.push(
+            `(LOWER(title) LIKE $${termParamIndex} OR LOWER(COALESCE(description, '')) LIKE $${termParamIndex} OR LOWER(COALESCE(skills, '')) LIKE $${termParamIndex} OR LOWER(company_name) LIKE $${termParamIndex})`
+          );
+          params.push(termPattern);
+        });
+        
+        // All terms must match (AND logic)
+        whereConditions.push(`(${searchConditions.join(' AND ')})`);
+      }
     }
 
     // Location search

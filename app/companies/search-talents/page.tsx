@@ -147,12 +147,7 @@ export default async function SearchTalentsPage({
                 </h3>
               </div>
               <div className="flex flex-wrap gap-3">
-                {searchParams.search && (
-                  <span className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 text-amber-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
-                    <Wrench className="w-4 h-4 mr-1" /> Skills:{" "}
-                    {searchParams.search}
-                  </span>
-                )}
+                {/* Do not display a chip for free-text keyword search */}
                 {searchParams.location && (
                   <span className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 text-blue-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
                     <MapPin className="w-4 h-4 mr-1" /> Location:{" "}

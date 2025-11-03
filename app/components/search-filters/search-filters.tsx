@@ -23,7 +23,6 @@ import {
 
 import { jobTypes, typeEngagements } from "@/app/constants/common";
 import { CitySuggestion } from "../city-suggestor/city-suggestor";
-import { SkillsSuggestionMulti } from "../skills-suggestor/skills-suggestor-multi";
 import type { SearchFiltersProps } from "./search-filters.types";
 
 import styles from "./search-filters.module.scss";
@@ -70,7 +69,7 @@ const ENGAGEMENT_OPTIONS = [
 ];
 
 type FilterUpdates = {
-  selectedSkills?: string[];
+  keywords?: string;
   location?: string;
   name?: string;
   datePosted?: string;
@@ -232,7 +231,7 @@ export const SearchFilters = ({
     ? "/companies/search-talents"
     : "/talents/job-search";
 
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [keywordQuery, setKeywordQuery] = useState("");
   const [location, setLocation] = useState("");
   const [nameQuery, setNameQuery] = useState("");
   const [datePosted, setDatePosted] = useState("any");
@@ -252,14 +251,8 @@ export const SearchFilters = ({
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   useEffect(() => {
-    const skillsParam = searchParams.get("search");
-    const parsedSkills = skillsParam
-      ? skillsParam
-          .split(",")
-          .map((skill) => skill.trim())
-          .filter(Boolean)
-      : [];
-    setSelectedSkills(parsedSkills);
+    const searchParam = searchParams.get("search") || "";
+    setKeywordQuery(searchParam);
 
     setLocation(searchParams.get("location") || "");
     setNameQuery(searchParams.get("name") || "");
@@ -295,9 +288,10 @@ export const SearchFilters = ({
         params.delete("page");
       }
 
-      const nextSkills = updates.selectedSkills ?? selectedSkills;
-      if (nextSkills.length) {
-        params.set("search", nextSkills.join(","));
+      const nextKeywords =
+        updates.keywords !== undefined ? updates.keywords : keywordQuery;
+      if (nextKeywords.trim()) {
+        params.set("search", nextKeywords.trim());
       } else {
         params.delete("search");
       }
@@ -431,6 +425,7 @@ export const SearchFilters = ({
       freelanceOnlyPreference,
       isSearchTalent,
       jobType,
+      keywordQuery,
       location,
       nameQuery,
       onlyMentor,
@@ -442,7 +437,6 @@ export const SearchFilters = ({
       remoteOnlyPreference,
       router,
       searchParams,
-      selectedSkills,
       sortOrder,
     ],
   );
@@ -455,8 +449,16 @@ export const SearchFilters = ({
     [applyFilters],
   );
 
+  // Debounced live search for keywords
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      applyFilters({ keywords: keywordQuery });
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [keywordQuery, applyFilters]);
+
   const handleClearFilters = useCallback(() => {
-    setSelectedSkills([]);
+    setKeywordQuery("");
     setLocation("");
     setNameQuery("");
     setDatePosted("any");
@@ -479,7 +481,7 @@ export const SearchFilters = ({
 
   const hasActiveFilters = useMemo(() => {
     const baseActive =
-      selectedSkills.length > 0 ||
+      Boolean(keywordQuery.trim()) ||
       Boolean(location.trim()) ||
       Boolean(nameQuery.trim());
 
@@ -514,6 +516,7 @@ export const SearchFilters = ({
     freelanceOnlyPreference,
     isSearchTalent,
     jobType,
+    keywordQuery,
     location,
     nameQuery,
     onlyMentor,
@@ -523,7 +526,6 @@ export const SearchFilters = ({
     openToRecruiter,
     openToTalents,
     remoteOnlyPreference,
-    selectedSkills,
     sortOrder,
   ]);
 
@@ -665,15 +667,26 @@ export const SearchFilters = ({
                 <span className={styles.fieldLabel}>What</span>
                 <div className={styles.fieldControl}>
                   <SearchIcon className={styles.fieldIcon} />
-                  <SkillsSuggestionMulti
-                    placeholder="Job title, skill, or company"
-                    value={selectedSkills}
-                    onSkillsChange={(skills) =>
-                      setSelectedSkills(
-                        skills.map((skill) => skill.trim()).filter(Boolean),
-                      )
-                    }
-                    classes={styles.skillsInput}
+                  <input
+                    type="text"
+                    value={keywordQuery}
+                    onChange={(e) => setKeywordQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        applyFilters({ keywords: keywordQuery });
+                      }
+                    }}
+                    placeholder="Job title, skill, company or keyword"
+                    name="keywords"
+                    autoComplete="off"
+                    spellCheck={false}
+                    aria-label="Search keywords"
+                    data-gramm="false"
+                    data-gramm_editor="false"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    className={styles.locationInput}
                   />
                 </div>
               </div>
