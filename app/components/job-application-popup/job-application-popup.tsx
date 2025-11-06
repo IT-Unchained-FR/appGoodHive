@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import * as yup from "yup";
 import Cookies from "js-cookie";
+import styles from "./job-application-popup.module.scss";
 
 interface JobApplicationPopupProps {
   isOpen: boolean;
@@ -56,6 +57,17 @@ export const JobApplicationPopup: React.FC<JobApplicationPopupProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mounted, setMounted] = useState(false);
   const logged_in_user_id = Cookies.get("user_id");
+
+  // Component-based class management
+  const getOverlayClasses = () => {
+    return `${styles.jobApplicationOverlay} ${
+      isOpen ? styles.entered : styles.exiting
+    }`;
+  };
+
+  const getModalClasses = () => {
+    return styles.jobApplicationModal;
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -130,23 +142,10 @@ export const JobApplicationPopup: React.FC<JobApplicationPopupProps> = ({
 
   const modalContent = (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]"
-      style={{
-        position: 'fixed',
-        top: '0',
-        left: '0',
-        right: '0',
-        bottom: '0',
-        width: '100vw',
-        height: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}
+      className={getOverlayClasses()}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="relative bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto"
-           style={{ margin: '0 auto' }}>
+      <div className={getModalClasses()}>
         {/* Decorative Header with Honeycomb Pattern */}
         <div className="relative bg-gradient-to-br from-amber-400 via-yellow-400 to-amber-500 p-8 rounded-t-3xl overflow-hidden">
           {/* Honeycomb Background Pattern */}
