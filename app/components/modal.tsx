@@ -1,4 +1,5 @@
 import { useRef, ReactNode, useEffect } from "react";
+import styles from "./modal.module.scss";
 
 interface ModalProps {
   open: boolean;
@@ -24,16 +25,22 @@ const Modal = ({ open, onClose, children }: ModalProps) => {
     onClose();
   };
 
+  const overlayClasses = `${styles.modalOverlay} ${
+    open ? styles.visible : styles.hidden
+  }`;
+
+  const dialogClasses = `${styles.modalDialog} ${
+    open ? styles.visible : styles.hidden
+  }`;
+
   return (
     <div
-      className={`fixed top-0 left-0 w-[100vw] h-[100vh] z-[99999999] rounded bg-black bg-opacity-30 flex items-center justify-center ${
-        open ? "block" : "hidden"
-      }`}
+      className={overlayClasses}
       onClick={handleOverlayClick}
     >
       <dialog
         ref={dialogRef}
-        className="relative bg-white rounded-xl shadow-lg border-0 p-0 max-h-[80%] max-w-[80%] z-[9999999]"
+        className={dialogClasses}
         onClick={(e) => e.stopPropagation()}
       >
         {children}
