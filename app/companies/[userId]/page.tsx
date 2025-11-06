@@ -9,6 +9,7 @@ import { CompanyBio } from "@/app/components/companies/company-bio-section";
 import { CompanyHeroSection } from "@/app/components/companies/company-hero-section";
 import { CompanyLoadingSpinner } from "@/app/components/companies/company-loading-spinner";
 import { CompanySocialMediaAndContact } from "@/app/components/companies/profile-social-media-and-contact";
+import { JobSummarySection } from "@/app/components/companies/job-summary-section";
 import { getJobBalance } from "@/lib/contracts/jobManager";
 
 export const revalidate = 0;
@@ -157,14 +158,6 @@ export default function CompanyProfilePage(context: CompanyProfilePageProps) {
 
   return (
     <main className={styles.companyProfileMain}>
-      {/* Floating Decorative Elements */}
-      <div className={styles.floatingElements}>
-        <div className={styles.floatingBee1}>🐝</div>
-        <div className={styles.floatingBee2}>🐝</div>
-        <div className={styles.floatingHex1}></div>
-        <div className={styles.floatingHex2}></div>
-      </div>
-
       {/* Enhanced Hero Section */}
       <CompanyHeroSection
         companyName={designation || "Company Name"}
@@ -182,33 +175,43 @@ export default function CompanyProfilePage(context: CompanyProfilePageProps) {
         <div className={styles.contentGrid}>
           {/* Main Column - 70% */}
           <div className={styles.mainColumn}>
-            {/* About Company Section */}
-            <div className={styles.aboutSection}>
-              <div className={styles.sectionHeader}>
-                <div className={styles.titlePill}>
-                  <svg
-                    className={styles.icon}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    ></path>
-                  </svg>
-                  <span>About Company</span>
+            {/* Conditional Content Based on Job View */}
+            {singleJob ? (
+              /* Job Summary Section when viewing specific job */
+              <JobSummarySection
+                job={singleJob}
+                balance={jobBalances[singleJob.id]}
+                isLoadingBalance={isLoadingBalances}
+              />
+            ) : (
+              /* About Company Section when no specific job */
+              <div className={styles.aboutSection}>
+                <div className={styles.sectionHeader}>
+                  <div className={styles.titlePill}>
+                    <svg
+                      className={styles.icon}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      ></path>
+                    </svg>
+                    <span>About Company</span>
+                  </div>
+                </div>
+                <div className={styles.bioContent}>
+                  <CompanyBio text={headline} />
                 </div>
               </div>
-              <div className={styles.bioContent}>
-                <CompanyBio text={headline} />
-              </div>
-            </div>
+            )}
 
-            {/* Enhanced Job Listings */}
+            {/* Enhanced Job Listings - Show when no specific job or all jobs when viewing job */}
             <div className={styles.jobSection}>
               <AnimatedJobSection
                 jobs={jobs}
@@ -217,6 +220,7 @@ export default function CompanyProfilePage(context: CompanyProfilePageProps) {
                 userId={userId}
                 jobBalances={jobBalances}
                 isLoadingBalances={isLoadingBalances}
+                showAllJobs={!singleJob}
               />
             </div>
           </div>

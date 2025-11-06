@@ -41,6 +41,7 @@ interface AnimatedJobSectionProps {
   jobBalances?: { [key: string]: number };
   isLoadingBalances?: boolean;
   className?: string;
+  showAllJobs?: boolean;
 }
 
 export const AnimatedJobSection = ({
@@ -51,6 +52,7 @@ export const AnimatedJobSection = ({
   jobBalances = {},
   isLoadingBalances = false,
   className = "",
+  showAllJobs = true,
 }: AnimatedJobSectionProps) => {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -83,133 +85,9 @@ export const AnimatedJobSection = ({
 
   return (
     <div className={className}>
-      {/* Featured Position Section - Honey Bee Themed */}
-      {featuredJob && (
-        <div className={`featured-position-section ${isVisible ? "fade-in-up" : "opacity-0"}`}>
-          <div className="featured-position-container">
-            {/* Header with Honey Bee Theme */}
-            <div className="featured-position-header">
-              <div className="header-content">
-                <div className="honey-crown">
-                  <div className="crown-icon">
-                    <span className="crown-emoji">👑</span>
-                    <div className="floating-bees">
-                      <span className="bee bee-1">🐝</span>
-                      <span className="bee bee-2">🐝</span>
-                      <span className="bee bee-3">🐝</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="header-text">
-                  <h2 className="featured-title">
-                    🍯 Featured Position
-                    <div className="title-underline"></div>
-                  </h2>
-                  <p className="featured-subtitle">
-                    Our premium spotlight opportunity awaits you!
-                  </p>
-                </div>
-              </div>
-              
-              {/* Decorative Honeycomb Pattern */}
-              <div className="honeycomb-decoration">
-                <div className="hexagon hex-1"></div>
-                <div className="hexagon hex-2"></div>
-                <div className="hexagon hex-3"></div>
-                <div className="hexagon hex-4"></div>
-              </div>
-            </div>
-
-            {/* Escrow Balance with Honey Theme */}
-            <div className="escrow-balance-honey">
-              {isLoadingBalances ? (
-                <div className="balance-loading">
-                  <div className="honey-spinner">
-                    <span className="spinning-bee">🐝</span>
-                  </div>
-                  <span>Loading honey pot balance...</span>
-                </div>
-              ) : (
-                <div className="balance-display">
-                  <div className="honey-pot-icon">
-                    <span>🍯</span>
-                  </div>
-                  <div className="balance-info">
-                    <p className="balance-amount">
-                      Honey Pot: ${jobBalances[featuredJob.id]?.toFixed(2) || "0.00"} USDC
-                    </p>
-                    <p className="balance-subtitle">Rewards secured & ready</p>
-                  </div>
-                  <div className="balance-bees">
-                    <span className="guard-bee">🐝</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Featured Job Card with Enhanced Styling */}
-            <div className="featured-job-wrapper">
-              <div className="featured-job-glow"></div>
-              <div className="featured-job-border">
-                <div className="featured-job-content">
-                  <JobCard
-                    key={featuredJob.id}
-                    id={featuredJob.id}
-                    type="Job"
-                    title={featuredJob.title}
-                    postedBy={featuredJob.companyName}
-                    details={featuredJob.description}
-                    duration={featuredJob.duration}
-                    image={featuredJob.image_url || "/img/company_img.png"}
-                    countryFlag={generateCountryFlag(featuredJob.country) as string}
-                    city={featuredJob.city}
-                    country={featuredJob.country}
-                    typeEngagement={featuredJob.typeEngagement}
-                    jobType={featuredJob.jobType}
-                    projectType={featuredJob.projectType}
-                    budget={featuredJob.budget}
-                    skills={featuredJob.skills}
-                    buttonText="🍯 Apply Now"
-                    walletAddress={featuredJob.walletAddress}
-                    companyEmail={companyEmail}
-                    escrowAmount={featuredJob.escrowAmount}
-                    user_id={featuredJob.user_id}
-                    talent={featuredJob.talent}
-                    mentor={featuredJob.mentor}
-                    recruiter={featuredJob.recruiter}
-                  />
-                </div>
-              </div>
-              
-              {/* Floating Elements */}
-              <div className="floating-elements">
-                <span className="float-honey float-1">🍯</span>
-                <span className="float-bee float-2">🐝</span>
-                <span className="float-flower float-3">🌻</span>
-                <span className="float-honey float-4">🍯</span>
-              </div>
-            </div>
-
-            {/* Call to Action Banner */}
-            <div className="featured-cta-banner">
-              <div className="cta-content">
-                <span className="cta-bee">🐝</span>
-                <p className="cta-text">
-                  Don't miss this exclusive opportunity! Join our hive and make it yours.
-                </p>
-                <div className="cta-sparkles">
-                  <span className="sparkle">✨</span>
-                  <span className="sparkle">✨</span>
-                  <span className="sparkle">✨</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* All Jobs Section */}
-      <div className={`mt-8 ${isVisible ? styles.fadeInUp + " " + styles.delay200 : "opacity-0"}`}>
+      {showAllJobs && (
+        <div className={`${isVisible ? styles.fadeInUp + " " + styles.delay200 : "opacity-0"}`}>
         <div className={styles.jobsSectionPill}>
           <div className={styles.jobsHeaderPill}>
             <div className={styles.jobsTitlePill}>
@@ -274,7 +152,7 @@ export const AnimatedJobSection = ({
                   This company doesn't have any open positions at the moment.
                   <br />
                   <span className={styles.emptyCta}>
-                    🐝 Check back soon for new opportunities!
+                    Check back soon for new opportunities!
                   </span>
                 </p>
 
@@ -286,7 +164,42 @@ export const AnimatedJobSection = ({
             </div>
           )}
         </div>
-      </div>
+        </div>
+      )}
+
+      {/* Other Jobs Section - when viewing specific job */}
+      {featuredJob && (
+        <div className={`${isVisible ? styles.fadeInUp + " " + styles.delay300 : "opacity-0"}`}>
+          <div className={styles.otherJobsSection}>
+            <h3 className={styles.otherJobsTitle}>Other Opportunities</h3>
+            {jobs.filter(job => job.id !== featuredJob.id).length > 0 ? (
+              <div className={styles.otherJobsGrid}>
+                {jobs
+                  .filter(job => job.id !== featuredJob.id)
+                  .slice(0, 3)
+                  .map((job) => (
+                    <div key={job.id} className={styles.otherJobCard}>
+                      <h4 className={styles.otherJobTitle}>{job.title}</h4>
+                      <p className={styles.otherJobLocation}>
+                        <MapPin className={styles.otherJobIcon} />
+                        {job.city}, {job.country}
+                      </p>
+                      <p className={styles.otherJobBudget}>
+                        <DollarSign className={styles.otherJobIcon} />
+                        ${job.budget.toLocaleString()} {job.currency}
+                      </p>
+                      <a href={`?id=${job.id}`} className={styles.otherJobLink}>
+                        View Details →
+                      </a>
+                    </div>
+                  ))}
+              </div>
+            ) : (
+              <p className={styles.noOtherJobs}>No other positions available.</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

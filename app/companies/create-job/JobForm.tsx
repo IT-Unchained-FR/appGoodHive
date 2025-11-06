@@ -1,12 +1,14 @@
 import FundManager from "@/app/components/FundManager";
-import ProfileImageUpload from "@/app/components/profile-image-upload";
 import JobSectionsManager from "@/app/components/job-sections-manager/job-sections-manager";
+import ProfileImageUpload from "@/app/components/profile-image-upload";
+import { useProtectedNavigation } from "@/app/hooks/useProtectedNavigation";
 import "@/app/styles/rich-text.css";
 import {
   calculateJobCreateFees,
   getBudgetLabel,
   getFeeDisplaySuffix,
 } from "@/app/utils/calculate-job-create-fees";
+import { ACTIVE_CHAIN_ID } from "@/config/chains";
 import { useJobManager } from "@/hooks/contracts/useJobManager";
 import { getSupportedTokensForChain } from "@/lib/contracts/jobManager";
 import { AutoSuggestInput } from "@components/autosuggest-input";
@@ -24,16 +26,13 @@ import {
   typeEngagements,
 } from "@constants/common";
 import { skills } from "@constants/skills";
-import LabelOption from "@interfaces/label-option";
 import { IJobSection } from "@interfaces/job-offer";
+import LabelOption from "@interfaces/label-option";
 import { Tooltip } from "@nextui-org/tooltip";
-import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import "react-quill/dist/quill.snow.css";
 import { useActiveAccount } from "thirdweb/react";
-import { useProtectedNavigation } from "@/app/hooks/useProtectedNavigation";
-import { ACTIVE_CHAIN_ID } from "@/config/chains";
 
 const mapToChainId = (value: unknown): number | null => {
   if (value === null || value === undefined) {
@@ -46,15 +45,33 @@ const mapToChainId = (value: unknown): number | null => {
 
   const normalized = value.toString().toLowerCase();
 
-  if (["polygon", "polygon-mainnet", "matic", "matic-mainnet", "polygon_mainnet"].includes(normalized)) {
+  if (
+    [
+      "polygon",
+      "polygon-mainnet",
+      "matic",
+      "matic-mainnet",
+      "polygon_mainnet",
+    ].includes(normalized)
+  ) {
     return 137;
   }
 
-  if (["polygon-amoy", "amoy", "polygon_testnet", "polygon-amoy-testnet", "polygon-mumbai"].includes(normalized)) {
+  if (
+    [
+      "polygon-amoy",
+      "amoy",
+      "polygon_testnet",
+      "polygon-amoy-testnet",
+      "polygon-mumbai",
+    ].includes(normalized)
+  ) {
     return 80002;
   }
 
-  if (["gnosis", "gnosis-chain", "chiado", "gnosis chain"].includes(normalized)) {
+  if (
+    ["gnosis", "gnosis-chain", "chiado", "gnosis chain"].includes(normalized)
+  ) {
     return 100;
   }
 
@@ -148,7 +165,10 @@ export const JobForm = ({
     [jobData?.chain, selectedChain?.value],
   );
 
-  const jobChainId = useMemo(() => mapToChainId(jobChainLabel), [jobChainLabel]);
+  const jobChainId = useMemo(
+    () => mapToChainId(jobChainLabel),
+    [jobChainLabel],
+  );
 
   const currentBlockchainJobId = useMemo(() => {
     if (!jobData) {
@@ -357,7 +377,9 @@ export const JobForm = ({
       return;
     }
     const readableChainName = jobChainLabel
-      ? jobChainLabel.replace(/[-_]/g, " ").replace(/\b\w/g, (char) => char.toUpperCase())
+      ? jobChainLabel
+          .replace(/[-_]/g, " ")
+          .replace(/\b\w/g, (char) => char.toUpperCase())
       : "the correct network";
     if (jobChainId && jobChainId !== ACTIVE_CHAIN_ID) {
       toast.error(
@@ -401,7 +423,7 @@ export const JobForm = ({
       if (response.ok) {
         toast.success("Job cancelled successfully");
         protectedNavigate("/companies/my-profile", {
-          authDescription: "access your company profile"
+          authDescription: "access your company profile",
         });
       } else {
         const data = await response.json();
@@ -1092,9 +1114,7 @@ export const JobForm = ({
                 type="button"
                 onClick={onManageFundsClick}
                 disabled={
-                  isLoading ||
-                  isBlockchainLoading ||
-                  !currentBlockchainJobId
+                  isLoading || isBlockchainLoading || !currentBlockchainJobId
                 }
               >
                 Manage Funds
