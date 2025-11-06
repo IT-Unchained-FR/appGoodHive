@@ -256,7 +256,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.875rem 2rem;
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  background: linear-gradient(135deg, #f59e0b 0%, #eab308 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -264,12 +264,12 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
 
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(5, 150, 105, 0.3);
-    background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+    box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+    background: linear-gradient(135deg, #d97706 0%, #ca8a04 100%);
   }
 
   &:active {
