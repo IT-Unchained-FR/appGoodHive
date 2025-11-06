@@ -1,6 +1,10 @@
 "use client";
 
 import { MapPin, Clock, DollarSign, Calendar, Building, Users } from "lucide-react";
+import { useState } from "react";
+import { useAuth } from "@/app/contexts/AuthContext";
+import { JobApplicationPopup } from "@/app/components/job-application-popup/job-application-popup";
+import OnboardingPopup from "@/app/components/onboarding-popup/OnboardingPopup";
 import styles from "./job-summary-section.module.scss";
 
 interface JobSummaryProps {
@@ -31,13 +35,21 @@ interface JobSummaryProps {
   };
   balance?: number;
   isLoadingBalance?: boolean;
+  companyEmail?: string;
+  walletAddress?: string;
 }
 
 export const JobSummarySection = ({
   job,
   balance,
-  isLoadingBalance = false
+  isLoadingBalance = false,
+  companyEmail = "",
+  walletAddress = ""
 }: JobSummaryProps) => {
+  const { user, isAuthenticated } = useAuth();
+  const [isApplicationPopupOpen, setIsApplicationPopupOpen] = useState(false);
+  const [isOnboardingPopupOpen, setIsOnboardingPopupOpen] = useState(false);
+
   // Debug logging to check what data we're receiving
   console.log('JobSummarySection job data:', job);
   console.log('Job sections:', job.sections);
@@ -61,6 +73,16 @@ export const JobSummarySection = ({
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
+  };
+
+  const handleApplyClick = () => {
+    // Check if user is authenticated and has verified talent status
+    if (isAuthenticated && user && user.talent_status === "approved") {
+      setIsApplicationPopupOpen(true);
+    } else {
+      // Show onboarding popup for unverified or unauthenticated users
+      setIsOnboardingPopupOpen(true);
+    }
   };
 
   return (
@@ -173,7 +195,7 @@ export const JobSummarySection = ({
 
       {/* Apply Section */}
       <div className={styles.applySection}>
-        <button className={styles.applyButton}>
+        <button className={styles.applyButton} onClick={handleApplyClick}>
           <Users className={styles.applyIcon} />
           Apply for this position
         </button>
@@ -181,6 +203,31 @@ export const JobSummarySection = ({
           Join our team and help us build something amazing together.
         </p>
       </div>
+
+      {/* Job Application Popup */}
+      {isApplicationPopupOpen && companyEmail && walletAddress && (
+        <JobApplicationPopup
+          isOpen={isApplicationPopupOpen}
+          onClose={() => setIsApplicationPopupOpen(false)}
+          jobTitle={job.title}
+          companyName={job.companyName}
+          companyEmail={companyEmail}
+          jobId={job.id}
+          walletAddress={walletAddress}
+        />
+      )}
+
+      {/* Onboarding Popup */}
+      {isOnboardingPopupOpen && (
+        <OnboardingPopup
+          isOpen={isOnboardingPopupOpen}
+          onClose={() => setIsOnboardingPopupOpen(false)}
+          onContinue={() => {
+            setIsOnboardingPopupOpen(false);
+            // User will be redirected to profile creation via the onboarding component
+          }}
+        />
+      )}
     </div>
   );
 };
