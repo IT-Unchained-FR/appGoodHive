@@ -5,9 +5,17 @@ interface ModalProps {
   open: boolean;
   onClose: () => void;
   children: ReactNode;
+  disableOutsideClick?: boolean;
+  blurIntensity?: 'light' | 'medium' | 'heavy';
 }
 
-const Modal = ({ open, onClose, children }: ModalProps) => {
+const Modal = ({
+  open,
+  onClose,
+  children,
+  disableOutsideClick = false,
+  blurIntensity = 'medium'
+}: ModalProps) => {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
 
   useEffect(() => {
@@ -22,12 +30,16 @@ const Modal = ({ open, onClose, children }: ModalProps) => {
   }, [open]);
 
   const handleOverlayClick = () => {
-    onClose();
+    if (!disableOutsideClick) {
+      onClose();
+    }
   };
 
-  const overlayClasses = `${styles.modalOverlay} ${
-    open ? styles.visible : styles.hidden
-  }`;
+  const getOverlayClasses = () => {
+    const baseClasses = `${styles.modalOverlay} ${open ? styles.visible : styles.hidden}`;
+    const blurClass = styles[`blur${blurIntensity.charAt(0).toUpperCase() + blurIntensity.slice(1)}`];
+    return `${baseClasses} ${blurClass}`;
+  };
 
   const dialogClasses = `${styles.modalDialog} ${
     open ? styles.visible : styles.hidden
@@ -35,7 +47,7 @@ const Modal = ({ open, onClose, children }: ModalProps) => {
 
   return (
     <div
-      className={overlayClasses}
+      className={getOverlayClasses()}
       onClick={handleOverlayClick}
     >
       <dialog

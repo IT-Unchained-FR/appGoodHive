@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { JobApplicationPopup } from "@/app/components/job-application-popup/job-application-popup";
 import OnboardingPopup from "@/app/components/onboarding-popup/OnboardingPopup";
+import TalentVerificationPopup from "@/app/components/talent-verification-popup/TalentVerificationPopup";
 import styles from "./job-summary-section.module.scss";
 
 interface JobSummaryProps {
@@ -48,6 +49,7 @@ export const JobSummarySection = ({
 }: JobSummaryProps) => {
   const { user, isAuthenticated } = useAuth();
   const [isApplicationPopupOpen, setIsApplicationPopupOpen] = useState(false);
+  const [isVerificationPopupOpen, setIsVerificationPopupOpen] = useState(false);
   const [isOnboardingPopupOpen, setIsOnboardingPopupOpen] = useState(false);
 
   // Debug logging to check what data we're receiving
@@ -80,9 +82,14 @@ export const JobSummarySection = ({
     if (isAuthenticated && user && user.talent_status === "approved") {
       setIsApplicationPopupOpen(true);
     } else {
-      // Show onboarding popup for unverified or unauthenticated users
-      setIsOnboardingPopupOpen(true);
+      // Show verification popup for unverified or unauthenticated users
+      setIsVerificationPopupOpen(true);
     }
+  };
+
+  const handleContinueToOnboarding = () => {
+    setIsVerificationPopupOpen(false);
+    setIsOnboardingPopupOpen(true);
   };
 
   return (
@@ -203,6 +210,17 @@ export const JobSummarySection = ({
           Join our team and help us build something amazing together.
         </p>
       </div>
+
+      {/* Talent Verification Popup */}
+      {isVerificationPopupOpen && (
+        <TalentVerificationPopup
+          isOpen={isVerificationPopupOpen}
+          onClose={() => setIsVerificationPopupOpen(false)}
+          onContinueToOnboarding={handleContinueToOnboarding}
+          jobTitle={job.title}
+          companyName={job.companyName}
+        />
+      )}
 
       {/* Job Application Popup */}
       {isApplicationPopupOpen && companyEmail && walletAddress && (
