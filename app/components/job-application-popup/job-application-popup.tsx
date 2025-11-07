@@ -1,12 +1,12 @@
 "use client";
 
 import { yupResolver } from "@hookform/resolvers/yup";
-import React, { useState, useEffect } from "react";
+import Cookies from "js-cookie";
+import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import * as yup from "yup";
-import Cookies from "js-cookie";
 import styles from "./job-application-popup.module.scss";
 
 interface JobApplicationPopupProps {
@@ -15,7 +15,7 @@ interface JobApplicationPopupProps {
   jobTitle: string;
   companyName: string;
   companyEmail: string;
-  jobId: number;
+  jobId: string; // UUID string
   walletAddress: string;
 }
 
@@ -39,10 +39,7 @@ const schema = yup.object({
     .string()
     .required("Cover letter is required")
     .min(200, "Cover letter must be at least 200 characters"),
-  portfolioLink: yup
-    .string()
-    .optional()
-    .url("Please enter a valid URL"),
+  portfolioLink: yup.string().optional().url("Please enter a valid URL"),
 });
 
 export const JobApplicationPopup: React.FC<JobApplicationPopupProps> = ({
@@ -164,13 +161,22 @@ export const JobApplicationPopup: React.FC<JobApplicationPopupProps> = ({
 
           {/* Floating Bees */}
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-4 left-12 animate-bounce" style={{ animationDelay: '0s', animationDuration: '3s' }}>
+            <div
+              className="absolute top-4 left-12 animate-bounce"
+              style={{ animationDelay: "0s", animationDuration: "3s" }}
+            >
               <span className="text-lg">🐝</span>
             </div>
-            <div className="absolute top-8 right-20 animate-bounce" style={{ animationDelay: '1s', animationDuration: '4s' }}>
+            <div
+              className="absolute top-8 right-20 animate-bounce"
+              style={{ animationDelay: "1s", animationDuration: "4s" }}
+            >
               <span className="text-lg">🐝</span>
             </div>
-            <div className="absolute bottom-4 left-20 animate-bounce" style={{ animationDelay: '2s', animationDuration: '3.5s' }}>
+            <div
+              className="absolute bottom-4 left-20 animate-bounce"
+              style={{ animationDelay: "2s", animationDuration: "3.5s" }}
+            >
               <span className="text-lg">🐝</span>
             </div>
           </div>
@@ -296,7 +302,9 @@ export const JobApplicationPopup: React.FC<JobApplicationPopupProps> = ({
                 <span className="text-xs text-gray-500">
                   Minimum 200 characters required
                 </span>
-                <span className={`text-xs font-medium ${coverLetterValue.length >= 200 ? 'text-green-600' : 'text-red-500'}`}>
+                <span
+                  className={`text-xs font-medium ${coverLetterValue.length >= 200 ? "text-green-600" : "text-red-500"}`}
+                >
                   {coverLetterValue.length}/200
                 </span>
               </div>
@@ -350,7 +358,7 @@ export const JobApplicationPopup: React.FC<JobApplicationPopupProps> = ({
     </div>
   );
 
-  return typeof document !== 'undefined'
+  return typeof document !== "undefined"
     ? createPortal(modalContent, document.body)
     : null;
 };

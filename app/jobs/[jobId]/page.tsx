@@ -61,13 +61,22 @@ interface Job {
 
 async function getJob(jobId: string): Promise<Job | null> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    // Use absolute URL for server-side fetch
+    // In production, this should be your actual domain
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+                    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
     const response = await fetch(`${baseUrl}/api/jobs/${jobId}`, {
       cache: 'no-store',
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
 
     if (!response.ok) {
-      return null;
+      if (response.status === 404) {
+        return null;
+      }
+      throw new Error(`Failed to fetch job: ${response.status}`);
     }
 
     const job = await response.json();

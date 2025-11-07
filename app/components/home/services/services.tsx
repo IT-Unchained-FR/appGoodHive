@@ -1,6 +1,6 @@
 "use client";
 
-import Cookies from "js-cookie";
+import clsx from "clsx";
 import {
   ArrowRight,
   Building2,
@@ -12,18 +12,98 @@ import {
   Zap,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import { useState } from "react";
+=======
+import { useEffect, useRef, useState } from "react";
+
+>>>>>>> Stashed changes
+=======
+import { useEffect, useRef, useState } from "react";
+
+>>>>>>> Stashed changes
 import { useAuthCheck } from "@/app/hooks/useAuthCheck";
 import { useProtectedNavigation } from "@/app/hooks/useProtectedNavigation";
 
 import { TRANSLATION, allServices } from "./services.constants";
 import styles from "./services.module.scss";
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+=======
+>>>>>>> Stashed changes
+
+type IndicatorState = {
+  width: number;
+  left: number;
+};
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 
 export const Services = () => {
   const router = useRouter();
   const { navigate: protectedNavigate } = useProtectedNavigation();
   const { isAuthenticated, checkAuthAndShowConnectPrompt } = useAuthCheck();
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
   const [activeTab, setActiveTab] = useState("talent");
+=======
+  const [activeServiceId, setActiveServiceId] = useState(allServices[0]?.id ?? "talent");
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [indicatorStyle, setIndicatorStyle] = useState<IndicatorState>({ width: 0, left: 0 });
+=======
+  const [activeServiceId, setActiveServiceId] = useState(allServices[0]?.id ?? "talent");
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [indicatorStyle, setIndicatorStyle] = useState<IndicatorState>({ width: 0, left: 0 });
+
+  useEffect(() => {
+    const updateIndicator = () => {
+      const activeEl = tabRefs.current[activeServiceId];
+
+      if (!activeEl) {
+        return;
+      }
+
+      setIndicatorStyle({
+        width: activeEl.offsetWidth,
+        left: activeEl.offsetLeft,
+      });
+    };
+
+    updateIndicator();
+    window.addEventListener("resize", updateIndicator);
+
+    return () => {
+      window.removeEventListener("resize", updateIndicator);
+    };
+  }, [activeServiceId]);
+>>>>>>> Stashed changes
+
+  useEffect(() => {
+    const updateIndicator = () => {
+      const activeEl = tabRefs.current[activeServiceId];
+
+      if (!activeEl) {
+        return;
+      }
+
+      setIndicatorStyle({
+        width: activeEl.offsetWidth,
+        left: activeEl.offsetLeft,
+      });
+    };
+
+    updateIndicator();
+    window.addEventListener("resize", updateIndicator);
+
+    return () => {
+      window.removeEventListener("resize", updateIndicator);
+    };
+  }, [activeServiceId]);
+>>>>>>> Stashed changes
 
 
   const getButtonText = (id: string) => {
@@ -33,7 +113,9 @@ export const Services = () => {
 
     if (id === "talent") {
       return "Visit your talent profile";
-    } else if (id === "companies") {
+    }
+
+    if (id === "companies") {
       return "Visit your company profile";
     }
 
@@ -41,6 +123,8 @@ export const Services = () => {
   };
 
   return (
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
     <section className={styles.servicesSection}>
       {/* Decorative Background */}
       <div className={styles.decorativeBackground}>
@@ -106,10 +190,131 @@ export const Services = () => {
 
         {/* Modern Two-Card Layout */}
         <div className={styles.cardsContainer}>
+=======
+    <section className={styles.section}>
+      <div className={styles.background} aria-hidden>
+        <div className={clsx(styles.hexagon, styles.hexagonTop)} />
+        <div className={clsx(styles.hexagon, styles.hexagonBottom)} />
+
+        <span className={clsx(styles.bee, styles.beeLarge)}>🐝</span>
+        <span className={clsx(styles.bee, styles.beeSmall)}>🐝</span>
+      </div>
+
+      <div className={styles.container}>
+        <header className={styles.header}>
+          <div className={styles.badge}>
+            <Crown size={16} />
+            Sweet Benefits
+          </div>
+
+          <h1 className={styles.title}>
+            <span>Why Choose</span>
+            <span className={styles.titleHighlight}>GoodHive</span>
+          </h1>
+
+          <p className={styles.description}>{TRANSLATION.description}</p>
+        </header>
+
+        <div className={styles.tabSwitcher}>
+          <div className={styles.tabList}>
+            <div
+              className={styles.tabIndicator}
+              style={{
+                width: indicatorStyle.width ? `${indicatorStyle.width}px` : undefined,
+                transform: `translateX(${indicatorStyle.left}px)`,
+                opacity: indicatorStyle.width ? 1 : 0,
+              }}
+              aria-hidden
+            />
+            {allServices.map(({ id, title }) => {
+              const isActive = activeServiceId === id;
+
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  ref={(el) => {
+                    tabRefs.current[id] = el;
+                  }}
+                  onClick={() => setActiveServiceId(id)}
+                  className={clsx(styles.tab, isActive && styles.tabActive)}
+                  aria-pressed={isActive}
+                >
+                  {title}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className={styles.cardStage}>
+>>>>>>> Stashed changes
+=======
+    <section className={styles.section}>
+      <div className={styles.background} aria-hidden>
+        <div className={clsx(styles.hexagon, styles.hexagonTop)} />
+        <div className={clsx(styles.hexagon, styles.hexagonBottom)} />
+
+        <span className={clsx(styles.bee, styles.beeLarge)}>🐝</span>
+        <span className={clsx(styles.bee, styles.beeSmall)}>🐝</span>
+      </div>
+
+      <div className={styles.container}>
+        <header className={styles.header}>
+          <div className={styles.badge}>
+            <Crown size={16} />
+            Sweet Benefits
+          </div>
+
+          <h1 className={styles.title}>
+            <span>Why Choose</span>
+            <span className={styles.titleHighlight}>GoodHive</span>
+          </h1>
+
+          <p className={styles.description}>{TRANSLATION.description}</p>
+        </header>
+
+        <div className={styles.tabSwitcher}>
+          <div className={styles.tabList}>
+            <div
+              className={styles.tabIndicator}
+              style={{
+                width: indicatorStyle.width ? `${indicatorStyle.width}px` : undefined,
+                transform: `translateX(${indicatorStyle.left}px)`,
+                opacity: indicatorStyle.width ? 1 : 0,
+              }}
+              aria-hidden
+            />
+            {allServices.map(({ id, title }) => {
+              const isActive = activeServiceId === id;
+
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  ref={(el) => {
+                    tabRefs.current[id] = el;
+                  }}
+                  onClick={() => setActiveServiceId(id)}
+                  className={clsx(styles.tab, isActive && styles.tabActive)}
+                  aria-pressed={isActive}
+                >
+                  {title}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className={styles.cardStage}>
+>>>>>>> Stashed changes
           {allServices.map((service) => {
             const { id, title, description } = service;
+            const isActive = activeServiceId === id;
             const isForTalent = id === "talent";
             const Icon = isForTalent ? Users : Building2;
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
             const isActive = id === activeTab;
 
             return (
@@ -234,10 +439,163 @@ export const Services = () => {
                   </div>
                 </div>
               </div>
+=======
+            const features = isForTalent
+              ? [
+                  { Icon: Star, text: "100% commission returned" },
+                  { Icon: Trophy, text: "Co-own your platform" },
+                  { Icon: Zap, text: "Earn as recruiter & mentor" },
+                ]
+              : [
+                  { Icon: Star, text: "Stake-backed recruiters" },
+                  { Icon: Trophy, text: "Community mentoring" },
+                  { Icon: Zap, text: "Excellence rewards" },
+                ];
+
+            return (
+              <article
+                key={id}
+                className={clsx(
+                  styles.card,
+                  isForTalent ? styles.cardTalent : styles.cardCompany,
+                  isActive && styles.cardActive,
+                )}
+                aria-hidden={!isActive}
+              >
+                <div className={styles.cardHeader}>
+                  <div
+                    className={clsx(
+                      styles.iconWrapper,
+                      isForTalent ? styles.iconTalent : styles.iconCompany,
+                    )}
+                  >
+                    <Icon size={40} />
+                  </div>
+
+                  <h3 className={styles.cardTitle}>{title}</h3>
+                </div>
+
+                <p className={styles.cardText}>{description}</p>
+
+                <div className={styles.featureList}>
+                  {features.map(({ Icon: FeatureIcon, text }) => (
+                    <div key={text} className={styles.feature}>
+                      <FeatureIcon
+                        className={clsx(
+                          styles.featureIcon,
+                          isForTalent
+                            ? styles.featureIconTalent
+                            : styles.featureIconCompany,
+                        )}
+                      />
+                      <span>{text}</span>
+                    </div>
+                  ))}
+                </div>
+
+=======
+            const features = isForTalent
+              ? [
+                  { Icon: Star, text: "100% commission returned" },
+                  { Icon: Trophy, text: "Co-own your platform" },
+                  { Icon: Zap, text: "Earn as recruiter & mentor" },
+                ]
+              : [
+                  { Icon: Star, text: "Stake-backed recruiters" },
+                  { Icon: Trophy, text: "Community mentoring" },
+                  { Icon: Zap, text: "Excellence rewards" },
+                ];
+
+            return (
+              <article
+                key={id}
+                className={clsx(
+                  styles.card,
+                  isForTalent ? styles.cardTalent : styles.cardCompany,
+                  isActive && styles.cardActive,
+                )}
+                aria-hidden={!isActive}
+              >
+                <div className={styles.cardHeader}>
+                  <div
+                    className={clsx(
+                      styles.iconWrapper,
+                      isForTalent ? styles.iconTalent : styles.iconCompany,
+                    )}
+                  >
+                    <Icon size={40} />
+                  </div>
+
+                  <h3 className={styles.cardTitle}>{title}</h3>
+                </div>
+
+                <p className={styles.cardText}>{description}</p>
+
+                <div className={styles.featureList}>
+                  {features.map(({ Icon: FeatureIcon, text }) => (
+                    <div key={text} className={styles.feature}>
+                      <FeatureIcon
+                        className={clsx(
+                          styles.featureIcon,
+                          isForTalent
+                            ? styles.featureIconTalent
+                            : styles.featureIconCompany,
+                        )}
+                      />
+                      <span>{text}</span>
+                    </div>
+                  ))}
+                </div>
+
+>>>>>>> Stashed changes
+                <button
+                  type="button"
+                  onClick={() => onCtaClickHandler(id)}
+                  className={clsx(
+                    styles.ctaButton,
+                    isForTalent ? styles.ctaButtonTalent : styles.ctaButtonCompany,
+                  )}
+                >
+                  <span>{getButtonText(id)}</span>
+                  <ArrowRight className={styles.ctaButtonIcon} />
+                </button>
+
+                <div
+                  className={clsx(
+                    styles.accent,
+                    styles.accentTop,
+                    isForTalent ? styles.accentTalent : styles.accentCompany,
+                  )}
+                  aria-hidden
+                />
+                <div
+                  className={clsx(
+                    styles.accent,
+                    styles.accentBottom,
+                    isForTalent ? styles.accentTalent : styles.accentCompany,
+                  )}
+                  aria-hidden
+                />
+                <div
+                  className={clsx(
+                    styles.floatingDecoration,
+                    isForTalent
+                      ? styles.floatingDecorationTalent
+                      : styles.floatingDecorationCompany,
+                  )}
+                  aria-hidden
+                />
+              </article>
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
             );
           })}
         </div>
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
         {/* Bottom CTA Section */}
         <div className={styles.bottomCta}>
           <div className={styles.ctaBadge}>
@@ -245,6 +603,17 @@ export const Services = () => {
             <span>
               Join the leading community in Web3! 🍯
             </span>
+=======
+=======
+>>>>>>> Stashed changes
+        <div className={styles.bottomCta}>
+          <div className={styles.bottomBadge}>
+            <Sparkles className={styles.sparkleIcon} />
+            <span>Join the sweetest community in Web3! 🍯</span>
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
           </div>
         </div>
       </div>

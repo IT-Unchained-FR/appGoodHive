@@ -43,7 +43,7 @@ async function fetchCompanyJobs(userId: string) {
 }
 
 // Helper function to fetch single job from API
-async function fetchSingleJob(jobId: number) {
+async function fetchSingleJob(jobId: string) {
   const response = await fetch(`/api/companies/job-data?id=${jobId}`);
   if (!response.ok) {
     throw new Error(`Failed to fetch single job: ${response.statusText}`);
@@ -96,9 +96,7 @@ export default function CompanyProfilePage(context: CompanyProfilePageProps) {
       // Fetch single job with error handling
       if (jobId) {
         try {
-          const singleJobResult = await fetchSingleJob(
-            jobId as unknown as number,
-          );
+          const singleJobResult = await fetchSingleJob(jobId);
           setSingleJob(singleJobResult);
         } catch (error) {
           console.error("Failed to fetch single job:", error);
