@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { jobId: string } }
+  { params }: { params: { jobId: string } },
 ) {
   const { jobId } = params;
 
@@ -18,7 +18,8 @@ export async function GET(
     const jobQuery = await sql`
       SELECT jo.*, c.designation as company_name, c.image_url as company_logo,
              c.headline, c.city as company_city, c.country as company_country,
-             c.email as company_email, c.linkedin, c.twitter, c.website as portfolio
+             c.email as company_email, c.linkedin, c.twitter, c.portfolio,
+             c.wallet_address as company_wallet_address
       FROM goodhive.job_offers jo
       LEFT JOIN goodhive.companies c ON jo.user_id = c.user_id
       WHERE jo.id = ${jobId}
@@ -68,7 +69,9 @@ export async function GET(
       jobType: jobData.job_type,
       typeEngagement: jobData.type_engagement,
       duration: jobData.duration,
-      skills: jobData.skills ? jobData.skills.split(",").map((s: string) => s.trim()) : [],
+      skills: jobData.skills
+        ? jobData.skills.split(",").map((s: string) => s.trim())
+        : [],
       city: jobData.city,
       country: jobData.country,
       postedAt: jobData.posted_at,
@@ -92,12 +95,12 @@ export async function GET(
         email: jobData.company_email,
         linkedin: jobData.linkedin,
         twitter: jobData.twitter,
-        website: jobData.portfolio,
-        walletAddress: jobData.wallet_address,
+        website: jobData.portfolio || null,
+        walletAddress: jobData.company_wallet_address || null,
       },
 
       // Job sections
-      sections: sectionsQuery.map(section => ({
+      sections: sectionsQuery.map((section) => ({
         id: section.id.toString(),
         jobId: jobId,
         heading: section.heading,
@@ -108,7 +111,7 @@ export async function GET(
       })),
 
       // Related jobs
-      relatedJobs: relatedJobsQuery.map(job => ({
+      relatedJobs: relatedJobsQuery.map((job) => ({
         id: job.id,
         title: job.title,
         budget: job.budget,
@@ -131,8 +134,11 @@ export async function GET(
     });
   } catch (error) {
     console.error("Error fetching job data:", error);
-    return new Response(JSON.stringify({ message: "Error retrieving job data" }), {
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({ message: "Error retrieving job data" }),
+      {
+        status: 500,
+      },
+    );
   }
 }

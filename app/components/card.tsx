@@ -10,7 +10,7 @@ import LastActiveStatus from "./LastActiveStatus";
 import { OptimizedJobBalance } from "./OptimizedJobBalance";
 
 interface Props {
-  jobId?: number;
+  jobId?: string; // UUID string
   blockId?: number;
   uniqueId: string;
   type: string;
@@ -139,7 +139,8 @@ export const Card: FC<Props> = ({
   // Know more link
   const knowMoreLink =
     type === "talent" ? `/talents/${uniqueId}` :
-    type === "job" ? `/jobs/${jobId}` :
+    type === "job" && jobId ? `/jobs/${jobId}` :
+    type === "job" ? `#` : // Disable link if jobId is missing (shouldn't happen)
     `/companies/${uniqueId}`;
 
   // Flag & Escrow Icon - ensure all cards have flags

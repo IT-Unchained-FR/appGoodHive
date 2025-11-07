@@ -109,7 +109,7 @@ export default function JobResult({ jobOffers }: { jobOffers: ApiJobOffer[] }) {
             <div key={`job-${jobOffer.id}-${index}`} className="group relative">
               <Card
                 uniqueId={jobOffer?.user_id}
-                jobId={Number(jobOffer.id) || index}
+                jobId={jobOffer.id || undefined}
                 blockId={jobOffer.block_id}
                 type="job"
                 title={jobOffer.title || "Job Position"}

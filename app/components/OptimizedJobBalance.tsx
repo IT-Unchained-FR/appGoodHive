@@ -3,7 +3,7 @@
 import React from "react";
 
 interface OptimizedJobBalanceProps {
-  jobId?: number;
+  jobId?: string; // UUID string
   blockId?: number;
   currency?: string;
   className?: string;

@@ -209,9 +209,9 @@ export const JobPageHeader = ({ job }: JobPageHeaderProps) => {
           onClose={() => setIsApplicationPopupOpen(false)}
           jobTitle={job.title}
           companyName={job.company.name}
-          companyEmail="" // We'll need to pass this from the job data
-          jobId={parseInt(job.id)}
-          walletAddress={job.company.id}
+          companyEmail={job.company.email || ""}
+          jobId={job.id}
+          walletAddress={job.company.walletAddress || job.company.id}
         />
       )}
 

@@ -13,7 +13,7 @@ import { FC, useState } from "react";
 import { Button } from "./button";
 
 interface Props {
-  id: number;
+  id: string; // UUID string
   type: string;
   title: string;
   postedBy: string;
