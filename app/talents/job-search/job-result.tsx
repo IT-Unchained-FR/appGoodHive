@@ -111,7 +111,7 @@ export default function JobResult({ jobOffers }: { jobOffers: ApiJobOffer[] }) {
                 uniqueId={jobOffer?.user_id}
                 jobId={Number(jobOffer.id) || index}
                 blockId={jobOffer.block_id}
-                type="company"
+                type="job"
                 title={jobOffer.title || "Job Position"}
                 postedBy={jobOffer.companyName || "Company"}
                 postedOn={`Posted ${moment(jobOffer.posted_at).fromNow()}`}
