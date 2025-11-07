@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import styles from "./company-profile.module.scss";
 import "@/app/styles/company-profile-enhanced.scss";
 
@@ -53,6 +54,7 @@ async function fetchSingleJob(jobId: number) {
 export default function CompanyProfilePage(context: CompanyProfilePageProps) {
   const { userId } = context.params;
   const { id: jobId } = context.searchParams;
+  const router = useRouter();
 
   const [profileData, setProfileData] = useState<any>({});
   const [jobs, setJobs] = useState<any[]>([]);
@@ -60,6 +62,14 @@ export default function CompanyProfilePage(context: CompanyProfilePageProps) {
   const [jobBalances, setJobBalances] = useState<{ [key: string]: number }>({});
   const [isLoadingBalances, setIsLoadingBalances] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Redirect to new job URL format if jobId is provided
+  useEffect(() => {
+    if (jobId) {
+      router.replace(`/jobs/${jobId}`);
+      return;
+    }
+  }, [jobId, router]);
 
   useEffect(() => {
     const fetchData = async () => {
