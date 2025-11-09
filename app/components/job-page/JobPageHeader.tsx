@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, Clock, DollarSign, Calendar, Building, Share2, ArrowLeft, Users } from "lucide-react";
+import { MapPin, Clock, DollarSign, Calendar, Building, Share2, ArrowLeft, Users, Timer } from "lucide-react";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { JobApplicationPopup } from "@/app/components/job-application-popup/job-application-popup";
 import TalentVerificationPopup from "@/app/components/talent-verification-popup/TalentVerificationPopup";
 import OnboardingPopup from "@/app/components/onboarding-popup/OnboardingPopup";
 import Image from "next/image";
 import Link from "next/link";
+import { projectTypes, projectDuration } from "@/app/constants/common";
+import { generateJobTypeEngage } from "@/app/utils/generate-job-type-engage";
 import styles from "./JobPageHeader.module.scss";
 
 interface JobPageHeaderProps {
@@ -27,6 +29,7 @@ interface JobPageHeaderProps {
     currency: string;
     projectType: string;
     typeEngagement?: string;
+    duration?: string;
     postedAt: string;
     applicationCount?: number;
   };
@@ -52,12 +55,48 @@ export const JobPageHeader = ({ job }: JobPageHeaderProps) => {
   };
 
   const formatBudget = (amount: number, currency: string) => {
+    // Format as number only (no currency symbol) since we have the DollarSign icon
     return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency === 'USDC' ? 'USD' : currency,
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
+  };
+
+  const getProjectTypeLabel = (projectType: string) => {
+    const type = projectTypes.find(pt => pt.value === projectType);
+    return type?.label || projectType.charAt(0).toUpperCase() + projectType.slice(1);
+  };
+
+  const getEngagementLabel = (typeEngagement?: string) => {
+    if (!typeEngagement) return null;
+    // Return only the role names, not the full descriptive text
+    switch (typeEngagement) {
+      case "freelance":
+        return "Freelancer";
+      case "remote":
+        return "Employee";
+      case "any":
+        return "Both";
+      default:
+        return "Both";
+    }
+  };
+
+  const getDurationLabel = (duration?: string) => {
+    if (!duration) return null;
+    // Return short format
+    switch (duration) {
+      case "lessThanSevenDays":
+        return "<7 days";
+      case "moreThanSevenDays":
+        return ">7 days";
+      case "moreThanOneMonth":
+        return ">1 month";
+      case "moreThanThreeMonths":
+        return ">3 months";
+      default:
+        return duration;
+    }
   };
 
   const handleApplyClick = () => {
@@ -163,30 +202,54 @@ export const JobPageHeader = ({ job }: JobPageHeaderProps) => {
           </div>
         </div>
 
-        {/* Job Metadata */}
+        {/* Job Summary */}
         <div className={styles.jobMeta}>
           <div className={styles.metaItem}>
             <DollarSign className={styles.metaIcon} />
-            <span>{formatBudget(job.budget, job.currency)}</span>
+            <div className={styles.metaContent}>
+              <span className={styles.metaLabel}>Budget</span>
+              <span className={styles.metaValue}>${formatBudget(job.budget, job.currency)}</span>
+            </div>
           </div>
           <div className={styles.metaItem}>
             <Building className={styles.metaIcon} />
-            <span>{job.projectType}</span>
+            <div className={styles.metaContent}>
+              <span className={styles.metaLabel}>Project Type</span>
+              <span className={styles.metaValue}>{getProjectTypeLabel(job.projectType)}</span>
+            </div>
           </div>
           {job.typeEngagement && (
             <div className={styles.metaItem}>
               <Clock className={styles.metaIcon} />
-              <span>{job.typeEngagement}</span>
+              <div className={styles.metaContent}>
+                <span className={styles.metaLabel}>Opened For</span>
+                <span className={styles.metaValue}>{getEngagementLabel(job.typeEngagement)}</span>
+              </div>
+            </div>
+          )}
+          {job.duration && (
+            <div className={styles.metaItem}>
+              <Timer className={styles.metaIcon} />
+              <div className={styles.metaContent}>
+                <span className={styles.metaLabel}>Duration</span>
+                <span className={styles.metaValue}>{getDurationLabel(job.duration)}</span>
+              </div>
             </div>
           )}
           <div className={styles.metaItem}>
             <Calendar className={styles.metaIcon} />
-            <span>Posted {getRelativeTime(job.postedAt)}</span>
+            <div className={styles.metaContent}>
+              <span className={styles.metaLabel}>Posted</span>
+              <span className={styles.metaValue}>{getRelativeTime(job.postedAt)}</span>
+            </div>
           </div>
           {job.applicationCount !== undefined && (
             <div className={styles.metaItem}>
               <Users className={styles.metaIcon} />
-              <span>{job.applicationCount} applications</span>
+              <div className={styles.metaContent}>
+                <span className={styles.metaLabel}>Applications</span>
+                <span className={styles.metaValue}>{job.applicationCount} {job.applicationCount === 1 ? 'applicant' : 'applicants'}</span>
+              </div>
             </div>
           )}
         </div>

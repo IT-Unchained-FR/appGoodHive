@@ -1,5 +1,5 @@
 // Services component styles
-.servicesSection {
+.section {
   position: relative;
   width: 100%;
   background: linear-gradient(180deg, #fafafa 0%, #ffffff 50%, #fef7f0 100%);
@@ -7,84 +7,57 @@
   overflow: hidden;
 }
 
-.decorativeBackground {
+.background {
   position: absolute;
   inset: 0;
 }
 
-.floatingHexagon1 {
+.hexagon {
   position: absolute;
-  top: 4rem;
-  left: 4rem;
   width: 6rem;
   height: 6rem;
   transform: rotate(45deg);
-
-  div {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #fcd34d 0%, #fde047 100%);
-    border-radius: 0.5rem;
-    opacity: 0.1;
-    animation: pulse 2s infinite;
-  }
+  background: linear-gradient(135deg, #fcd34d 0%, #fde047 100%);
+  border-radius: 0.5rem;
+  opacity: 0.1;
+  animation: pulse 2s infinite;
 }
 
-.floatingHexagon2 {
-  position: absolute;
+.hexagonTop {
+  top: 4rem;
+  left: 4rem;
+}
+
+.hexagonBottom {
   bottom: 5rem;
   right: 5rem;
   width: 8rem;
   height: 8rem;
   transform: rotate(-45deg);
-
-  div {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #fed7aa 0%, #fcd34d 100%);
-    border-radius: 0.5rem;
-    opacity: 0.1;
-    animation: pulse 2s infinite;
-    animation-delay: 1s;
-  }
+  background: linear-gradient(135deg, #fed7aa 0%, #fcd34d 100%);
+  animation-delay: 1s;
 }
 
-.animatedBee1 {
+.bee {
   position: absolute;
+  font-size: 1.5rem;
+  opacity: 0.6;
+  animation: bounce 4s infinite;
+}
+
+.beeLarge {
   top: 25%;
   right: 25%;
-  width: 2rem;
-  height: 2rem;
-  opacity: 0.6;
-
-  div {
-    position: relative;
-    animation: bounce 4s infinite;
-    animation-delay: 0.5s;
-
-    span {
-      font-size: 1.5rem;
-    }
-  }
+  animation-delay: 0.5s;
 }
 
-.animatedBee2 {
-  position: absolute;
+.beeSmall {
   bottom: 33.333333%;
   left: 25%;
-  width: 1.5rem;
-  height: 1.5rem;
+  font-size: 1.25rem;
   opacity: 0.5;
-
-  div {
-    position: relative;
-    animation: bounce 5s infinite;
-    animation-delay: 2s;
-
-    span {
-      font-size: 1.25rem;
-    }
-  }
+  animation-delay: 2s;
+  animation-duration: 5s;
 }
 
 .container {
@@ -164,7 +137,9 @@
   border: 1px solid rgba(251, 191, 36, 0.1);
   display: flex;
   gap: 0.5rem;
+  position: relative;
 }
+
 
 .tabButton {
   padding: 0.875rem 2.5rem;
@@ -237,7 +212,6 @@
   }
 }
 
-// New Modern Two-Card Layout
 .cardsContainer {
   position: relative;
   max-width: 1200px;
@@ -281,7 +255,6 @@
   }
 }
 
-// Service Details Card
 .serviceCard {
   background: linear-gradient(145deg, #ffffff 0%, #fafafa 100%);
   border-radius: 24px;
@@ -537,6 +510,7 @@
     }
   }
 
+
   @media (max-width: 768px) {
     width: 32px;
     height: 32px;
@@ -586,6 +560,28 @@
     transform: translateY(0);
   }
 
+  &.talent {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: #ffffff;
+    box-shadow: 0 10px 30px rgba(251, 191, 36, 0.25);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 40px rgba(251, 191, 36, 0.35);
+    }
+  }
+
+  &.company {
+    background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);
+    color: #ffffff;
+    box-shadow: 0 10px 30px rgba(251, 146, 60, 0.25);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 40px rgba(251, 146, 60, 0.35);
+    }
+  }
+
   &::before {
     content: '';
     position: absolute;
@@ -615,14 +611,15 @@
   position: relative;
   z-index: 2;
 
-  svg {
+  svg, .ctaButtonIcon {
     width: 18px;
     height: 18px;
     transition: transform 0.3s ease;
   }
 }
 
-.ctaButton:hover .buttonContent svg {
+.ctaButton:hover .buttonContent svg,
+.ctaButton:hover .buttonContent .ctaButtonIcon {
   transform: translateX(4px);
 }
 
@@ -770,7 +767,7 @@
   text-align: center;
   margin-top: 3rem;
 
-  .ctaBadge {
+  .bottomBadge {
     display: inline-flex;
     align-items: center;
     background: linear-gradient(90deg, #fef3c7 0%, #fefce8 100%);
@@ -779,7 +776,7 @@
     border-radius: 1rem;
     border: 1px solid #fcd34d;
 
-    svg {
+    .sparkleIcon {
       width: 1.25rem;
       height: 1.25rem;
       margin-right: 0.5rem;
@@ -983,4 +980,58 @@
     animation-delay: 2s;
     animation-duration: 3.5s;
   }
+}
+
+// Accent and decoration classes
+.accent {
+  position: absolute;
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+.accentTop {
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  border-radius: 0 24px 0 50%;
+}
+
+.accentBottom {
+  bottom: 0;
+  left: 0;
+  width: 80px;
+  height: 80px;
+  border-radius: 50% 0 24px 0;
+}
+
+.accentTalent {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+.accentCompany {
+  background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);
+}
+
+.floatingDecoration {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.floatingDecorationTalent {
+  background: #fbbf24;
+  top: 20%;
+  right: 20%;
+  animation: floatingParticle 4s ease-in-out infinite;
+}
+
+.floatingDecorationCompany {
+  background: #fb923c;
+  top: 20%;
+  right: 20%;
+  animation: floatingParticle 4s ease-in-out infinite;
 }
