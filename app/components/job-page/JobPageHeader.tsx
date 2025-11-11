@@ -179,6 +179,10 @@ export const JobPageHeader = ({ job }: JobPageHeaderProps) => {
                   <MapPin className={styles.metaIcon} />
                   <span>{job.city}, {job.country}</span>
                 </div>
+                <div className={styles.postedInfo}>
+                  <Calendar className={styles.postedIcon} />
+                  <span>Posted {getRelativeTime(job.postedAt)}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -236,13 +240,6 @@ export const JobPageHeader = ({ job }: JobPageHeaderProps) => {
               </div>
             </div>
           )}
-          <div className={styles.metaItem}>
-            <Calendar className={styles.metaIcon} />
-            <div className={styles.metaContent}>
-              <span className={styles.metaLabel}>Posted</span>
-              <span className={styles.metaValue}>{getRelativeTime(job.postedAt)}</span>
-            </div>
-          </div>
           {job.applicationCount !== undefined && (
             <div className={styles.metaItem}>
               <Users className={styles.metaIcon} />
