@@ -5,6 +5,7 @@ import { JobPageSidebar } from "@/app/components/job-page/JobPageSidebar";
 import { JobSectionsDisplay } from "@/app/components/job-sections-display/job-sections-display";
 import styles from "./page.module.scss";
 import { JobPageAnalytics } from "@/app/components/job-page/JobPageAnalytics";
+import sql from "@/lib/db";
 
 interface Job {
   id: string;
@@ -63,25 +64,116 @@ interface Job {
 
 async function getJob(jobId: string): Promise<Job | null> {
   try {
-    // Use absolute URL for server-side fetch
-    // In production, this should be your actual domain
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
-                    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
-    const response = await fetch(`${baseUrl}/api/jobs/${jobId}`, {
-      cache: 'no-store',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    // Fetch job data directly from database
+    const jobQuery = await sql`
+      SELECT jo.*, c.designation as company_name, c.image_url as company_logo,
+             c.headline, c.city as company_city, c.country as company_country,
+             c.email as company_email, c.linkedin, c.twitter, c.portfolio,
+             c.wallet_address as company_wallet_address
+      FROM goodhive.job_offers jo
+      LEFT JOIN goodhive.companies c ON jo.user_id = c.user_id
+      WHERE jo.id = ${jobId}
+    `;
 
-    if (!response.ok) {
-      if (response.status === 404) {
-        return null;
-      }
-      throw new Error(`Failed to fetch job: ${response.status}`);
+    if (jobQuery.length === 0) {
+      return null;
     }
 
-    const job = await response.json();
+    const jobData = jobQuery[0];
+
+    // Fetch job sections
+    const sectionsQuery = await sql`
+      SELECT id, heading, content, sort_order, created_at, updated_at
+      FROM goodhive.job_sections
+      WHERE job_id = ${jobId}
+      ORDER BY sort_order ASC
+    `;
+
+    // Fetch related jobs from same company (limit 3)
+    const relatedJobsQuery = await sql`
+      SELECT id, title, budget, currency, project_type, city, country, posted_at
+      FROM goodhive.job_offers
+      WHERE user_id = ${jobData.user_id} AND id != ${jobId} AND published = true
+      ORDER BY posted_at DESC
+      LIMIT 3
+    `;
+
+    // Fetch application count
+    const applicationCountQuery = await sql`
+      SELECT COUNT(*) as application_count
+      FROM goodhive.job_applications
+      WHERE job_id = ${jobId}
+    `.catch(() => [{ application_count: 0 }]);
+
+    // Format the response
+    const job: Job = {
+      // Job details
+      id: jobData.id,
+      title: jobData.title,
+      description: jobData.description,
+      budget: jobData.budget,
+      currency: jobData.currency,
+      projectType: jobData.project_type,
+      jobType: jobData.job_type,
+      typeEngagement: jobData.type_engagement,
+      duration: jobData.duration,
+      skills: jobData.skills
+        ? jobData.skills.split(",").map((s: string) => s.trim())
+        : [],
+      city: jobData.city,
+      country: jobData.country,
+      postedAt: jobData.posted_at,
+      createdAt: jobData.posted_at,
+      published: jobData.published,
+
+      // Blockchain data
+      blockId: jobData.block_id,
+      blockchainJobId: jobData.blockchain_job_id,
+      escrowAmount: jobData.escrow_amount,
+      paymentTokenAddress: jobData.payment_token_address,
+
+      // Company information
+      company: {
+        id: jobData.user_id,
+        name: jobData.company_name || jobData.designation,
+        logo: jobData.company_logo,
+        headline: jobData.headline,
+        city: jobData.company_city,
+        country: jobData.company_country,
+        email: jobData.company_email,
+        linkedin: jobData.linkedin,
+        twitter: jobData.twitter,
+        website: jobData.portfolio || null,
+        walletAddress: jobData.company_wallet_address || null,
+      },
+
+      // Job sections
+      sections: sectionsQuery.map((section) => ({
+        id: section.id.toString(),
+        jobId: jobId,
+        heading: section.heading,
+        content: section.content,
+        sortOrder: section.sort_order,
+        createdAt: section.created_at,
+        updatedAt: section.updated_at,
+      })),
+
+      // Related jobs
+      relatedJobs: relatedJobsQuery.map((job) => ({
+        id: job.id,
+        title: job.title,
+        budget: job.budget,
+        currency: job.currency,
+        projectType: job.project_type,
+        city: job.city,
+        country: job.country,
+        postedAt: job.posted_at,
+      })),
+
+      // Application stats
+      applicationCount: applicationCountQuery[0]?.application_count || 0,
+    };
+
     return job;
   } catch (error) {
     console.error('Error fetching job:', error);
@@ -89,8 +181,13 @@ async function getJob(jobId: string): Promise<Job | null> {
   }
 }
 
-export async function generateMetadata({ params }: { params: { jobId: string } }): Promise<Metadata> {
-  const job = await getJob(params.jobId);
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{ jobId: string }>
+}): Promise<Metadata> {
+  const { jobId } = await params;
+  const job = await getJob(jobId);
 
   if (!job) {
     return {
@@ -136,8 +233,13 @@ export async function generateMetadata({ params }: { params: { jobId: string } }
   };
 }
 
-export default async function JobPage({ params }: { params: { jobId: string } }) {
-  const job = await getJob(params.jobId);
+export default async function JobPage({
+  params
+}: {
+  params: Promise<{ jobId: string }>
+}) {
+  const { jobId } = await params;
+  const job = await getJob(jobId);
 
   // In development, allow viewing unpublished jobs for testing
   const isDevelopment = process.env.NODE_ENV === 'development';
