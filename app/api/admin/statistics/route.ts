@@ -94,17 +94,14 @@ export async function GET(req: NextRequest) {
     `;
 
     // Get recent registrations (last 7 days)
-    const [recentUsersCount] = await sql`
-      SELECT COUNT(*) as count 
-      FROM goodhive.users 
-      WHERE created_at >= NOW() - INTERVAL '7 days'
-    `;
+    // Note: users table doesn't have a timestamp column, defaulting to 0
+    const recentUsersCount = { count: 0 };
 
     // Get recent jobs (last 7 days)
     const [recentJobsCount] = await sql`
-      SELECT COUNT(*) as count 
-      FROM goodhive.job_offers 
-      WHERE created_at >= NOW() - INTERVAL '7 days'
+      SELECT COUNT(*) as count
+      FROM goodhive.job_offers
+      WHERE posted_at >= NOW() - INTERVAL '7 days'
     `;
 
     // Get users with profiles

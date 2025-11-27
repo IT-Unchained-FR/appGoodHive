@@ -47,26 +47,18 @@ export async function GET(req: NextRequest) {
     const endDate = searchParams.get("endDate");
 
     // User growth over time (last 30 days by default)
-    const userGrowth = await sql`
-      SELECT 
-        DATE(created_at) as date,
-        COUNT(*) as count
-      FROM goodhive.users
-      WHERE created_at >= COALESCE(${startDate ? new Date(startDate) : null}, NOW() - INTERVAL '30 days')
-        AND created_at <= COALESCE(${endDate ? new Date(endDate) : null}, NOW())
-      GROUP BY DATE(created_at)
-      ORDER BY date ASC
-    `;
+    // Note: users table doesn't have timestamp column, returning empty array
+    const userGrowth: any[] = [];
 
     // Job posting trends
     const jobTrends = await sql`
-      SELECT 
-        DATE(created_at) as date,
+      SELECT
+        DATE(posted_at) as date,
         COUNT(*) as count
       FROM goodhive.job_offers
-      WHERE created_at >= COALESCE(${startDate ? new Date(startDate) : null}, NOW() - INTERVAL '30 days')
-        AND created_at <= COALESCE(${endDate ? new Date(endDate) : null}, NOW())
-      GROUP BY DATE(created_at)
+      WHERE posted_at >= COALESCE(${startDate ? new Date(startDate) : null}, NOW() - INTERVAL '30 days')
+        AND posted_at <= COALESCE(${endDate ? new Date(endDate) : null}, NOW())
+      GROUP BY DATE(posted_at)
       ORDER BY date ASC
     `;
 
@@ -97,38 +89,15 @@ export async function GET(req: NextRequest) {
     `;
 
     // Activity by day (last 7 days)
+    // Note: Simplified due to missing timestamp columns in some tables
     const dailyActivity = await sql`
-      SELECT 
-        DATE(created_at) as date,
-        'users' as type,
-        COUNT(*) as count
-      FROM goodhive.users
-      WHERE created_at >= NOW() - INTERVAL '7 days'
-      GROUP BY DATE(created_at)
-      UNION ALL
-      SELECT 
-        DATE(created_at) as date,
+      SELECT
+        DATE(posted_at) as date,
         'jobs' as type,
         COUNT(*) as count
       FROM goodhive.job_offers
-      WHERE created_at >= NOW() - INTERVAL '7 days'
-      GROUP BY DATE(created_at)
-      UNION ALL
-      SELECT 
-        DATE(created_at) as date,
-        'talents' as type,
-        COUNT(*) as count
-      FROM goodhive.talents
-      WHERE created_at >= NOW() - INTERVAL '7 days'
-      GROUP BY DATE(created_at)
-      UNION ALL
-      SELECT 
-        DATE(created_at) as date,
-        'companies' as type,
-        COUNT(*) as count
-      FROM goodhive.companies
-      WHERE created_at >= NOW() - INTERVAL '7 days'
-      GROUP BY DATE(created_at)
+      WHERE posted_at >= NOW() - INTERVAL '7 days'
+      GROUP BY DATE(posted_at)
       ORDER BY date DESC
     `;
 
