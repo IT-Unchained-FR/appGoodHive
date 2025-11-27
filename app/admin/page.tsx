@@ -121,22 +121,22 @@ export default function AdminDashboard() {
   const totalPending = statistics.approvals.pendingTalents + statistics.approvals.pendingCompanies;
 
   return (
-    <div className="w-full mx-auto p-6 space-y-6">
+    <div className="w-full mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-sm text-gray-600 mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-xs sm:text-sm text-gray-600 mt-1">
             Overview of your GoodHive platform
           </p>
         </div>
-        <Button onClick={fetchStatistics} variant="outline" size="sm">
+        <Button onClick={fetchStatistics} variant="outline" size="sm" className="w-full sm:w-auto">
           Refresh
         </Button>
       </div>
 
       {/* Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <StatCard
           title="Total Users"
           value={statistics.overview.totalUsers.toLocaleString()}
@@ -180,9 +180,9 @@ export default function AdminDashboard() {
       </div>
 
       {/* Secondary Stats and Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Pending Approvals */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">
               Pending Approvals
@@ -239,7 +239,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Jobs Overview */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Jobs Status</h3>
             <Briefcase className="h-5 w-5 text-[#FFC905]" />
@@ -268,7 +268,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Profile Statistics */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">
               Profile Statistics
@@ -302,7 +302,7 @@ export default function AdminDashboard() {
       {/* Quick Actions and System Info */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Quick Actions */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Quick Actions
           </h3>
@@ -347,7 +347,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* System Overview */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             System Overview
           </h3>

@@ -106,6 +106,7 @@ const bottomNavItems: NavItem[] = [
 const Sidebar = ({ children }: SidebarProps) => {
   const pathname = usePathname();
   const router = useRouter();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   // If we're on the login page, don't apply the admin layout
   if (pathname === "/admin/login") {
@@ -125,9 +126,58 @@ const Sidebar = ({ children }: SidebarProps) => {
     return pathname === href || pathname.startsWith(href + "/");
   };
 
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
   return (
     <div className={styles.layout}>
-      <aside className={styles.sidebar}>
+      {/* Mobile Header */}
+      <div className={styles.mobileHeader}>
+        <button
+          className={styles.hamburger}
+          onClick={toggleMobileMenu}
+          aria-label="Toggle menu"
+        >
+          <svg
+            className={styles.hamburgerIcon}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            {isMobileMenuOpen ? (
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            ) : (
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            )}
+          </svg>
+        </button>
+        <h2 className={styles.mobileTitle}>Admin Dashboard</h2>
+      </div>
+
+      {/* Backdrop */}
+      {isMobileMenuOpen && (
+        <div
+          className={styles.backdrop}
+          onClick={closeMobileMenu}
+        />
+      )}
+
+      <aside className={`${styles.sidebar} ${isMobileMenuOpen ? styles.sidebarOpen : ""}`}>
         <div className={styles.sidebarContent}>
           {/* Header */}
           <div className={styles.sidebarHeader}>
@@ -150,6 +200,7 @@ const Sidebar = ({ children }: SidebarProps) => {
                   className={`${styles.navItem} ${
                     isActiveLink(item.href) ? styles.navItemActive : ""
                   }`}
+                  onClick={closeMobileMenu}
                 >
                   {item.icon}
                   <span className={styles.navLabel}>{item.label}</span>
@@ -168,6 +219,7 @@ const Sidebar = ({ children }: SidebarProps) => {
                 href={item.href as any}
                 data-e2e={item.dataE2e}
                 className={styles.navItem}
+                onClick={closeMobileMenu}
               >
                 {item.icon}
                 <span className={styles.navLabel}>{item.label}</span>
