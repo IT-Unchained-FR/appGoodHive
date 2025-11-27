@@ -32,31 +32,31 @@ export function StatCard({
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900 mb-2">{value}</p>
+    <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">{title}</p>
+          <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">{value}</p>
           {trend && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-wrap">
               <span
-                className={`text-sm font-medium ${
+                className={`text-xs sm:text-sm font-medium ${
                   trend.isPositive ? "text-green-600" : "text-red-600"
                 }`}
               >
-                {trend.isPositive ? "↑" : "↓"} {Math.abs(trend.value)}%
+                {trend.isPositive ? "↑" : "↓"} {Math.abs(trend.value)}
               </span>
-              <span className="text-sm text-gray-500">vs last period</span>
+              <span className="text-xs sm:text-sm text-gray-500 truncate">{description || "vs last period"}</span>
             </div>
           )}
-          {description && (
-            <p className="text-xs text-gray-500 mt-2">{description}</p>
+          {description && !trend && (
+            <p className="text-xs text-gray-500 mt-1 sm:mt-2">{description}</p>
           )}
         </div>
         <div
-          className={`p-3 rounded-lg border ${colorClasses[color]} flex-shrink-0`}
+          className={`p-2 sm:p-3 rounded-lg border ${colorClasses[color]} flex-shrink-0`}
         >
-          <Icon className="h-6 w-6" />
+          <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
         </div>
       </div>
     </div>
