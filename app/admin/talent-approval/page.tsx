@@ -208,7 +208,11 @@ export default function AdminTalentApproval() {
       key: "created_at",
       header: "Created on",
       width: "13%",
-      render: (value: string) => moment(value).format("MMM D, YYYY"),
+      render: (value: string, row: ProfileData) => {
+        const createdAt =
+          row.user_created_at || value; // Prefer user account creation date
+        return createdAt ? moment(createdAt).format("MMM D, YYYY") : "N/A";
+      },
     },
     {
       key: "actions",
@@ -253,10 +257,20 @@ export default function AdminTalentApproval() {
       setLoading(true);
       const response = await fetch("/api/admin/talents/pending");
       const data = await response.json();
+
+      if (!response.ok || !Array.isArray(data)) {
+        console.error("Failed to fetch pending users:", data);
+        setUsers([]);
+        setFilteredUsers([]);
+        return;
+      }
+
       setUsers(data);
       setFilteredUsers(data);
     } catch (error) {
       console.error("Failed to fetch pending users:", error);
+      setUsers([]);
+      setFilteredUsers([]);
     } finally {
       setLoading(false);
     }

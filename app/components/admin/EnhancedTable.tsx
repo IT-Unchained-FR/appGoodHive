@@ -59,6 +59,7 @@ interface EnhancedTableProps<T> {
   searchPlaceholder?: string;
   pagination?: boolean;
   itemsPerPage?: number;
+  pageSizeOptions?: number[];
   exportable?: boolean;
   onExport?: (data: T[]) => void;
   loading?: boolean;
@@ -80,6 +81,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   searchPlaceholder = "Search...",
   pagination = true,
   itemsPerPage = 10,
+  pageSizeOptions = [10, 25, 50],
   exportable = false,
   onExport,
   loading = false,
@@ -93,6 +95,7 @@ export function EnhancedTable<T extends Record<string, any>>({
 }: EnhancedTableProps<T>) {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(itemsPerPage);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [selectedRows, setSelectedRows] = useState<Set<string | number>>(
@@ -246,12 +249,12 @@ export function EnhancedTable<T extends Record<string, any>>({
   const paginatedData = useMemo(() => {
     if (!pagination) return sortedData;
 
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
     return sortedData.slice(startIndex, endIndex);
-  }, [sortedData, currentPage, itemsPerPage, pagination]);
+  }, [sortedData, currentPage, pageSize, pagination]);
 
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredData.length / pageSize) || 1;
 
   // Get selected items
   const selectedItems = useMemo(() => {
@@ -661,23 +664,47 @@ export function EnhancedTable<T extends Record<string, any>>({
       {pagination && totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-600">
-            Showing{" "}
-            <span className="font-medium">
-              {(currentPage - 1) * itemsPerPage + 1}
-            </span>{" "}
-            to{" "}
-            <span className="font-medium">
-              {Math.min(currentPage * itemsPerPage, filteredData.length)}
-            </span>{" "}
-            of <span className="font-medium">{filteredData.length}</span>{" "}
-            results
+            {filteredData.length > 0 ? (
+              <>
+                Showing{" "}
+                <span className="font-medium">
+                  Math.min((currentPage - 1) * pageSize + 1, filteredData.length)
+                </span>{" "}
+                to{" "}
+                <span className="font-medium">
+                  {Math.min(currentPage * pageSize, filteredData.length)}
+                </span>{" "}
+                of <span className="font-medium">{filteredData.length}</span>{" "}
+                results
+              </>
+            ) : (
+              <>Showing 0 results</>
+            )}
             {selectable && selectedItems.length > 0 && (
               <span className="ml-2 text-[#FFC905]">
                 • {selectedItems.length} selected
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <span>Rows:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  const next = Number(e.target.value);
+                  setPageSize(next);
+                  setCurrentPage(1);
+                }}
+                className="border border-gray-200 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#FFC905] focus:border-transparent bg-white"
+              >
+                {pageSizeOptions.map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </select>
+            </div>
             <Button
               variant="outline"
               size="sm"

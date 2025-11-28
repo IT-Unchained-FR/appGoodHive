@@ -1,6 +1,7 @@
 "use client";
 
 import { ConfirmationPopup } from "@/app/components/ConfirmationPopup/ConfirmationPopup";
+import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { EditTalentModal } from "@/app/components/admin/EditTalentModal";
 import { Column, EnhancedTable } from "@/app/components/admin/EnhancedTable";
 import { ProfileData } from "@/app/talents/my-profile/page";
@@ -328,7 +329,10 @@ export default function AdminManageTalents() {
   ];
 
   return (
-    <div className="w-full mx-auto p-6">
+    <AdminPageLayout
+      title="All Talents"
+      subtitle="Manage talent profiles, roles, and approvals"
+    >
       <ConfirmationPopup
         open={showDeleteConfirm}
         onOpenChange={setShowDeleteConfirm}
@@ -354,28 +358,32 @@ export default function AdminManageTalents() {
         talent={editingTalent}
         onSave={handleSaveTalent}
       />
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h2 className="text-xl font-semibold mb-1">
-            All Talents Under GoodHive's System
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {talents.length} talents
-          </p>
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 sm:p-6">
+        <div className="flex flex-col gap-4 sm:gap-5">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Talent Directory
+              </h2>
+              <p className="text-sm text-gray-600">
+                {talents.length} talents • search, edit roles, or approve.
+              </p>
+            </div>
+          </div>
+          <EnhancedTable
+            data={talents}
+            columns={columns}
+            searchable={true}
+            searchPlaceholder="Search by name, email, user ID, or wallet address..."
+            pagination={true}
+            itemsPerPage={10}
+            exportable={true}
+            loading={loading}
+            emptyMessage="No talents found"
+            pageSizeOptions={[10, 25, 50]}
+          />
         </div>
       </div>
-
-      <EnhancedTable
-        data={talents}
-        columns={columns}
-        searchable={true}
-        searchPlaceholder="Search by name, email, user ID, or wallet address..."
-        pagination={true}
-        itemsPerPage={10}
-        exportable={true}
-        loading={loading}
-        emptyMessage="No talents found"
-      />
-    </div>
+    </AdminPageLayout>
   );
 }
