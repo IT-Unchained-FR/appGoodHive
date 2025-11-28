@@ -7,6 +7,7 @@ import { SearchInput } from "@/app/components/admin/SearchInput";
 import { Spinner } from "@/app/components/admin/Spinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +31,7 @@ export default function AdminTalentApproval() {
   const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
   const [selectedItems, setSelectedItems] = useState<ProfileData[]>([]);
   const [showBulkApproval, setShowBulkApproval] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const handleApproveClick = (user: ProfileData) => {
     setSelectedUser(user);
@@ -281,6 +283,15 @@ export default function AdminTalentApproval() {
   }, []);
 
   useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
     const filtered = users.filter((user) => {
       const searchStr =
         `${user.first_name} ${user.last_name} ${user.email}`.toLowerCase();
@@ -350,17 +361,42 @@ export default function AdminTalentApproval() {
           </div>
         ) : (
           <>
-            <AdminTable
-              columns={columns}
-              data={filteredUsers}
-              // onRowClick={(row) =>
-              //   window.open(`/admin/talent/${row.user_id}`, "_blank")
-              // }
-            />
-            {filteredUsers.length === 0 && (
-              <div className="text-center text-gray-500 py-8">
-                No pending requests found
-              </div>
+            {isMobile ? (
+              filteredUsers.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4">
+                  {filteredUsers.map((user) => (
+                    <TalentApprovalCard
+                      key={user.user_id}
+                      user={user}
+                      selected={selectedItems.some(
+                        (item) => item.user_id === user.user_id,
+                      )}
+                      onSelect={() => toggleItemSelection(user)}
+                      onApprove={() => handleApproveClick(user)}
+                      onReject={() => handleBulkReject([user.user_id])}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 py-8">
+                  No pending requests found
+                </div>
+              )
+            ) : (
+              <>
+                <AdminTable
+                  columns={columns}
+                  data={filteredUsers}
+                  // onRowClick={(row) =>
+                  //   window.open(`/admin/talent/${row.user_id}`, "_blank")
+                  // }
+                />
+                {filteredUsers.length === 0 && (
+                  <div className="text-center text-gray-500 py-8">
+                    No pending requests found
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
@@ -385,6 +421,85 @@ export default function AdminTalentApproval() {
         onApprove={handleBulkApprove}
         onReject={handleBulkReject}
       />
+      <QuickActionFAB
+        actions={[
+          {
+            icon: CheckSquare,
+            label: "Bulk approve",
+            onClick: () => setShowBulkApproval(true),
+          },
+          {
+            icon: Square,
+            label: "Select all",
+            onClick: toggleSelectAll,
+          },
+          {
+            icon: MoreHorizontal,
+            label: "Pending list",
+            onClick: () =>
+              window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+              }),
+          },
+        ]}
+      />
     </AdminPageLayout>
+  );
+}
+
+function TalentApprovalCard({
+  user,
+  selected,
+  onSelect,
+  onApprove,
+  onReject,
+}: {
+  user: ProfileData;
+  selected: boolean;
+  onSelect: () => void;
+  onApprove: () => void;
+  onReject: () => void;
+}) {
+  return (
+    <div className="border border-gray-200 rounded-lg bg-white p-4 shadow-sm space-y-3 relative">
+      <div className="absolute top-3 right-3">
+        <Checkbox checked={selected} onCheckedChange={onSelect} />
+      </div>
+      <div className="space-y-1">
+        <div className="font-semibold text-gray-900">
+          {user.first_name} {user.last_name}
+        </div>
+        <div className="text-sm text-gray-600">{user.email}</div>
+        <div className="flex items-center gap-2 text-xs text-gray-500">
+          <Badge
+            variant="outline"
+            className="bg-yellow-50 text-yellow-700 border-yellow-200"
+          >
+            Pending
+          </Badge>
+          <span>{moment(user.created_at).fromNow()}</span>
+        </div>
+      </div>
+      <div className="text-sm text-gray-700">
+        {user.city}, {user.country}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" variant="outline" onClick={onApprove}>
+          Approve
+        </Button>
+        <Button size="sm" variant="destructive" onClick={onReject}>
+          Reject
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="ml-auto"
+          onClick={() => window.open(`/admin/talent/${user.user_id}`, "_blank")}
+        >
+          View Profile
+        </Button>
+      </div>
+    </div>
   );
 }

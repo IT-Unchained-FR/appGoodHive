@@ -1,10 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@/app/components/button";
+import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
+import { EnhancedTable, Column } from "@/app/components/admin/EnhancedTable";
+import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
+import { Button } from "@/components/ui/button";
 import { Dialog } from "@headlessui/react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
+import { Plus, RefreshCw } from "lucide-react";
 
 // Update the Spinner component
 const Spinner = () => (
@@ -115,56 +119,59 @@ export default function AdminsPage() {
     }
   };
 
+  const columns: Column<Admin>[] = [
+    {
+      key: "name",
+      header: "Name",
+      sortable: true,
+    },
+    {
+      key: "email",
+      header: "Email",
+      sortable: true,
+    },
+    {
+      key: "created_at",
+      header: "Created",
+      sortable: true,
+      render: (value) => new Date(value).toLocaleDateString(),
+    },
+  ];
+
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Manage Admins</h1>
-        <Button
-          text="Create New Admin"
-          type="primary"
-          size="medium"
-          onClickHandler={() => setIsOpen(true)}
-        />
+    <AdminPageLayout
+      title="Manage Admins"
+      subtitle="Add and manage platform administrators"
+    >
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Admins</h1>
+        <Button onClick={() => setIsOpen(true)} className="gap-2 bg-[#FFC905] hover:bg-[#FFC905]/80 text-black">
+          <Plus className="h-4 w-4" />
+          Create New Admin
+        </Button>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Email
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Created At
-              </th>
-            </tr>
-          </thead>
-          {loading ? (
-            <tbody>
-              <tr>
-                <td colSpan={3}>
-                  <Spinner />
-                </td>
-              </tr>
-            </tbody>
-          ) : (
-            <tbody className="bg-white divide-y divide-gray-200">
-              {admins.map((admin) => (
-                <tr key={admin.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">{admin.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{admin.email}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {new Date(admin.created_at).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          )}
-        </table>
-      </div>
+      <EnhancedTable
+        data={admins}
+        columns={columns}
+        searchable
+        searchPlaceholder="Search admins by name or email..."
+        pagination
+        itemsPerPage={10}
+        loading={loading}
+        emptyMessage="No admins found"
+        getRowId={(row) => row.id}
+        mobileCardView
+        renderMobileCard={(admin) => (
+          <div className="border border-gray-200 rounded-lg bg-white p-4 shadow-sm space-y-2">
+            <div className="font-semibold text-gray-900">{admin.name}</div>
+            <div className="text-sm text-gray-600 break-words">{admin.email}</div>
+            <div className="text-xs text-gray-500">
+              Created {new Date(admin.created_at).toLocaleDateString()}
+            </div>
+          </div>
+        )}
+      />
 
       <Dialog open={isOpen} onClose={() => setIsOpen(false)}>
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
@@ -238,24 +245,39 @@ export default function AdminsPage() {
 
                 <div className="flex justify-end gap-3">
                   <Button
-                    text="Cancel"
-                    type="secondary"
-                    size="medium"
-                    onClickHandler={() => setIsOpen(false)}
-                  />
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Cancel
+                  </Button>
                   <Button
-                    text={loading ? "Creating..." : "Create Admin"}
-                    type="primary"
-                    size="medium"
+                    type="submit"
+                    className="bg-[#FFC905] text-black hover:bg-[#FFC905]/80"
                     disabled={loading}
-                    onClickHandler={handleSubmit}
-                  />
+                  >
+                    {loading ? "Creating..." : "Create Admin"}
+                  </Button>
                 </div>
               </div>
             </form>
           </Dialog.Panel>
         </div>
       </Dialog>
-    </div>
+      <QuickActionFAB
+        actions={[
+          {
+            icon: Plus,
+            label: "New admin",
+            onClick: () => setIsOpen(true),
+          },
+          {
+            icon: RefreshCw,
+            label: "Refresh list",
+            onClick: fetchAdmins,
+          },
+        ]}
+      />
+    </AdminPageLayout>
   );
 }

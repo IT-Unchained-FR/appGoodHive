@@ -8,13 +8,14 @@ import { Spinner } from "@/app/components/admin/Spinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
+import { CheckSquare, MoreHorizontal, Square } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import ApprovalPopup from "./components/ApprovalPopup";
@@ -38,6 +39,7 @@ export default function AdminCompanyApproval() {
   const [selectedUser, setSelectedUser] = useState<Company | null>(null);
   const [selectedItems, setSelectedItems] = useState<Company[]>([]);
   const [showBulkApproval, setShowBulkApproval] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const handleApproveClick = (user: Company) => {
     setSelectedUser(user);
@@ -237,6 +239,15 @@ export default function AdminCompanyApproval() {
   }, []);
 
   useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
     const filtered = users.filter((user) => {
       const searchStr =
         `${user.headline} ${user.email} ${user.city} ${user.country}`.toLowerCase();
@@ -306,17 +317,42 @@ export default function AdminCompanyApproval() {
           </div>
         ) : (
           <>
-            <AdminTable
-              columns={columns}
-              data={filteredUsers}
-              // onRowClick={(row) =>
-              //   window.open(`/admin/company/${row.user_id}`, "_blank")
-              // }
-            />
-            {filteredUsers.length === 0 && (
-              <div className="text-center text-gray-500 py-8">
-                No pending requests found
-              </div>
+            {isMobile ? (
+              filteredUsers.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4">
+                  {filteredUsers.map((company) => (
+                    <CompanyApprovalCard
+                      key={company.user_id}
+                      company={company}
+                      selected={selectedItems.some(
+                        (item) => item.user_id === company.user_id,
+                      )}
+                      onSelect={() => toggleItemSelection(company)}
+                      onApprove={() => handleApproveClick(company)}
+                      onReject={() => handleBulkReject([company.user_id])}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 py-8">
+                  No pending requests found
+                </div>
+              )
+            ) : (
+              <>
+                <AdminTable
+                  columns={columns}
+                  data={filteredUsers}
+                  // onRowClick={(row) =>
+                  //   window.open(`/admin/company/${row.user_id}`, "_blank")
+                  // }
+                />
+                {filteredUsers.length === 0 && (
+                  <div className="text-center text-gray-500 py-8">
+                    No pending requests found
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
@@ -341,6 +377,84 @@ export default function AdminCompanyApproval() {
         onApprove={handleBulkApprove}
         onReject={handleBulkReject}
       />
+      <QuickActionFAB
+        actions={[
+          {
+            icon: CheckSquare,
+            label: "Bulk approve",
+            onClick: () => setShowBulkApproval(true),
+          },
+          {
+            icon: Square,
+            label: "Select all",
+            onClick: toggleSelectAll,
+          },
+          {
+            icon: MoreHorizontal,
+            label: "Pending list",
+            onClick: () =>
+              window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+              }),
+          },
+        ]}
+      />
     </AdminPageLayout>
+  );
+}
+
+function CompanyApprovalCard({
+  company,
+  selected,
+  onSelect,
+  onApprove,
+  onReject,
+}: {
+  company: Company;
+  selected: boolean;
+  onSelect: () => void;
+  onApprove: () => void;
+  onReject: () => void;
+}) {
+  return (
+    <div className="border border-gray-200 rounded-lg bg-white p-4 shadow-sm space-y-3 relative">
+      <div className="absolute top-3 right-3">
+        <Checkbox checked={selected} onCheckedChange={onSelect} />
+      </div>
+      <div className="space-y-1">
+        <div className="font-semibold text-gray-900">
+          {company.designation || "Company"}
+        </div>
+        <div className="text-sm text-gray-600">{company.email}</div>
+        <Badge
+          variant="outline"
+          className="bg-yellow-50 text-yellow-700 border-yellow-200"
+        >
+          Pending
+        </Badge>
+      </div>
+      <div className="text-sm text-gray-700">
+        {company.city}, {company.country}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" variant="outline" onClick={onApprove}>
+          Approve
+        </Button>
+        <Button size="sm" variant="destructive" onClick={onReject}>
+          Reject
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="ml-auto"
+          onClick={() =>
+            window.open(`/admin/company/${company.user_id}`, "_blank")
+          }
+        >
+          View Profile
+        </Button>
+      </div>
+    </div>
   );
 }

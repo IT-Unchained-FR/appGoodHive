@@ -2,6 +2,8 @@
 
 import Spinner from "@/app/components/Spinner/Spinner";
 import { StatCard } from "@/app/components/admin/StatCard";
+import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
+import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
 import { Button } from "@/components/ui/button";
 import Cookies from "js-cookie";
 import {
@@ -121,7 +123,11 @@ export default function AdminDashboard() {
   const totalPending = statistics.approvals.pendingTalents + statistics.approvals.pendingCompanies;
 
   return (
-    <div className="w-full mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+    <AdminPageLayout
+      title="Admin Dashboard"
+      subtitle="Overview of your GoodHive platform"
+    >
+      <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
         <div>
@@ -388,6 +394,25 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
-    </div>
+      <QuickActionFAB
+        actions={[
+          {
+            icon: UserCheck,
+            label: "Approve talents",
+            href: "/admin/talent-approval",
+          },
+          {
+            icon: Building2,
+            label: "Approve companies",
+            href: "/admin/company-approval",
+          },
+          {
+            icon: TrendingUp,
+            label: "View analytics",
+            href: "/admin/analytics",
+          },
+        ]}
+      />
+    </AdminPageLayout>
   );
 }

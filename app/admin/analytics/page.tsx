@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
+import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
 import { UserGrowthChart } from "@/app/components/admin/UserGrowthChart";
 import { JobTrendsChart } from "@/app/components/admin/JobTrendsChart";
 import { ReportGenerator } from "@/app/components/admin/ReportGenerator";
@@ -292,6 +293,25 @@ export default function AnalyticsPage() {
         open={showReportGenerator}
         onOpenChange={setShowReportGenerator}
         onGenerate={handleGenerateReport}
+      />
+      <QuickActionFAB
+        actions={[
+          {
+            icon: Download,
+            label: "Export report",
+            onClick: () => setShowReportGenerator(true),
+          },
+          {
+            icon: TrendingUp,
+            label: "Refresh data",
+            onClick: fetchAnalytics,
+          },
+          {
+            icon: Users,
+            label: "Talent approvals",
+            href: "/admin/talent-approval",
+          },
+        ]}
       />
     </AdminPageLayout>
   );
