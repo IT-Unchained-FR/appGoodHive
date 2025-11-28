@@ -2,10 +2,12 @@
 
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { Column, EnhancedTable } from "@/app/components/admin/EnhancedTable";
+import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { IJobOffer } from "@/interfaces/job-offer";
 import Image from "next/image";
+import { Download, Filter } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 export default function AdminAllJobs() {
@@ -103,6 +105,19 @@ export default function AdminAllJobs() {
           </Button>
         </div>
       ),
+    },
+  ];
+
+  const jobActions = [
+    {
+      icon: Download,
+      label: "Export jobs",
+      onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }),
+    },
+    {
+      icon: Filter,
+      label: "Filter & sort",
+      onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }),
     },
   ];
 
@@ -231,6 +246,7 @@ export default function AdminAllJobs() {
           )}
         </div>
       </div>
+      <QuickActionFAB actions={jobActions} />
     </AdminPageLayout>
   );
 }

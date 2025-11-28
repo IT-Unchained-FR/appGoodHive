@@ -1,0 +1,82 @@
+.fabContainer {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 50;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(2px);
+}
+
+.mainFab {
+  width: 56px;
+  height: 56px;
+  border-radius: 9999px;
+  background: #ffc905;
+  color: #1a1d1f;
+  border: none;
+  box-shadow: 0 4px 12px rgba(255, 201, 5, 0.4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mainFab:active {
+  transform: scale(0.97);
+  box-shadow: 0 6px 16px rgba(255, 201, 5, 0.45);
+}
+
+.actionList {
+  position: absolute;
+  right: 0;
+  bottom: 4.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+.actionListOpen {
+  pointer-events: auto;
+}
+
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #ffffff;
+  border-radius: 9999px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 12px rgba(17, 24, 39, 0.12);
+  color: #111827;
+  text-decoration: none;
+  font-weight: 600;
+  transform: translateY(8px);
+  opacity: 0;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.actionListOpen .actionButton {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.actionButton span {
+  font-size: 0.9rem;
+}
+
+.actionIcon {
+  width: 18px;
+  height: 18px;
+}
+
+.stagger {
+  transition-delay: var(--delay, 0ms);
+}

@@ -1,11 +1,13 @@
 "use client";
 
+import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { Column, EnhancedTable } from "@/app/components/admin/EnhancedTable";
+import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Cookies from "js-cookie";
-import { Copy, Filter } from "lucide-react";
+import { BarChart3, Copy, Download, Filter } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -224,11 +226,14 @@ export default function AdminManageUsers() {
   ];
 
   return (
-    <div className="w-full mx-auto p-6">
-      <div className="flex items-center justify-between mb-8">
+    <AdminPageLayout
+      title="All Users"
+      subtitle="Manage users, roles, and profile access across GoodHive"
+    >
+      <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold mb-1">
-            All Users Under GoodHive's System
+            All Users Under GoodHive&apos;s System
           </h2>
           <p className="text-sm text-muted-foreground">
             {filteredUsers.length} users
@@ -237,7 +242,7 @@ export default function AdminManageUsers() {
       </div>
 
       {/* Filter Buttons */}
-      <div className="flex gap-2 items-center bg-white p-2 rounded-lg border border-gray-200 w-fit mb-4">
+      <div className="flex gap-2 items-center bg-white p-2 rounded-lg border border-gray-200 w-fit">
         <Filter className="h-4 w-4 text-muted-foreground" />
         <button
           onClick={() => setProfileFilter("all")}
@@ -281,7 +286,105 @@ export default function AdminManageUsers() {
         exportable={true}
         loading={loading}
         emptyMessage="No users found"
+        pageSizeOptions={[10, 25, 50]}
+        mobileCardView
+        renderMobileCard={(user) => <UserCard user={user} />}
       />
+
+      <QuickActionFAB
+        actions={[
+          {
+            icon: Download,
+            label: "Export users",
+            onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }),
+          },
+          {
+            icon: Filter,
+            label: "Filter by profile",
+            onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }),
+          },
+          {
+            icon: BarChart3,
+            label: "View analytics",
+            onClick: () => router.push("/admin/analytics"),
+          },
+        ]}
+      />
+    </AdminPageLayout>
+  );
+}
+
+function UserCard({ user }: { user: User }) {
+  return (
+    <div className="border border-gray-200 rounded-lg bg-white p-4 shadow-sm space-y-3">
+      <div className="flex items-start gap-3">
+        <Avatar className="h-10 w-10">
+          <AvatarFallback>
+            {user.email?.charAt(0) || user.wallet_address?.charAt(2)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 space-y-1">
+          <div className="font-semibold text-gray-900">
+            {user.first_name} {user.last_name}
+          </div>
+          <div className="text-sm text-gray-600 break-words">{user.email}</div>
+          <div className="text-xs text-gray-500">
+            ID:{" "}
+            {user.userid.length > 10
+              ? `${user.userid.slice(0, 6)}...${user.userid.slice(-4)}`
+              : user.userid}
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {user.mentor_status === "approved" && (
+          <Badge className="bg-green-500 text-white hover:bg-green-600 text-xs">
+            Mentor
+          </Badge>
+        )}
+        {user.recruiter_status === "approved" && (
+          <Badge className="bg-green-500 text-white hover:bg-green-600 text-xs">
+            Recruiter
+          </Badge>
+        )}
+        {user.talent_status === "approved" && (
+          <Badge className="bg-green-500 text-white hover:bg-green-600 text-xs">
+            Talent
+          </Badge>
+        )}
+        {user.mentor_status !== "approved" &&
+          user.recruiter_status !== "approved" &&
+          user.talent_status !== "approved" && (
+            <Badge className="bg-gray-500 text-white hover:bg-gray-600 text-xs">
+              No Roles
+            </Badge>
+          )}
+      </div>
+      <div className="flex items-center justify-between text-sm text-gray-700">
+        <span>
+          Wallet:{" "}
+          {user.wallet_address
+            ? `${user.wallet_address.slice(0, 6)}...${user.wallet_address.slice(-4)}`
+            : "N/A"}
+        </span>
+        <span className="text-xs text-gray-500">
+          Last active: {new Date(user.last_active).toLocaleDateString()}
+        </span>
+      </div>
+      {user.has_talent_profile ? (
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full text-white bg-[#FFC905] border border-transparent rounded-md hover:bg-[#FFC905]/80 transition duration-200 ease-in-out"
+          onClick={() => window.open(`/admin/talent/${user.userid}`, "_blank")}
+        >
+          View Talent Profile
+        </Button>
+      ) : (
+        <Badge className="bg-gray-600 text-gray-200 hover:bg-gray-500 w-full text-center justify-center">
+          No Talent Profile
+        </Badge>
+      )}
     </div>
   );
 }

@@ -4,12 +4,13 @@ import { ConfirmationPopup } from "@/app/components/ConfirmationPopup/Confirmati
 import { EditCompanyModal } from "@/app/components/admin/EditCompanyModal";
 import { Column, EnhancedTable } from "@/app/components/admin/EnhancedTable";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
+import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
 import { generateCountryFlag } from "@/app/utils/generate-country-flag";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Cookies from "js-cookie";
-import { Pencil, Trash2 } from "lucide-react";
+import { Building2, Download, Filter, Pencil, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -258,6 +259,24 @@ export default function AdminManageCompanies() {
     },
   ];
 
+  const companyActions = [
+    {
+      icon: Building2,
+      label: "Approve companies",
+      onClick: () => router.push("/admin/company-approval"),
+    },
+    {
+      icon: Filter,
+      label: "Filter & sort",
+      onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }),
+    },
+    {
+      icon: Download,
+      label: "Export data",
+      onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }),
+    },
+  ];
+
   return (
     <AdminPageLayout
       title="All Companies"
@@ -300,9 +319,88 @@ export default function AdminManageCompanies() {
             loading={loading}
             emptyMessage="No companies found"
             pageSizeOptions={[10, 25, 50]}
+            mobileCardView
+            renderMobileCard={(company) => (
+              <CompanyCard
+                company={company}
+                onEdit={() => {
+                  setEditingCompany(company);
+                  setShowEditModal(true);
+                }}
+                onDelete={() => {
+                  setUserToDelete(company.user_id);
+                  setShowDeleteConfirm(true);
+                }}
+              />
+            )}
           />
         </div>
       </div>
+      <QuickActionFAB actions={companyActions} />
     </AdminPageLayout>
+  );
+}
+
+function CompanyCard({
+  company,
+  onEdit,
+  onDelete,
+}: {
+  company: Company;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="border border-gray-200 rounded-lg bg-white p-4 shadow-sm space-y-3">
+      <div className="flex items-start gap-3">
+        <Avatar className="h-12 w-12">
+          {company.image_url ? (
+            <Image
+              src={company.image_url}
+              alt={company.designation}
+              width={48}
+              height={48}
+              className="h-12 w-12 rounded-full"
+            />
+          ) : (
+            <AvatarFallback>{company.designation?.[0]}</AvatarFallback>
+          )}
+        </Avatar>
+        <div className="flex-1">
+          <div className="font-semibold text-gray-900">{company.designation}</div>
+          <div className="text-sm text-gray-600 break-words">{company.email}</div>
+          <div className="flex flex-wrap gap-2 mt-2">
+            <Badge className={company.approved ? "bg-green-500 text-white" : "bg-orange-500 text-white"}>
+              {company.approved ? "Approved" : "Pending"}
+            </Badge>
+            <Badge variant="secondary">{company.status || "Active"}</Badge>
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center justify-between text-sm text-gray-700">
+        <span>
+          {company.city}, {company.country}
+        </span>
+        <span>
+          +{company.phone_country_code} {company.phone_number}
+        </span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" onClick={onEdit}>
+          Edit
+        </Button>
+        <Button variant="destructive" size="sm" onClick={onDelete}>
+          Delete
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="ml-auto"
+          onClick={() => window.open(`/admin/company/${company.user_id}`, "_blank")}
+        >
+          View
+        </Button>
+      </div>
+    </div>
   );
 }
