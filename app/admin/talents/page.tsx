@@ -4,12 +4,22 @@ import { ConfirmationPopup } from "@/app/components/ConfirmationPopup/Confirmati
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { EditTalentModal } from "@/app/components/admin/EditTalentModal";
 import { Column, EnhancedTable } from "@/app/components/admin/EnhancedTable";
+import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
 import { ProfileData } from "@/app/talents/my-profile/page";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Cookies from "js-cookie";
-import { Check, Copy, Pencil, Trash2, X } from "lucide-react";
+import {
+  Check,
+  Copy,
+  Download,
+  Filter,
+  Pencil,
+  Trash2,
+  UserCheck,
+  X,
+} from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -328,6 +338,24 @@ export default function AdminManageTalents() {
     },
   ];
 
+  const talentActions = [
+    {
+      icon: UserCheck,
+      label: "Approve talents",
+      onClick: () => router.push("/admin/talent-approval"),
+    },
+    {
+      icon: Filter,
+      label: "Filter & sort",
+      onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }),
+    },
+    {
+      icon: Download,
+      label: "Export data",
+      onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }),
+    },
+  ];
+
   return (
     <AdminPageLayout
       title="All Talents"
@@ -381,9 +409,112 @@ export default function AdminManageTalents() {
             loading={loading}
             emptyMessage="No talents found"
             pageSizeOptions={[10, 25, 50]}
+            mobileCardView
+            renderMobileCard={(talent) => (
+              <TalentCard
+                talent={talent}
+                onEdit={() => {
+                  setEditingTalent(talent);
+                  setShowEditModal(true);
+                }}
+                onApprove={() => {
+                  setSelectedUser(talent);
+                  setShowApprovePopup(true);
+                }}
+                onDelete={() => {
+                  setUserToDelete(talent.user_id || "");
+                  setShowDeleteConfirm(true);
+                }}
+              />
+            )}
           />
         </div>
       </div>
+      <QuickActionFAB actions={talentActions} />
     </AdminPageLayout>
+  );
+}
+
+function TalentCard({
+  talent,
+  onEdit,
+  onApprove,
+  onDelete,
+}: {
+  talent: ProfileData;
+  onEdit: () => void;
+  onApprove: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="border border-gray-200 rounded-lg bg-white p-4 shadow-sm space-y-3">
+      <div className="flex items-start gap-3">
+        <Avatar className="h-12 w-12">
+          {talent.image_url ? (
+            <Image
+              src={talent.image_url}
+              alt={`${talent.first_name} ${talent.last_name}`}
+              width={48}
+              height={48}
+              className="h-12 w-12 rounded-full"
+            />
+          ) : (
+            <AvatarFallback>
+              {talent.first_name?.[0]}
+              {talent.last_name?.[0]}
+            </AvatarFallback>
+          )}
+        </Avatar>
+        <div className="flex-1">
+          <div className="font-semibold text-gray-900">
+            {talent.first_name} {talent.last_name}
+          </div>
+          <div className="text-sm text-gray-600 break-words">
+            {talent.email}
+          </div>
+          <div className="flex flex-wrap gap-2 mt-2">
+            <Badge className={talent.talent ? "bg-green-500 text-white" : "bg-orange-500 text-white"}>
+              Talent {talent.talent ? "Yes" : "No"}
+            </Badge>
+            <Badge className={talent.mentor ? "bg-green-500 text-white" : "bg-orange-500 text-white"}>
+              Mentor {talent.mentor ? "Yes" : "No"}
+            </Badge>
+            <Badge className={talent.recruiter ? "bg-green-500 text-white" : "bg-orange-500 text-white"}>
+              Recruiter {talent.recruiter ? "Yes" : "No"}
+            </Badge>
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center justify-between text-sm text-gray-700">
+        <span>
+          Wallet:{" "}
+          {talent.wallet_address
+            ? `${talent.wallet_address.slice(0, 6)}...${talent.wallet_address.slice(-4)}`
+            : "N/A"}
+        </span>
+        <Badge className={talent.approved ? "bg-green-500 text-white" : "bg-orange-500 text-white"}>
+          {talent.approved ? "Approved" : "Pending"}
+        </Badge>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" onClick={onEdit}>
+          Edit
+        </Button>
+        <Button variant="outline" size="sm" onClick={onApprove}>
+          Roles
+        </Button>
+        <Button variant="destructive" size="sm" onClick={onDelete}>
+          Delete
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="ml-auto"
+          onClick={() => window.open(`/admin/talent/${talent.user_id}`, "_blank")}
+        >
+          View
+        </Button>
+      </div>
+    </div>
   );
 }

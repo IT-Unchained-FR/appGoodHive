@@ -70,6 +70,9 @@ interface EnhancedTableProps<T> {
   onSelectionChange?: (selectedItems: T[]) => void; // Callback when selection changes
   enableFilterBuilder?: boolean; // Enable custom filter builder
   enableColumnSelection?: boolean; // Enable column selection for export
+  mobileCardView?: boolean; // Enable card view on mobile
+  renderMobileCard?: (row: T) => React.ReactNode; // Custom card renderer
+  cardBreakpoint?: number; // Viewport width to switch to cards
 }
 
 type SortDirection = "asc" | "desc" | null;
@@ -92,6 +95,9 @@ export function EnhancedTable<T extends Record<string, any>>({
   onSelectionChange,
   enableFilterBuilder = false,
   enableColumnSelection = false,
+  mobileCardView = false,
+  renderMobileCard,
+  cardBreakpoint = 768,
 }: EnhancedTableProps<T>) {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -108,6 +114,30 @@ export function EnhancedTable<T extends Record<string, any>>({
   const [filterLogic, setFilterLogic] = useState<"AND" | "OR">("AND");
   const [showFilterBuilder, setShowFilterBuilder] = useState(false);
   const [savedPresets, setSavedPresets] = useState<any[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Track viewport width to toggle card view on mobile
+  useEffect(() => {
+    if (!mobileCardView) return;
+
+    let resizeTimeout: ReturnType<typeof setTimeout>;
+    const checkMobile = () => {
+      const isSmall = window.innerWidth < (cardBreakpoint || 768);
+      setIsMobile(isSmall);
+    };
+
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(checkMobile, 150);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", handleResize);
+    return () => {
+      clearTimeout(resizeTimeout);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [mobileCardView, cardBreakpoint]);
 
   // Filter visible columns
   const displayColumns = useMemo(() => {
@@ -396,6 +426,34 @@ export function EnhancedTable<T extends Record<string, any>>({
     return <ChevronUp className="h-4 w-4 text-gray-400" />;
   };
 
+  const sortableColumns = useMemo(
+    () => columns.filter((col) => col.sortable),
+    [columns],
+  );
+
+  const showCardView = mobileCardView && isMobile;
+
+  const DefaultCard = ({ row }: { row: T }) => {
+    return (
+      <div
+        className="border border-gray-200 rounded-lg p-4 bg-white space-y-3 shadow-sm"
+      >
+        <div className="space-y-2">
+          {displayColumns.map((col) => (
+            <div key={col.key} className="flex justify-between items-start gap-3">
+              <span className="text-xs font-medium text-gray-500 uppercase">
+                {col.header}
+              </span>
+              <div className="text-sm text-gray-900 text-right">
+                {col.render ? col.render(row[col.key], row) : String(row[col.key] ?? "")}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-4">
       {/* Search, Export, Bulk Actions, and Column Visibility Bar */}
@@ -419,6 +477,12 @@ export function EnhancedTable<T extends Record<string, any>>({
                   className="pl-8"
                 />
               </div>
+            )}
+            {showCardView && selectable && (
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <Checkbox checked={isAllSelected} onCheckedChange={handleSelectAll} />
+                <span>Select page</span>
+              </label>
             )}
             {enableFilterBuilder && (
               <Button
@@ -473,6 +537,28 @@ export function EnhancedTable<T extends Record<string, any>>({
             )}
           </div>
           <div className="flex items-center gap-2">
+            {showCardView && sortableColumns.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    Sort
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  {sortableColumns.map((column) => (
+                    <DropdownMenuItem
+                      key={column.key}
+                      onClick={() => handleSort(column.key)}
+                      className="flex items-center justify-between gap-2"
+                    >
+                      <span>{column.header}</span>
+                      {getSortIcon(column.key)}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             {/* Column Visibility Toggle */}
             {columns.length > 1 && (
               <DropdownMenu>
@@ -577,88 +663,136 @@ export function EnhancedTable<T extends Record<string, any>>({
         />
       )}
 
-      {/* Table */}
-      <div className="border rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {selectable && (
-                <TableHead className="w-[50px]">
-                  <Checkbox
-                    checked={isAllSelected}
-                    onCheckedChange={handleSelectAll}
-                  />
-                </TableHead>
-              )}
-              {displayColumns.map((column) => (
-                <TableHead
-                  key={column.key}
-                  style={{ width: column.width }}
-                  className={
-                    column.sortable ? "cursor-pointer hover:bg-gray-50" : ""
-                  }
-                  onClick={() => column.sortable && handleSort(column.key)}
+      {/* Table / Card View */}
+      {showCardView ? (
+        <div className="grid grid-cols-1 gap-4">
+          {loading ? (
+            Array.from({ length: pageSize }).map((_, idx) => (
+              <div
+                key={idx}
+                className="border border-gray-200 rounded-lg p-4 bg-gray-50 animate-pulse h-32"
+              />
+            ))
+          ) : paginatedData.length === 0 ? (
+            <div className="border rounded-lg p-6 text-center text-gray-500 bg-white">
+              {emptyMessage}
+            </div>
+          ) : (
+            paginatedData.map((row, index) => {
+              const rowId = getRowIdentifier(row, index);
+              const isSelected = selectedRows.has(rowId);
+              const cardContent = renderMobileCard ? (
+                renderMobileCard(row)
+              ) : (
+                <DefaultCard row={row} />
+              );
+
+              return (
+                <div
+                  key={rowId}
+                  className={`${selectable ? "relative" : ""} ${
+                    isSelected && selectable ? "ring-2 ring-[#FFC905]/60 rounded-lg" : ""
+                  }`}
                 >
-                  <div className="flex items-center gap-2">
-                    <span>{column.header}</span>
-                    {column.sortable && getSortIcon(column.key)}
-                  </div>
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
+                  {selectable && (
+                    <div className="absolute top-3 right-3 z-10">
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => handleSelectRow(row, index)}
+                        aria-label="Select row"
+                        className="bg-white"
+                      />
+                    </div>
+                  )}
+                  {cardContent}
+                </div>
+              );
+            })
+          )}
+        </div>
+      ) : (
+        <div className="border rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell
-                  colSpan={displayColumns.length + (selectable ? 1 : 0)}
-                  className="text-center py-8"
-                >
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#FFC905]"></div>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : paginatedData.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={displayColumns.length + (selectable ? 1 : 0)}
-                  className="text-center py-8 text-gray-500"
-                >
-                  {emptyMessage}
-                </TableCell>
-              </TableRow>
-            ) : (
-              paginatedData.map((row, index) => {
-                const rowId = getRowIdentifier(row, index);
-                const isSelected = selectedRows.has(rowId);
-                return (
-                  <TableRow
-                    key={rowId}
-                    className={isSelected ? "bg-[#FFC905]/10" : ""}
+                {selectable && (
+                  <TableHead className="w-[50px]">
+                    <Checkbox
+                      checked={isAllSelected}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
+                )}
+                {displayColumns.map((column) => (
+                  <TableHead
+                    key={column.key}
+                    style={{ width: column.width }}
+                    className={
+                      column.sortable ? "cursor-pointer hover:bg-gray-50" : ""
+                    }
+                    onClick={() => column.sortable && handleSort(column.key)}
                   >
-                    {selectable && (
-                      <TableCell>
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={() => handleSelectRow(row, index)}
-                        />
-                      </TableCell>
-                    )}
-                    {displayColumns.map((column) => (
-                      <TableCell key={column.key}>
-                        {column.render
-                          ? column.render(row[column.key], row)
-                          : String(row[column.key] || "")}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                    <div className="flex items-center gap-2">
+                      <span>{column.header}</span>
+                      {column.sortable && getSortIcon(column.key)}
+                    </div>
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={displayColumns.length + (selectable ? 1 : 0)}
+                    className="text-center py-8"
+                  >
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#FFC905]"></div>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : paginatedData.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={displayColumns.length + (selectable ? 1 : 0)}
+                    className="text-center py-8 text-gray-500"
+                  >
+                    {emptyMessage}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                paginatedData.map((row, index) => {
+                  const rowId = getRowIdentifier(row, index);
+                  const isSelected = selectedRows.has(rowId);
+                  return (
+                    <TableRow
+                      key={rowId}
+                      className={isSelected ? "bg-[#FFC905]/10" : ""}
+                    >
+                      {selectable && (
+                        <TableCell>
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => handleSelectRow(row, index)}
+                          />
+                        </TableCell>
+                      )}
+                      {displayColumns.map((column) => (
+                        <TableCell key={column.key}>
+                          {column.render
+                            ? column.render(row[column.key], row)
+                            : String(row[column.key] || "")}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       {/* Pagination */}
       {pagination && totalPages > 1 && (

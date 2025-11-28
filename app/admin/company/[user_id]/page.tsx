@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
 import toast from "react-hot-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 
 type CompanyAdminViewProfileProps = {
   params: {
@@ -23,6 +24,9 @@ export default function CompaniesPage({
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const { user_id } = params;
+  const breadcrumbLabels = company
+    ? { [user_id]: company.designation || "Company Detail" }
+    : undefined;
 
   useEffect(() => {
     fetchData();
@@ -70,51 +74,79 @@ export default function CompaniesPage({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FFC905]"></div>
-      </div>
+      <AdminPageLayout
+        title="Company Details"
+        subtitle="Manage company profile"
+        breadcrumbLabels={breadcrumbLabels}
+      >
+        <div className="flex items-center justify-center min-h-[200px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FFC905]"></div>
+        </div>
+      </AdminPageLayout>
     );
   }
 
   if (error) {
-    return <div className="text-red-500">Error: {error}</div>;
+    return (
+      <AdminPageLayout
+        title="Company Details"
+        subtitle="Manage company profile"
+        breadcrumbLabels={breadcrumbLabels}
+      >
+        <div className="text-red-500">Error: {error}</div>
+      </AdminPageLayout>
+    );
   }
 
   if (!company) {
-    return <div>No company data found</div>;
+    return (
+      <AdminPageLayout
+        title="Company Details"
+        subtitle="Manage company profile"
+        breadcrumbLabels={breadcrumbLabels}
+      >
+        <div>No company data found</div>
+      </AdminPageLayout>
+    );
   }
 
   return (
-    <div className="w-full mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Company Details</h1>
-        <Button
-          variant="outline"
-          onClick={() => setShowEditModal(true)}
-          className="gap-2"
-        >
-          <Pencil className="h-4 w-4" />
-          Edit Company
-        </Button>
+    <AdminPageLayout
+      title={company.designation || "Company Details"}
+      subtitle="Company profile details"
+      breadcrumbLabels={breadcrumbLabels}
+    >
+      <div className="w-full mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900">Company Details</h1>
+          <Button
+            variant="outline"
+            onClick={() => setShowEditModal(true)}
+            className="gap-2"
+          >
+            <Pencil className="h-4 w-4" />
+            Edit Company
+          </Button>
+        </div>
+
+        <CompanyAdminView {...company} />
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Action History</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ActionHistory targetType="company" targetId={user_id} />
+          </CardContent>
+        </Card>
+
+        <EditCompanyModal
+          open={showEditModal}
+          onOpenChange={setShowEditModal}
+          company={company}
+          onSave={handleSave}
+        />
       </div>
-
-      <CompanyAdminView {...company} />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Action History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ActionHistory targetType="company" targetId={user_id} />
-        </CardContent>
-      </Card>
-
-      <EditCompanyModal
-        open={showEditModal}
-        onOpenChange={setShowEditModal}
-        company={company}
-        onSave={handleSave}
-      />
-    </div>
+    </AdminPageLayout>
   );
 }

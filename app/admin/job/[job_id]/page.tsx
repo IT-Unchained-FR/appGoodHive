@@ -42,6 +42,12 @@ export default function AdminEditJobPage() {
   const [initialJob, setInitialJob] = useState<IJobOffer | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const breadcrumbLabels =
+    job || initialJob
+      ? {
+          [job_id]: job?.title || initialJob?.title || "Job Detail",
+        }
+      : undefined;
 
   useEffect(() => {
     if (job_id) {
@@ -113,7 +119,7 @@ export default function AdminEditJobPage() {
 
   if (loading) {
     return (
-      <AdminPageLayout title="Edit Job">
+      <AdminPageLayout title="Edit Job" breadcrumbLabels={breadcrumbLabels}>
         <div className="flex justify-center py-12">
           <Spinner size="lg" />
         </div>
@@ -123,7 +129,7 @@ export default function AdminEditJobPage() {
 
   if (!job) {
     return (
-      <AdminPageLayout title="Edit Job">
+      <AdminPageLayout title="Edit Job" breadcrumbLabels={breadcrumbLabels}>
         <div className="text-center py-12">Job not found.</div>
       </AdminPageLayout>
     );
@@ -133,6 +139,7 @@ export default function AdminEditJobPage() {
     <AdminPageLayout
       title={`Edit Job: ${initialJob?.title}`}
       subtitle={`ID: ${job.id}`}
+      breadcrumbLabels={breadcrumbLabels}
     >
       <div className="space-y-8 max-w-4xl mx-auto">
         {/* Job Details Section */}
