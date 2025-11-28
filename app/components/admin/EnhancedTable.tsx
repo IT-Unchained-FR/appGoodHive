@@ -802,7 +802,7 @@ export function EnhancedTable<T extends Record<string, any>>({
               <>
                 Showing{" "}
                 <span className="font-medium">
-                  Math.min((currentPage - 1) * pageSize + 1, filteredData.length)
+                  {Math.min((currentPage - 1) * pageSize + 1, filteredData.length)}
                 </span>{" "}
                 to{" "}
                 <span className="font-medium">
