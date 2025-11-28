@@ -3,6 +3,7 @@
 import { ConfirmationPopup } from "@/app/components/ConfirmationPopup/ConfirmationPopup";
 import { EditCompanyModal } from "@/app/components/admin/EditCompanyModal";
 import { Column, EnhancedTable } from "@/app/components/admin/EnhancedTable";
+import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { generateCountryFlag } from "@/app/utils/generate-country-flag";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -258,7 +259,10 @@ export default function AdminManageCompanies() {
   ];
 
   return (
-    <div className="w-full mx-auto p-6">
+    <AdminPageLayout
+      title="All Companies"
+      subtitle="Manage company profiles, approvals, and contact details"
+    >
       <ConfirmationPopup
         open={showDeleteConfirm}
         onOpenChange={setShowDeleteConfirm}
@@ -273,28 +277,32 @@ export default function AdminManageCompanies() {
         company={editingCompany}
         onSave={handleSaveCompany}
       />
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h2 className="text-xl font-semibold mb-1">
-            All Companies Under GoodHive's System
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {companies.length} companies
-          </p>
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 sm:p-6">
+        <div className="flex flex-col gap-4 sm:gap-5">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Company Directory
+              </h2>
+              <p className="text-sm text-gray-600">
+                {companies.length} companies • search, edit, or approve profiles.
+              </p>
+            </div>
+          </div>
+          <EnhancedTable
+            data={companies}
+            columns={columns}
+            searchable={true}
+            searchPlaceholder="Search by email, designation, user ID, or wallet address..."
+            pagination={true}
+            itemsPerPage={10}
+            exportable={true}
+            loading={loading}
+            emptyMessage="No companies found"
+            pageSizeOptions={[10, 25, 50]}
+          />
         </div>
       </div>
-
-      <EnhancedTable
-        data={companies}
-        columns={columns}
-        searchable={true}
-        searchPlaceholder="Search by email, designation, user ID, or wallet address..."
-        pagination={true}
-        itemsPerPage={10}
-        exportable={true}
-        loading={loading}
-        emptyMessage="No companies found"
-      />
-    </div>
+    </AdminPageLayout>
   );
 }

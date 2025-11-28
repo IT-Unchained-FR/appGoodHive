@@ -6,7 +6,8 @@ export async function getPendingTalents() {
       SELECT 
           talents.*, 
           users.referred_by,
-          users.approved_roles
+          users.approved_roles,
+          COALESCE(users.created_at, users.last_active) AS user_created_at
       FROM 
           goodhive.talents AS talents
       JOIN 
