@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
+import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,15 +79,12 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="w-full mx-auto p-6 space-y-6 max-w-4xl">
+    <AdminPageLayout
+      title="Settings"
+      subtitle="Manage admin panel preferences and configuration"
+    >
+      <div className="w-full mx-auto space-y-6 max-w-4xl">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-        <p className="text-sm text-gray-600 mt-1">
-          Manage your admin panel preferences and system configuration
-        </p>
-      </div>
-
       {/* Notification Settings */}
       <Card>
         <CardHeader>
@@ -284,7 +283,24 @@ export default function SettingsPage() {
           {loading ? "Saving..." : "Save Settings"}
         </Button>
       </div>
-    </div>
+      </div>
+      <QuickActionFAB
+        actions={[
+          {
+            icon: Settings,
+            label: "Save settings",
+            onClick: handleSave,
+          },
+          {
+            icon: Bell,
+            label: "Notifications",
+            onClick: () =>
+              document
+                .getElementById("email-notifications")
+                ?.scrollIntoView({ behavior: "smooth" }),
+          },
+        ]}
+      />
+    </AdminPageLayout>
   );
 }
-
