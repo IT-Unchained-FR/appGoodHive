@@ -128,18 +128,18 @@ export default function AdminDashboard() {
       subtitle="Overview of your GoodHive platform"
     >
       <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-xs sm:text-sm text-gray-600 mt-1">
-            Overview of your GoodHive platform
-          </p>
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+            <p className="text-xs sm:text-sm text-gray-600 mt-1">
+              Overview of your GoodHive platform
+            </p>
+          </div>
+          <Button onClick={fetchStatistics} variant="outline" size="sm" className="w-full sm:w-auto">
+            Refresh
+          </Button>
         </div>
-        <Button onClick={fetchStatistics} variant="outline" size="sm" className="w-full sm:w-auto">
-          Refresh
-        </Button>
-      </div>
 
       {/* Overview Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -393,6 +393,7 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
+      </div>
       </div>
       <QuickActionFAB
         actions={[
