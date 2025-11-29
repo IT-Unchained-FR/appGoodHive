@@ -62,9 +62,8 @@ export function JobTrendsChart({ data, loading }: JobTrendsChartProps) {
 
   const totalJobs = data.reduce((sum, point) => sum + point.count, 0);
   const averagePerDay = (totalJobs / data.length).toFixed(1);
-  const trend = data.length >= 2
-    ? data[data.length - 1].count - data[0].count
-    : 0;
+  const trend =
+    data.length >= 2 ? data[data.length - 1].count - data[0].count : 0;
 
   return (
     <Card>
@@ -86,39 +85,22 @@ export function JobTrendsChart({ data, loading }: JobTrendsChartProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          {/* Line chart representation */}
-          <div className="flex items-end gap-1 h-64 relative">
+          {/* Bar chart representation */}
+          <div className="flex items-end gap-1 h-64">
             {data.map((point, index) => {
               const height = maxValue > 0 ? (point.count / maxValue) * 100 : 0;
-              const nextPoint = data[index + 1];
-              const nextHeight = nextPoint && maxValue > 0
-                ? (nextPoint.count / maxValue) * 100
-                : 0;
 
               return (
                 <div
                   key={index}
-                  className="flex-1 flex flex-col items-center group relative"
+                  className="flex-1 flex flex-col items-center group"
                 >
                   <div className="w-full flex flex-col items-center">
                     <div
-                      className="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-t hover:from-blue-600 hover:to-blue-500 transition-all cursor-pointer relative"
+                      className="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-t hover:from-blue-600 hover:to-blue-500 transition-all cursor-pointer"
                       style={{ height: `${height}%` }}
                       title={`${point.date}: ${point.count} jobs`}
-                    >
-                      {nextPoint && (
-                        <div
-                          className="absolute top-0 left-full w-full h-0.5 bg-blue-500"
-                          style={{
-                            transform: `rotate(${Math.atan2(
-                              nextHeight - height,
-                              100
-                            ) * (180 / Math.PI)}deg)`,
-                            transformOrigin: "left center",
-                          }}
-                        />
-                      )}
-                    </div>
+                    />
                     <span className="text-xs text-gray-500 mt-1 hidden group-hover:block">
                       {point.count}
                     </span>
@@ -138,4 +120,3 @@ export function JobTrendsChart({ data, loading }: JobTrendsChartProps) {
     </Card>
   );
 }
-
