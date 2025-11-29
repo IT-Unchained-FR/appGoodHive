@@ -257,6 +257,7 @@ export function EnhancedTable<T extends Record<string, any>>({
 
   // Sort data
   const sortedData = useMemo(() => {
+    if (!filteredData) return [];
     if (!sortColumn || !sortDirection) return filteredData;
 
     return [...filteredData].sort((a, b) => {
@@ -277,6 +278,7 @@ export function EnhancedTable<T extends Record<string, any>>({
 
   // Paginate data
   const paginatedData = useMemo(() => {
+    if (!sortedData) return [];
     if (!pagination) return sortedData;
 
     const startIndex = (currentPage - 1) * pageSize;
@@ -284,10 +286,11 @@ export function EnhancedTable<T extends Record<string, any>>({
     return sortedData.slice(startIndex, endIndex);
   }, [sortedData, currentPage, pageSize, pagination]);
 
-  const totalPages = Math.ceil(filteredData.length / pageSize) || 1;
+  const totalPages = Math.ceil((filteredData?.length || 0) / pageSize) || 1;
 
   // Get selected items
   const selectedItems = useMemo(() => {
+    if (!filteredData) return [];
     return filteredData.filter((row, index) =>
       selectedRows.has(getRowIdentifier(row, index)),
     );
