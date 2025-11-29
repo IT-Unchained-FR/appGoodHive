@@ -1,0 +1,148 @@
+.dateRangeFilter {
+  .quickOptions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+
+    button {
+      padding: 0.5rem 1rem;
+      border: 1px solid #dee2e6;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #495057;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #e9ecef;
+        border-color: #adb5bd;
+      }
+
+      &.active {
+        background: #ffc107;
+        border-color: #ffc107;
+        color: white;
+
+        &:hover {
+          background: #e0a800;
+          border-color: #e0a800;
+        }
+      }
+
+      &:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.25);
+      }
+    }
+  }
+
+  .customRange {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+
+    .dateInputs {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 0.75rem;
+
+      input[type='date'] {
+        padding: 0.5rem;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        color: #495057;
+
+        &:focus {
+          outline: none;
+          border-color: #ffc107;
+          box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.15);
+        }
+      }
+
+      .separator {
+        color: #6c757d;
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+    }
+
+    .customActions {
+      display: flex;
+      gap: 0.5rem;
+
+      button {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+
+        &:focus {
+          outline: none;
+          box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+        }
+      }
+
+      .applyBtn {
+        background: #ffc107;
+        color: white;
+
+        &:hover:not(:disabled) {
+          background: #e0a800;
+        }
+
+        &:disabled {
+          background: #e9ecef;
+          color: #adb5bd;
+          cursor: not-allowed;
+        }
+      }
+
+      .cancelBtn {
+        background: #e9ecef;
+        color: #495057;
+
+        &:hover {
+          background: #dee2e6;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    .quickOptions {
+      button {
+        font-size: 0.8125rem;
+        padding: 0.4rem 0.75rem;
+      }
+    }
+
+    .customRange {
+      .dateInputs {
+        flex-direction: column;
+        align-items: stretch;
+
+        .separator {
+          text-align: center;
+          margin: 0.25rem 0;
+        }
+      }
+
+      .customActions {
+        flex-direction: column;
+
+        button {
+          width: 100%;
+        }
+      }
+    }
+  }
+}
