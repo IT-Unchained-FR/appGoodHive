@@ -3,14 +3,17 @@
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { Column, EnhancedTable } from "@/app/components/admin/EnhancedTable";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
+import { AdminFilters } from "@/app/components/admin/AdminFilters";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { IJobOffer } from "@/interfaces/job-offer";
 import Image from "next/image";
 import { Download, Filter } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 export default function AdminAllJobs() {
+  const searchParams = useSearchParams();
   const [jobs, setJobs] = useState<IJobOffer[]>([]);
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
@@ -18,7 +21,11 @@ export default function AdminAllJobs() {
   const fetchJobs = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/admin/jobs");
+      // Build URL with filter params
+      const params = new URLSearchParams(searchParams.toString());
+      const url = `/api/admin/jobs${params.toString() ? `?${params.toString()}` : ''}`;
+
+      const response = await fetch(url);
       const data = await response.json();
       setJobs(data);
     } catch (error) {
@@ -30,7 +37,7 @@ export default function AdminAllJobs() {
 
   useEffect(() => {
     fetchJobs();
-  }, []);
+  }, [searchParams]);
 
   const jobCards = useMemo(() => {
     return jobs.map((job) => ({
@@ -126,6 +133,44 @@ export default function AdminAllJobs() {
       title="All Jobs"
       subtitle="Browse and manage all job listings"
     >
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-xl font-semibold mb-1">All Job Listings</h2>
+          <p className="text-sm text-muted-foreground">
+            {jobs?.length || 0} jobs
+          </p>
+        </div>
+      </div>
+
+      {/* Admin Filters */}
+      <AdminFilters
+        config={{
+          dateFilter: true,
+          statusFilter: [
+            { value: 'all', label: 'All jobs' },
+            { value: 'published', label: 'Published' },
+            { value: 'unpublished', label: 'Unpublished' },
+          ],
+          customFilters: [
+            {
+              key: 'location',
+              label: 'Location',
+              type: 'text',
+              placeholder: 'Search by city or country...',
+            },
+          ],
+          sortOptions: [
+            { value: 'latest', label: 'Latest first' },
+            { value: 'oldest', label: 'Oldest first' },
+            { value: 'title-asc', label: 'Title A-Z' },
+            { value: 'title-desc', label: 'Title Z-A' },
+            { value: 'company-asc', label: 'Company A-Z' },
+            { value: 'company-desc', label: 'Company Z-A' },
+          ],
+        }}
+        basePath="/admin/all-jobs"
+      />
+
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 sm:p-6">
         <div className="flex flex-col gap-4 sm:gap-5">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
