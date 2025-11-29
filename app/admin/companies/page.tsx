@@ -5,6 +5,7 @@ import { EditCompanyModal } from "@/app/components/admin/EditCompanyModal";
 import { Column, EnhancedTable } from "@/app/components/admin/EnhancedTable";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
+import { AdminFilters } from "@/app/components/admin/AdminFilters";
 import { generateCountryFlag } from "@/app/utils/generate-country-flag";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import Cookies from "js-cookie";
 import { Building2, Download, Filter, Pencil, Trash2 } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -37,10 +38,12 @@ interface Company {
   twitter: string | null;
   user_id: string;
   wallet_address: string | null;
+  created_at?: string;
 }
 
 export default function AdminManageCompanies() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -66,7 +69,11 @@ export default function AdminManageCompanies() {
       const headers = getAuthHeaders();
       if (!headers) return;
 
-      const response = await fetch("/api/admin/companies", { headers });
+      // Build URL with filter params
+      const params = new URLSearchParams(searchParams.toString());
+      const url = `/api/admin/companies${params.toString() ? `?${params.toString()}` : ""}`;
+
+      const response = await fetch(url, { headers });
 
       if (response.status === 401) {
         router.push("/admin/login");
@@ -85,7 +92,7 @@ export default function AdminManageCompanies() {
 
   useEffect(() => {
     fetchAllCompanies();
-  }, []);
+  }, [searchParams]);
 
   const handleDeleteCompany = async (userId: string) => {
     try {
@@ -295,6 +302,32 @@ export default function AdminManageCompanies() {
         onOpenChange={setShowEditModal}
         company={editingCompany}
         onSave={handleSaveCompany}
+      />
+      {/* Admin Filters */}
+      <AdminFilters
+        config={{
+          dateFilter: true,
+          statusFilter: [
+            { value: "all", label: "All companies" },
+            { value: "approved", label: "Approved" },
+            { value: "pending", label: "Pending / In review" },
+          ],
+          customFilters: [
+            {
+              key: "location",
+              label: "Location",
+              type: "text",
+              placeholder: "Search by city or country...",
+            },
+          ],
+          sortOptions: [
+            { value: "latest", label: "Latest first" },
+            { value: "oldest", label: "Oldest first" },
+            { value: "name-asc", label: "Name A-Z" },
+            { value: "name-desc", label: "Name Z-A" },
+          ],
+        }}
+        basePath="/admin/companies"
       />
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 sm:p-6">
         <div className="flex flex-col gap-4 sm:gap-5">

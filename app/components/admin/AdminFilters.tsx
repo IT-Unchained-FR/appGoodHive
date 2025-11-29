@@ -10,17 +10,27 @@ export type FilterOption = {
   label: string;
 };
 
+type CustomFilter =
+  | {
+      key: string;
+      label: string;
+      type?: 'select';
+      options: FilterOption[];
+    }
+  | {
+      key: string;
+      label: string;
+      type: 'text';
+      placeholder?: string;
+    };
+
 export type FilterConfig = {
   dateFilter?: boolean;
   statusFilter?: boolean | FilterOption[];
   roleFilter?: boolean | FilterOption[];
   locationFilter?: boolean;
   typeFilter?: boolean | FilterOption[];
-  customFilters?: Array<{
-    key: string;
-    label: string;
-    options: FilterOption[];
-  }>;
+  customFilters?: CustomFilter[];
   sortOptions?: FilterOption[];
 };
 
@@ -257,19 +267,34 @@ export function AdminFilters({ config, basePath }: AdminFiltersProps) {
         {config.customFilters?.map((filter) => (
           <div key={filter.key} className={styles.filterGroup}>
             <label className={styles.filterLabel}>{filter.label}</label>
-            <select
-              value={customFilterValues[filter.key] || ''}
-              onChange={(e) =>
-                setCustomFilterValues((prev) => ({ ...prev, [filter.key]: e.target.value }))
-              }
-              className={styles.filterSelect}
-            >
-              {filter.options.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            {filter.type === 'text' ? (
+              <input
+                type="text"
+                value={customFilterValues[filter.key] || ''}
+                onChange={(e) =>
+                  setCustomFilterValues((prev) => ({
+                    ...prev,
+                    [filter.key]: e.target.value,
+                  }))
+                }
+                className={styles.filterInput}
+                placeholder={filter.placeholder || 'Type to filter...'}
+              />
+            ) : (
+              <select
+                value={customFilterValues[filter.key] || ''}
+                onChange={(e) =>
+                  setCustomFilterValues((prev) => ({ ...prev, [filter.key]: e.target.value }))
+                }
+                className={styles.filterSelect}
+              >
+                {filter.options.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         ))}
 
