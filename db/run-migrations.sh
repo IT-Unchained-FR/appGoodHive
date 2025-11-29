@@ -7,7 +7,7 @@ set -e  # Exit on error
 
 # Load environment variables
 if [ -f .env ]; then
-  export $(cat .env | grep DATABASE_URL | xargs)
+  export $(cat .env | grep -E '^DATABASE_URL=' | xargs)
 fi
 
 if [ -z "$DATABASE_URL" ]; then
