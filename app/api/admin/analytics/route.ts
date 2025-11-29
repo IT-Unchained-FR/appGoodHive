@@ -46,9 +46,17 @@ export async function GET(req: NextRequest) {
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
 
-    // User growth over time (last 30 days by default)
-    // Note: users table doesn't have timestamp column, returning empty array
-    const userGrowth: any[] = [];
+    // User growth over time (last 30 days by default, or filtered range)
+    const userGrowth = await sql`
+      SELECT
+        DATE(created_at) as date,
+        COUNT(*) as count
+      FROM goodhive.users
+      WHERE created_at >= COALESCE(${startDate ? new Date(startDate) : null}, NOW() - INTERVAL '30 days')
+        AND created_at <= COALESCE(${endDate ? new Date(endDate) : null}, NOW())
+      GROUP BY DATE(created_at)
+      ORDER BY date ASC
+    `;
 
     // Job posting trends
     const jobTrends = await sql`
