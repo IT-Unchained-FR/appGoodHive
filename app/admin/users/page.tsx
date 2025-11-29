@@ -231,7 +231,7 @@ export default function AdminManageUsers() {
             All Users Under GoodHive&apos;s System
           </h2>
           <p className="text-sm text-muted-foreground">
-            {users.length} users
+            {users?.length || 0} users
           </p>
         </div>
       </div>
