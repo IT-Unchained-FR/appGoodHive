@@ -47,16 +47,23 @@ export async function GET(req: NextRequest) {
     const endDate = searchParams.get("endDate");
 
     // User growth over time (last 30 days by default, or filtered range)
-    const userGrowth = await sql`
-      SELECT
-        DATE(created_at) as date,
-        COUNT(*) as count
-      FROM goodhive.users
-      WHERE created_at >= COALESCE(${startDate ? new Date(startDate) : null}, NOW() - INTERVAL '30 days')
-        AND created_at <= COALESCE(${endDate ? new Date(endDate) : null}, NOW())
-      GROUP BY DATE(created_at)
-      ORDER BY date ASC
-    `;
+    // users table doesn't always include a created_at column; attempt and fall back gracefully
+    let userGrowth: any[] = [];
+    try {
+      userGrowth = await sql`
+        SELECT
+          DATE(created_at) as date,
+          COUNT(*) as count
+        FROM goodhive.users
+        WHERE created_at >= COALESCE(${startDate ? new Date(startDate) : null}, NOW() - INTERVAL '30 days')
+          AND created_at <= COALESCE(${endDate ? new Date(endDate) : null}, NOW())
+        GROUP BY DATE(created_at)
+        ORDER BY date ASC
+      `;
+    } catch (e) {
+      console.warn("User growth query skipped: created_at column missing on goodhive.users");
+      userGrowth = [];
+    }
 
     // Job posting trends
     const jobTrends = await sql`
