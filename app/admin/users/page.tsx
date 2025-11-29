@@ -3,12 +3,13 @@
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { Column, EnhancedTable } from "@/app/components/admin/EnhancedTable";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
+import { AdminFilters } from "@/app/components/admin/AdminFilters";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Cookies from "js-cookie";
 import { BarChart3, Copy, Download, Filter } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -28,11 +29,9 @@ interface User {
 
 export default function AdminManageUsers() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [profileFilter, setProfileFilter] = useState<
-    "all" | "with_profile" | "without_profile"
-  >("all");
 
   const getAuthHeaders = () => {
     const token = Cookies.get("admin_token");
@@ -52,8 +51,12 @@ export default function AdminManageUsers() {
       const headers = getAuthHeaders();
       if (!headers) return;
 
-      const response = await fetch("/api/admin/users", { headers });
-      
+      // Build URL with filter params
+      const params = new URLSearchParams(searchParams.toString());
+      const url = `/api/admin/users${params.toString() ? `?${params.toString()}` : ''}`;
+
+      const response = await fetch(url, { headers });
+
       if (response.status === 401) {
         router.push("/admin/login");
         return;
@@ -70,15 +73,7 @@ export default function AdminManageUsers() {
 
   useEffect(() => {
     fetchAllUsers();
-  }, []);
-
-  // Filter users based on profile filter
-  const filteredUsers = users.filter(
-    (user) =>
-      profileFilter === "all" ||
-      (profileFilter === "with_profile" && user.has_talent_profile) ||
-      (profileFilter === "without_profile" && !user.has_talent_profile),
-  );
+  }, [searchParams]);
 
   const columns: Column<User>[] = [
     {
@@ -230,54 +225,50 @@ export default function AdminManageUsers() {
       title="All Users"
       subtitle="Manage users, roles, and profile access across GoodHive"
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-semibold mb-1">
             All Users Under GoodHive&apos;s System
           </h2>
           <p className="text-sm text-muted-foreground">
-            {filteredUsers.length} users
+            {users.length} users
           </p>
         </div>
       </div>
 
-      {/* Filter Buttons */}
-      <div className="flex gap-2 items-center bg-white p-2 rounded-lg border border-gray-200 w-fit">
-        <Filter className="h-4 w-4 text-muted-foreground" />
-        <button
-          onClick={() => setProfileFilter("all")}
-          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-            profileFilter === "all"
-              ? "bg-[#FFC905] text-black"
-              : "text-gray-600 hover:bg-gray-100"
-          }`}
-        >
-          All Users
-        </button>
-        <button
-          onClick={() => setProfileFilter("with_profile")}
-          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-            profileFilter === "with_profile"
-              ? "bg-[#FFC905] text-black"
-              : "text-gray-600 hover:bg-gray-100"
-          }`}
-        >
-          With Profile
-        </button>
-        <button
-          onClick={() => setProfileFilter("without_profile")}
-          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-            profileFilter === "without_profile"
-              ? "bg-[#FFC905] text-black"
-              : "text-gray-600 hover:bg-gray-100"
-          }`}
-        >
-          Without Profile
-        </button>
-      </div>
+      {/* Admin Filters */}
+      <AdminFilters
+        config={{
+          dateFilter: true,
+          statusFilter: [
+            { value: 'all', label: 'All roles' },
+            { value: 'talent', label: 'Talent' },
+            { value: 'mentor', label: 'Mentor' },
+            { value: 'recruiter', label: 'Recruiter' },
+          ],
+          customFilters: [
+            {
+              key: 'hasProfile',
+              label: 'Talent Profile',
+              options: [
+                { value: 'all', label: 'All users' },
+                { value: 'yes', label: 'With profile' },
+                { value: 'no', label: 'Without profile' },
+              ],
+            },
+          ],
+          sortOptions: [
+            { value: 'latest', label: 'Latest first' },
+            { value: 'oldest', label: 'Oldest first' },
+            { value: 'email-asc', label: 'Email A-Z' },
+            { value: 'email-desc', label: 'Email Z-A' },
+          ],
+        }}
+        basePath="/admin/users"
+      />
 
       <EnhancedTable
-        data={filteredUsers}
+        data={users}
         columns={columns}
         searchable={true}
         searchPlaceholder="Search by email, wallet address, user ID, first name, or last name..."
