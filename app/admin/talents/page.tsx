@@ -5,6 +5,7 @@ import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { EditTalentModal } from "@/app/components/admin/EditTalentModal";
 import { Column, EnhancedTable } from "@/app/components/admin/EnhancedTable";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
+import { AdminFilters } from "@/app/components/admin/AdminFilters";
 import { ProfileData } from "@/app/talents/my-profile/page";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -21,13 +22,14 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import ApprovalPopup from "../talent-approval/components/ApprovalPopup";
 
 export default function AdminManageTalents() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [talents, setTalents] = useState<ProfileData[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -55,8 +57,12 @@ export default function AdminManageTalents() {
       const headers = getAuthHeaders();
       if (!headers) return;
 
-      const response = await fetch("/api/admin/talents", { headers });
-      
+      // Build URL with filter params
+      const params = new URLSearchParams(searchParams.toString());
+      const url = `/api/admin/talents${params.toString() ? `?${params.toString()}` : ''}`;
+
+      const response = await fetch(url, { headers });
+
       if (response.status === 401) {
         router.push("/admin/login");
         return;
@@ -74,7 +80,7 @@ export default function AdminManageTalents() {
 
   useEffect(() => {
     fetchAllTalents();
-  }, []);
+  }, [searchParams]);
 
   const handleDeleteTalent = async (userId: string) => {
     try {
@@ -361,6 +367,48 @@ export default function AdminManageTalents() {
       title="All Talents"
       subtitle="Manage talent profiles, roles, and approvals"
     >
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-xl font-semibold mb-1">All Talents</h2>
+          <p className="text-sm text-muted-foreground">
+            {talents?.length || 0} talents
+          </p>
+        </div>
+      </div>
+
+      {/* Admin Filters */}
+      <AdminFilters
+        config={{
+          dateFilter: true,
+          statusFilter: [
+            { value: 'all', label: 'All statuses' },
+            { value: 'approved', label: 'Approved' },
+            { value: 'pending', label: 'Pending' },
+          ],
+          customFilters: [
+            {
+              key: 'role',
+              label: 'Role',
+              options: [
+                { value: 'all', label: 'All roles' },
+                { value: 'talent', label: 'Talent' },
+                { value: 'mentor', label: 'Mentor' },
+                { value: 'recruiter', label: 'Recruiter' },
+              ],
+            },
+          ],
+          sortOptions: [
+            { value: 'latest', label: 'Latest first' },
+            { value: 'oldest', label: 'Oldest first' },
+            { value: 'name-asc', label: 'Name A-Z' },
+            { value: 'name-desc', label: 'Name Z-A' },
+            { value: 'email-asc', label: 'Email A-Z' },
+            { value: 'email-desc', label: 'Email Z-A' },
+          ],
+        }}
+        basePath="/admin/talents"
+      />
+
       <ConfirmationPopup
         open={showDeleteConfirm}
         onOpenChange={setShowDeleteConfirm}
@@ -394,7 +442,7 @@ export default function AdminManageTalents() {
                 Talent Directory
               </h2>
               <p className="text-sm text-gray-600">
-                {talents.length} talents • search, edit roles, or approve.
+                {talents?.length || 0} talents • search, edit roles, or approve.
               </p>
             </div>
           </div>
