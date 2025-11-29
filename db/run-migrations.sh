@@ -25,9 +25,14 @@ psql "$DATABASE_URL" -f db/migrations/add-created-at-to-referrals.sql
 echo "✓ Migration 1 complete"
 
 echo ""
-echo "[2/2] Adding performance indexes..."
+echo "[2/3] Adding performance indexes..."
 psql "$DATABASE_URL" -f db/migrations/add-admin-filter-indexes.sql
 echo "✓ Migration 2 complete"
+
+echo ""
+echo "[3/3] Adding created_at to all tables..."
+psql "$DATABASE_URL" -f db/migrations/add-created-at-to-all-tables.sql
+echo "✓ Migration 3 complete"
 
 echo ""
 echo "================================"
