@@ -12,6 +12,20 @@ After completing work:
 2. Add any architecture decisions to `decisions.md`
 3. Update `todos.md` by checking off completed items and adding new ones
 
+## Git Commit Guidelines
+
+**IMPORTANT**: When creating git commits:
+- **DO NOT mention AI assistance** (Claude, Cursor, Codex, etc.) in commit messages
+- Keep commit messages professional and concise
+- Follow conventional commit format: `type: description`
+- Focus on what changed and why, not who made the change
+
+Example:
+```
+✅ feat: add user authentication
+❌ feat: add user authentication (Generated with Claude Code)
+```
+
 ## File Descriptions
 
 - **current-task.md**: Active work in progress, who's working on what
