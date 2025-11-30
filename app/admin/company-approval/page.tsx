@@ -139,6 +139,7 @@ export default function AdminCompanyApproval() {
       header: "Headline",
       width: "27%",
       sortable: true,
+      exportValue: (row: Company) => row.headline?.replace(/<[^>]*>?/gm, "") || "",
       render: (value: any, row: Company) => {
         const cleanHeadline = row.headline?.replace(/<[^>]*>?/gm, "") || "";
         return (
@@ -158,6 +159,11 @@ export default function AdminCompanyApproval() {
       key: "status",
       header: "Status",
       width: "10%",
+      exportValue: (row: Company) => {
+        if (row.approved) return "Approved";
+        if (row.inReview) return "Pending";
+        return "Rejected";
+      },
       render: (value: any, row: Company) => {
         if (row.approved) {
           return (
@@ -190,6 +196,10 @@ export default function AdminCompanyApproval() {
       key: "location",
       header: "Location",
       width: "18%",
+      exportValue: (row: Company) => {
+        const parts = [row.city, row.country].filter(Boolean);
+        return parts.join(", ") || "";
+      },
       render: (value: any, row: Company) => (
         <span>
           {row.city}, {row.country}

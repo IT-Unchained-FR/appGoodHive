@@ -40,6 +40,7 @@ export interface Column<T> {
   width?: string;
   sortable?: boolean;
   render?: (value: any, row: T) => React.ReactNode;
+  exportValue?: (row: T) => string | number | null | undefined; // Function to get exportable value
   filterable?: boolean;
   visible?: boolean; // For column visibility
 }
@@ -655,55 +656,51 @@ export function EnhancedTable<T extends Record<string, any>>({
                   .map((col) => ({
                     key: col.key,
                     header: col.header,
+                    exportValue: col.exportValue, // Pass exportValue function if available
                   }))}
                 fileName={`export-${new Date().toISOString().split("T")[0]}`}
                 allowColumnSelection={enableColumnSelection}
-                onExportCSV={(selectedCols) => {
-                  if (onExport) {
-                    const filtered = filteredData.map((row) => {
-                      const result: any = {};
-                      (selectedCols || displayColumns.filter((c) => c.key !== 'select').map((c) => c.key)).forEach(
-                        (key) => {
-                          result[key] = row[key];
-                        }
-                      );
-                      return result;
-                    });
-                    onExport(filtered);
-                  }
-                }}
-                onExportJSON={(selectedCols) => {
-                  // Default JSON export - ExportButton handles this if onExportJSON is not provided
-                  // But we can also call onExport if provided
-                  if (onExport) {
-                    const filtered = filteredData.map((row) => {
-                      const result: any = {};
-                      (selectedCols || displayColumns.filter((c) => c.key !== 'select').map((c) => c.key)).forEach(
-                        (key) => {
-                          result[key] = row[key];
-                        }
-                      );
-                      return result;
-                    });
-                    onExport(filtered);
-                  }
-                }}
-                onExportExcel={(selectedCols) => {
-                  // Default Excel export - ExportButton handles this if onExportExcel is not provided
-                  // But we can also call onExport if provided
-                  if (onExport) {
-                    const filtered = filteredData.map((row) => {
-                      const result: any = {};
-                      (selectedCols || displayColumns.filter((c) => c.key !== 'select').map((c) => c.key)).forEach(
-                        (key) => {
-                          result[key] = row[key];
-                        }
-                      );
-                      return result;
-                    });
-                    onExport(filtered);
-                  }
-                }}
+                {...(onExport
+                  ? {
+                      // Only pass handlers if onExport is provided
+                      onExportCSV: (selectedCols) => {
+                        const colsToUse = selectedCols || displayColumns.filter((c) => c.key !== 'select').map((c) => c.key);
+                        const filtered = filteredData.map((row) => {
+                          const result: any = {};
+                          colsToUse.forEach((key) => {
+                            result[key] = row[key];
+                          });
+                          return result;
+                        });
+                        onExport(filtered);
+                      },
+                      onExportJSON: (selectedCols) => {
+                        const colsToUse = selectedCols || displayColumns.filter((c) => c.key !== 'select').map((c) => c.key);
+                        const filtered = filteredData.map((row) => {
+                          const result: any = {};
+                          colsToUse.forEach((key) => {
+                            result[key] = row[key];
+                          });
+                          return result;
+                        });
+                        onExport(filtered);
+                      },
+                      onExportExcel: (selectedCols) => {
+                        const colsToUse = selectedCols || displayColumns.filter((c) => c.key !== 'select').map((c) => c.key);
+                        const filtered = filteredData.map((row) => {
+                          const result: any = {};
+                          colsToUse.forEach((key) => {
+                            result[key] = row[key];
+                          });
+                          return result;
+                        });
+                        onExport(filtered);
+                      },
+                    }
+                  : {
+                      // If onExport is not provided, don't pass handlers
+                      // ExportButton will use its default implementations
+                    })}
               />
             )}
           </div>

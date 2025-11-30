@@ -135,6 +135,7 @@ export default function AdminTalentApproval() {
       header: "Name",
       width: "22%",
       sortable: true,
+      exportValue: (row: ProfileData) => `${row.first_name || ''} ${row.last_name || ''}`.trim(),
       render: (value: any, row: ProfileData) => {
         const fullName = `${row.first_name} ${row.last_name}`;
         return (
@@ -154,6 +155,11 @@ export default function AdminTalentApproval() {
       key: "status",
       header: "Status",
       width: "12%",
+      exportValue: (row: ProfileData) => {
+        if (row.approved) return "Approved";
+        if (row.inReview) return "Pending";
+        return "Rejected";
+      },
       render: (value: any, row: ProfileData) => {
         if (row.approved) {
           return (
@@ -180,6 +186,13 @@ export default function AdminTalentApproval() {
       key: "applied_for",
       header: "Applied For",
       width: "12%",
+      exportValue: (row: ProfileData) => {
+        const roles: string[] = [];
+        if (row.talent) roles.push("Talent");
+        if (row.mentor) roles.push("Mentor");
+        if (row.recruiter) roles.push("Recruiter");
+        return roles.join(", ") || "";
+      },
       render: (value: any, row: ProfileData) => {
         return (
           <div className="flex flex-col gap-2 w-full justify-center items-center">
@@ -225,6 +238,10 @@ export default function AdminTalentApproval() {
       header: "Created on",
       width: "13%",
       sortable: true,
+      exportValue: (row: ProfileData) => {
+        const createdAt = row.user_created_at || row.created_at;
+        return createdAt ? moment(createdAt).format("MMM D, YYYY") : "N/A";
+      },
       render: (value: string, row: ProfileData) => {
         const createdAt = row.user_created_at || value;
         return createdAt ? moment(createdAt).format("MMM D, YYYY") : "N/A";
