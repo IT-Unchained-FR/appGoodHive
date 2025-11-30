@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { Column, EnhancedTable } from "@/app/components/admin/EnhancedTable";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";

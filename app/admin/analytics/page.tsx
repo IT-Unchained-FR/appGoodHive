@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useEffect, useState } from "react";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";

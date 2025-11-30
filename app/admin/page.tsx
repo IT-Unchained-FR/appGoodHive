@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import Spinner from "@/app/components/Spinner/Spinner";
 import { StatCard } from "@/app/components/admin/StatCard";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";

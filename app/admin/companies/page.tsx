@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { ConfirmationPopup } from "@/app/components/ConfirmationPopup/ConfirmationPopup";
 import { EditCompanyModal } from "@/app/components/admin/EditCompanyModal";
 import { Column, EnhancedTable } from "@/app/components/admin/EnhancedTable";

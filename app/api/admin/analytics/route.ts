@@ -3,6 +3,8 @@ import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 const ADMIN_JWT_SECRET =
   process.env.ADMIN_JWT_SECRET || "your-admin-secret-key";
 

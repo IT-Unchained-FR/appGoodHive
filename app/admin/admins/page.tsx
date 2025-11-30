@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useState, useEffect } from "react";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { EnhancedTable, Column } from "@/app/components/admin/EnhancedTable";

@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { ConfirmationPopup } from "@/app/components/ConfirmationPopup/ConfirmationPopup";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { EditTalentModal } from "@/app/components/admin/EditTalentModal";

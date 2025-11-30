@@ -3,6 +3,8 @@ import sql from "@/lib/db";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 // Force the browser to always fetch the latest data from the server
 export const fetchCache = "force-no-store";
 export const revalidate = 0;
