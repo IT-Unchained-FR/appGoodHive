@@ -1,0 +1,54 @@
+name: Sync Fork Repository
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - '.ai-context/**'
+      - '.claude/**'
+      - '.gemini/**'
+
+jobs:
+  sync-fork:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add forked repository as remote
+        run: |
+          # Remove existing fork remote if it exists
+          git remote remove fork 2>/dev/null || true
+          # Add fork remote with authentication token
+          git remote add fork https://${{ secrets.FORK_SYNC_TOKEN }}@github.com/IT-Unchained-FR/appGoodHive.git
+
+      - name: Fetch from fork to check access
+        run: |
+          git fetch fork main || echo "Unable to fetch from fork, will attempt push anyway"
+
+      - name: Push to forked repository
+        run: |
+          echo "Pushing to forked repository..."
+          # Use force-with-lease for safety, fallback to force if needed
+          git push fork HEAD:main --force-with-lease || {
+            echo "force-with-lease failed, trying force push..."
+            git push fork HEAD:main --force
+          }
+          echo "Successfully synced to forked repository!"
+
+      - name: Verify sync
+        run: |
+          echo "Sync completed. Check https://github.com/IT-Unchained-FR/appGoodHive/tree/main"
+
