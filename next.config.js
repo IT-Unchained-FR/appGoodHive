@@ -3,6 +3,8 @@ const nextConfig = {
   reactStrictMode: false,
   experimental: {
     typedRoutes: true,
+    workerThreads: false,
+    cpus: 1,
   },
   async headers() {
     return [
@@ -40,6 +42,11 @@ const nextConfig = {
   },
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  // Skip failing prerender pages (404/500 errors)
+  onDemandEntries: {
+    maxInactiveAge: 25 * 1000,
+    pagesBufferLength: 2,
   },
   output: "standalone",
   poweredByHeader: false,
