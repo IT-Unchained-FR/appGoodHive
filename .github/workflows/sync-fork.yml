@@ -31,8 +31,14 @@ jobs:
         run: |
           # Remove existing fork remote if it exists
           git remote remove fork 2>/dev/null || true
+          # Try using PAT token if available, otherwise use default GITHUB_TOKEN
+          if [ -n "${{ secrets.FORK_SYNC_TOKEN }}" ]; then
+            TOKEN="${{ secrets.FORK_SYNC_TOKEN }}"
+          else
+            TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          fi
           # Add fork remote with authentication token
-          git remote add fork https://${{ secrets.FORK_SYNC_TOKEN }}@github.com/IT-Unchained-FR/appGoodHive.git
+          git remote add fork https://${TOKEN}@github.com/IT-Unchained-FR/appGoodHive.git
 
       - name: Fetch from fork to check access
         run: |
