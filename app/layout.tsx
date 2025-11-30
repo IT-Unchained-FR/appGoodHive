@@ -10,6 +10,8 @@ import "./globals.css";
 import { ClientLayout } from "./client-layout";
 import { GAListener } from "./ga-listener";
 
+export const dynamic = "force-dynamic";
+
 const GA_TRACKING_ID = process.env.NEXT_PUBLIC_GA_ID;
 const isProduction = process.env.NODE_ENV === 'production';
 
