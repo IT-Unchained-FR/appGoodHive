@@ -26,7 +26,7 @@ interface ExportButtonProps {
   onExportExcel?: (selectedColumns?: string[]) => void;
   onExportPDF?: (selectedColumns?: string[]) => void;
   data?: any[];
-  columns?: Array<{ key: string; header: string }>;
+  columns?: Array<{ key: string; header: string; exportValue?: (row: any) => string | number | null | undefined }>;
   fileName?: string;
   disabled?: boolean;
   allowColumnSelection?: boolean;
@@ -77,7 +77,11 @@ export function ExportButton({
       ...data.map((row) =>
         colsToExport
           .map((key) => {
-            const value = row[key];
+            const column = columns.find((col) => col.key === key);
+            // Use exportValue function if available, otherwise use row[key]
+            const value = column?.exportValue 
+              ? column.exportValue(row)
+              : row[key];
             if (value === null || value === undefined) return "";
             const stringValue = String(value).replace(/"/g, '""');
             return `"${stringValue}"`;
@@ -103,7 +107,11 @@ export function ExportButton({
     const jsonData = data.map((row) => {
       const filtered: any = {};
       colsToExport.forEach((key) => {
-        filtered[key] = row[key];
+        const column = columns.find((col) => col.key === key);
+        // Use exportValue function if available, otherwise use row[key]
+        filtered[key] = column?.exportValue 
+          ? column.exportValue(row)
+          : row[key];
       });
       return filtered;
     });
@@ -131,7 +139,11 @@ export function ExportButton({
         const filtered: any = {};
         colsToExport.forEach((key) => {
           const col = columns.find((c) => c.key === key);
-          filtered[col?.header || key] = row[key];
+          // Use exportValue function if available, otherwise use row[key]
+          const value = col?.exportValue 
+            ? col.exportValue(row)
+            : row[key];
+          filtered[col?.header || key] = value;
         });
         return filtered;
       });
