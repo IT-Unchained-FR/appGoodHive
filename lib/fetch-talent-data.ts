@@ -3,19 +3,20 @@ import sql from "@/lib/db";
 export async function getPendingTalents() {
   try {
     const users = await sql`
-      SELECT 
-          talents.*, 
+      SELECT
+          talents.*,
+          talents.inreview AS "inReview",
           users.referred_by,
           users.approved_roles,
-          COALESCE(users.created_at, users.last_active) AS user_created_at
-      FROM 
+          users.created_at AS user_created_at
+      FROM
           goodhive.talents AS talents
-      JOIN 
+      JOIN
           goodhive.users AS users
-      ON 
+      ON
           talents.user_id = users.userid
-      WHERE 
-          talents.inReview = true;
+      WHERE
+          talents.inreview = true;
         `;
     return users;
   } catch (error) {

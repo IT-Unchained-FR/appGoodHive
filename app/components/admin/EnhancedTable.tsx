@@ -107,9 +107,11 @@ export function EnhancedTable<T extends Record<string, any>>({
   const [selectedRows, setSelectedRows] = useState<Set<string | number>>(
     new Set(),
   );
-  const [visibleColumns, setVisibleColumns] = useState<Set<string>>(
-    new Set(columns.map((col) => col.key)),
-  );
+  // Initialize visible columns - always include select column if it exists
+  const [visibleColumns, setVisibleColumns] = useState<Set<string>>(() => {
+    const allKeys = columns.map((col) => col.key);
+    return new Set(allKeys);
+  });
   const [customFilters, setCustomFilters] = useState<FilterCondition[]>([]);
   const [filterLogic, setFilterLogic] = useState<"AND" | "OR">("AND");
   const [showFilterBuilder, setShowFilterBuilder] = useState(false);
@@ -139,9 +141,13 @@ export function EnhancedTable<T extends Record<string, any>>({
     };
   }, [mobileCardView, cardBreakpoint]);
 
-  // Filter visible columns
+  // Filter visible columns - ensure select column is always visible if it exists
   const displayColumns = useMemo(() => {
-    return columns.filter((col) => visibleColumns.has(col.key));
+    const selectColumn = columns.find((col) => col.key === 'select');
+    const otherColumns = columns.filter((col) => col.key !== 'select' && visibleColumns.has(col.key));
+    
+    // Always include select column if it exists, then add other visible columns
+    return selectColumn ? [selectColumn, ...otherColumns] : otherColumns;
   }, [columns, visibleColumns]);
 
   // Get row ID helper
@@ -372,6 +378,10 @@ export function EnhancedTable<T extends Record<string, any>>({
   };
 
   const toggleColumnVisibility = (columnKey: string) => {
+    // Prevent hiding the select column
+    if (columnKey === 'select') {
+      return;
+    }
     setVisibleColumns((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(columnKey)) {
@@ -386,6 +396,15 @@ export function EnhancedTable<T extends Record<string, any>>({
   const showAllColumns = () => {
     setVisibleColumns(new Set(columns.map((col) => col.key)));
   };
+  
+  // Get visible column count excluding select column for display
+  const visibleColumnCount = useMemo(() => {
+    const selectColumn = columns.find((col) => col.key === 'select');
+    if (selectColumn) {
+      return visibleColumns.size; // Select column is always visible, so count includes it
+    }
+    return visibleColumns.size;
+  }, [columns, visibleColumns]);
 
   const hideAllColumns = () => {
     setVisibleColumns(new Set());
@@ -572,7 +591,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                     ) : (
                       <EyeOff className="h-4 w-4" />
                     )}
-                    Columns ({visibleColumns.size}/{columns.length})
+                    Columns ({visibleColumnCount}/{columns.length})
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
@@ -580,25 +599,34 @@ export function EnhancedTable<T extends Record<string, any>>({
                     Toggle Columns
                   </div>
                   {columns.map((column) => {
-                    const isVisible = visibleColumns.has(column.key);
+                    const isSelectColumn = column.key === 'select';
+                    const isVisible = isSelectColumn || visibleColumns.has(column.key);
                     return (
                       <DropdownMenuItem
                         key={column.key}
                         onClick={(e) => {
                           e.preventDefault();
-                          toggleColumnVisibility(column.key);
+                          if (!isSelectColumn) {
+                            toggleColumnVisibility(column.key);
+                          }
                         }}
-                        className="flex items-center gap-2 cursor-pointer"
+                        className={`flex items-center gap-2 ${isSelectColumn ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                       >
                         <Checkbox
                           checked={isVisible}
-                          onCheckedChange={() =>
-                            toggleColumnVisibility(column.key)
-                          }
+                          disabled={isSelectColumn}
+                          onCheckedChange={() => {
+                            if (!isSelectColumn) {
+                              toggleColumnVisibility(column.key);
+                            }
+                          }}
                         />
                         <span className={isVisible ? "" : "text-gray-400"}>
-                          {column.header}
+                          {column.header || column.key}
                         </span>
+                        {isSelectColumn && (
+                          <span className="text-xs text-gray-400 ml-auto">(Always visible)</span>
+                        )}
                       </DropdownMenuItem>
                     );
                   })}
@@ -622,17 +650,51 @@ export function EnhancedTable<T extends Record<string, any>>({
             {exportable && (
               <ExportButton
                 data={filteredData}
-                columns={displayColumns.map((col) => ({
-                  key: col.key,
-                  header: col.header,
-                }))}
+                columns={displayColumns
+                  .filter((col) => col.key !== 'select') // Exclude select column from export
+                  .map((col) => ({
+                    key: col.key,
+                    header: col.header,
+                  }))}
                 fileName={`export-${new Date().toISOString().split("T")[0]}`}
                 allowColumnSelection={enableColumnSelection}
                 onExportCSV={(selectedCols) => {
                   if (onExport) {
                     const filtered = filteredData.map((row) => {
                       const result: any = {};
-                      (selectedCols || displayColumns.map((c) => c.key)).forEach(
+                      (selectedCols || displayColumns.filter((c) => c.key !== 'select').map((c) => c.key)).forEach(
+                        (key) => {
+                          result[key] = row[key];
+                        }
+                      );
+                      return result;
+                    });
+                    onExport(filtered);
+                  }
+                }}
+                onExportJSON={(selectedCols) => {
+                  // Default JSON export - ExportButton handles this if onExportJSON is not provided
+                  // But we can also call onExport if provided
+                  if (onExport) {
+                    const filtered = filteredData.map((row) => {
+                      const result: any = {};
+                      (selectedCols || displayColumns.filter((c) => c.key !== 'select').map((c) => c.key)).forEach(
+                        (key) => {
+                          result[key] = row[key];
+                        }
+                      );
+                      return result;
+                    });
+                    onExport(filtered);
+                  }
+                }}
+                onExportExcel={(selectedCols) => {
+                  // Default Excel export - ExportButton handles this if onExportExcel is not provided
+                  // But we can also call onExport if provided
+                  if (onExport) {
+                    const filtered = filteredData.map((row) => {
+                      const result: any = {};
+                      (selectedCols || displayColumns.filter((c) => c.key !== 'select').map((c) => c.key)).forEach(
                         (key) => {
                           result[key] = row[key];
                         }

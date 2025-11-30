@@ -27,13 +27,13 @@ export async function GET(req: NextRequest) {
       };
 
       if (dateRange in ranges) {
-        conditions.push(sql`COALESCE(u.created_at, u.last_active, NOW()) >= ${ranges[dateRange]}`);
+        conditions.push(sql`u.created_at >= ${ranges[dateRange]}`);
       } else if (dateRange.includes(',')) {
         const [start, end] = dateRange.split(',');
         const startDate = new Date(start);
         const endDate = new Date(end);
         endDate.setHours(23, 59, 59, 999);
-        conditions.push(sql`COALESCE(u.created_at, u.last_active, NOW()) BETWEEN ${startDate} AND ${endDate}`);
+        conditions.push(sql`u.created_at BETWEEN ${startDate} AND ${endDate}`);
       }
     }
 
@@ -51,8 +51,8 @@ export async function GET(req: NextRequest) {
 
     // Build sort clause
     const sortMap: Record<string, any> = {
-      latest: sql`COALESCE(u.created_at, u.last_active, NOW()) DESC`,
-      oldest: sql`COALESCE(u.created_at, u.last_active, NOW()) ASC`,
+      latest: sql`u.created_at DESC`,
+      oldest: sql`u.created_at ASC`,
       'email-asc': sql`LOWER(u.email) ASC`,
       'email-desc': sql`LOWER(u.email) DESC`,
     };
