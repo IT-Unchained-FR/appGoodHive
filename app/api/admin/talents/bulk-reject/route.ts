@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
         // Update talent to rejected status
         await sql`
           UPDATE goodhive.talents
-          SET approved = false, inReview = false
+          SET approved = false, inreview = false
           WHERE user_id = ${userId}
         `;
 

@@ -1,6 +1,6 @@
 # Current Tasks
 
-**Last Updated**: 2025-12-02
+**Last Updated**: 2025-11-30
 
 ## Active Work
 
@@ -12,18 +12,6 @@
 - Status: On hold (will resume later)
 
 ### Codex
-- Working on: Admin filter plan sync and gap check (no code changes yet)
-- Files reviewed:
-  - `app/api/admin/users/route.ts`
-  - `app/api/admin/jobs/route.ts`
-  - `app/api/admin/talents/route.ts`
-  - `app/api/admin/companies/route.ts`
-  - `app/admin/*`
-  - `lib/admin-filters.ts`
-  - `app/components/admin/AdminFilters.tsx`
-- Status: Completed companies filters; remaining gaps: approval tables migration, filter chips
-
-### Codex
 - Working on: DB created_at enforcement/backfill across all tables (prod + dev DBs)
 - Files:
   - `goodhive-prod-database` (Cloud SQL)
@@ -31,7 +19,15 @@
 - Status: Completed (backfilled to 2025-11-28 00:41:00+00, defaults set to NOW, NOT NULL)
 
 ### Claude Code
-- Available for new tasks
+- Working on: Completed admin panel migration (filter chips + approval pages)
+- Files modified:
+  - `app/components/admin/AdminFilters.tsx`
+  - `app/components/admin/AdminFilters.module.scss`
+  - `app/api/admin/talents/pending/route.ts`
+  - `app/api/admin/companies/pending/route.ts`
+  - `app/admin/talent-approval/page.tsx`
+  - `app/admin/company-approval/page.tsx`
+- Status: Completed (2025-11-30)
 
 ### Cursor
 - Available for new tasks

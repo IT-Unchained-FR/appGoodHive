@@ -1,14 +1,12 @@
 # Shared TODO List
 
-**Last Updated**: 2025-12-02
+**Last Updated**: 2025-11-30
 
 ## In Progress
-- [ ] created_at backfill/defaults on all DB tables (Codex) — done 2025-12-02
+(none)
 
 ## Todo
 - [ ] Analytics charts and job trends rendering (Codex, later)
-- [ ] Migrate talent/company approval pages to EnhancedTable with filters (Codex)
-- [ ] Add active filter chips/clear-all UX to admin filters (Codex)
 
 ## Completed
 - [x] Fix pagination start value rendering
@@ -17,6 +15,8 @@
 - [x] Admin mobile cards and quick actions
 - [x] Finish admin companies filters + API support (Codex) — 2025-12-02
 - [x] created_at backfill/defaults on all DB tables (Codex) — 2025-12-02
+- [x] Migrate talent/company approval pages to EnhancedTable with filters (Claude Code) — 2025-11-30
+- [x] Add active filter chips/clear-all UX to admin filters (Claude Code) — 2025-11-30
 
 ---
 

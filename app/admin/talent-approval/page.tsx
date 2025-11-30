@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
-import { AdminTable } from "@/app/components/admin/AdminTable";
-import { SearchInput } from "@/app/components/admin/SearchInput";
+import { EnhancedTable, Column } from "@/app/components/admin/EnhancedTable";
+import { AdminFilters } from "@/app/components/admin/AdminFilters";
 import { Spinner } from "@/app/components/admin/Spinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,15 +24,13 @@ import toast from "react-hot-toast";
 import moment from "moment";
 
 export default function AdminTalentApproval() {
+  const searchParams = useSearchParams();
   const [users, setUsers] = useState<ProfileData[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<ProfileData[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [showApprovePopup, setShowApprovePopup] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
   const [selectedItems, setSelectedItems] = useState<ProfileData[]>([]);
   const [showBulkApproval, setShowBulkApproval] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
 
   const handleApproveClick = (user: ProfileData) => {
     setSelectedUser(user);
@@ -50,10 +49,10 @@ export default function AdminTalentApproval() {
   };
 
   const toggleSelectAll = () => {
-    if (selectedItems.length === filteredUsers.length) {
+    if (selectedItems.length === users.length) {
       setSelectedItems([]);
     } else {
-      setSelectedItems([...filteredUsers]);
+      setSelectedItems([...users]);
     }
   };
 
@@ -118,7 +117,7 @@ export default function AdminTalentApproval() {
     }
   };
 
-  const columns = [
+  const columns: Column<ProfileData>[] = [
     {
       key: "select",
       header: "",
@@ -135,6 +134,7 @@ export default function AdminTalentApproval() {
       key: "name",
       header: "Name",
       width: "22%",
+      sortable: true,
       render: (value: any, row: ProfileData) => {
         const fullName = `${row.first_name} ${row.last_name}`;
         return (
@@ -154,14 +154,27 @@ export default function AdminTalentApproval() {
       key: "status",
       header: "Status",
       width: "12%",
-      render: () => (
-        <Badge
-          variant="outline"
-          className="bg-yellow-50 text-yellow-700 border-yellow-200"
-        >
-          Pending
-        </Badge>
-      ),
+      render: (value: any, row: ProfileData) => {
+        if (row.approved) {
+          return (
+            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+              Approved
+            </Badge>
+          );
+        } else if (row.inReview) {
+          return (
+            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+              Pending
+            </Badge>
+          );
+        } else {
+          return (
+            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+              Rejected
+            </Badge>
+          );
+        }
+      },
     },
     {
       key: "applied_for",
@@ -205,14 +218,15 @@ export default function AdminTalentApproval() {
       key: "email",
       header: "Email",
       width: "25%",
+      sortable: true,
     },
     {
       key: "created_at",
       header: "Created on",
       width: "13%",
+      sortable: true,
       render: (value: string, row: ProfileData) => {
-        const createdAt =
-          row.user_created_at || value; // Prefer user account creation date
+        const createdAt = row.user_created_at || value;
         return createdAt ? moment(createdAt).format("MMM D, YYYY") : "N/A";
       },
     },
@@ -257,22 +271,31 @@ export default function AdminTalentApproval() {
   const fetchPendingUsers = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/admin/talents/pending");
+      const params = new URLSearchParams(searchParams.toString());
+
+      // Default to pending status if not specified
+      if (!params.has('status')) {
+        params.set('status', 'pending');
+      }
+
+      const url = `/api/admin/talents/pending${params.toString() ? `?${params.toString()}` : ''}`;
+      const response = await fetch(url, {
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+        },
+      });
       const data = await response.json();
 
       if (!response.ok || !Array.isArray(data)) {
         console.error("Failed to fetch pending users:", data);
         setUsers([]);
-        setFilteredUsers([]);
         return;
       }
 
       setUsers(data);
-      setFilteredUsers(data);
     } catch (error) {
       console.error("Failed to fetch pending users:", error);
       setUsers([]);
-      setFilteredUsers([]);
     } finally {
       setLoading(false);
     }
@@ -280,31 +303,14 @@ export default function AdminTalentApproval() {
 
   useEffect(() => {
     fetchPendingUsers();
-  }, []);
+  }, [searchParams]);
 
+  // Smart selection preservation: keep only items still in filtered results
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  useEffect(() => {
-    const filtered = users.filter((user) => {
-      const searchStr =
-        `${user.first_name} ${user.last_name} ${user.email}`.toLowerCase();
-      return searchStr.includes(searchQuery.toLowerCase());
-    });
-    setFilteredUsers(filtered);
-    // Clear selection when filtering
     setSelectedItems((prev) =>
-      prev.filter((item) =>
-        filtered.some((user) => user.user_id === item.user_id)
-      )
+      prev.filter((item) => users.some((u) => u.user_id === item.user_id))
     );
-  }, [searchQuery, users]);
+  }, [users]);
 
   return (
     <AdminPageLayout
@@ -312,37 +318,48 @@ export default function AdminTalentApproval() {
       subtitle="Review and approve talent applications"
     >
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <SearchInput
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Search by name or email..."
-          />
-          {selectedItems.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">
-                {selectedItems.length} selected
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowBulkApproval(true)}
-              >
-                Bulk Actions
-              </Button>
-            </div>
-          )}
-        </div>
+        <AdminFilters
+          config={{
+            dateFilter: true,
+            statusFilter: [
+              { value: 'pending', label: 'Pending' },
+              { value: 'approved', label: 'Approved' },
+              { value: 'rejected', label: 'Rejected' },
+              { value: 'all', label: 'All statuses' },
+            ],
+            customFilters: [
+              {
+                key: 'role',
+                label: 'Applied Role',
+                options: [
+                  { value: 'all', label: 'All roles' },
+                  { value: 'talent', label: 'Talent' },
+                  { value: 'mentor', label: 'Mentor' },
+                  { value: 'recruiter', label: 'Recruiter' },
+                ],
+              },
+            ],
+            sortOptions: [
+              { value: 'latest', label: 'Latest first' },
+              { value: 'oldest', label: 'Oldest first' },
+              { value: 'name-asc', label: 'Name A-Z' },
+              { value: 'name-desc', label: 'Name Z-A' },
+              { value: 'email-asc', label: 'Email A-Z' },
+              { value: 'email-desc', label: 'Email Z-A' },
+            ],
+          }}
+          basePath="/admin/talent-approval"
+        />
 
         {selectedItems.length > 0 && (
           <div className="bg-[#FFC905]/10 border border-[#FFC905] rounded-lg p-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Checkbox
-                checked={selectedItems.length === filteredUsers.length}
+                checked={selectedItems.length === users.length}
                 onCheckedChange={toggleSelectAll}
               />
               <span className="text-sm font-medium text-gray-900">
-                Select All ({filteredUsers.length})
+                Select All ({users.length})
               </span>
             </div>
             <Button
@@ -355,51 +372,27 @@ export default function AdminTalentApproval() {
           </div>
         )}
 
-        {loading ? (
-          <div className="py-12">
-            <Spinner size="lg" />
-          </div>
-        ) : (
-          <>
-            {isMobile ? (
-              filteredUsers.length > 0 ? (
-                <div className="grid grid-cols-1 gap-4">
-                  {filteredUsers.map((user) => (
-                    <TalentApprovalCard
-                      key={user.user_id}
-                      user={user}
-                      selected={selectedItems.some(
-                        (item) => item.user_id === user.user_id,
-                      )}
-                      onSelect={() => toggleItemSelection(user)}
-                      onApprove={() => handleApproveClick(user)}
-                      onReject={() => handleBulkReject([user.user_id])}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center text-gray-500 py-8">
-                  No pending requests found
-                </div>
-              )
-            ) : (
-              <>
-                <AdminTable
-                  columns={columns}
-                  data={filteredUsers}
-                  // onRowClick={(row) =>
-                  //   window.open(`/admin/talent/${row.user_id}`, "_blank")
-                  // }
-                />
-                {filteredUsers.length === 0 && (
-                  <div className="text-center text-gray-500 py-8">
-                    No pending requests found
-                  </div>
-                )}
-              </>
-            )}
-          </>
-        )}
+        <EnhancedTable
+          data={users}
+          columns={columns}
+          searchable={true}
+          searchPlaceholder="Search by name or email..."
+          pagination={true}
+          itemsPerPage={10}
+          exportable={true}
+          loading={loading}
+          emptyMessage="No talent requests found"
+          mobileCardView
+          renderMobileCard={(user) => (
+            <TalentApprovalCard
+              user={user}
+              selected={selectedItems.some((item) => item.user_id === user.user_id)}
+              onSelect={() => toggleItemSelection(user)}
+              onApprove={() => handleApproveClick(user)}
+              onReject={() => handleBulkReject([user.user_id])}
+            />
+          )}
+        />
       </div>
 
       {selectedUser && (
@@ -461,6 +454,28 @@ function TalentApprovalCard({
   onApprove: () => void;
   onReject: () => void;
 }) {
+  const getStatusBadge = () => {
+    if (user.approved) {
+      return (
+        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+          Approved
+        </Badge>
+      );
+    } else if (user.inReview) {
+      return (
+        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+          Pending
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+          Rejected
+        </Badge>
+      );
+    }
+  };
+
   return (
     <div className="border border-gray-200 rounded-lg bg-white p-4 shadow-sm space-y-3 relative">
       <div className="absolute top-3 right-3">
@@ -472,17 +487,31 @@ function TalentApprovalCard({
         </div>
         <div className="text-sm text-gray-600">{user.email}</div>
         <div className="flex items-center gap-2 text-xs text-gray-500">
-          <Badge
-            variant="outline"
-            className="bg-yellow-50 text-yellow-700 border-yellow-200"
-          >
-            Pending
-          </Badge>
-          <span>{moment(user.created_at).fromNow()}</span>
+          {getStatusBadge()}
+          <span>{moment(user.created_at || user.user_created_at).fromNow()}</span>
         </div>
       </div>
-      <div className="text-sm text-gray-700">
-        {user.city}, {user.country}
+      {(user.city || user.country) && (
+        <div className="text-sm text-gray-700">
+          {user.city}{user.city && user.country ? ', ' : ''}{user.country}
+        </div>
+      )}
+      <div className="flex flex-wrap gap-2">
+        {user.talent && (
+          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+            Talent
+          </Badge>
+        )}
+        {user.mentor && (
+          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+            Mentor
+          </Badge>
+        )}
+        {user.recruiter && (
+          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+            Recruiter
+          </Badge>
+        )}
       </div>
       <div className="flex flex-wrap gap-2">
         <Button size="sm" variant="outline" onClick={onApprove}>

@@ -5,27 +5,54 @@
   margin-bottom: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 
+  // Date Range Row - Full width on top
+  .dateRow {
+    margin-bottom: 1rem;
+
+    .dateRangeGroup {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      min-width: 0;
+    }
+  }
+
+  // Second Row - Other filters
   .filterRow {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.25rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
     align-items: end;
+
+    @media (max-width: 1200px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
   }
 
   .filterGroup {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    min-width: 0; // Prevent overflow
 
     .filterLabel {
       font-size: 0.875rem;
       font-weight: 600;
       color: #495057;
       margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .filterSelect,
     .filterInput {
+      width: 100%;
+      min-width: 0; // Prevent overflow
       padding: 0.625rem;
       border: 1px solid #ced4da;
       border-radius: 6px;
@@ -71,25 +98,88 @@
     }
   }
 
-  @media (max-width: 1024px) {
-    .filterRow {
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 1rem;
+  .filterChips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.625rem;
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #e9ecef;
+    align-items: center;
+
+    .filterChip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      font-size: 0.875rem;
+
+      .chipLabel {
+        font-weight: 600;
+        color: #495057;
+      }
+
+      .chipValue {
+        color: #6c757d;
+      }
+
+      .removeBtn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.125rem;
+        margin-left: 0.25rem;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: #6c757d;
+        transition: color 0.2s ease;
+        border-radius: 3px;
+
+        &:hover {
+          color: #dc3545;
+          background: rgba(220, 53, 69, 0.1);
+        }
+
+        &:focus {
+          outline: none;
+          box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
+        }
+      }
+    }
+
+    .clearAllBtn {
+      padding: 0.5rem 1rem;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      margin-left: auto;
+
+      &:hover {
+        background: #c82333;
+      }
+
+      &:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
+      }
     }
   }
 
   @media (max-width: 768px) {
     padding: 1rem;
 
-    .filterRow {
-      grid-template-columns: 1fr;
-      gap: 1rem;
-    }
-
-    .filterGroup {
-      .filterSelect,
-      .filterInput,
-      .clearBtn {
+    .filterChips {
+      .clearAllBtn {
+        margin-left: 0;
         width: 100%;
       }
     }

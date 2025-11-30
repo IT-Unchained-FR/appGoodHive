@@ -2,7 +2,9 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { X } from 'lucide-react';
 import { DateRangeFilter } from './DateRangeFilter';
+import { Badge } from '@/components/ui/badge';
 import styles from './AdminFilters.module.scss';
 
 export type FilterOption = {
@@ -43,9 +45,19 @@ export function AdminFilters({ config, basePath }: AdminFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // Get default status value from config
+  const getDefaultStatus = () => {
+    if (Array.isArray(config.statusFilter) && config.statusFilter.length > 0) {
+      // Use the first non-"all" status as default, or "all" if it's the only option
+      const firstNonAll = config.statusFilter.find(opt => opt.value !== 'all');
+      return firstNonAll ? firstNonAll.value : config.statusFilter[0].value;
+    }
+    return 'all';
+  };
+
   // State for all filter values
   const [dateRange, setDateRange] = useState(searchParams.get('dateRange') || 'any');
-  const [status, setStatus] = useState(searchParams.get('status') || 'all');
+  const [status, setStatus] = useState(searchParams.get('status') || getDefaultStatus());
   const [role, setRole] = useState(searchParams.get('role') || 'all');
   const [location, setLocation] = useState(searchParams.get('location') || '');
   const [type, setType] = useState(searchParams.get('type') || 'all');
@@ -66,7 +78,7 @@ export function AdminFilters({ config, basePath }: AdminFiltersProps) {
   // Sync with URL params on mount and when they change
   useEffect(() => {
     setDateRange(searchParams.get('dateRange') || 'any');
-    setStatus(searchParams.get('status') || 'all');
+    setStatus(searchParams.get('status') || getDefaultStatus());
     setRole(searchParams.get('role') || 'all');
     setLocation(searchParams.get('location') || '');
     setType(searchParams.get('type') || 'all');
@@ -82,8 +94,9 @@ export function AdminFilters({ config, basePath }: AdminFiltersProps) {
       params.set('dateRange', dateRange);
     }
 
-    // Add status
-    if (status && status !== 'all') {
+    // Add status - always include it in URL if not default 'all', or if it's the configured default
+    const defaultStatus = getDefaultStatus();
+    if (status && (status !== 'all' || defaultStatus !== 'all')) {
       params.set('status', status);
     }
 
@@ -127,22 +140,81 @@ export function AdminFilters({ config, basePath }: AdminFiltersProps) {
     return () => clearTimeout(timer);
   }, [applyFilters]);
 
-  // Clear all filters
+  // Clear all filters - reset to defaults
   const handleClearFilters = () => {
     setDateRange('any');
-    setStatus('all');
+    setStatus(getDefaultStatus());
     setRole('all');
     setLocation('');
     setType('all');
     setSortOrder('latest');
     setCustomFilterValues({});
-    router.replace(basePath, { scroll: false });
+
+    // Build URL with default status if it's not 'all'
+    const defaultStatus = getDefaultStatus();
+    if (defaultStatus !== 'all') {
+      const params = new URLSearchParams();
+      params.set('status', defaultStatus);
+      router.replace(`${basePath}?${params.toString()}`, { scroll: false });
+    } else {
+      router.replace(basePath, { scroll: false });
+    }
   };
 
-  // Check if any filters are active
+  // Remove individual filter
+  const removeFilter = (filterKey: string) => {
+    switch (filterKey) {
+      case 'dateRange':
+        setDateRange('any');
+        break;
+      case 'status':
+        setStatus('all');
+        break;
+      case 'role':
+        setRole('all');
+        break;
+      case 'location':
+        setLocation('');
+        break;
+      case 'type':
+        setType('all');
+        break;
+      default:
+        // Handle custom filters
+        if (customFilterValues[filterKey]) {
+          setCustomFilterValues((prev) => ({ ...prev, [filterKey]: '' }));
+        }
+    }
+  };
+
+  // Get human-readable date range label
+  const getDateRangeLabel = (range: string): string => {
+    const labels: Record<string, string> = {
+      '1d': 'Last 24 hours',
+      '3d': 'Last 3 days',
+      '7d': 'Last 7 days',
+      '14d': 'Last 14 days',
+      '30d': 'Last 30 days',
+    };
+
+    if (range in labels) {
+      return labels[range];
+    }
+
+    // Custom range format: "2024-01-01,2024-12-31"
+    if (range.includes(',')) {
+      const [start, end] = range.split(',');
+      return `${start} to ${end}`;
+    }
+
+    return range;
+  };
+
+  // Check if any filters are active (beyond defaults)
+  const defaultStatus = getDefaultStatus();
   const hasActiveFilters =
     dateRange !== 'any' ||
-    status !== 'all' ||
+    status !== defaultStatus ||
     role !== 'all' ||
     location.trim() !== '' ||
     type !== 'all' ||
@@ -186,15 +258,18 @@ export function AdminFilters({ config, basePath }: AdminFiltersProps) {
 
   return (
     <div className={styles.adminFilters}>
-      <div className={styles.filterRow}>
-        {/* Date Range Filter */}
-        {config.dateFilter && (
-          <div className={styles.filterGroup}>
+      {/* First Row: Date Range */}
+      {config.dateFilter && (
+        <div className={styles.dateRow}>
+          <div className={styles.dateRangeGroup}>
             <label className={styles.filterLabel}>Date Range</label>
             <DateRangeFilter value={dateRange} onChange={setDateRange} />
           </div>
-        )}
+        </div>
+      )}
 
+      {/* Second Row: Other Filters */}
+      <div className={styles.filterRow}>
         {/* Status Filter */}
         {config.statusFilter && (
           <div className={styles.filterGroup}>
@@ -324,6 +399,7 @@ export function AdminFilters({ config, basePath }: AdminFiltersProps) {
           </div>
         )}
       </div>
+
     </div>
   );
 }
