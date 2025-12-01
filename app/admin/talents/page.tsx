@@ -32,6 +32,7 @@ import ApprovalPopup from "../talent-approval/components/ApprovalPopup";
 export default function AdminManageTalents() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const searchParamsString = searchParams.toString();
   const [talents, setTalents] = useState<ProfileData[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -60,7 +61,7 @@ export default function AdminManageTalents() {
       if (!headers) return;
 
       // Build URL with filter params
-      const params = new URLSearchParams(searchParams.toString());
+      const params = new URLSearchParams(searchParamsString);
       const url = `/api/admin/talents${params.toString() ? `?${params.toString()}` : ''}`;
 
       const response = await fetch(url, { headers });
@@ -82,7 +83,8 @@ export default function AdminManageTalents() {
 
   useEffect(() => {
     fetchAllTalents();
-  }, [searchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParamsString]);
 
   const handleDeleteTalent = async (userId: string) => {
     try {
