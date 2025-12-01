@@ -64,19 +64,23 @@ export async function GET(req: NextRequest) {
     };
     const orderBy = sortMap[sort] || sortMap.latest;
 
+    // Build WHERE clause without relying on sql.join (not available in some runtimes)
+    const whereClause =
+      conditions.length > 0
+        ? conditions.reduce(
+            (acc, condition, index) =>
+              index === 0 ? condition : sql`${acc} AND ${condition}`,
+            sql``,
+          )
+        : null;
+
     // Execute query with filters
-    const jobs = conditions.length > 0
-      ? await sql`
-          SELECT *
-          FROM goodhive.job_offers
-          WHERE ${sql.join(conditions, sql` AND `)}
-          ORDER BY ${orderBy}
-        `
-      : await sql`
-          SELECT *
-          FROM goodhive.job_offers
-          ORDER BY ${orderBy}
-        `;
+    const jobs = await sql`
+      SELECT *
+      FROM goodhive.job_offers
+      ${whereClause ? sql`WHERE ${whereClause}` : sql``}
+      ORDER BY ${orderBy}
+    `;
 
     const headers = new Headers({
       "Content-Type": "application/json",
