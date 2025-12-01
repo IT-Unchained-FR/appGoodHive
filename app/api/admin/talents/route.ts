@@ -69,19 +69,23 @@ export async function GET(req: NextRequest) {
     };
     const orderBy = sortMap[sort] || sortMap.latest;
 
+    // Build WHERE clause without sql.join (not available in some runtimes)
+    const whereClause =
+      conditions.length > 0
+        ? conditions.reduce(
+            (acc, condition, index) =>
+              index === 0 ? condition : sql`${acc} AND ${condition}`,
+            sql``,
+          )
+        : null;
+
     // Execute query with filters
-    const talents = conditions.length > 0
-      ? await sql`
-          SELECT *
-          FROM goodhive.talents
-          WHERE ${sql.join(conditions, sql` AND `)}
-          ORDER BY ${orderBy}
-        `
-      : await sql`
-          SELECT *
-          FROM goodhive.talents
-          ORDER BY ${orderBy}
-        `;
+    const talents = await sql`
+      SELECT *
+      FROM goodhive.talents
+      ${whereClause ? sql`WHERE ${whereClause}` : sql``}
+      ORDER BY ${orderBy}
+    `;
 
     // Set Cache-Control header to disable caching
     const headers = new Headers({

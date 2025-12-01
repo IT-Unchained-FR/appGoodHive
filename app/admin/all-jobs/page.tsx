@@ -28,10 +28,14 @@ export default function AdminAllJobs() {
       const url = `/api/admin/jobs${params.toString() ? `?${params.toString()}` : ''}`;
 
       const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch jobs: ${response.status}`);
+      }
       const data = await response.json();
-      setJobs(data);
+      setJobs(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Failed to fetch jobs:", error);
+      setJobs([]);
     } finally {
       setLoading(false);
     }
@@ -42,6 +46,7 @@ export default function AdminAllJobs() {
   }, [searchParams]);
 
   const jobCards = useMemo(() => {
+    if (!Array.isArray(jobs)) return [];
     return jobs.map((job) => ({
       id: job.id,
       title: job.title,

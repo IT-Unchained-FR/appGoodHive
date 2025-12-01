@@ -60,35 +60,31 @@ export async function GET(req: NextRequest) {
     };
     const orderBy = sortMap[sort] || sortMap.latest;
 
+    // Build WHERE clause without sql.join (not available in some runtimes)
+    const whereClause =
+      conditions.length > 0
+        ? conditions.reduce(
+            (acc, condition, index) =>
+              index === 0 ? condition : sql`${acc} AND ${condition}`,
+            sql``,
+          )
+        : null;
+
     // Execute query with filters
-    const users = conditions.length > 0
-      ? await sql`
-          SELECT u.*,
-            t.first_name,
-            t.last_name,
-            EXISTS (
-              SELECT 1
-              FROM goodhive.talents t2
-              WHERE t2.user_id = u.userid
-            ) as has_talent_profile
-          FROM goodhive.users u
-          LEFT JOIN goodhive.talents t ON t.user_id = u.userid
-          WHERE ${sql.join(conditions, sql` AND `)}
-          ORDER BY ${orderBy}
-        `
-      : await sql`
-          SELECT u.*,
-            t.first_name,
-            t.last_name,
-            EXISTS (
-              SELECT 1
-              FROM goodhive.talents t2
-              WHERE t2.user_id = u.userid
-            ) as has_talent_profile
-          FROM goodhive.users u
-          LEFT JOIN goodhive.talents t ON t.user_id = u.userid
-          ORDER BY ${orderBy}
-        `;
+    const users = await sql`
+      SELECT u.*,
+        t.first_name,
+        t.last_name,
+        EXISTS (
+          SELECT 1
+          FROM goodhive.talents t2
+          WHERE t2.user_id = u.userid
+        ) as has_talent_profile
+      FROM goodhive.users u
+      LEFT JOIN goodhive.talents t ON t.user_id = u.userid
+      ${whereClause ? sql`WHERE ${whereClause}` : sql``}
+      ORDER BY ${orderBy}
+    `;
 
     return new Response(
       JSON.stringify({
