@@ -1,7 +1,7 @@
-import sanityClient from "@sanity/client";
+import { createClient } from "@sanity/client";
 import imageUrlBuilder from "@sanity/image-url";
 
-export const client = sanityClient({
+export const client = createClient({
   projectId: "bk6p174g",
   dataset: "production",
   apiVersion: "2021-03-25", // use a date that's compatible with your Sanity version
