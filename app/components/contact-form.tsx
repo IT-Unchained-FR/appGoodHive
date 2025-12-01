@@ -1,47 +1,111 @@
 "use client";
 
-import React from "react";
-import { useForm, ValidationError } from "@formspree/react";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import { Send, CheckCircle } from "lucide-react";
+import toast from "react-hot-toast";
 
-const formId = process.env.NEXT_PUBLIC_FORMSPREE_FORM_ID;
+interface FormData {
+  name: string;
+  email: string;
+  subject?: string;
+  message: string;
+}
+
+const schema = yup.object({
+  name: yup
+    .string()
+    .required("Name is required")
+    .min(2, "Name must be at least 2 characters"),
+  email: yup
+    .string()
+    .required("Email is required")
+    .email("Please enter a valid email"),
+  subject: yup.string().optional(),
+  message: yup
+    .string()
+    .required("Message is required")
+    .min(10, "Message must be at least 10 characters"),
+});
 
 export default function ContactForm() {
-  
-  const [state, handleSubmit] = useForm(formId || "placeholder");
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!formId) {
-    return (
-      <div className="text-center p-8 bg-amber-50 rounded-2xl border-2 border-amber-200">
-        <div className="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Send className="w-8 h-8 text-white" />
-        </div>
-        <h3 className="text-xl font-bold text-amber-800 mb-2">Contact Form Configuration Required</h3>
-        <p className="text-amber-600">
-          The contact form is currently not configured. Please add the NEXT_PUBLIC_FORMSPREE_FORM_ID environment variable.
-        </p>
-      </div>
-    );
-  }
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<FormData>({
+    resolver: yupResolver(schema),
+  });
 
-  if (state.succeeded) {
+  const onSubmit = async (data: FormData) => {
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          message: data.message,
+          type: "contact-us",
+          subject: data.subject
+            ? `New Contact Message from ${data.name}: ${data.subject}`
+            : `New Contact Message from ${data.name}`,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success(
+          "🍯 Message sent successfully! We'll buzz back to you soon!",
+        );
+        setIsSubmitted(true);
+        reset();
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to send message");
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error("Failed to send message. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isSubmitted) {
     return (
       <div className="text-center p-8 bg-green-50 rounded-2xl border-2 border-green-200">
         <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
           <CheckCircle className="w-8 h-8 text-white" />
         </div>
-        <h3 className="text-xl font-bold text-green-800 mb-2">Message Sent Successfully! 🐝</h3>
+        <h3 className="text-xl font-bold text-green-800 mb-2">
+          Message Sent Successfully! 🐝
+        </h3>
         <p className="text-green-600">
           Thanks for reaching out! We&apos;ve received your message and our team
           will get back to you within 24 hours.
         </p>
+        <button
+          onClick={() => setIsSubmitted(false)}
+          className="mt-4 text-green-700 hover:text-green-800 font-semibold underline"
+        >
+          Send another message
+        </button>
       </div>
     );
   }
-  
+
   return (
     <div>
-      <form className="space-y-6" onSubmit={handleSubmit}>
+      <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
         <div>
           <label
             htmlFor="name"
@@ -52,11 +116,13 @@ export default function ContactForm() {
           <input
             type="text"
             id="name"
-            name="name"
+            {...register("name")}
             className="form-control block w-full px-4 py-3 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-amber-300 rounded-xl hover:shadow-md transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-amber-500 focus:outline-none"
             placeholder="John Doe"
-            required
           />
+          {errors.name && (
+            <p className="text-red-500 text-sm mt-1 ml-3">{errors.name.message}</p>
+          )}
         </div>
 
         <div>
@@ -67,16 +133,17 @@ export default function ContactForm() {
             Your Email*
           </label>
           <input
-            name="email"
-            id="email"
             type="email"
+            id="email"
+            {...register("email")}
             className="form-control block w-full px-4 py-3 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-amber-300 rounded-xl hover:shadow-md transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-amber-500 focus:outline-none"
             placeholder="john.doe@example.com"
-            required
           />
-          <ValidationError prefix="Email" field="email" errors={state.errors} />
+          {errors.email && (
+            <p className="text-red-500 text-sm mt-1 ml-3">{errors.email.message}</p>
+          )}
         </div>
-        
+
         <div>
           <label
             htmlFor="subject"
@@ -87,12 +154,12 @@ export default function ContactForm() {
           <input
             type="text"
             id="subject"
-            name="subject"
+            {...register("subject")}
             className="form-control block w-full px-4 py-3 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-amber-300 rounded-xl hover:shadow-md transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-amber-500 focus:outline-none"
             placeholder="What can we help you with?"
           />
         </div>
-        
+
         <div>
           <label
             htmlFor="message"
@@ -102,27 +169,24 @@ export default function ContactForm() {
           </label>
           <textarea
             id="message"
-            name="message"
+            {...register("message")}
             rows={5}
             className="form-control block w-full px-4 py-3 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-amber-300 rounded-xl hover:shadow-md transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-amber-500 focus:outline-none resize-none"
             placeholder="Tell us more about your needs or questions..."
-            required
           ></textarea>
-          <ValidationError
-            prefix="Message"
-            field="message"
-            errors={state.errors}
-          />
+          {errors.message && (
+            <p className="text-red-500 text-sm mt-1 ml-3">{errors.message.message}</p>
+          )}
         </div>
-        
+
         <button
           type="submit"
-          disabled={state.submitting}
+          disabled={isSubmitting}
           className="group w-full px-8 py-4 bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold rounded-2xl hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 shadow-lg flex items-center justify-center relative overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-amber-600 to-yellow-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <span className="relative z-10 flex items-center">
-            {state.submitting ? (
+            {isSubmitting ? (
               <>
                 <div className="w-5 h-5 mr-2 animate-spin border-2 border-white border-t-transparent rounded-full"></div>
                 Sending...
