@@ -44,6 +44,8 @@ type AdminFiltersProps = {
 export function AdminFilters({ config, basePath }: AdminFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const searchParamsString = searchParams.toString();
+  const customFiltersSignature = JSON.stringify(config.customFilters || []);
 
   // Get default status value from config
   const getDefaultStatus = () => {
@@ -71,9 +73,15 @@ export function AdminFilters({ config, basePath }: AdminFiltersProps) {
       config.customFilters.forEach((filter) => {
         values[filter.key] = searchParams.get(filter.key) || '';
       });
-      setCustomFilterValues(values);
+      setCustomFilterValues((prev) => {
+        const hasChanges =
+          Object.keys(values).length !== Object.keys(prev).length ||
+          Object.entries(values).some(([key, value]) => prev[key] !== value);
+
+        return hasChanges ? values : prev;
+      });
     }
-  }, [config.customFilters, searchParams]);
+  }, [customFiltersSignature, searchParamsString]);
 
   // Sync with URL params on mount and when they change
   useEffect(() => {
@@ -83,7 +91,7 @@ export function AdminFilters({ config, basePath }: AdminFiltersProps) {
     setLocation(searchParams.get('location') || '');
     setType(searchParams.get('type') || 'all');
     setSortOrder(searchParams.get('sort') || 'latest');
-  }, [searchParams]);
+  }, [searchParamsString]);
 
   // Apply filters to URL
   const applyFilters = useCallback(() => {
