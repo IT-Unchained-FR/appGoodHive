@@ -25,6 +25,44 @@ const verifyAdminToken = async () => {
   }
 };
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { userId: string } },
+) {
+  try {
+    await verifyAdminToken();
+    const { userId } = params;
+
+    if (!userId) {
+      return new Response(JSON.stringify({ message: "User ID is required" }), {
+        status: 400,
+      });
+    }
+
+    const company = await sql`
+      SELECT * FROM goodhive.companies WHERE user_id = ${userId}
+    `;
+
+    if (company.length === 0) {
+      return new Response(JSON.stringify({ message: "Company not found" }), {
+        status: 404,
+      });
+    }
+
+    return new Response(JSON.stringify(company[0]), { status: 200 });
+  } catch (error) {
+    console.error("Get company error:", error);
+    if (error instanceof Error && error.message.includes("Unauthorized")) {
+      return new Response(JSON.stringify({ message: "Unauthorized" }), {
+        status: 401,
+      });
+    }
+    return new Response(JSON.stringify({ message: "Error fetching company" }), {
+      status: 500,
+    });
+  }
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: { userId: string } },

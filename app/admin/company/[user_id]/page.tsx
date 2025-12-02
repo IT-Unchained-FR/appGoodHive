@@ -35,7 +35,7 @@ export default function CompaniesPage({
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/admin/company?user_id=${user_id}`);
+      const response = await fetch(`/api/admin/companies/${user_id}`);
       if (!response.ok) {
         throw new Error("Failed to fetch company data");
       }
