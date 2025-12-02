@@ -1,8 +1,12 @@
 import type { NextRequest } from "next/server";
 import sql from "@/lib/db";
+import { requireAdminAuth } from "@/app/lib/admin-auth";
 
 export async function DELETE(req: NextRequest) {
   try {
+    // Verify admin token (SECURITY FIX)
+    const authError = requireAdminAuth(req);
+    if (authError) return authError;
     const body = await req.text();
     if (!body) {
       return new Response(

@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { ConfirmationPopup } from "@/app/components/ConfirmationPopup/ConfirmationPopup";
+import { DeleteConfirmDialog } from "@/app/components/admin/DeleteConfirmDialog";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { EditTalentModal } from "@/app/components/admin/EditTalentModal";
 import { Column, EnhancedTable } from "@/app/components/admin/EnhancedTable";
@@ -37,6 +37,8 @@ export default function AdminManageTalents() {
   const [loading, setLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [selectedTalent, setSelectedTalent] = useState<ProfileData | null>(null);
   const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
   const [showApprovePopup, setShowApprovePopup] = useState(false);
   const [editingTalent, setEditingTalent] = useState<ProfileData | null>(null);
@@ -85,16 +87,18 @@ export default function AdminManageTalents() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParamsString]);
 
-  const handleDeleteTalent = async (userId: string) => {
+  const handleDeleteTalent = async () => {
+    if (!userToDelete) return;
+
     try {
-      setLoading(true);
+      setDeleteLoading(true);
       const headers = getAuthHeaders();
       if (!headers) return;
 
-      const response = await fetch(`/api/admin/talents/${userId}`, {
+      const response = await fetch(`/api/admin/talents/${userToDelete}`, {
         method: "DELETE",
         headers,
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ userId: userToDelete }),
       });
 
       if (!response.ok) {
@@ -103,12 +107,14 @@ export default function AdminManageTalents() {
 
       toast.success("Talent deleted successfully");
       setShowDeleteConfirm(false);
+      setUserToDelete(null);
+      setSelectedTalent(null);
       await fetchAllTalents();
     } catch (error) {
       console.error("Error deleting talent:", error);
       toast.error("Failed to delete talent");
     } finally {
-      setLoading(false);
+      setDeleteLoading(false);
     }
   };
 
@@ -326,6 +332,7 @@ export default function AdminManageTalents() {
             title="Delete talent"
             onClick={() => {
               setUserToDelete(row.user_id || "");
+              setSelectedTalent(row);
               setShowDeleteConfirm(true);
             }}
             disabled={loading}
@@ -412,13 +419,14 @@ export default function AdminManageTalents() {
         basePath="/admin/talents"
       />
 
-      <ConfirmationPopup
+      <DeleteConfirmDialog
         open={showDeleteConfirm}
         onOpenChange={setShowDeleteConfirm}
-        onConfirm={() => userToDelete && handleDeleteTalent(userToDelete)}
-        title="Delete Talent"
-        description="Are you sure you want to delete this talent? This action cannot be undone."
-        loading={loading}
+        onConfirm={handleDeleteTalent}
+        entityType="talent"
+        entityName={selectedTalent?.email || ""}
+        entityId={userToDelete || ""}
+        loading={deleteLoading}
       />
       {selectedUser && (
         <ApprovalPopup
@@ -474,6 +482,7 @@ export default function AdminManageTalents() {
                 }}
                 onDelete={() => {
                   setUserToDelete(talent.user_id || "");
+                  setSelectedTalent(talent);
                   setShowDeleteConfirm(true);
                 }}
               />

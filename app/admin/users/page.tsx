@@ -6,11 +6,18 @@ import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { Column, EnhancedTable } from "@/app/components/admin/EnhancedTable";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
 import { AdminFilters } from "@/app/components/admin/AdminFilters";
+import { DeleteConfirmDialog } from "@/app/components/admin/DeleteConfirmDialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import Cookies from "js-cookie";
-import { BarChart3, Copy, Download, Filter } from "lucide-react";
+import { BarChart3, Copy, Download, Filter, MoreHorizontal } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -34,6 +41,18 @@ export default function AdminManageUsers() {
   const searchParams = useSearchParams();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<{
+    id: string;
+    email: string;
+    name: string;
+  } | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [relatedData, setRelatedData] = useState({
+    talents: 0,
+    companies: 0,
+    jobs: 0,
+  });
 
   const getAuthHeaders = () => {
     const token = Cookies.get("admin_token");
@@ -76,6 +95,56 @@ export default function AdminManageUsers() {
   useEffect(() => {
     fetchAllUsers();
   }, [searchParams]);
+
+  const fetchUserRelatedData = async (userId: string) => {
+    try {
+      const headers = getAuthHeaders();
+      if (!headers) return;
+
+      const response = await fetch(`/api/admin/users/${userId}/related`, {
+        headers,
+      });
+      const data = await response.json();
+      setRelatedData(data);
+    } catch (error) {
+      console.error("Failed to fetch related data:", error);
+      setRelatedData({ talents: 0, companies: 0, jobs: 0 });
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    try {
+      setDeleteLoading(true);
+      const headers = getAuthHeaders();
+      if (!headers) return;
+
+      const response = await fetch(`/api/admin/users/${userToDelete.id}`, {
+        method: "DELETE",
+        headers,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success(
+          `User deleted successfully. Removed: ${data.deleted.talents} talents, ${data.deleted.companies} companies, ${data.deleted.jobs} jobs`
+        );
+        fetchAllUsers(); // Refresh list
+        setShowDeleteDialog(false);
+        setUserToDelete(null);
+      } else {
+        throw new Error(data.message || "Failed to delete user");
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete user"
+      );
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   const columns: Column<User>[] = [
     {
@@ -220,6 +289,48 @@ export default function AdminManageUsers() {
           </Badge>
         ),
     },
+    {
+      key: "actions",
+      header: "Actions",
+      width: "10%",
+      render: (_value: unknown, row: User) => (
+        <div className="flex justify-end">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => {
+                  if (row.has_talent_profile) {
+                    window.open(`/admin/talent/${row.userid}`, "_blank");
+                  }
+                }}
+                disabled={!row.has_talent_profile}
+              >
+                View Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-red-600 focus:text-red-600"
+                onClick={async () => {
+                  setUserToDelete({
+                    id: row.userid,
+                    email: row.email,
+                    name: `${row.first_name} ${row.last_name}`,
+                  });
+                  await fetchUserRelatedData(row.userid);
+                  setShowDeleteDialog(true);
+                }}
+              >
+                Delete User
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
   ];
 
   return (
@@ -302,6 +413,17 @@ export default function AdminManageUsers() {
             onClick: () => router.push("/admin/analytics"),
           },
         ]}
+      />
+
+      <DeleteConfirmDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={handleDeleteUser}
+        entityType="user"
+        entityName={userToDelete?.email || ""}
+        entityId={userToDelete?.id || ""}
+        relatedData={relatedData}
+        loading={deleteLoading}
       />
     </AdminPageLayout>
   );

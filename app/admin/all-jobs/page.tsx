@@ -6,19 +6,47 @@ import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { Column, EnhancedTable } from "@/app/components/admin/EnhancedTable";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
 import { AdminFilters } from "@/app/components/admin/AdminFilters";
+import { DeleteConfirmDialog } from "@/app/components/admin/DeleteConfirmDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { IJobOffer } from "@/interfaces/job-offer";
 import Image from "next/image";
-import { Download, Filter } from "lucide-react";
+import Cookies from "js-cookie";
+import { Download, Filter, MoreHorizontal } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import toast from "react-hot-toast";
 
 export default function AdminAllJobs() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [jobs, setJobs] = useState<IJobOffer[]>([]);
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [jobToDelete, setJobToDelete] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const getAuthHeaders = () => {
+    const token = Cookies.get("admin_token");
+    if (!token) {
+      router.push("/admin/login");
+      return null;
+    }
+    return {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    };
+  };
 
   const fetchJobs = async () => {
     try {
@@ -44,6 +72,38 @@ export default function AdminAllJobs() {
   useEffect(() => {
     fetchJobs();
   }, [searchParams]);
+
+  const handleDeleteJob = async () => {
+    if (!jobToDelete) return;
+
+    try {
+      setDeleteLoading(true);
+      const headers = getAuthHeaders();
+      if (!headers) return;
+
+      const response = await fetch(`/api/admin/job/${jobToDelete.id}`, {
+        method: "DELETE",
+        headers,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success("Job deleted successfully");
+        fetchJobs(); // Refresh list
+        setShowDeleteDialog(false);
+        setJobToDelete(null);
+      } else {
+        throw new Error(data.message || "Failed to delete job");
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete job"
+      );
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   const jobCards = useMemo(() => {
     if (!Array.isArray(jobs)) return [];
@@ -107,16 +167,32 @@ export default function AdminAllJobs() {
     {
       key: "actions",
       header: "Actions",
-      width: "15%",
+      width: "12%",
       render: (_value: unknown, row: IJobOffer) => (
         <div className="flex justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.open(`/admin/job/${row.id}`, "_blank")}
-          >
-            View
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => window.open(`/admin/job/${row.id}`, "_blank")}
+              >
+                View/Edit Job
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-red-600 focus:text-red-600"
+                onClick={() => {
+                  setJobToDelete({ id: row.id, title: row.title });
+                  setShowDeleteDialog(true);
+                }}
+              >
+                Delete Job
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       ),
     },
@@ -299,6 +375,16 @@ export default function AdminAllJobs() {
         </div>
       </div>
       <QuickActionFAB actions={jobActions} />
+
+      <DeleteConfirmDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={handleDeleteJob}
+        entityType="job"
+        entityName={jobToDelete?.title || ""}
+        entityId={jobToDelete?.id || ""}
+        loading={deleteLoading}
+      />
     </AdminPageLayout>
   );
 }
