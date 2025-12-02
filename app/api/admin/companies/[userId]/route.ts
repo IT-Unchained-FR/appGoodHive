@@ -3,6 +3,7 @@ import sql from "@/lib/db";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { getAdminJWTSecret } from "@/app/lib/admin-auth";
+import { updateCompanySchema, validateInput } from "@/app/lib/admin-validations";
 
 export const dynamic = "force-dynamic";
 
@@ -70,7 +71,6 @@ export async function PUT(
   try {
     await verifyAdminToken();
     const { userId } = params;
-    const body = await request.json();
 
     if (!userId) {
       return new Response(JSON.stringify({ message: "User ID is required" }), {
@@ -78,22 +78,40 @@ export async function PUT(
       });
     }
 
+    const body = await request.json();
+
+    // Validate input
+    const validation = validateInput(updateCompanySchema, body);
+    if (!validation.success) {
+      return new Response(
+        JSON.stringify({
+          message: "Validation failed",
+          errors: validation.errors,
+        }),
+        {
+          status: 400,
+        },
+      );
+    }
+
+    const validatedBody = validation.data;
+
     await sql`
       UPDATE goodhive.companies
-      SET 
-        designation = ${body.designation || null},
-        headline = ${body.headline || null},
-        email = ${body.email || null},
-        phone_country_code = ${body.phone_country_code || null},
-        phone_number = ${body.phone_number || null},
-        address = ${body.address || null},
-        city = ${body.city || null},
-        country = ${body.country || null},
-        linkedin = ${body.linkedin || null},
-        twitter = ${body.twitter || null},
-        github = ${body.github || null},
-        telegram = ${body.telegram || null},
-        approved = ${body.approved || false}
+      SET
+        designation = ${validatedBody.designation || null},
+        headline = ${validatedBody.headline || null},
+        email = ${validatedBody.email || null},
+        phone_country_code = ${validatedBody.phone_country_code || null},
+        phone_number = ${validatedBody.phone_number || null},
+        address = ${validatedBody.address || null},
+        city = ${validatedBody.city || null},
+        country = ${validatedBody.country || null},
+        linkedin = ${validatedBody.linkedin || null},
+        twitter = ${validatedBody.twitter || null},
+        github = ${validatedBody.github || null},
+        telegram = ${validatedBody.telegram || null},
+        approved = ${validatedBody.approved || false}
       WHERE user_id = ${userId}
     `;
 

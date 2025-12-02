@@ -4,6 +4,7 @@ import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
 import { getAdminJWTSecret } from "@/app/lib/admin-auth";
+import { createAdminSchema, validateInput } from "@/app/lib/admin-validations";
 
 export const dynamic = "force-dynamic";
 
@@ -65,16 +66,23 @@ export async function POST(req: Request) {
   try {
     await verifyAdminToken(req);
 
-    const { name, email, password } = await req.json();
+    const body = await req.json();
 
-    if (!name || !email || !password) {
+    // Validate input
+    const validation = validateInput(createAdminSchema, body);
+    if (!validation.success) {
       return new Response(
-        JSON.stringify({ message: "Name, email and password are required" }),
+        JSON.stringify({
+          message: "Validation failed",
+          errors: validation.errors,
+        }),
         {
           status: 400,
         },
       );
     }
+
+    const { name, email, password } = validation.data;
 
     // Check if email already exists
     const existingAdmin = await sql`

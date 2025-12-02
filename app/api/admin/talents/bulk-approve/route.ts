@@ -3,6 +3,7 @@ import sql from "@/lib/db";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { getAdminJWTSecret } from "@/app/lib/admin-auth";
+import { bulkOperationSchema, validateInput } from "@/app/lib/admin-validations";
 
 export const dynamic = "force-dynamic";
 
@@ -28,14 +29,21 @@ const verifyAdminToken = async () => {
 export async function POST(req: NextRequest) {
   try {
     await verifyAdminToken();
-    const { userIds, approvalTypes } = await req.json();
+    const body = await req.json();
 
-    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+    // Validate input
+    const validation = validateInput(bulkOperationSchema, body);
+    if (!validation.success) {
       return new Response(
-        JSON.stringify({ message: "User IDs array is required" }),
+        JSON.stringify({
+          message: "Validation failed",
+          errors: validation.errors,
+        }),
         { status: 400 }
       );
     }
+
+    const { userIds, approvalTypes } = validation.data;
 
     // Approve talents in parallel
     await Promise.all(
