@@ -88,8 +88,6 @@ export default function AdminsPage() {
     setLoading(true);
     setError("");
 
-    console.log("formData", formData);
-
     try {
       const headers = getAuthHeaders();
       if (!headers) return;

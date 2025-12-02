@@ -109,7 +109,6 @@ export default function AnalyticsPage() {
 
   const handleGenerateReport = async (params: any) => {
     // TODO: Implement report generation
-    console.log("Generating report with params:", params);
     // This would call an API endpoint to generate and download the report
   };
 

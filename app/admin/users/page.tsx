@@ -67,7 +67,7 @@ export default function AdminManageUsers() {
       const { users } = await response.json();
       setUsers(users);
     } catch (error) {
-      console.log("💥", error);
+      toast.error("Failed to fetch users");
     } finally {
       setLoading(false);
     }

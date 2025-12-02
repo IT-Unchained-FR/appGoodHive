@@ -82,7 +82,6 @@ export default function ApprovalPopup({
   };
 
   useEffect(() => {
-    console.log(user, "user");
     if (user) {
       setApprovalTypes({
         mentor: user.mentor ? true : false,

@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 
     return new Response(JSON.stringify(company[0]), { status: 200 });
   } catch (error) {
-    console.log(error, "error..");
+    console.error("Error fetching company:", error);
     return new Response(JSON.stringify({ message: "Error fetching company" }), {
       status: 500,
     });

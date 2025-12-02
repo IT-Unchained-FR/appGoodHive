@@ -3,11 +3,9 @@ import bcrypt from "bcryptjs";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
+import { getAdminJWTSecret } from "@/app/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
-
-const ADMIN_JWT_SECRET =
-  process.env.ADMIN_JWT_SECRET || "your-admin-secret-key";
 
 // Verify admin token middleware
 const verifyAdminToken = async (req: NextRequest | Request) => {
@@ -16,7 +14,7 @@ const verifyAdminToken = async (req: NextRequest | Request) => {
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.substring(7);
     try {
-      const decoded = verify(token, ADMIN_JWT_SECRET) as { role: string };
+      const decoded = verify(token, getAdminJWTSecret()) as { role: string };
       if (decoded.role === "admin") return decoded;
     } catch (error) {
       // Fall through to cookie check
@@ -32,7 +30,7 @@ const verifyAdminToken = async (req: NextRequest | Request) => {
   }
 
   try {
-    const decoded = verify(token, ADMIN_JWT_SECRET) as { role: string };
+    const decoded = verify(token, getAdminJWTSecret()) as { role: string };
     if (decoded.role !== "admin") {
       throw new Error("Not authorized");
     }
@@ -83,7 +81,7 @@ export async function POST(req: Request) {
       SELECT 1 FROM goodhive.admin WHERE email = ${email};
     `;
 
-    if (existingAdmin.count > 0) {
+    if (existingAdmin.length > 0) {
       return new Response(JSON.stringify({ message: "Email already exists" }), {
         status: 409,
       });

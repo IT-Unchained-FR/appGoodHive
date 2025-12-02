@@ -1,9 +1,7 @@
 import sql from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { sign } from "jsonwebtoken";
-
-const ADMIN_JWT_SECRET =
-  process.env.ADMIN_JWT_SECRET || "your-admin-secret-key";
+import { getAdminJWTSecret } from "@/app/lib/admin-auth";
 
 export async function POST(req: Request) {
   if (req.method === "POST") {
@@ -51,7 +49,7 @@ export async function POST(req: Request) {
       // Generate JWT token
       const token = sign(
         { email: admin.email, role: admin.role },
-        ADMIN_JWT_SECRET,
+        getAdminJWTSecret(),
       );
 
       return new Response(

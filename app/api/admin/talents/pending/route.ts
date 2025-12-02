@@ -138,7 +138,7 @@ export async function POST(req: NextRequest) {
       JSON.stringify({ message: "Approved talent successfully" }),
     );
   } catch (error) {
-    console.log(error, "error..");
+    console.error("Error approving talent:", error);
     return new Response(
       JSON.stringify({ message: "Unable to approve the talent" }),
       {

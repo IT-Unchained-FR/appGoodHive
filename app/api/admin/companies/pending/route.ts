@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
       JSON.stringify({ message: "Approved company successfully" }),
     );
   } catch (error) {
-    console.log(error, "error..");
+    console.error("Error approving company:", error);
     return new Response(
       JSON.stringify({ message: "Unable to approve the company" }),
       {

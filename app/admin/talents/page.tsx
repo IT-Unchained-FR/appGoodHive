@@ -74,7 +74,6 @@ export default function AdminManageTalents() {
       const talents = await response.json();
       setTalents(talents);
     } catch (error) {
-      console.log("💥", error);
       toast.error("Failed to fetch talents");
     } finally {
       setLoading(false);

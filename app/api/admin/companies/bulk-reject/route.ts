@@ -2,11 +2,9 @@ import type { NextRequest } from "next/server";
 import sql from "@/lib/db";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
+import { getAdminJWTSecret } from "@/app/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
-
-const ADMIN_JWT_SECRET =
-  process.env.ADMIN_JWT_SECRET || "your-admin-secret-key";
 
 const verifyAdminToken = async () => {
   const cookieStore = cookies();
@@ -17,7 +15,7 @@ const verifyAdminToken = async () => {
   }
 
   try {
-    const decoded = verify(token, ADMIN_JWT_SECRET) as { role: string };
+    const decoded = verify(token, getAdminJWTSecret()) as { role: string };
     if (decoded.role !== "admin") {
       throw new Error("Not authorized");
     }

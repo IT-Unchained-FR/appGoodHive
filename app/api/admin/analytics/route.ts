@@ -2,11 +2,9 @@ import sql from "@/lib/db";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
+import { getAdminJWTSecret } from "@/app/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
-
-const ADMIN_JWT_SECRET =
-  process.env.ADMIN_JWT_SECRET || "your-admin-secret-key";
 
 const verifyAdminToken = async (req: NextRequest) => {
   // Check Authorization header first
@@ -14,7 +12,7 @@ const verifyAdminToken = async (req: NextRequest) => {
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.substring(7);
     try {
-      const decoded = verify(token, ADMIN_JWT_SECRET) as { role: string };
+      const decoded = verify(token, getAdminJWTSecret()) as { role: string };
       if (decoded.role === "admin") return decoded;
     } catch (error) {
       // Fall through to cookie check
@@ -30,7 +28,7 @@ const verifyAdminToken = async (req: NextRequest) => {
   }
 
   try {
-    const decoded = verify(token, ADMIN_JWT_SECRET) as { role: string };
+    const decoded = verify(token, getAdminJWTSecret()) as { role: string };
     if (decoded.role !== "admin") {
       throw new Error("Not authorized");
     }

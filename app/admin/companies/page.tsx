@@ -85,7 +85,6 @@ export default function AdminManageCompanies() {
       const company_data = await response.json();
       setCompanies(company_data);
     } catch (error) {
-      console.log("💥", error);
       toast.error("Failed to fetch companies");
     } finally {
       setLoading(false);

@@ -19,6 +19,7 @@ import "@/app/styles/rich-text.css";
 import { getProfileData } from "@/lib/fetch-profile-data";
 import Image from "next/image";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
+import SafeHTML from "@/app/components/SafeHTML";
 
 export const metadata: Metadata = {
   title: "Admin Talent Management - GoodHive",
@@ -87,9 +88,9 @@ export default async function Page(context: MyProfilePageProps) {
         <div className="p-6 space-y-4">
           <div className="">
             <h2 className="text-xl font-semibold mb-2">Description</h2>
-            <div
+            <SafeHTML
+              html={user.description || ""}
               className="text-gray-700 rich-text-content"
-              dangerouslySetInnerHTML={{ __html: user.description || "" }}
             />
           </div>
           <div className="grid grid-cols-2 gap-4 border-t pt-4">
@@ -115,9 +116,9 @@ export default async function Page(context: MyProfilePageProps) {
 
           <div className="border-t pt-4">
             <h2 className="text-xl font-semibold mb-2">About Work</h2>
-            <div
+            <SafeHTML
+              html={user.about_work || ""}
               className="text-gray-700 rich-text-content"
-              dangerouslySetInnerHTML={{ __html: user.about_work || "" }}
             />
           </div>
 

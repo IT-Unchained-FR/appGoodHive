@@ -46,7 +46,7 @@ export async function DELETE(req: NextRequest) {
       { status: 200 },
     );
   } catch (error) {
-    console.log(error, "error..");
+    console.error("Error deleting company:", error);
     return new Response(JSON.stringify({ message: "Error deleting user" }), {
       status: 500,
     });

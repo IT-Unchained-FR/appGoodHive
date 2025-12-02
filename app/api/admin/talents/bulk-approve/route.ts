@@ -2,11 +2,9 @@ import type { NextRequest } from "next/server";
 import sql from "@/lib/db";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
+import { getAdminJWTSecret } from "@/app/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
-
-const ADMIN_JWT_SECRET =
-  process.env.ADMIN_JWT_SECRET || "your-admin-secret-key";
 
 const verifyAdminToken = async () => {
   const cookieStore = cookies();
@@ -17,7 +15,7 @@ const verifyAdminToken = async () => {
   }
 
   try {
-    const decoded = verify(token, ADMIN_JWT_SECRET) as { role: string };
+    const decoded = verify(token, getAdminJWTSecret()) as { role: string };
     if (decoded.role !== "admin") {
       throw new Error("Not authorized");
     }
@@ -49,32 +47,23 @@ export async function POST(req: NextRequest) {
           WHERE user_id = ${userId}
         `;
 
-        // Update user status based on approval types
-        const updates: string[] = [];
-        if (approvalTypes?.talent) {
-          updates.push("talent_status = 'approved'");
-        }
-        if (approvalTypes?.mentor) {
-          updates.push("mentor_status = 'approved'");
-        }
-        if (approvalTypes?.recruiter) {
-          updates.push("recruiter_status = 'approved'");
-        }
+        // Update user status based on approval types using safe conditional updates
+        const talentStatus = approvalTypes?.talent ? 'approved' : null;
+        const mentorStatus = approvalTypes?.mentor ? 'approved' : null;
+        const recruiterStatus = approvalTypes?.recruiter ? 'approved' : null;
 
-        if (updates.length > 0) {
-          await sql`
-            UPDATE goodhive.users
-            SET ${sql.raw(updates.join(", "))}
-            WHERE userid = ${userId}
-          `;
-        } else {
-          // Default to talent approval if no types specified
-          await sql`
-            UPDATE goodhive.users
-            SET talent_status = 'approved'
-            WHERE userid = ${userId}
-          `;
-        }
+        // Use CASE statements for conditional updates (safe parameterized approach)
+        await sql`
+          UPDATE goodhive.users
+          SET
+            talent_status = COALESCE(${talentStatus}, talent_status),
+            mentor_status = COALESCE(${mentorStatus}, mentor_status),
+            recruiter_status = COALESCE(${recruiterStatus}, recruiter_status)
+          WHERE userid = ${userId}
+            AND (${talentStatus} IS NOT NULL
+              OR ${mentorStatus} IS NOT NULL
+              OR ${recruiterStatus} IS NOT NULL)
+        `;
       })
     );
 
