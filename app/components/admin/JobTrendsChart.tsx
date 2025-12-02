@@ -64,6 +64,7 @@ export function JobTrendsChart({ data, loading }: JobTrendsChartProps) {
   const averagePerDay = (totalJobs / data.length).toFixed(1);
   const trend =
     data.length >= 2 ? data[data.length - 1].count - data[0].count : 0;
+  const safeMax = Math.max(maxValue, 1);
 
   return (
     <Card>
@@ -88,7 +89,7 @@ export function JobTrendsChart({ data, loading }: JobTrendsChartProps) {
           {/* Bar chart representation */}
           <div className="flex items-end gap-1 h-64">
             {data.map((point, index) => {
-              const height = maxValue > 0 ? (point.count / maxValue) * 100 : 0;
+              const height = (point.count / safeMax) * 100;
 
               return (
                 <div
@@ -98,7 +99,7 @@ export function JobTrendsChart({ data, loading }: JobTrendsChartProps) {
                   <div className="w-full flex flex-col items-center">
                     <div
                       className="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-t hover:from-blue-600 hover:to-blue-500 transition-all cursor-pointer"
-                      style={{ height: `${height}%` }}
+                      style={{ height: `${Math.max(height, 5)}%` }}
                       title={`${point.date}: ${point.count} jobs`}
                     />
                     <span className="text-xs text-gray-500 mt-1 hidden group-hover:block">

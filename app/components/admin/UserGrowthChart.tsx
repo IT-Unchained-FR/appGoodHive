@@ -62,6 +62,7 @@ export function UserGrowthChart({ data, loading }: UserGrowthChartProps) {
 
   const totalGrowth = data.reduce((sum, point) => sum + point.count, 0);
   const averagePerDay = (totalGrowth / data.length).toFixed(1);
+  const safeMax = Math.max(maxValue, 1);
 
   return (
     <Card>
@@ -80,7 +81,7 @@ export function UserGrowthChart({ data, loading }: UserGrowthChartProps) {
           {/* Simple bar chart */}
           <div className="flex items-end gap-1 h-64">
             {data.map((point, index) => {
-              const height = maxValue > 0 ? (point.count / maxValue) * 100 : 0;
+              const height = (point.count / safeMax) * 100;
               return (
                 <div
                   key={index}
@@ -89,7 +90,7 @@ export function UserGrowthChart({ data, loading }: UserGrowthChartProps) {
                   <div className="w-full flex flex-col items-center">
                     <div
                       className="w-full bg-gradient-to-t from-[#FFC905] to-yellow-400 rounded-t hover:from-yellow-500 hover:to-yellow-400 transition-all cursor-pointer"
-                      style={{ height: `${height}%` }}
+                      style={{ height: `${Math.max(height, 5)}%` }}
                       title={`${point.date}: ${point.count} users`}
                     />
                     <span className="text-xs text-gray-500 mt-1 hidden group-hover:block">
@@ -111,4 +112,3 @@ export function UserGrowthChart({ data, loading }: UserGrowthChartProps) {
     </Card>
   );
 }
-
