@@ -21,11 +21,11 @@ export async function GET(req: NextRequest) {
     // Status filter: pending, approved, rejected, all
     if (status && status !== 'all') {
       if (status === 'pending') {
-        conditions.push(`talents.inReview = true`);
+        conditions.push(`talents.inreview = true`);
       } else if (status === 'approved') {
         conditions.push(`talents.approved = true`);
       } else if (status === 'rejected') {
-        conditions.push(`talents.approved = false AND talents.inReview = false`);
+        conditions.push(`talents.approved = false AND talents.inreview = false`);
       }
     }
 
@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
     // Build WHERE clause
     const whereClause = conditions.length > 0
       ? `WHERE ${conditions.join(' AND ')}`
-      : 'WHERE talents.inReview = true';
+      : 'WHERE talents.inreview = true';
 
     // Build sort clause
     const sortMap: Record<string, string> = {
