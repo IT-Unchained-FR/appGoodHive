@@ -60,7 +60,11 @@ export default function ApprovalPopup({
 
       setOpen(false);
     } catch (error) {
-      toast.error("Failed to approve company.");
+      toast.error(
+        error instanceof Error
+          ? `Failed to approve company: ${error.message}`
+          : "Failed to approve company. Please check your connection and try again."
+      );
     } finally {
       setLoading(false);
     }

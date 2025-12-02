@@ -201,7 +201,11 @@ export async function GET(req: NextRequest) {
       });
     }
     return new Response(
-      JSON.stringify({ message: "Error fetching analytics" }),
+      JSON.stringify({
+        message: "Failed to generate analytics data",
+        error: error instanceof Error ? error.message : "Analytics query failed",
+        details: "Check if all required database tables exist and have proper permissions"
+      }),
       {
         status: 500,
         headers: {

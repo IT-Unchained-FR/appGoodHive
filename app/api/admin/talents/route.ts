@@ -133,7 +133,10 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error("Error fetching talents:", error);
     return new Response(
-      JSON.stringify({ message: "Error fetching talents data" }),
+      JSON.stringify({
+        message: "Failed to fetch talents from database",
+        error: error instanceof Error ? error.message : "Unknown database error"
+      }),
       {
         status: 500,
         headers: {

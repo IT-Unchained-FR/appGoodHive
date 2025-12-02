@@ -76,7 +76,11 @@ export default function ApprovalPopup({
 
       setOpen(false);
     } catch (error) {
-      toast.error("Failed to approve user.");
+      toast.error(
+        error instanceof Error
+          ? `Failed to approve user: ${error.message}`
+          : "Failed to approve user. Please check your connection and try again."
+      );
     } finally {
       setLoading(false);
     }

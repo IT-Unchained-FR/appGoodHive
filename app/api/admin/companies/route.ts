@@ -105,7 +105,10 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error("Error fetching companies:", error);
     return new Response(
-      JSON.stringify({ message: "Error fetching companies" }),
+      JSON.stringify({
+        message: "Failed to fetch companies from database",
+        error: error instanceof Error ? error.message : "Unknown database error"
+      }),
       {
         status: 500,
       },

@@ -110,10 +110,14 @@ export default function AdminsPage() {
         setFormData({ name: "", email: "", password: "" });
         fetchAdmins();
       } else {
-        setError(data.message || "Something went wrong");
+        setError(data.message || "Failed to create admin account. Please try again.");
       }
     } catch (error) {
-      setError("Failed to create admin");
+      setError(
+        error instanceof Error
+          ? `Failed to create admin: ${error.message}`
+          : "Failed to create admin. Check your network connection and try again."
+      );
     } finally {
       setLoading(false);
     }
