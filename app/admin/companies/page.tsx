@@ -56,6 +56,9 @@ export default function AdminManageCompanies() {
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
+  const getSafeValue = (value?: string | null) =>
+    value && value !== "null" ? value : undefined;
+
   const getAuthHeaders = () => {
     const token = Cookies.get("admin_token");
     if (!token) {
@@ -318,7 +321,11 @@ export default function AdminManageCompanies() {
         onOpenChange={setShowDeleteConfirm}
         onConfirm={handleDeleteCompany}
         entityType="company"
-        entityName={selectedCompany?.email || selectedCompany?.designation || ""}
+        entityName={
+          getSafeValue(selectedCompany?.email) ||
+          getSafeValue(selectedCompany?.designation) ||
+          ""
+        }
         entityId={userToDelete || ""}
         loading={deleteLoading}
       />

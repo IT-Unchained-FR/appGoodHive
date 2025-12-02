@@ -53,6 +53,8 @@ export default function AdminManageUsers() {
     companies: 0,
     jobs: 0,
   });
+  const getSafeValue = (value?: string | null) =>
+    value && value !== "null" ? value : undefined;
 
   const getAuthHeaders = () => {
     const token = Cookies.get("admin_token");
@@ -420,7 +422,11 @@ export default function AdminManageUsers() {
         onOpenChange={setShowDeleteDialog}
         onConfirm={handleDeleteUser}
         entityType="user"
-        entityName={userToDelete?.email || ""}
+        entityName={
+          getSafeValue(userToDelete?.email) ||
+          getSafeValue(userToDelete?.name) ||
+          ""
+        }
         entityId={userToDelete?.id || ""}
         relatedData={relatedData}
         loading={deleteLoading}

@@ -45,6 +45,9 @@ export default function AdminManageTalents() {
   const [editingTalent, setEditingTalent] = useState<ProfileData | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
+  const getSafeValue = (value?: string | null) =>
+    value && value !== "null" ? value : undefined;
+
   const getAuthHeaders = () => {
     const token = Cookies.get("admin_token");
     if (!token) {
@@ -436,7 +439,13 @@ export default function AdminManageTalents() {
         onOpenChange={setShowDeleteConfirm}
         onConfirm={handleDeleteTalent}
         entityType="talent"
-        entityName={selectedTalent?.email || ""}
+        entityName={
+          getSafeValue(selectedTalent?.email) ||
+          [getSafeValue(selectedTalent?.first_name), getSafeValue(selectedTalent?.last_name)]
+            .filter(Boolean)
+            .join(" ") ||
+          ""
+        }
         entityId={userToDelete || ""}
         loading={deleteLoading}
       />

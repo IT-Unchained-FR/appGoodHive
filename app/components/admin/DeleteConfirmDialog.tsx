@@ -34,6 +34,7 @@ export function DeleteConfirmDialog({
   onConfirm,
   entityType,
   entityName,
+  entityId,
   relatedData,
   loading,
 }: DeleteConfirmDialogProps) {
@@ -66,9 +67,17 @@ export function DeleteConfirmDialog({
             <p className="text-sm text-red-800 font-semibold mb-2">
               You are about to permanently delete:
             </p>
-            <p className="text-sm text-red-900 font-mono bg-white px-2 py-1 rounded break-all">
-              {entityName}
-            </p>
+            <div className="text-sm text-red-900 font-mono bg-white px-2 py-1 rounded break-all space-y-1">
+              {entityName?.trim() ? (
+                <p>{entityName}</p>
+              ) : null}
+              {entityId?.trim() && entityId !== entityName ? (
+                <p className="text-xs text-red-700">ID: {entityId}</p>
+              ) : null}
+              {!entityName?.trim() && !entityId?.trim() ? (
+                <p>Unknown record</p>
+              ) : null}
+            </div>
 
             {relatedData &&
               (relatedData.talents ||
