@@ -17,6 +17,19 @@ export async function GET(req: NextRequest) {
     const location = searchParams.get("location");
     const sort = searchParams.get("sort") || "latest";
 
+    // Pagination parameters
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "25", 10);
+    const offset = (page - 1) * limit;
+
+    // Validate pagination params
+    if (page < 1 || limit < 1 || limit > 100) {
+      return new Response(
+        JSON.stringify({ message: "Invalid pagination parameters" }),
+        { status: 400 }
+      );
+    }
+
     const filters = [];
 
     // Date range on company creation
@@ -49,22 +62,46 @@ export async function GET(req: NextRequest) {
     };
     const sortClause = sortMap[sort] || sortMap.latest;
 
+    // Get total count
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM goodhive.companies c
+      ${whereClause}
+    `;
+    const countResult = await sql.unsafe(countQuery, values);
+    const total = parseInt(countResult[0].total, 10);
+
+    // Get paginated data
     const query = `
       SELECT c.*
       FROM goodhive.companies c
       ${whereClause}
       ORDER BY ${sortClause}
+      LIMIT $${values.length + 1} OFFSET $${values.length + 2}
     `;
 
-    const companies = await sql.unsafe(query, values);
+    const companies = await sql.unsafe(query, [...values, limit, offset]);
 
-    return new Response(JSON.stringify(companies), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-store, max-age=0",
-      },
-    });
+    return new Response(
+      JSON.stringify({
+        data: companies,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+          hasNextPage: page * limit < total,
+          hasPrevPage: page > 1,
+        },
+      }),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store, max-age=0",
+        },
+      }
+    );
   } catch (error) {
     console.error("Error fetching companies:", error);
     return new Response(

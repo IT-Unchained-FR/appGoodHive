@@ -13,6 +13,19 @@ export async function GET(req: NextRequest) {
     const hasProfile = searchParams.get('hasProfile');
     const sort = searchParams.get('sort') || 'latest';
 
+    // Pagination parameters
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '25', 10);
+    const offset = (page - 1) * limit;
+
+    // Validate pagination params
+    if (page < 1 || limit < 1 || limit > 100) {
+      return new Response(
+        JSON.stringify({ message: "Invalid pagination parameters" }),
+        { status: 400 }
+      );
+    }
+
     // Build WHERE conditions
     const conditions = [];
     const params: any[] = [];
@@ -70,7 +83,16 @@ export async function GET(req: NextRequest) {
           )
         : null;
 
-    // Execute query with filters
+    // Get total count for pagination
+    const countResult = await sql`
+      SELECT COUNT(DISTINCT u.userid) as total
+      FROM goodhive.users u
+      LEFT JOIN goodhive.talents t ON t.user_id = u.userid
+      ${whereClause ? sql`WHERE ${whereClause}` : sql``}
+    `;
+    const total = parseInt(countResult[0].total, 10);
+
+    // Execute query with filters and pagination
     const users = await sql`
       SELECT u.*,
         t.first_name,
@@ -84,12 +106,22 @@ export async function GET(req: NextRequest) {
       LEFT JOIN goodhive.talents t ON t.user_id = u.userid
       ${whereClause ? sql`WHERE ${whereClause}` : sql``}
       ORDER BY ${orderBy}
+      LIMIT ${limit}
+      OFFSET ${offset}
     `;
 
     return new Response(
       JSON.stringify({
         message: "Successfully Retrieved All Users.",
         users,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+          hasNextPage: page * limit < total,
+          hasPrevPage: page > 1,
+        },
       }),
       {
         status: 200,

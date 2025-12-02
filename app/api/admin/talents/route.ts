@@ -13,6 +13,19 @@ export async function GET(req: NextRequest) {
     const role = searchParams.get('role');
     const sort = searchParams.get('sort') || 'latest';
 
+    // Pagination parameters
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '25', 10);
+    const offset = (page - 1) * limit;
+
+    // Validate pagination params
+    if (page < 1 || limit < 1 || limit > 100) {
+      return new Response(
+        JSON.stringify({ message: "Invalid pagination parameters" }),
+        { status: 400 }
+      );
+    }
+
     // Build WHERE conditions
     const conditions = [];
 
@@ -79,12 +92,22 @@ export async function GET(req: NextRequest) {
           )
         : null;
 
-    // Execute query with filters
+    // Get total count for pagination
+    const countResult = await sql`
+      SELECT COUNT(*) as total
+      FROM goodhive.talents
+      ${whereClause ? sql`WHERE ${whereClause}` : sql``}
+    `;
+    const total = parseInt(countResult[0].total, 10);
+
+    // Execute query with filters and pagination
     const talents = await sql`
       SELECT *
       FROM goodhive.talents
       ${whereClause ? sql`WHERE ${whereClause}` : sql``}
       ORDER BY ${orderBy}
+      LIMIT ${limit}
+      OFFSET ${offset}
     `;
 
     // Set Cache-Control header to disable caching
@@ -93,7 +116,20 @@ export async function GET(req: NextRequest) {
       "Cache-Control": "no-store, max-age=0",
     });
 
-    return new Response(JSON.stringify(talents), { status: 200, headers });
+    return new Response(
+      JSON.stringify({
+        data: talents,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+          hasNextPage: page * limit < total,
+          hasPrevPage: page > 1,
+        },
+      }),
+      { status: 200, headers }
+    );
   } catch (error) {
     console.error("Error fetching talents:", error);
     return new Response(
