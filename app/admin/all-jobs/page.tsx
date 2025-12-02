@@ -65,7 +65,7 @@ export default function AdminAllJobs() {
       key: "image_url",
       header: "Image",
       width: "10%",
-      render: (value: any, row: IJobOffer) => (
+      render: (_value: unknown, row: IJobOffer) => (
         <Image
           src={row.image_url || "/img/placeholder.png"}
           alt={row.title}
@@ -98,7 +98,7 @@ export default function AdminAllJobs() {
       header: "Status",
       width: "15%",
       sortable: true,
-      render: (value: any, row: IJobOffer) => (
+      render: (_value: unknown, row: IJobOffer) => (
         <Badge variant={row.published ? "default" : "destructive"}>
           {row.published ? "Published" : "Not Published"}
         </Badge>
@@ -108,7 +108,7 @@ export default function AdminAllJobs() {
       key: "actions",
       header: "Actions",
       width: "15%",
-      render: (value: any, row: IJobOffer) => (
+      render: (_value: unknown, row: IJobOffer) => (
         <div className="flex justify-end">
           <Button
             variant="outline"

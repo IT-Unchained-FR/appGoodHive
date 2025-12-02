@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
 
     // Build WHERE conditions as strings
     const conditions: string[] = [];
-    const params: any[] = [];
+    const params: (string | Date | number)[] = [];
     let paramIndex = 1;
 
     // Status filter: pending, approved, rejected, all

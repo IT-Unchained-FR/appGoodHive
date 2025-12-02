@@ -13,6 +13,7 @@ import {
   Twitter,
   XCircle,
 } from "lucide-react";
+import { ProfileData } from "@/app/talents/my-profile/types";
 import { Metadata } from "next";
 
 import "@/app/styles/rich-text.css";
@@ -40,7 +41,7 @@ export const revalidate = 0;
 export default async function Page(context: MyProfilePageProps) {
   const { user_id } = context.params;
 
-  const user: any = await getProfileData(user_id);
+  const user: ProfileData = await getProfileData(user_id);
 
   const breadcrumbLabels = {
     [user_id]: `${user.first_name} ${user.last_name}`,

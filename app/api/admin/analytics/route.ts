@@ -6,6 +6,19 @@ import { getAdminJWTSecret } from "@/app/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 
+// Types for analytics data
+interface DateCount {
+  date: Date | string;
+  count: number | string;
+}
+
+interface ApprovalRate {
+  category: string;
+  approved: number | string;
+  pending: number | string;
+  rejected: number | string;
+}
+
 const verifyAdminToken = async (req: NextRequest) => {
   // Check Authorization header first
   const authHeader = req.headers.get("authorization");
@@ -48,7 +61,7 @@ export async function GET(req: NextRequest) {
 
     // User growth over time (last 30 days by default, or filtered range)
     // users table doesn't always include a created_at column; attempt and fall back gracefully
-    let userGrowth: any[] = [];
+    let userGrowth: DateCount[] = [];
     try {
       userGrowth = await sql`
         SELECT
@@ -117,7 +130,7 @@ export async function GET(req: NextRequest) {
     `;
 
     // Helper function to safely format dates from PostgreSQL
-    const formatDate = (date: any): string => {
+    const formatDate = (date: Date | string): string => {
       if (!date) return "";
       // If it's already a string in YYYY-MM-DD format, return it
       if (typeof date === "string") {
@@ -136,15 +149,15 @@ export async function GET(req: NextRequest) {
     };
 
     const analytics = {
-      userGrowth: userGrowth.map((row: any) => ({
+      userGrowth: userGrowth.map((row) => ({
         date: formatDate(row.date),
         count: Number(row.count),
       })),
-      jobTrends: jobTrends.map((row: any) => ({
+      jobTrends: jobTrends.map((row) => ({
         date: formatDate(row.date),
         count: Number(row.count),
       })),
-      approvalRates: approvalRates.map((row: any) => ({
+      approvalRates: approvalRates.map((row) => ({
         type: row.type,
         approved: Number(row.approved || 0),
         pending: Number(row.pending || 0),
@@ -158,7 +171,7 @@ export async function GET(req: NextRequest) {
         mentors: Number(usersByRole[0]?.mentors || 0),
         recruiters: Number(usersByRole[0]?.recruiters || 0),
       },
-      dailyActivity: dailyActivity.map((row: any) => ({
+      dailyActivity: dailyActivity.map((row) => ({
         date: formatDate(row.date),
         type: row.type,
         count: Number(row.count),

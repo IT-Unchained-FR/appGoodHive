@@ -9,10 +9,21 @@ import {
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
 
+interface Company {
+  user_id: string;
+  headline?: string;
+  email?: string;
+  city?: string;
+  country?: string;
+  designation?: string;
+  approved?: boolean;
+  inReview?: boolean;
+}
+
 type ApprovalPopupProps = {
   open: boolean;
   setOpen: (open: boolean) => void;
-  user: any;
+  user: Company;
   fetchData: () => void;
   loading: boolean;
   setLoading: (loading: boolean) => void;

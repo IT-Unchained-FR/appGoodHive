@@ -49,7 +49,7 @@ export default function CompaniesPage({
     }
   };
 
-  const handleSave = async (updatedCompany: any) => {
+  const handleSave = async (updatedCompany: Record<string, unknown>) => {
     try {
       const response = await fetch(`/api/admin/companies/${user_id}`, {
         method: "PUT",

@@ -128,7 +128,7 @@ export default function AdminCompanyApproval() {
       key: "select",
       header: "",
       width: "5%",
-      render: (value: any, row: Company) => (
+      render: (_value: unknown, row: Company) => (
         <Checkbox
           checked={selectedItems.some((item) => item.user_id === row.user_id)}
           onCheckedChange={() => toggleItemSelection(row)}
@@ -142,7 +142,7 @@ export default function AdminCompanyApproval() {
       width: "27%",
       sortable: true,
       exportValue: (row: Company) => row.headline?.replace(/<[^>]*>?/gm, "") || "",
-      render: (value: any, row: Company) => {
+      render: (_value: unknown, row: Company) => {
         const cleanHeadline = row.headline?.replace(/<[^>]*>?/gm, "") || "";
         return (
           <div className="flex items-center gap-3 min-w-0">
@@ -166,7 +166,7 @@ export default function AdminCompanyApproval() {
         if (row.inReview) return "Pending";
         return "Rejected";
       },
-      render: (value: any, row: Company) => {
+      render: (_value: unknown, row: Company) => {
         if (row.approved) {
           return (
             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
@@ -202,7 +202,7 @@ export default function AdminCompanyApproval() {
         const parts = [row.city, row.country].filter(Boolean);
         return parts.join(", ") || "";
       },
-      render: (value: any, row: Company) => (
+      render: (_value: unknown, row: Company) => (
         <span>
           {row.city}, {row.country}
         </span>
@@ -212,7 +212,7 @@ export default function AdminCompanyApproval() {
       key: "actions",
       header: "Actions",
       width: "12%",
-      render: (value: any, row: Company) => (
+      render: (_value: unknown, row: Company) => (
         <div className="flex justify-end">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

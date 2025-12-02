@@ -64,7 +64,7 @@ export function UserTable({
               <TableCell>{user.mentor ? "Yes" : "No"}</TableCell>
               <TableCell>{user.recruiter ? "Yes" : "No"}</TableCell>
               <TableCell>
-                {user.approved_roles?.map((role: any, index) => {
+                {user.approved_roles?.map((role: { role: string; approved_at: string }, index: number) => {
                   return (
                     <div key={index}>
                       {role.role.charAt(0).toUpperCase() + role.role.slice(1)} (

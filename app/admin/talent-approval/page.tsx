@@ -124,7 +124,7 @@ export default function AdminTalentApproval() {
       key: "select",
       header: "",
       width: "5%",
-      render: (value: any, row: ProfileData) => (
+      render: (_value: unknown, row: ProfileData) => (
         <Checkbox
           checked={selectedItems.some((item) => item.user_id === row.user_id)}
           onCheckedChange={() => toggleItemSelection(row)}
@@ -138,7 +138,7 @@ export default function AdminTalentApproval() {
       width: "22%",
       sortable: true,
       exportValue: (row: ProfileData) => `${row.first_name || ''} ${row.last_name || ''}`.trim(),
-      render: (value: any, row: ProfileData) => {
+      render: (_value: unknown, row: ProfileData) => {
         const fullName = `${row.first_name} ${row.last_name}`;
         return (
           <div className="flex items-center gap-3 min-w-0">
@@ -162,7 +162,7 @@ export default function AdminTalentApproval() {
         if (row.inReview) return "Pending";
         return "Rejected";
       },
-      render: (value: any, row: ProfileData) => {
+      render: (_value: unknown, row: ProfileData) => {
         if (row.approved) {
           return (
             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
@@ -195,7 +195,7 @@ export default function AdminTalentApproval() {
         if (row.recruiter) roles.push("Recruiter");
         return roles.join(", ") || "";
       },
-      render: (value: any, row: ProfileData) => {
+      render: (_value: unknown, row: ProfileData) => {
         return (
           <div className="flex flex-col gap-2 w-full justify-center items-center">
             {row.talent && (
@@ -253,7 +253,7 @@ export default function AdminTalentApproval() {
       key: "actions",
       header: "Actions",
       width: "8%",
-      render: (value: any, row: ProfileData) => (
+      render: (_value: unknown, row: ProfileData) => (
         <div className="flex justify-end">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

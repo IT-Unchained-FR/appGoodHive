@@ -107,9 +107,10 @@ export default function AnalyticsPage() {
     }
   };
 
-  const handleGenerateReport = async (params: any) => {
+  const handleGenerateReport = async (params: { startDate: string; endDate: string; format: string }) => {
     // TODO: Implement report generation
     // This would call an API endpoint to generate and download the report
+    console.log("Report generation params:", params);
   };
 
   const handleDateRangeChange = () => {

@@ -187,7 +187,7 @@ export default function AdminEditJobPage() {
                   <SelectValue placeholder="Select engagement type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {typeEngagements.map((option: any) => (
+                  {typeEngagements.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -206,7 +206,7 @@ export default function AdminEditJobPage() {
                   <SelectValue placeholder="Select job type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {jobTypes.map((option: any) => (
+                  {jobTypes.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -227,7 +227,7 @@ export default function AdminEditJobPage() {
                   <SelectValue placeholder="Select project type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {projectTypes.map((option: any) => (
+                  {projectTypes.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -246,7 +246,7 @@ export default function AdminEditJobPage() {
                   <SelectValue placeholder="Select duration" />
                 </SelectTrigger>
                 <SelectContent>
-                  {projectDuration.map((option: any) => (
+                  {projectDuration.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -317,7 +317,7 @@ export default function AdminEditJobPage() {
                   <SelectValue placeholder="Select chain" />
                 </SelectTrigger>
                 <SelectContent>
-                  {chains.map((option: any) => (
+                  {chains.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>

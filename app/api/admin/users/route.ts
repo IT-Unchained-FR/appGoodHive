@@ -28,7 +28,6 @@ export async function GET(req: NextRequest) {
 
     // Build WHERE conditions
     const conditions = [];
-    const params: any[] = [];
 
     // Date filter
     if (dateRange && dateRange !== 'any') {

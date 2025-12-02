@@ -5,6 +5,16 @@ import { getAdminJWTSecret } from "@/app/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 
+interface ActionHistory {
+  id: string;
+  action: string;
+  admin_id: string;
+  target_type: string;
+  target_id: string;
+  timestamp: Date;
+  details?: Record<string, unknown>;
+}
+
 const verifyAdminToken = async (req: NextRequest) => {
   // Check Authorization header first
   const authHeader = req.headers.get("authorization");
@@ -61,7 +71,7 @@ export async function GET(req: NextRequest) {
     // ORDER BY timestamp DESC LIMIT ${limit}
 
     // Mock structure for now - replace with actual database query
-    const history: any[] = [];
+    const history: ActionHistory[] = [];
 
     return new Response(
       JSON.stringify({
