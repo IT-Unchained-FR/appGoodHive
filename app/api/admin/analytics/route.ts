@@ -56,38 +56,56 @@ export async function GET(req: NextRequest) {
     await verifyAdminToken(req);
 
     const { searchParams } = new URL(req.url);
-    const startDate = searchParams.get("startDate");
-    const endDate = searchParams.get("endDate");
+    const startDateParam = searchParams.get("startDate");
+    const endDateParam = searchParams.get("endDate");
 
-    // User growth over time (last 30 days by default, or filtered range)
-    // users table doesn't always include a created_at column; attempt and fall back gracefully
-    let userGrowth: DateCount[] = [];
-    try {
-      userGrowth = await sql`
-        SELECT
-          DATE(created_at) as date,
-          COUNT(*) as count
-        FROM goodhive.users
-        WHERE created_at >= COALESCE(${startDate ? new Date(startDate) : null}, NOW() - INTERVAL '30 days')
-          AND created_at <= COALESCE(${endDate ? new Date(endDate) : null}, NOW())
-        GROUP BY DATE(created_at)
-        ORDER BY date ASC
-      `;
-    } catch (e) {
-      console.warn("User growth query skipped: created_at column missing on goodhive.users");
-      userGrowth = [];
+    // Normalize date range (default: last 30 days including today)
+    const endDate = endDateParam ? new Date(endDateParam) : new Date();
+    const startDate = startDateParam
+      ? new Date(startDateParam)
+      : new Date(endDate.getTime() - 29 * 24 * 60 * 60 * 1000);
+    // Clamp order if inverted
+    if (startDate > endDate) {
+      const tmp = new Date(startDate);
+      startDate.setTime(endDate.getTime());
+      endDate.setTime(tmp.getTime());
     }
+    // Ensure time component covers full days
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+
+    // User growth over time (continuous date series)
+    const userGrowth = await sql`
+      WITH date_series AS (
+        SELECT generate_series(${startDate}::date, ${endDate}::date, '1 day'::interval) AS date
+      ),
+      counts AS (
+        SELECT DATE(created_at) AS date, COUNT(*) AS count
+        FROM goodhive.users
+        WHERE created_at::date BETWEEN ${startDate}::date AND ${endDate}::date
+        GROUP BY DATE(created_at)
+      )
+      SELECT ds.date::date AS date, COALESCE(c.count, 0) AS count
+      FROM date_series ds
+      LEFT JOIN counts c ON ds.date::date = c.date
+      ORDER BY ds.date ASC
+    `;
 
     // Job posting trends
     const jobTrends = await sql`
-      SELECT
-        DATE(posted_at) as date,
-        COUNT(*) as count
-      FROM goodhive.job_offers
-      WHERE posted_at >= COALESCE(${startDate ? new Date(startDate) : null}, NOW() - INTERVAL '30 days')
-        AND posted_at <= COALESCE(${endDate ? new Date(endDate) : null}, NOW())
-      GROUP BY DATE(posted_at)
-      ORDER BY date ASC
+      WITH date_series AS (
+        SELECT generate_series(${startDate}::date, ${endDate}::date, '1 day'::interval) AS date
+      ),
+      counts AS (
+        SELECT DATE(posted_at) AS date, COUNT(*) AS count
+        FROM goodhive.job_offers
+        WHERE posted_at::date BETWEEN ${startDate}::date AND ${endDate}::date
+        GROUP BY DATE(posted_at)
+      )
+      SELECT ds.date::date AS date, COALESCE(c.count, 0) AS count
+      FROM date_series ds
+      LEFT JOIN counts c ON ds.date::date = c.date
+      ORDER BY ds.date ASC
     `;
 
     // Approval rates
