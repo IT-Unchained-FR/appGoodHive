@@ -45,35 +45,32 @@ export async function POST(req: NextRequest) {
 
     const { userIds, approvalTypes } = validation.data;
 
-    // Approve talents in parallel
-    await Promise.all(
-      userIds.map(async (userId: string) => {
-        // Update talent approval
-        await sql`
-          UPDATE goodhive.talents
-          SET approved = true, talent = true, inreview = false
-          WHERE user_id = ${userId}
-        `;
+    // Batch update talents - single query for all users
+    await sql`
+      UPDATE goodhive.talents
+      SET approved = true, talent = true, inreview = false
+      WHERE user_id = ANY(${userIds})
+    `;
 
-        // Update user status based on approval types using safe conditional updates
-        const talentStatus = approvalTypes?.talent ? 'approved' : null;
-        const mentorStatus = approvalTypes?.mentor ? 'approved' : null;
-        const recruiterStatus = approvalTypes?.recruiter ? 'approved' : null;
+    // Batch update user statuses - single query for all users
+    const talentStatus = approvalTypes?.talent ? 'approved' : null;
+    const mentorStatus = approvalTypes?.mentor ? 'approved' : null;
+    const recruiterStatus = approvalTypes?.recruiter ? 'approved' : null;
 
-        // Use CASE statements for conditional updates (safe parameterized approach)
-        await sql`
-          UPDATE goodhive.users
-          SET
-            talent_status = COALESCE(${talentStatus}, talent_status),
-            mentor_status = COALESCE(${mentorStatus}, mentor_status),
-            recruiter_status = COALESCE(${recruiterStatus}, recruiter_status)
-          WHERE userid = ${userId}
-            AND (${talentStatus} IS NOT NULL
-              OR ${mentorStatus} IS NOT NULL
-              OR ${recruiterStatus} IS NOT NULL)
-        `;
-      })
-    );
+    // Only run user update if at least one status is being set
+    if (talentStatus || mentorStatus || recruiterStatus) {
+      await sql`
+        UPDATE goodhive.users
+        SET
+          talent_status = COALESCE(${talentStatus}, talent_status),
+          mentor_status = COALESCE(${mentorStatus}, mentor_status),
+          recruiter_status = COALESCE(${recruiterStatus}, recruiter_status)
+        WHERE userid = ANY(${userIds})
+          AND (${talentStatus} IS NOT NULL
+            OR ${mentorStatus} IS NOT NULL
+            OR ${recruiterStatus} IS NOT NULL)
+      `;
+    }
 
     return new Response(
       JSON.stringify({

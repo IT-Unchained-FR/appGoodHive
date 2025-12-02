@@ -3,6 +3,7 @@ import sql from "@/lib/db";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { getAdminJWTSecret } from "@/app/lib/admin-auth";
+import { bulkOperationSchema, validateInput } from "@/app/lib/admin-validations";
 
 export const dynamic = "force-dynamic";
 
@@ -28,35 +29,38 @@ const verifyAdminToken = async () => {
 export async function POST(req: NextRequest) {
   try {
     await verifyAdminToken();
-    const { userIds, reason } = await req.json();
+    const body = await req.json();
 
-    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+    // Validate input
+    const validation = validateInput(bulkOperationSchema, body);
+    if (!validation.success) {
       return new Response(
-        JSON.stringify({ message: "User IDs array is required" }),
+        JSON.stringify({
+          message: "Validation failed",
+          errors: validation.errors,
+        }),
         { status: 400 }
       );
     }
 
-    // Reject companies in parallel
-    await Promise.all(
-      userIds.map(async (userId: string) => {
-        // Update company to rejected status
-        await sql`
-          UPDATE goodhive.companies
-          SET approved = false, inreview = false
-          WHERE user_id = ${userId}
-        `;
+    const { userIds, rejectionReason } = validation.data;
 
-        // Update user status
-        await sql`
-          UPDATE goodhive.users
-          SET recruiter_status = 'rejected'
-          WHERE userid = ${userId}
-        `;
+    // Batch update companies - single query for all users
+    await sql`
+      UPDATE goodhive.companies
+      SET approved = false, inreview = false
+      WHERE user_id = ANY(${userIds})
+    `;
 
-        // TODO: Store rejection reason in audit log or separate table
-      })
-    );
+    // Batch update user statuses - single query for all users
+    await sql`
+      UPDATE goodhive.users
+      SET recruiter_status = 'rejected'
+      WHERE userid = ANY(${userIds})
+    `;
+
+    // TODO: Store rejection reason in audit log or separate table
+    // rejectionReason is validated if provided but not yet stored
 
     return new Response(
       JSON.stringify({
