@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { ConfirmationPopup } from "@/app/components/ConfirmationPopup/ConfirmationPopup";
+import { DeleteConfirmDialog } from "@/app/components/admin/DeleteConfirmDialog";
 import { EditCompanyModal } from "@/app/components/admin/EditCompanyModal";
 import { Column, EnhancedTable } from "@/app/components/admin/EnhancedTable";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
@@ -50,6 +50,8 @@ export default function AdminManageCompanies() {
   const [loading, setLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -95,11 +97,17 @@ export default function AdminManageCompanies() {
     fetchAllCompanies();
   }, [searchParams]);
 
-  const handleDeleteCompany = async (userId: string) => {
+  const handleDeleteCompany = async () => {
+    if (!userToDelete) return;
+
     try {
-      setLoading(true);
-      const response = await fetch(`/api/admin/companies/${userId}`, {
+      setDeleteLoading(true);
+      const headers = getAuthHeaders();
+      if (!headers) return;
+
+      const response = await fetch(`/api/admin/companies/${userToDelete}`, {
         method: "DELETE",
+        headers,
       });
 
       if (!response.ok) {
@@ -109,6 +117,8 @@ export default function AdminManageCompanies() {
 
       toast.success("Company deleted successfully");
       setShowDeleteConfirm(false);
+      setUserToDelete(null);
+      setSelectedCompany(null);
       await fetchAllCompanies();
     } catch (error) {
       console.error("Error deleting company:", error);
@@ -116,7 +126,7 @@ export default function AdminManageCompanies() {
         error instanceof Error ? error.message : "Failed to delete company",
       );
     } finally {
-      setLoading(false);
+      setDeleteLoading(false);
     }
   };
 
@@ -246,6 +256,7 @@ export default function AdminManageCompanies() {
             title="Delete company"
             onClick={() => {
               setUserToDelete(row.user_id);
+              setSelectedCompany(row);
               setShowDeleteConfirm(true);
             }}
             disabled={loading}
@@ -290,13 +301,14 @@ export default function AdminManageCompanies() {
       title="All Companies"
       subtitle="Manage company profiles, approvals, and contact details"
     >
-      <ConfirmationPopup
+      <DeleteConfirmDialog
         open={showDeleteConfirm}
         onOpenChange={setShowDeleteConfirm}
-        onConfirm={() => userToDelete && handleDeleteCompany(userToDelete)}
-        title="Delete Company"
-        description="Are you sure you want to delete this company? This action cannot be undone."
-        loading={loading}
+        onConfirm={handleDeleteCompany}
+        entityType="company"
+        entityName={selectedCompany?.email || selectedCompany?.designation || ""}
+        entityId={userToDelete || ""}
+        loading={deleteLoading}
       />
       <EditCompanyModal
         open={showEditModal}
@@ -363,6 +375,7 @@ export default function AdminManageCompanies() {
                 }}
                 onDelete={() => {
                   setUserToDelete(company.user_id);
+                  setSelectedCompany(company);
                   setShowDeleteConfirm(true);
                 }}
               />
