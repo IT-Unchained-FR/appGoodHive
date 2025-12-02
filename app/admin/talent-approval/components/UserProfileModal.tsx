@@ -26,8 +26,7 @@ export function UserProfileModal({
   onUpdateRoles,
 }: UserProfileModalProps) {
   const handleRoleChange = (role: "talent" | "recruiter" | "mentor") => {
-    // const newRoles = { ...user.roles, [role]: !user.roles[role] };
-    // onUpdateRoles(user.id, newRoles);
+    // Role change functionality can be added here if needed
   };
 
   const initialUser = user;

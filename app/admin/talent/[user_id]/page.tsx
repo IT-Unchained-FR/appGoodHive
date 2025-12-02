@@ -289,11 +289,3 @@ export default async function Page(context: MyProfilePageProps) {
     </AdminPageLayout>
   );
 }
-
-// import React from "react";
-
-// const AdminViewTalent = () => {
-//   return <div>AdminViewTalent</div>;
-// };
-
-// export default AdminViewTalent;
