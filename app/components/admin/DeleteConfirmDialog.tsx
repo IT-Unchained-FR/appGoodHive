@@ -67,15 +67,21 @@ export function DeleteConfirmDialog({
             <p className="text-sm text-red-800 font-semibold mb-2">
               You are about to permanently delete:
             </p>
-            <div className="text-sm text-red-900 font-mono bg-white px-2 py-1 rounded break-all space-y-1">
+            <div className="text-sm text-red-900 bg-white px-3 py-2 rounded break-all space-y-1">
               {entityName?.trim() ? (
-                <p>{entityName}</p>
+                <p>
+                  <span className="font-semibold text-red-700">Email/Name:</span>{" "}
+                  <span className="font-mono">{entityName}</span>
+                </p>
               ) : null}
-              {entityId?.trim() && entityId !== entityName ? (
-                <p className="text-xs text-red-700">ID: {entityId}</p>
+              {entityId?.trim() ? (
+                <p>
+                  <span className="font-semibold text-red-700">User ID:</span>{" "}
+                  <span className="font-mono">{entityId}</span>
+                </p>
               ) : null}
               {!entityName?.trim() && !entityId?.trim() ? (
-                <p>Unknown record</p>
+                <p className="font-mono">Unknown record</p>
               ) : null}
             </div>
 
