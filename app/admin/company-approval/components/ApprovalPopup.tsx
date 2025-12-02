@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
+import { AlertCircle } from "lucide-react";
 
 interface Company {
   user_id: string;
@@ -71,9 +72,20 @@ export default function ApprovalPopup({
         <DialogHeader>
           <DialogTitle>Approve Company</DialogTitle>
         </DialogHeader>
-        <div className="py-4">
-          Are you sure you want to approve{" "}
-          {user?.headline?.replace(/<[^>]*>?/gm, "")}?
+        <div className="space-y-4 py-4">
+          <p className="text-sm">
+            Are you sure you want to approve{" "}
+            <span className="font-semibold">{user?.headline?.replace(/<[^>]*>?/gm, "")}</span>?
+          </p>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-yellow-800">
+                This action will approve the company and grant them access to the platform.
+                Make sure you have reviewed their profile carefully.
+              </p>
+            </div>
+          </div>
         </div>
         <Button
           onClick={handleApprove}

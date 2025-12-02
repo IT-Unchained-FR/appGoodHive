@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ProfileData } from "@/app/talents/my-profile/page";
 import toast from "react-hot-toast";
+import { AlertCircle } from "lucide-react";
 
 type ApprovalTypes = {
   mentor: boolean;
@@ -141,6 +142,15 @@ export default function ApprovalPopup({
               checked={approvalTypes.recruiter}
               onCheckedChange={() => handleApprovalChange("recruiter")}
             />
+          </div>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-yellow-800">
+                This will approve the user for the selected roles and grant them platform access.
+                Please verify all details before confirming.
+              </p>
+            </div>
           </div>
         </div>
         <Button onClick={handleApprove} disabled={loading}>
