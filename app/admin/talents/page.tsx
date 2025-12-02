@@ -34,6 +34,7 @@ export default function AdminManageTalents() {
   const searchParams = useSearchParams();
   const searchParamsString = searchParams.toString();
   const [talents, setTalents] = useState<ProfileData[]>([]);
+  const [totalTalents, setTotalTalents] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
@@ -73,8 +74,19 @@ export default function AdminManageTalents() {
         return;
       }
 
-      const talents = await response.json();
-      setTalents(talents);
+      const result = await response.json();
+      const list = Array.isArray(result)
+        ? result
+        : Array.isArray(result?.data)
+          ? result.data
+          : [];
+
+      setTalents(list);
+      setTotalTalents(
+        typeof result?.pagination?.total === "number"
+          ? result.pagination.total
+          : list.length,
+      );
     } catch (error) {
       toast.error("Failed to fetch talents");
     } finally {
@@ -381,7 +393,7 @@ export default function AdminManageTalents() {
         <div>
           <h2 className="text-xl font-semibold mb-1">All Talents</h2>
           <p className="text-sm text-muted-foreground">
-            {talents?.length || 0} talents
+            {totalTalents || talents?.length || 0} talents
           </p>
         </div>
       </div>
@@ -453,7 +465,7 @@ export default function AdminManageTalents() {
                 Talent Directory
               </h2>
               <p className="text-sm text-gray-600">
-                {talents?.length || 0} talents • search, edit roles, or approve.
+                {totalTalents || talents?.length || 0} talents • search, edit roles, or approve.
               </p>
             </div>
           </div>

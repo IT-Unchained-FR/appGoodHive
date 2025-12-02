@@ -47,6 +47,7 @@ export default function AdminManageCompanies() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [totalCompanies, setTotalCompanies] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
@@ -84,8 +85,19 @@ export default function AdminManageCompanies() {
         return;
       }
 
-      const company_data = await response.json();
-      setCompanies(company_data);
+      const result = await response.json();
+      const list = Array.isArray(result)
+        ? result
+        : Array.isArray(result?.data)
+          ? result.data
+          : [];
+
+      setCompanies(list);
+      setTotalCompanies(
+        typeof result?.pagination?.total === "number"
+          ? result.pagination.total
+          : list.length,
+      );
     } catch (error) {
       toast.error("Failed to fetch companies");
     } finally {
@@ -350,7 +362,7 @@ export default function AdminManageCompanies() {
                 Company Directory
               </h2>
               <p className="text-sm text-gray-600">
-                {companies.length} companies • search, edit, or approve profiles.
+                {totalCompanies || companies.length} companies • search, edit, or approve profiles.
               </p>
             </div>
           </div>
