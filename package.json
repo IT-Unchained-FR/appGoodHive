@@ -112,7 +112,7 @@
     "uuid": "^9.0.0",
     "xlsx": "^0.18.5",
     "yup": "^1.6.1",
-    "zod": "^3.24.1"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^15.4.1",
