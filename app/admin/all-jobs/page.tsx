@@ -165,6 +165,21 @@ export default function AdminAllJobs() {
       ),
     },
     {
+      key: "created_at",
+      header: "Created",
+      width: "12%",
+      sortable: true,
+      render: (value) => {
+        if (!value) return "N/A";
+        return new Date(value).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      },
+      exportValue: (row) => row.created_at ? new Date(row.created_at).toISOString() : '',
+    },
+    {
       key: "actions",
       header: "Actions",
       width: "12%",

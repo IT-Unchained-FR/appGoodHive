@@ -75,10 +75,10 @@ const personalNavItems: NavItem[] = [
     dataE2e: "users-menu",
   },
   {
-    href: "/admin/admins",
+    href: "/admin/manage-admins",
     icon: <Users className={styles.navIcon} />,
     label: "Manage Admins",
-    dataE2e: "admins-menu",
+    dataE2e: "manage-admins-menu",
   },
   {
     href: "/admin/analytics",

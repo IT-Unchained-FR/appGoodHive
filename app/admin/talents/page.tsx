@@ -310,6 +310,21 @@ export default function AdminManageTalents() {
       ),
     },
     {
+      key: "created_at",
+      header: "Created",
+      width: "12%",
+      sortable: true,
+      render: (value) => {
+        if (!value) return "N/A";
+        return new Date(value).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      },
+      exportValue: (row) => row.created_at ? new Date(row.created_at).toISOString() : '',
+    },
+    {
       key: "actions",
       header: "Actions",
       width: "12%",
@@ -576,6 +591,9 @@ function TalentCard({
         <Badge className={talent.approved ? "bg-green-500 text-white" : "bg-orange-500 text-white"}>
           {talent.approved ? "Approved" : "Pending"}
         </Badge>
+      </div>
+      <div className="text-xs text-gray-500">
+        Created: {talent.created_at ? new Date(talent.created_at).toLocaleDateString() : "N/A"}
       </div>
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" size="sm" onClick={onEdit}>

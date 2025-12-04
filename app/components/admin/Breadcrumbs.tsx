@@ -33,7 +33,7 @@ const routeConfig: Record<string, RouteConfig> = {
   "/admin/companies": { label: "Companies", icon: Building2 },
   "/admin/all-jobs": { label: "Jobs", icon: Briefcase },
   "/admin/users": { label: "Users", icon: Users },
-  "/admin/admins": { label: "Admins", icon: Shield },
+  "/admin/manage-admins": { label: "Manage Admins", icon: Shield },
   "/admin/analytics": { label: "Analytics", icon: BarChart3 },
   "/admin/talent-approval": { label: "Approve Talents", icon: UserCheck },
   "/admin/company-approval": { label: "Approve Companies", icon: Building2 },

@@ -83,6 +83,7 @@ export type ProfileData = {
   education?: any[];
   current_company?: string;
   user_created_at?: string;
+  created_at?: string;
 };
 
 // Component to display profile status

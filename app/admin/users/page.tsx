@@ -34,6 +34,7 @@ interface User {
   wallet_address?: string;
   last_active: string;
   has_talent_profile: boolean;
+  created_at?: string;
 }
 
 export default function AdminManageUsers() {
@@ -292,6 +293,21 @@ export default function AdminManageUsers() {
         ),
     },
     {
+      key: "created_at",
+      header: "Created",
+      width: "12%",
+      sortable: true,
+      render: (value) => {
+        if (!value) return "N/A";
+        return new Date(value).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      },
+      exportValue: (row) => row.created_at ? new Date(row.created_at).toISOString() : '',
+    },
+    {
       key: "actions",
       header: "Actions",
       width: "10%",
@@ -491,6 +507,9 @@ function UserCard({ user }: { user: User }) {
         <span className="text-xs text-gray-500">
           Last active: {new Date(user.last_active).toLocaleDateString()}
         </span>
+      </div>
+      <div className="text-xs text-gray-500">
+        Created: {user.created_at ? new Date(user.created_at).toLocaleDateString() : "N/A"}
       </div>
       {user.has_talent_profile ? (
         <Button

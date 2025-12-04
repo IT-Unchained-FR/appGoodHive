@@ -246,6 +246,21 @@ export default function AdminManageCompanies() {
       ),
     },
     {
+      key: "created_at",
+      header: "Created",
+      width: "12%",
+      sortable: true,
+      render: (value) => {
+        if (!value) return "N/A";
+        return new Date(value).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      },
+      exportValue: (row) => row.created_at ? new Date(row.created_at).toISOString() : '',
+    },
+    {
       key: "actions",
       header: "Actions",
       width: "20%",
@@ -450,6 +465,9 @@ function CompanyCard({
         <span>
           +{company.phone_country_code} {company.phone_number}
         </span>
+      </div>
+      <div className="text-xs text-gray-500">
+        Created: {company.created_at ? new Date(company.created_at).toLocaleDateString() : "N/A"}
       </div>
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" size="sm" onClick={onEdit}>
