@@ -232,6 +232,9 @@ export function EnhancedTable<T extends Record<string, any>>({
 
   // Filter data based on search query and custom filters
   const filteredData = useMemo(() => {
+    // Ensure data is an array
+    if (!Array.isArray(data)) return [];
+
     let result = data;
 
     // Apply search query
@@ -264,7 +267,7 @@ export function EnhancedTable<T extends Record<string, any>>({
 
   // Sort data
   const sortedData = useMemo(() => {
-    if (!filteredData) return [];
+    if (!filteredData || !Array.isArray(filteredData)) return [];
     if (!sortColumn || !sortDirection) return filteredData;
 
     return [...filteredData].sort((a, b) => {
