@@ -98,6 +98,9 @@ export default function AnalyticsPage() {
       }
 
       const data = await response.json();
+      console.log("Analytics data received:", data);
+      console.log("User growth data:", data.userGrowth);
+      console.log("Job trends data:", data.jobTrends);
       setAnalytics(data);
     } catch (err) {
       console.error("Error fetching analytics:", err);

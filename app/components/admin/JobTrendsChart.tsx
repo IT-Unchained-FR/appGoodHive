@@ -20,6 +20,8 @@ export function JobTrendsChart({ data, loading }: JobTrendsChartProps) {
   useEffect(() => {
     if (data.length > 0) {
       const max = Math.max(...data.map((d) => d.count));
+      console.log("JobTrendsChart - Max value:", max, "Data points:", data.length);
+      console.log("JobTrendsChart - Sample data:", data.slice(0, 5));
       setMaxValue(max);
     }
   }, [data]);
@@ -66,6 +68,20 @@ export function JobTrendsChart({ data, loading }: JobTrendsChartProps) {
     data.length >= 2 ? data[data.length - 1].count - data[0].count : 0;
   const safeMax = Math.max(maxValue, 1);
 
+  // Check if all values are zero
+  const allZeros = data.every(point => point.count === 0);
+
+  // Sample data to show fewer points on chart (every nth point based on data length)
+  const getSampledData = () => {
+    if (data.length <= 14) return data; // Show all if 14 or fewer points
+
+    // For larger datasets, sample to show ~12-15 points
+    const sampleRate = Math.ceil(data.length / 14);
+    return data.filter((_, index) => index % sampleRate === 0 || index === data.length - 1);
+  };
+
+  const sampledData = getSampledData();
+
   return (
     <Card>
       <CardHeader>
@@ -85,38 +101,48 @@ export function JobTrendsChart({ data, loading }: JobTrendsChartProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-2">
-          {/* Bar chart representation */}
-          <div className="flex items-end gap-1 h-64">
-            {data.map((point, index) => {
-              const height = (point.count / safeMax) * 100;
+        {allZeros ? (
+          <div className="text-center py-12 text-gray-500">
+            <FileText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+            <p className="text-sm font-medium">No job postings in this period</p>
+            <p className="text-xs mt-1">Try selecting a different date range</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Bar chart representation */}
+            <div className="flex items-end gap-1.5 sm:gap-2 h-64 pb-12">
+              {sampledData.map((point, index) => {
+                const height = (point.count / safeMax) * 100;
 
-              return (
-                <div
-                  key={index}
-                  className="flex-1 flex flex-col items-center group"
-                >
-                  <div className="w-full flex flex-col items-center">
-                    <div
-                      className="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-t hover:from-blue-600 hover:to-blue-500 transition-all cursor-pointer"
-                      style={{ height: `${Math.max(height, 5)}%` }}
-                      title={`${point.date}: ${point.count} jobs`}
-                    />
-                    <span className="text-xs text-gray-500 mt-1 hidden group-hover:block">
-                      {point.count}
+                return (
+                  <div
+                    key={index}
+                    className="flex-1 flex flex-col items-center group relative"
+                  >
+                    <div className="w-full flex flex-col items-center relative">
+                      <div
+                        className="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-t hover:from-blue-600 hover:to-blue-500 transition-all cursor-pointer shadow-sm"
+                        style={{ height: `${Math.max(height, 5)}%` }}
+                        title={`${point.date}: ${point.count} jobs`}
+                      />
+                      {/* Tooltip on hover */}
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                        {point.count} jobs
+                      </div>
+                    </div>
+                    {/* Date label - show on all points now that we've sampled */}
+                    <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-[10px] sm:text-xs text-gray-500 whitespace-nowrap">
+                      {new Date(point.date).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })}
                     </span>
                   </div>
-                  <span className="text-xs text-gray-400 mt-2 transform -rotate-45 origin-top-left whitespace-nowrap">
-                    {new Date(point.date).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </span>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );
