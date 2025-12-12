@@ -564,21 +564,42 @@
       margin-bottom: 16px;
 
       .icon {
-        width: 40px;
-        height: 40px;
+        width: 48px;
+        height: 48px;
         background-color: #fef3c7;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         margin-right: 12px;
-        font-size: 20px;
+        font-size: 24px;
+
+        @media (min-width: 640px) {
+          width: 52px;
+          height: 52px;
+          font-size: 26px;
+        }
+
+        @media (min-width: 768px) {
+          width: 56px;
+          height: 56px;
+          font-size: 28px;
+        }
       }
 
       .title {
-        font-size: 20px;
+        font-size: 24px;
         font-weight: 600;
         color: #111827;
+        line-height: 1.2;
+
+        @media (min-width: 640px) {
+          font-size: 26px;
+        }
+
+        @media (min-width: 768px) {
+          font-size: 28px;
+        }
       }
     }
 
@@ -586,8 +607,18 @@
       text-align: center;
       color: #4b5563;
       margin-bottom: 24px;
-      font-size: 14px;
+      font-size: 16px;
       line-height: 1.6;
+
+      @media (min-width: 640px) {
+        font-size: 17px;
+        line-height: 1.65;
+      }
+
+      @media (min-width: 768px) {
+        font-size: 18px;
+        line-height: 1.7;
+      }
 
       .highlight {
         font-weight: 500;
@@ -596,17 +627,29 @@
     }
 
     .questButton {
-      padding: 10px 20px;
+      padding: 12px 24px;
       background-color: #fef3c7;
       color: #b45309;
       font-weight: 500;
-      border-radius: 8px;
+      border-radius: 10px;
       transition: background-color 0.2s;
       margin: 0 auto;
       display: block;
-      font-size: 14px;
+      font-size: 16px;
       border: none;
       cursor: pointer;
+
+      @media (min-width: 640px) {
+        padding: 13px 28px;
+        font-size: 17px;
+        border-radius: 11px;
+      }
+
+      @media (min-width: 768px) {
+        padding: 14px 32px;
+        font-size: 18px;
+        border-radius: 12px;
+      }
 
       &:hover {
         background-color: #fde68a;
