@@ -89,6 +89,8 @@ export default async function JobSearchPage({
   searchParams: {
     search?: string;
     location?: string;
+    country?: string;
+    countryCode?: string;
     name?: string;
     page: number;
     recruiter?: string;
@@ -106,10 +108,34 @@ export default async function JobSearchPage({
   console.log("Search params received:", searchParams);
 
   const query = { items: itemsPerPage, ...searchParams };
-  const { jobs, count } = (await fetchJobs(query)) || {
+  let { jobs, count } = (await fetchJobs(query)) || {
     jobs: [],
     count: 0,
   };
+
+  let fallbackMessage: string | null = null;
+
+  if (
+    (!jobs || jobs.length === 0) &&
+    (searchParams.country || searchParams.countryCode)
+  ) {
+    const countryLabel = searchParams.country || searchParams.countryCode;
+    const fallbackQuery = {
+      ...query,
+      location: "",
+      country: searchParams.country,
+      countryCode: searchParams.countryCode,
+    };
+
+    const fallbackResult = await fetchJobs(fallbackQuery);
+    if (fallbackResult?.jobs?.length) {
+      jobs = fallbackResult.jobs;
+      count = fallbackResult.count;
+      fallbackMessage = searchParams.location
+        ? `No exact matches found in ${searchParams.location}. Showing jobs in ${countryLabel}.`
+        : `Showing jobs in ${countryLabel}.`;
+    }
+  }
 
   console.log("Jobs found:", jobs.length);
   console.log("Total count:", count);
@@ -180,6 +206,20 @@ export default async function JobSearchPage({
           </div>
         </div>
 
+        {fallbackMessage && (
+          <div className="max-w-3xl mx-auto mb-6">
+            <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 text-blue-800 px-4 py-3 rounded-2xl shadow-sm">
+              <div className="mt-1">
+                <Search className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="font-semibold">Showing nearby matches</p>
+                <p className="text-sm text-blue-700">{fallbackMessage}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Active Filters Display */}
         {Object.keys(searchParams).some(
           (key) =>
@@ -203,6 +243,12 @@ export default async function JobSearchPage({
                   <span className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 text-blue-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
                     <MapPin className="w-4 h-4 mr-1" /> Location:{" "}
                     {searchParams.location}
+                  </span>
+                )}
+                {searchParams.country && (
+                  <span className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 text-blue-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
+                    <MapPin className="w-4 h-4 mr-1" /> Country:{" "}
+                    {searchParams.country}
                   </span>
                 )}
                 {searchParams.name && (

@@ -22,6 +22,7 @@ import {
 } from "react";
 
 import { jobTypes, typeEngagements } from "@/app/constants/common";
+import { GooglePlaceSuggestion } from "../google-places-suggestion";
 import type { SearchFiltersProps } from "./search-filters.types";
 
 import styles from "./search-filters.module.scss";
@@ -75,6 +76,7 @@ type FilterUpdates = {
   jobType?: string;
   engagement?: string;
   budgetRange?: string;
+  country?: string;
   openToRecruiter?: boolean;
   openToMentor?: boolean;
   openToTalents?: boolean;
@@ -232,6 +234,7 @@ export const SearchFilters = ({
 
   const [keywordQuery, setKeywordQuery] = useState("");
   const [location, setLocation] = useState("");
+  const [country, setCountry] = useState("");
   const [nameQuery, setNameQuery] = useState("");
   const [datePosted, setDatePosted] = useState("any");
   const [jobType, setJobType] = useState("all");
@@ -254,6 +257,7 @@ export const SearchFilters = ({
     setKeywordQuery(searchParam);
 
     setLocation(searchParams.get("location") || "");
+    setCountry(searchParams.get("country") || "");
     setNameQuery(searchParams.get("name") || "");
 
     setDatePosted(searchParams.get("datePosted") || "any");
@@ -308,6 +312,13 @@ export const SearchFilters = ({
         params.set("location", nextLocation.trim());
       } else {
         params.delete("location");
+      }
+
+      const nextCountry = updates.country ?? country;
+      if (nextCountry.trim()) {
+        params.set("country", nextCountry.trim());
+      } else {
+        params.delete("country");
       }
 
       const nextName = updates.name ?? nameQuery;
@@ -434,6 +445,7 @@ export const SearchFilters = ({
       jobType,
       keywordQuery,
       location,
+      country,
       nameQuery,
       onlyMentor,
       onlyRecruiter,
@@ -468,9 +480,33 @@ export const SearchFilters = ({
     return () => clearTimeout(handle);
   }, [keywordQuery, applyFilters, searchParams]);
 
+  // Debounced live search for location
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      // Only apply if location actually changed from URL params
+      const currentLocation = searchParams.get("location") || "";
+      if (location !== currentLocation) {
+        applyFilters({ location });
+      }
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [location, applyFilters, searchParams]);
+
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      const currentLocation = searchParams.get("location") || "";
+      const currentCountry = searchParams.get("country") || "";
+      if (location !== currentLocation || country !== currentCountry) {
+        applyFilters({ location, country });
+      }
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [applyFilters, country, location, searchParams]);
+
   const handleClearFilters = useCallback(() => {
     setKeywordQuery("");
     setLocation("");
+    setCountry("");
     setNameQuery("");
     setDatePosted("any");
     setJobType("all");
@@ -494,6 +530,7 @@ export const SearchFilters = ({
     const baseActive =
       Boolean(keywordQuery.trim()) ||
       Boolean(location.trim()) ||
+      Boolean(country.trim()) ||
       Boolean(nameQuery.trim());
 
     const jobActive =
@@ -538,6 +575,7 @@ export const SearchFilters = ({
     openToTalents,
     remoteOnlyPreference,
     sortOrder,
+    country,
   ]);
 
   const handleSortChange = useCallback(
@@ -706,26 +744,33 @@ export const SearchFilters = ({
                 <span className={styles.fieldLabel}>Where</span>
                 <div className={styles.fieldControl}>
                   <MapPin className={styles.fieldIcon} />
-                  <input
-                    type="text"
+                  <GooglePlaceSuggestion
+                    label="City, state, or country"
                     value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        applyFilters({ location });
-                      }
+                    classes={[styles.locationInput, "w-full"]}
+                    onInputChange={(value) => {
+                      setLocation(value);
+                      setCountry("");
                     }}
-                    placeholder="City, state, or country"
-                    name="location"
-                    autoComplete="off"
-                    spellCheck={false}
-                    aria-label="Search location"
-                    data-gramm="false"
-                    data-gramm_editor="false"
-                    data-lpignore="true"
-                    data-form-type="other"
-                    className={styles.locationInput}
+                    handleLocationChange={(value, meta) => {
+                      setLocation(value);
+                      if (meta?.country) {
+                        setCountry(meta.country);
+                      } else if (meta?.countryCode) {
+                        setCountry(meta.countryCode);
+                      }
+                      applyFilters({
+                        location: value,
+                        country: meta?.country || meta?.countryCode || country,
+                      });
+                    }}
+                    onPlaceResolved={(meta) => {
+                      if (meta?.country && !country) {
+                        setCountry(meta.country);
+                      }
+                      // Surface the raw place data for debugging and QA
+                      console.log("Google place selected:", meta);
+                    }}
                   />
                 </div>
               </div>

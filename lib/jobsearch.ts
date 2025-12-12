@@ -4,6 +4,8 @@ import { getCountrySearchTerms } from "@/lib/country-mapping";
 type FetchJobsProps = {
   search?: string;
   location?: string;
+  country?: string;
+  countryCode?: string;
   name?: string;
   items: number;
   page: number;
@@ -25,6 +27,28 @@ type FetchJobsProps = {
 
 function contains(str: string) {
   return "%" + str.toLowerCase() + "%";
+}
+
+function expandLocationTerms(raw: string) {
+  const terms = new Set<string>();
+  const normalized = raw.toLowerCase().trim();
+  if (!normalized) return terms;
+
+  // Split on comma to capture "city, country" patterns
+  normalized
+    .split(",")
+    .map((piece) => piece.trim())
+    .filter(Boolean)
+    .forEach((piece) => {
+      terms.add(piece);
+      getCountrySearchTerms(piece).forEach((term) => terms.add(term));
+    });
+
+  // Also include the original full string
+  getCountrySearchTerms(normalized).forEach((term) => terms.add(term));
+  terms.add(normalized);
+
+  return terms;
 }
 
 function normalizeBooleanFilter(value: string | boolean | undefined | null) {
@@ -56,6 +80,8 @@ function normalizeBooleanFilter(value: string | boolean | undefined | null) {
 export async function fetchJobs({
   search = "",
   location = "",
+  country = "",
+  countryCode = "",
   name = "",
   items = 9,
   page = 1,
@@ -114,7 +140,7 @@ export async function fetchJobs({
 
     // Location search - enhanced to handle country codes and full names
     if (location) {
-      const searchTerms = getCountrySearchTerms(location);
+      const searchTerms = Array.from(expandLocationTerms(location));
       const locationConditions: string[] = [];
 
       // For each search term, check both city and country fields
@@ -123,7 +149,7 @@ export async function fetchJobs({
         const termParamIndex = ++paramIndex;
 
         locationConditions.push(
-          `(LOWER(city) LIKE $${termParamIndex} OR LOWER(country) LIKE $${termParamIndex})`
+          `(LOWER(jo.city) LIKE $${termParamIndex} OR LOWER(jo.country) LIKE $${termParamIndex})`
         );
         params.push(termPattern);
       });
@@ -132,53 +158,69 @@ export async function fetchJobs({
       whereConditions.push(`(${locationConditions.join(' OR ')})`);
     }
 
+    // Explicit country filter (AND)
+    const countryTerms = new Set<string>();
+    expandLocationTerms(country).forEach((t) => countryTerms.add(t));
+    expandLocationTerms(countryCode).forEach((t) => countryTerms.add(t));
+
+    if (countryTerms.size > 0) {
+      const conditions: string[] = [];
+      countryTerms.forEach((term) => {
+        const termPattern = contains(term);
+        const termParamIndex = ++paramIndex;
+        conditions.push(`LOWER(jo.country) LIKE $${termParamIndex}`);
+        params.push(termPattern);
+      });
+      whereConditions.push(`(${conditions.join(" OR ")})`);
+    }
+
     // Company name search (separate from general search)
     if (name) {
-      whereConditions.push(`LOWER(company_name) LIKE $${++paramIndex}`);
+      whereConditions.push(`LOWER(jo.company_name) LIKE $${++paramIndex}`);
       params.push(contains(name));
     }
 
     // Recruiter filter
     if (recruiterFlag === true) {
-      whereConditions.push("COALESCE(recruiter::text, 'false') = 'true'");
+      whereConditions.push("COALESCE(jo.recruiter::text, 'false') = 'true'");
     }
 
     // Mentor filter
     if (mentorFlag === true) {
-      whereConditions.push("COALESCE(mentor::text, 'false') = 'true'");
+      whereConditions.push("COALESCE(jo.mentor::text, 'false') = 'true'");
     }
 
     // Talent filter
     if (talentFlag === true) {
-      whereConditions.push("COALESCE(talent::text, 'false') = 'true'");
+      whereConditions.push("COALESCE(jo.talent::text, 'false') = 'true'");
     }
 
     // New "Open to" filters
     if (openToTalentsFlag === true) {
-      whereConditions.push("COALESCE(talent::text, 'false') = 'true'");
+      whereConditions.push("COALESCE(jo.talent::text, 'false') = 'true'");
     }
 
     // Project type filter
     if (projectType) {
-      whereConditions.push(`project_type = $${++paramIndex}`);
-      params.push(projectType);
-    }
+        whereConditions.push(`jo.project_type = $${++paramIndex}`);
+        params.push(projectType);
+      }
 
-    if (jobType && jobType !== "all") {
-      whereConditions.push(`job_type = $${++paramIndex}`);
-      params.push(jobType);
-    }
+      if (jobType && jobType !== "all") {
+        whereConditions.push(`jo.job_type = $${++paramIndex}`);
+        params.push(jobType);
+      }
 
-    if (engagement && engagement !== "all") {
-      whereConditions.push(`type_engagement = $${++paramIndex}`);
-      params.push(engagement);
-    }
+      if (engagement && engagement !== "all") {
+        whereConditions.push(`jo.type_engagement = $${++paramIndex}`);
+        params.push(engagement);
+      }
 
-    if (datePosted && datePosted !== "any") {
-      const intervalMap: Record<string, string> = {
-        "1d": "1 day",
-        "3d": "3 days",
-        "7d": "7 days",
+      if (datePosted && datePosted !== "any") {
+        const intervalMap: Record<string, string> = {
+          "1d": "1 day",
+          "3d": "3 days",
+          "7d": "7 days",
         "14d": "14 days",
         "30d": "30 days",
       };
@@ -186,29 +228,29 @@ export async function fetchJobs({
       const interval = intervalMap[datePosted];
 
       if (interval) {
-        whereConditions.push(`posted_at >= NOW() - INTERVAL '${interval}'`);
+        whereConditions.push(`jo.posted_at >= NOW() - INTERVAL '${interval}'`);
       }
     }
 
     // Budget range filter
-    if (budgetRange) {
-      const [minBudget, maxBudget] = budgetRange.split("-").map(Number);
-      if (maxBudget) {
-        whereConditions.push(
-          `CAST(budget AS INTEGER) BETWEEN $${++paramIndex} AND $${++paramIndex}`,
+      if (budgetRange) {
+        const [minBudget, maxBudget] = budgetRange.split("-").map(Number);
+        if (maxBudget) {
+          whereConditions.push(
+          `CAST(jo.budget AS INTEGER) BETWEEN $${++paramIndex} AND $${++paramIndex}`,
         );
-        params.push(minBudget, maxBudget);
-      } else {
-        whereConditions.push(`CAST(budget AS INTEGER) >= $${++paramIndex}`);
-        params.push(minBudget);
+          params.push(minBudget, maxBudget);
+        } else {
+          whereConditions.push(`CAST(jo.budget AS INTEGER) >= $${++paramIndex}`);
+          params.push(minBudget);
+        }
       }
-    }
 
     // Skills filter
     if (skills) {
       const skillsArray = skills.split(",").map((s) => s.trim());
       const skillsConditions = skillsArray.map(
-        () => `LOWER(COALESCE(skills, '')) LIKE $${++paramIndex}`,
+        () => `LOWER(COALESCE(jo.skills, '')) LIKE $${++paramIndex}`,
       );
       whereConditions.push(`(${skillsConditions.join(" OR ")})`);
       skillsArray.forEach((skill) => params.push(contains(skill)));
@@ -217,22 +259,22 @@ export async function fetchJobs({
     const whereClause = whereConditions.join(" AND ");
 
     // Count query
-    const countQuery = `SELECT COUNT(*) FROM goodhive.job_offers WHERE ${whereClause}`;
+    const countQuery = `SELECT COUNT(*) FROM goodhive.job_offers jo WHERE ${whereClause}`;
     const countJobs = await sql.unsafe(countQuery, params);
     const count = countJobs[0].count as number;
 
     const limit = Number(items);
     const offset = limit * (Number(page) - 1);
 
-    let orderClause = "ORDER BY posted_at DESC NULLS LAST, id DESC";
+    let orderClause = "ORDER BY jo.posted_at DESC NULLS LAST, jo.id DESC";
     const normalizedSort = sort?.toLowerCase();
 
     if (normalizedSort === "oldest") {
-      orderClause = "ORDER BY posted_at ASC NULLS LAST, id ASC";
+      orderClause = "ORDER BY jo.posted_at ASC NULLS LAST, jo.id ASC";
     } else if (normalizedSort === "budget_high") {
-      orderClause = "ORDER BY CAST(NULLIF(budget, '') AS INTEGER) DESC NULLS LAST, posted_at DESC";
+      orderClause = "ORDER BY CAST(NULLIF(jo.budget, '') AS INTEGER) DESC NULLS LAST, jo.posted_at DESC";
     } else if (normalizedSort === "budget_low") {
-      orderClause = "ORDER BY CAST(NULLIF(budget, '') AS INTEGER) ASC NULLS LAST, posted_at DESC";
+      orderClause = "ORDER BY CAST(NULLIF(jo.budget, '') AS INTEGER) ASC NULLS LAST, jo.posted_at DESC";
     }
 
     // Main query with company logo JOIN
