@@ -18,7 +18,9 @@ export const OptimizedJobBalance: React.FC<OptimizedJobBalanceProps> = ({
   amount,
 }) => {
   // Use the passed amount or default to 0
-  const displayAmount = amount ? amount.toFixed(2) : "0.00";
+  // Convert to number and ensure it's valid
+  const numericAmount = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
+  const displayAmount = numericAmount.toFixed(2);
 
   // Function to get proper currency symbol from contract address or currency string
   const getCurrencySymbol = (currencyInput: string): string => {

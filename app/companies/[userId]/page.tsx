@@ -13,8 +13,6 @@ import { CompanySocialMediaAndContact } from "@/app/components/companies/profile
 import { JobSummarySection } from "@/app/components/companies/job-summary-section";
 import { getJobBalance } from "@/lib/contracts/jobManager";
 
-export const revalidate = 0;
-
 type CompanyProfilePageProps = {
   params: {
     userId: string;
