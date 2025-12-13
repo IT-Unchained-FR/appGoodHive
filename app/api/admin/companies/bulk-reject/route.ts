@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     // Batch update companies - single query for all users
     await sql`
       UPDATE goodhive.companies
-      SET approved = false, inreview = false
+      SET approved = false, inreview = false, published = false
       WHERE user_id = ANY(${userIds})
     `;
 

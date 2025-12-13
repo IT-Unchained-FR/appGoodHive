@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
     try {
     await sql`
       UPDATE goodhive.companies
-      SET approved = true, inreview = false
+      SET approved = true, inreview = false, published = true
       WHERE user_id = ${userId}
       `;
 

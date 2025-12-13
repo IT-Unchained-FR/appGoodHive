@@ -22,6 +22,7 @@ import toast from "react-hot-toast";
 interface Company {
   address: string;
   approved: boolean;
+  published: boolean;
   city: string;
   country: string;
   designation: string;
@@ -236,13 +237,22 @@ export default function AdminManageCompanies() {
       width: "15%",
       sortable: true,
       render: (value, row) => (
-        <Badge
-          className={`${
-            row.approved ? "bg-green-500" : "bg-orange-500"
-          } text-white`}
-        >
-          {row.approved ? "Approved" : "Pending"}
-        </Badge>
+        <div className="flex flex-col gap-1">
+          <Badge
+            className={`${
+              row.approved ? "bg-green-500" : "bg-orange-500"
+            } text-white`}
+          >
+            {row.approved ? "Approved" : "Pending"}
+          </Badge>
+          <Badge
+            className={`${
+              row.published ? "bg-blue-500" : "bg-gray-400"
+            } text-white text-xs`}
+          >
+            {row.published ? "Published" : "Unpublished"}
+          </Badge>
+        </div>
       ),
     },
     {

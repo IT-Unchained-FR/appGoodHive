@@ -258,8 +258,13 @@ export async function fetchJobs({
 
     const whereClause = whereConditions.join(" AND ");
 
-    // Count query
-    const countQuery = `SELECT COUNT(*) FROM goodhive.job_offers jo WHERE ${whereClause}`;
+    // Count query - include company published filter
+    const countQuery = `
+      SELECT COUNT(*)
+      FROM goodhive.job_offers jo
+      LEFT JOIN goodhive.companies c ON jo.user_id = c.user_id
+      WHERE ${whereClause} AND (c.published = true OR c.published IS NULL)
+    `;
     const countJobs = await sql.unsafe(countQuery, params);
     const count = countJobs[0].count as number;
 
@@ -277,7 +282,7 @@ export async function fetchJobs({
       orderClause = "ORDER BY CAST(NULLIF(jo.budget, '') AS INTEGER) ASC NULLS LAST, jo.posted_at DESC";
     }
 
-    // Main query with company logo JOIN
+    // Main query with company logo JOIN and published filter
     const limitIndex = ++paramIndex;
     const offsetIndex = ++paramIndex;
     const jobsQuery = `
@@ -286,7 +291,7 @@ export async function fetchJobs({
         c.image_url as company_logo_url
       FROM goodhive.job_offers jo
       LEFT JOIN goodhive.companies c ON jo.user_id = c.user_id
-      WHERE ${whereClause}
+      WHERE ${whereClause} AND (c.published = true OR c.published IS NULL)
       ${orderClause}
       LIMIT $${limitIndex} OFFSET $${offsetIndex}`;
     const jobsResult = await sql.unsafe(jobsQuery, [...params, limit, offset]);

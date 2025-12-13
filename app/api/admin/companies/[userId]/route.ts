@@ -111,7 +111,8 @@ export async function PUT(
         twitter = ${validatedBody.twitter || null},
         github = ${validatedBody.github || null},
         telegram = ${validatedBody.telegram || null},
-        approved = ${validatedBody.approved || false}
+        approved = ${validatedBody.approved || false},
+        published = ${validatedBody.published !== undefined ? validatedBody.published : (validatedBody.approved || false)}
       WHERE user_id = ${userId}
     `;
 

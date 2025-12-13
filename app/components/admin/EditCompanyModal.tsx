@@ -26,6 +26,7 @@ interface Company {
   country: string;
   headline: string;
   approved: boolean;
+  published: boolean;
   inreview: boolean;
   status: string;
   image_url: string;
@@ -233,6 +234,22 @@ export function EditCompanyModal({
               checked={formData.approved || false}
               onCheckedChange={(checked) =>
                 setFormData({ ...formData, approved: checked })
+              }
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="published">Published Status</Label>
+              <p className="text-sm text-muted-foreground">
+                Controls visibility on public site
+              </p>
+            </div>
+            <Switch
+              id="published"
+              checked={formData.published || false}
+              onCheckedChange={(checked) =>
+                setFormData({ ...formData, published: checked })
               }
             />
           </div>

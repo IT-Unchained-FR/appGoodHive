@@ -6,9 +6,10 @@ export async function getCompanyJobs(userId: string) {
   }
   try {
     const jobsQuery = await sql`
-      SELECT *
-      FROM goodhive.job_offers
-      WHERE user_id = ${userId}
+      SELECT jo.*
+      FROM goodhive.job_offers jo
+      INNER JOIN goodhive.companies c ON jo.user_id = c.user_id
+      WHERE jo.user_id = ${userId} AND c.published = true
       `;
 
     const jobs = jobsQuery.map((item) => ({

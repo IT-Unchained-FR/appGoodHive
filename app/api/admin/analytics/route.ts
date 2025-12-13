@@ -110,17 +110,19 @@ export async function GET(req: NextRequest) {
 
     // Approval rates
     const approvalRates = await sql`
-      SELECT 
+      SELECT
         'talents' as type,
         COUNT(*) FILTER (WHERE approved = true) as approved,
         COUNT(*) FILTER (WHERE approved = false) as pending,
         COUNT(*) as total
       FROM goodhive.talents
         UNION ALL
-      SELECT 
+      SELECT
         'companies' as type,
         COUNT(*) FILTER (WHERE approved = true) as approved,
         COUNT(*) FILTER (WHERE approved = false) as pending,
+        COUNT(*) FILTER (WHERE published = true) as published,
+        COUNT(*) FILTER (WHERE published = false) as unpublished,
         COUNT(*) as total
       FROM goodhive.companies
     `;
@@ -179,8 +181,10 @@ export async function GET(req: NextRequest) {
         type: row.type,
         approved: Number(row.approved || 0),
         pending: Number(row.pending || 0),
+        published: Number(row.published || 0),
+        unpublished: Number(row.unpublished || 0),
         total: Number(row.total || 0),
-        approvalRate: row.total > 0 
+        approvalRate: row.total > 0
           ? ((Number(row.approved || 0) / Number(row.total || 0)) * 100).toFixed(1)
             : "0",
       })),

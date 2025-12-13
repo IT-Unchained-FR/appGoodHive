@@ -17,7 +17,7 @@ export async function GET(
   }
 
   try {
-    // Fetch job data
+    // Fetch job data - only from published companies
     const jobQuery = await sql`
       SELECT jo.*, c.designation as company_name, c.image_url as company_logo,
              c.headline, c.city as company_city, c.country as company_country,
@@ -25,7 +25,7 @@ export async function GET(
              c.wallet_address as company_wallet_address
       FROM goodhive.job_offers jo
       LEFT JOIN goodhive.companies c ON jo.user_id = c.user_id
-      WHERE jo.id = ${jobId}
+      WHERE jo.id = ${jobId} AND (c.published = true OR c.published IS NULL)
     `;
 
     if (jobQuery.length === 0) {

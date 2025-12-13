@@ -22,9 +22,9 @@ type CompanyProfilePageProps = {
   };
 };
 
-// Helper function to fetch company data from API
+// Helper function to fetch company data from API (public view)
 async function fetchCompanyData(userId: string) {
-  const response = await fetch(`/api/companies/my-profile?userId=${userId}`);
+  const response = await fetch(`/api/companies/${userId}/public`);
   if (!response.ok) {
     throw new Error(`Failed to fetch company data: ${response.statusText}`);
   }

@@ -73,6 +73,7 @@ export const updateCompanySchema = z.object({
   github: z.string().url().optional().or(z.literal("")),
   telegram: z.string().max(100).optional(),
   approved: z.boolean().optional(),
+  published: z.boolean().optional(),
 });
 
 export type UpdateCompanyInput = z.infer<typeof updateCompanySchema>;
