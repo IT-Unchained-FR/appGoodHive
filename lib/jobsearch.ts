@@ -109,7 +109,7 @@ export async function fetchJobs({
     const openToTalentsFlag = normalizeBooleanFilter(openToTalents);
 
     // Build dynamic WHERE conditions
-    let whereConditions = ["published = true"];
+    let whereConditions = ["jo.published = true"];
     let params: any[] = [];
     let paramIndex = 0;
 
