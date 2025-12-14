@@ -18,9 +18,12 @@ export async function GET(request: NextRequest) {
 
   try {
     const jobsQuery = await sql`
-      SELECT *
-      FROM goodhive.job_offers
-      WHERE user_id = ${userId}
+      SELECT
+        jo.*,
+        c.image_url as company_logo_url
+      FROM goodhive.job_offers jo
+      LEFT JOIN goodhive.companies c ON jo.user_id = c.user_id
+      WHERE jo.user_id = ${userId}
     `;
 
     console.log(jobsQuery, "jobsQuery result...");
@@ -40,6 +43,7 @@ export async function GET(request: NextRequest) {
       chain: item.chain,
       jobType: item.job_type,
       image_url: item.image_url,
+      company_logo_url: item.company_logo_url,
       walletAddress: item.wallet_address,
       escrowAmount: item.escrow_amount,
       mentor: item.mentor === "true" || item.mentor === true,

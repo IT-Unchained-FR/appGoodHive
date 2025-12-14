@@ -16,6 +16,7 @@ interface Job {
   projectType: string;
   skills: string[];
   image_url?: string;
+  company_logo_url?: string;
   walletAddress: string;
   escrowAmount: number;
   postedAt: string;
@@ -122,7 +123,7 @@ export const AnimatedJobSection = ({
                         title={job.title}
                         postedBy={job.companyName}
                         postedOn={getRelativeTime(job.postedAt)}
-                        image={job.image_url || "/img/company_img.png"}
+                        image={job.company_logo_url || "/img/company_img.png"}
                         country={job.country}
                         city={job.city}
                         budget={job.budget}
