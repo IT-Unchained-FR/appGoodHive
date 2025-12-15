@@ -106,8 +106,8 @@ export const OptimizedJobBalance: React.FC<OptimizedJobBalanceProps> = ({
         dot: "bg-emerald-500",
       }
     : {
-        container: "from-[#FFC905]/15 to-amber-200/60 border-[#FFC905]/30 text-[#d97706]",
-        dot: "bg-[#FFC905]",
+        container: "from-gray-50/70 to-slate-100/80 border-gray-200 text-gray-700",
+        dot: "bg-gray-400",
       };
 
   return (
