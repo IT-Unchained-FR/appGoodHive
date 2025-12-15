@@ -22,17 +22,20 @@ export const OptimizedJobBalance: React.FC<OptimizedJobBalanceProps> = ({
   const [blockchainBalance, setBlockchainBalance] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Prefer on-chain job id (blockId) if present, otherwise use database jobId
+  const chainJobId = blockId ? blockId.toString() : jobId;
+
   useEffect(() => {
     const fetchBlockchainBalance = async () => {
       // Only fetch if we have a jobId (UUID)
-      if (!jobId) {
+      if (!chainJobId) {
         return;
       }
 
       setIsLoading(true);
       try {
         // Fetch balance from blockchain using the job UUID
-        const balanceWei = await getJobBalance(jobId);
+        const balanceWei = await getJobBalance(chainJobId);
 
         // Get token info to determine decimals
         let decimals = 6; // Default to 6 for USDC
@@ -57,10 +60,11 @@ export const OptimizedJobBalance: React.FC<OptimizedJobBalanceProps> = ({
     };
 
     fetchBlockchainBalance();
-  }, [jobId, currency]);
+  }, [chainJobId, currency]);
 
   // Use blockchain balance if available, otherwise fall back to database amount
-  const displayAmount = blockchainBalance !== null
+  const hasOnChainBalance = blockchainBalance !== null;
+  const displayAmount = hasOnChainBalance
     ? parseFloat(blockchainBalance).toFixed(2)
     : (typeof amount === 'number' && !isNaN(amount) ? amount.toFixed(2) : "0.00");
 
@@ -91,21 +95,60 @@ export const OptimizedJobBalance: React.FC<OptimizedJobBalanceProps> = ({
   };
 
   const displayCurrency = getCurrencySymbol(currency);
+  const balanceLabel = hasOnChainBalance ? "On-chain fund" : "Budget";
+  const balanceTitle = hasOnChainBalance
+    ? "On-chain escrow balance"
+    : "Budget fallback (on-chain balance unavailable)";
+
+  const badgeColors = hasOnChainBalance
+    ? {
+        container: "from-green-50/60 to-emerald-100/60 border-emerald-200 text-emerald-700",
+        dot: "bg-emerald-500",
+      }
+    : {
+        container: "from-[#FFC905]/15 to-amber-200/60 border-[#FFC905]/30 text-[#d97706]",
+        dot: "bg-[#FFC905]",
+      };
 
   return (
     <div className={`inline-flex items-center gap-1.5 ${className}`}>
-      <div className="flex items-center gap-1.5 bg-gradient-to-r from-[#FFC905]/15 to-amber-200/60 border border-[#FFC905]/30 rounded-lg px-2 py-0.5 shadow-sm backdrop-blur-sm">
+      <div
+        className={`flex items-center gap-1.5 bg-gradient-to-r border rounded-lg px-2 py-0.5 shadow-sm backdrop-blur-sm ${badgeColors.container}`}
+      >
         {isLoading ? (
           <>
-            <div className="w-1.5 h-1.5 bg-[#FFC905] rounded-full animate-pulse"></div>
-            <span className="text-xs font-medium text-[#FFC905]">
+            <div className={`w-1.5 h-1.5 ${badgeColors.dot} rounded-full animate-pulse`}></div>
+            <span className={`text-xs font-medium ${hasOnChainBalance ? "text-emerald-700" : "text-[#FFC905]"}`}>
               Loading...
             </span>
           </>
         ) : (
           <>
-            <div className="w-1.5 h-1.5 bg-[#FFC905] rounded-full"></div>
-            <span className="text-xs font-medium text-[#FFC905]" title={blockchainBalance !== null ? "On-chain escrow balance" : "Database budget"}>
+            <div
+              className={`flex items-center gap-1 ${hasOnChainBalance ? "text-emerald-700" : "text-[#d97706]"}`}
+              title={balanceTitle}
+            >
+              <svg
+                className="w-4 h-4 flex-shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 3 5 6v5c0 4.5 3.1 8.6 7 10 3.9-1.4 7-5.5 7-10V6l-7-3z" />
+                <circle cx="12" cy="11" r="3" />
+                <path d="M12 9v2l1 1" />
+              </svg>
+              <span className="text-[10px] font-semibold uppercase tracking-tight">
+                {balanceLabel}
+              </span>
+            </div>
+            <span
+              className={`text-xs font-semibold ${hasOnChainBalance ? "text-emerald-700" : "text-[#FFC905]"}`}
+              title={balanceTitle}
+            >
               {displayAmount} {displayCurrency}
             </span>
           </>
