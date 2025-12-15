@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { MapPin, Clock, DollarSign, Calendar, Building, Share2, ArrowLeft, Users, Timer } from "lucide-react";
 import { useAuth } from "@/app/contexts/AuthContext";
-import JobBalance from "@/app/components/JobBalance";
+import { OptimizedJobBalance } from "@/app/components/OptimizedJobBalance";
 import { JobApplicationPopup } from "@/app/components/job-application-popup/job-application-popup";
 import TalentVerificationPopup from "@/app/components/talent-verification-popup/TalentVerificationPopup";
 import OnboardingPopup from "@/app/components/onboarding-popup/OnboardingPopup";
@@ -34,6 +34,7 @@ interface JobPageHeaderProps {
     postedAt: string;
     applicationCount?: number;
     blockchainJobId?: string;
+    blockId?: number;
     block_id?: string;
   };
 }
@@ -213,22 +214,23 @@ export const JobPageHeader = ({ job }: JobPageHeaderProps) => {
         <div className={styles.jobSummarySection}>
           <h2 className={styles.jobSummaryTitle}>Job Summary</h2>
 
-          {/* Current Job Balance */}
-          {(job.blockchainJobId || job.block_id) && (
-            <div className="mb-6 flex justify-center">
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-4 max-w-md w-full">
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">Current Job Balance</h3>
-                  <div className="text-2xl font-bold text-green-600">
-                    <JobBalance
-                      jobId={job.blockchainJobId || job.block_id || ''}
-                      currency={job.currency || 'USDC'}
-                    />
-                  </div>
+          {/* On-Chain Fund Balance */}
+          <div className="mb-6 flex justify-center">
+            <div className="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 border border-amber-200 rounded-xl p-6 max-w-md w-full shadow-sm">
+              <div className="text-center">
+                <h3 className="text-base font-semibold text-gray-800 mb-3">Available Funds</h3>
+                <div className="flex justify-center">
+                  <OptimizedJobBalance
+                    jobId={job.id}
+                    blockId={job.blockId}
+                    currency={job.currency}
+                    amount={job.budget}
+                    className="scale-125"
+                  />
                 </div>
               </div>
             </div>
-          )}
+          </div>
 
           <div className={styles.jobMeta}>
           <div className={styles.metaItem}>

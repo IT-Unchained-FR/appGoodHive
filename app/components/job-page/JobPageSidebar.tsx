@@ -3,7 +3,7 @@
 import { MapPin, DollarSign, Clock, Calendar, Building, Users, Globe, Linkedin, Twitter, Mail } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import JobBalance from "@/app/components/JobBalance";
+import { OptimizedJobBalance } from "@/app/components/OptimizedJobBalance";
 import styles from "./JobPageSidebar.module.scss";
 
 interface JobPageSidebarProps {
@@ -17,6 +17,7 @@ interface JobPageSidebarProps {
     postedAt: string;
     applicationCount?: number;
     blockchainJobId?: string | null;
+    blockId?: number;
     block_id?: string;
     company: {
       id: string;
@@ -68,23 +69,23 @@ export const JobPageSidebar = ({ job }: JobPageSidebarProps) => {
   return (
     <div className={styles.sidebarContainer}>
 
-      {/* Job Balance Card */}
-      {(job.blockchainJobId || job.block_id) && (
-        <div className={styles.card}>
-          <h3 className={styles.cardTitle}>Job Balance</h3>
-          <div className="text-center py-4">
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
-              <div className="text-2xl font-bold text-green-600">
-                <JobBalance
-                  jobId={job.blockchainJobId || job.block_id || ''}
-                  currency={job.currency || 'USDC'}
-                />
-              </div>
-              <div className="text-sm text-gray-600 mt-1">Available Funds</div>
+      {/* Available Funds Card */}
+      <div className={styles.card}>
+        <h3 className={styles.cardTitle}>Available Funds</h3>
+        <div className="text-center py-4">
+          <div className="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 border border-amber-200 rounded-lg p-4">
+            <div className="flex justify-center">
+              <OptimizedJobBalance
+                jobId={job.id}
+                blockId={job.blockId}
+                currency={job.currency}
+                amount={job.budget}
+                className="scale-110"
+              />
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Company Card */}
       <div className={styles.card}>
