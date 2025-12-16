@@ -1218,7 +1218,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Work Preference Toggles */}
-          <div className="flex w-full justify-between mt-9 sm:flex-wrap sm:gap-3">
+          <div className="flex w-full justify-start gap-8 mt-9 sm:flex-wrap sm:gap-3">
             <ToggleButton
               label="Freelance Only"
               name="freelance_only"

@@ -108,7 +108,13 @@ export default function TalentResult({ talents }: { talents: TalentData[] }) {
                   type="talent"
                   title={talent.title || "Professional"}
                   postedBy={`${talent.firstName || ""} ${talent.lastName || ""}`}
-                  postedOn={talent.last_active || "Recently active"}
+                  postedOn={
+                    talent.last_active
+                      ? typeof talent.last_active === 'string'
+                        ? talent.last_active
+                        : new Date(talent.last_active).toISOString()
+                      : "Recently active"
+                  }
                   image={talent.imageUrl || "/img/talent_img.png"}
                   country={talent.country || ""}
                   city={talent.city || "Remote"}
@@ -122,7 +128,6 @@ export default function TalentResult({ talents }: { talents: TalentData[] }) {
                   freelancer={talent.freelancer}
                   remote={talent.remote}
                   availability={talent.availability === "Available" || talent.availability === true}
-                  last_active={new Date(talent.last_active || Date.now())}
                   uniqueId={talent.userId}
                 />
 

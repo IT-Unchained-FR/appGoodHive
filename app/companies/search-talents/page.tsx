@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     "search Web3 developers, blockchain talent, crypto professionals, decentralized experts, smart contract developers, DeFi talent search",
 };
 
-const itemsPerPage = 10;
+const itemsPerPage = 9;
 
 export const revalidate = 0;
 
