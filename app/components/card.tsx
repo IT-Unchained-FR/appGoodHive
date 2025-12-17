@@ -180,23 +180,57 @@ export const Card: FC<Props> = ({
       <div className="p-4 flex flex-col h-full">
         {/* Header Section */}
         <div className="flex items-start gap-2 sm:gap-3 mb-3">
-          <div className="relative flex-shrink-0">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-amber-100 to-yellow-200 overflow-hidden ring-2 ring-amber-200 shadow-sm border border-amber-200">
-              <Image
-                className="object-cover w-full h-full"
-                src={profileImage}
-                alt={hideCompanyDetails ? "Company logo hidden" : "Company logo"}
-                width={48}
-                height={48}
-                sizes="(max-width: 640px) 40px, 48px"
-                style={hideCompanyDetails ? { filter: "blur(8px)" } : undefined}
-              />
+          {hideCompanyDetails ? (
+            <CompanyInfoGuard
+              isVisible={false}
+              seed={jobId || uniqueId || title}
+              compact
+              placement="top"
+              className="relative flex-shrink-0"
+            >
+              <div className="relative flex-shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-amber-100 to-yellow-200 overflow-hidden ring-2 ring-amber-200 shadow-sm border border-amber-200">
+                  <Image
+                    className="object-cover w-full h-full"
+                    src={profileImage}
+                    alt="Company logo hidden"
+                    width={48}
+                    height={48}
+                    sizes="(max-width: 640px) 40px, 48px"
+                    style={{
+                      filter: "blur(6px)",
+                      WebkitMaskImage:
+                        "radial-gradient(circle at center, rgba(0,0,0,1) 55%, rgba(0,0,0,0.3) 75%, transparent 95%)",
+                      maskImage:
+                        "radial-gradient(circle at center, rgba(0,0,0,1) 55%, rgba(0,0,0,0.3) 75%, transparent 95%)",
+                      transform: "scale(1.02)",
+                    }}
+                  />
+                </div>
+                {/* Bee accent on company logo */}
+                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-[#FFC905] rounded-full flex items-center justify-center text-[10px] sm:text-xs shadow-sm">
+                  🐝
+                </div>
+              </div>
+            </CompanyInfoGuard>
+          ) : (
+            <div className="relative flex-shrink-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-amber-100 to-yellow-200 overflow-hidden ring-2 ring-amber-200 shadow-sm border border-amber-200">
+                <Image
+                  className="object-cover w-full h-full"
+                  src={profileImage}
+                  alt="Company logo"
+                  width={48}
+                  height={48}
+                  sizes="(max-width: 640px) 40px, 48px"
+                />
+              </div>
+              {/* Bee accent on company logo */}
+              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-[#FFC905] rounded-full flex items-center justify-center text-[10px] sm:text-xs shadow-sm">
+                🐝
+              </div>
             </div>
-            {/* Bee accent on company logo */}
-            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-[#FFC905] rounded-full flex items-center justify-center text-[10px] sm:text-xs shadow-sm">
-              🐝
-            </div>
-          </div>
+          )}
 
           <div className="flex-1 min-w-0">
             {/* Single line title with native tooltip */}
@@ -223,7 +257,7 @@ export const Card: FC<Props> = ({
                     isVisible={false}
                     compact
                     textClassName="!text-xs sm:!text-sm !font-medium tracking-wide text-gray-500"
-                    blurAmount="blur-[8px]"
+                    blurAmount="blur-[3px]"
                     placement="top"
                   />
                 ) : (

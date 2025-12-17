@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { Lock, Wallet2 } from "lucide-react";
+import { useMemo, useState, type ReactNode } from "react";
+import { Lock } from "lucide-react";
 import { useConnectModal } from "thirdweb/react";
 import { connectModalOptions } from "@/lib/auth/walletConfig";
 
@@ -18,6 +18,7 @@ interface CompanyInfoGuardProps {
   blurAmount?: string;
   placement?: TooltipPlacement;
   compact?: boolean;
+  children?: ReactNode;
 }
 
 const placeholders = [
@@ -54,6 +55,7 @@ export const CompanyInfoGuard = ({
   blurAmount = "blur-[1.5px]",
   placement = "bottom",
   compact = false,
+  children,
 }: CompanyInfoGuardProps) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const { connect } = useConnectModal();
@@ -80,7 +82,26 @@ export const CompanyInfoGuard = ({
     }
   };
 
-  const sizeClass = sizeClassName || (compact ? "text-xs" : "text-sm font-semibold");
+  const sizeClass =
+    sizeClassName || (compact ? "text-[11px] font-semibold" : "text-sm font-semibold");
+
+  const blurMaskStyle = !isVisible
+    ? {
+        WebkitMaskImage:
+          "linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.9) 18%, rgba(0,0,0,0.9) 82%, transparent 100%)",
+        maskImage:
+          "linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.9) 18%, rgba(0,0,0,0.9) 82%, transparent 100%)",
+      }
+    : undefined;
+
+  const tooltipBase =
+    "absolute z-30 whitespace-nowrap rounded-full bg-indigo-500 text-white shadow-lg shadow-indigo-200/60 transition-all duration-150 border border-indigo-100";
+
+  const tooltipPadding = compact ? "px-2.5 py-1.5 text-[11px]" : "px-3 py-2 text-xs";
+
+  const tooltipVisibility = showTooltip
+    ? "opacity-100 translate-y-0 pointer-events-auto"
+    : "opacity-0 translate-y-1 pointer-events-none";
 
   return (
     <div
@@ -93,61 +114,63 @@ export const CompanyInfoGuard = ({
       onFocus={() => setShowTooltip(true)}
       onBlur={() => setShowTooltip(false)}
     >
-      <span
-        className={classNames(
-          "inline-flex items-center gap-1",
-          textClassName,
-          !isVisible && `${blurAmount} text-gray-500`,
-          sizeClass,
-        )}
-      >
-        {!isVisible && <Lock className="w-3.5 h-3.5 text-amber-500" />}
-        <span aria-label={isVisible ? value : "Company hidden"}>
-          {displayValue}
+      {children ?? (
+        <span
+          className={classNames(
+            "inline-flex items-center gap-1",
+            textClassName,
+            !isVisible && `${blurAmount} text-gray-500`,
+            sizeClass,
+          )}
+          style={blurMaskStyle}
+        >
+          {!isVisible && <Lock className="w-3.5 h-3.5 text-amber-500" />}
+          <span aria-label={isVisible ? value : "Company hidden"}>{displayValue}</span>
         </span>
-      </span>
+      )}
 
       {!isVisible && (
         <div
           className={classNames(
-            "absolute z-30 min-w-[200px] max-w-xs rounded-lg border border-amber-100 bg-white/95 px-3 py-2 shadow-lg transition-all duration-150 backdrop-blur-sm",
+            tooltipBase,
             tooltipPosition,
-            showTooltip
-              ? "opacity-100 translate-y-0 pointer-events-auto"
-              : "opacity-0 translate-y-1 pointer-events-none",
+            tooltipPadding,
+            tooltipVisibility,
           )}
         >
           <span
             className={classNames(
-              "pointer-events-none absolute inline-block h-2 w-2 rotate-45 border border-amber-100 bg-white/95",
-              placement === "top" && "left-1/2 bottom-[-5px] -translate-x-1/2",
-              placement === "bottom" && "left-1/2 top-[-5px] -translate-x-1/2",
-              placement === "left" && "right-[-5px] top-1/2 -translate-y-1/2",
-              placement === "right" && "left-[-5px] top-1/2 -translate-y-1/2",
+              "pointer-events-none absolute inline-block h-2.5 w-2.5 rotate-45 border border-indigo-100 bg-indigo-500",
+              placement === "top" && "left-1/2 bottom-[-6px] -translate-x-1/2",
+              placement === "bottom" && "left-1/2 top-[-6px] -translate-x-1/2",
+              placement === "left" && "right-[-6px] top-1/2 -translate-y-1/2",
+              placement === "right" && "left-[-6px] top-1/2 -translate-y-1/2",
             )}
             aria-hidden
           />
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-800">
-            Sign in to reveal
-          </div>
-          <p className="mt-1 text-[11px] leading-relaxed text-gray-600">
-            Create an account or connect your wallet to view the company.
-          </p>
-          <div className="mt-2 flex gap-1.5">
-            <Link
-              href="/auth/signup"
-              className="inline-flex flex-1 items-center justify-center rounded-md bg-amber-500 px-2.5 py-1.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-amber-600"
-            >
-              Sign up
-            </Link>
-            <button
-              type="button"
-              onClick={handleConnectWallet}
-              className="inline-flex flex-1 items-center justify-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[11px] font-semibold text-amber-700 transition hover:border-amber-300 hover:bg-amber-100"
-            >
-              <Wallet2 className="w-3.5 h-3.5" />
-              Connect wallet
-            </button>
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-1 font-semibold leading-none">
+              <Lock className="w-3.5 h-3.5 text-white/90" />
+              <span>Sign in to reveal</span>
+            </div>
+            <p className="text-[11px] leading-tight text-white/90">
+              Create an account or connect your wallet to view this company.
+            </p>
+            <div className="flex gap-1.5 pt-0.5">
+              <Link
+                href="/auth/signup"
+                className="inline-flex items-center justify-center rounded-md bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-indigo-600 shadow-sm transition hover:bg-white"
+              >
+                Sign up
+              </Link>
+              <button
+                type="button"
+                onClick={handleConnectWallet}
+                className="inline-flex items-center justify-center rounded-md border border-white/50 bg-indigo-400/70 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-indigo-400"
+              >
+                Connect wallet
+              </button>
+            </div>
           </div>
         </div>
       )}

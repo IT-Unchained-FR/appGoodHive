@@ -193,8 +193,11 @@
 }
 
 .blurredText {
-  filter: blur(1.5px);
+  display: inline-block;
   color: #9ca3af;
+  filter: blur(2px);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.9) 18%, rgba(0, 0, 0, 0.9) 82%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.9) 18%, rgba(0, 0, 0, 0.9) 82%, transparent 100%);
 }
 
 .blurredRow {
