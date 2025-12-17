@@ -114,7 +114,11 @@ export const JobPageSidebar = ({ job }: JobPageSidebarProps) => {
                 width={48}
                 height={48}
                 className={styles.logoImage}
-                style={!isAuthenticated ? { filter: "blur(5px)" } : undefined}
+                style={!isAuthenticated ? {
+                  filter: "blur(10px) brightness(1.1)",
+                  opacity: 0.6,
+                  transition: "all 0.3s ease"
+                } : undefined}
               />
             ) : (
               <div className={styles.logoPlaceholder}>

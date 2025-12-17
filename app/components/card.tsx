@@ -137,9 +137,9 @@ export const Card: FC<Props> = ({
   };
 
   return (
-    <div className="group relative bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/40 rounded-2xl border border-amber-100/60 shadow-sm hover:shadow-2xl hover:border-[#FFC905]/30 transition-all duration-300 ease-in-out overflow-hidden cursor-pointer flex flex-col backdrop-blur-sm">
+    <div className="group relative bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/40 rounded-2xl border border-amber-100/60 shadow-sm hover:shadow-2xl hover:border-[#FFC905]/30 transition-all duration-300 ease-in-out cursor-pointer flex flex-col backdrop-blur-sm">
       {/* Honey comb pattern background accent */}
-      <div className="absolute top-0 right-0 w-20 h-20 opacity-20 pointer-events-none">
+      <div className="absolute top-0 right-0 w-20 h-20 opacity-20 pointer-events-none overflow-hidden rounded-2xl">
         <svg
           viewBox="0 0 24 24"
           fill="currentColor"
@@ -198,12 +198,14 @@ export const Card: FC<Props> = ({
                     height={48}
                     sizes="(max-width: 640px) 40px, 48px"
                     style={{
-                      filter: "blur(6px)",
+                      filter: "blur(10px) brightness(1.05)",
+                      opacity: 0.65,
                       WebkitMaskImage:
-                        "radial-gradient(circle at center, rgba(0,0,0,1) 55%, rgba(0,0,0,0.3) 75%, transparent 95%)",
+                        "radial-gradient(circle at center, rgba(0,0,0,0.95) 50%, rgba(0,0,0,0.5) 70%, transparent 90%)",
                       maskImage:
-                        "radial-gradient(circle at center, rgba(0,0,0,1) 55%, rgba(0,0,0,0.3) 75%, transparent 95%)",
-                      transform: "scale(1.02)",
+                        "radial-gradient(circle at center, rgba(0,0,0,0.95) 50%, rgba(0,0,0,0.5) 70%, transparent 90%)",
+                      transform: "scale(1.05)",
+                      transition: "all 0.3s ease",
                     }}
                   />
                 </div>
@@ -246,22 +248,24 @@ export const Card: FC<Props> = ({
                 href={
                   jobId ? `/companies/${uniqueId}` : `/talents/${uniqueId}`
                 }
-                className="text-xs sm:text-sm font-medium text-gray-600 hover:text-[#FFC905] transition-colors truncate max-w-[120px]"
+                className="relative inline-flex max-w-[150px] min-w-0 items-center text-xs sm:text-sm font-medium text-gray-600 hover:text-[#FFC905] transition-colors"
                 title={!hideCompanyDetails ? postedBy : "Sign in to reveal"}
                 onClick={handleCompanyClick}
               >
                 {hideCompanyDetails ? (
-                  <CompanyInfoGuard
-                    value={undefined}
-                    seed={jobId || uniqueId || title}
-                    isVisible={false}
-                    compact
-                    textClassName="!text-xs sm:!text-sm !font-medium tracking-wide text-gray-500"
-                    blurAmount="blur-[3px]"
-                    placement="top"
-                  />
+                  <span className="overflow-visible">
+                    <CompanyInfoGuard
+                      value={undefined}
+                      seed={jobId || uniqueId || title}
+                      isVisible={false}
+                      compact
+                      textClassName="!text-xs sm:!text-sm !font-medium tracking-wide text-gray-500"
+                      blurAmount="blur-[3px]"
+                      placement="top"
+                    />
+                  </span>
                 ) : (
-                  postedBy
+                  <span className="truncate">{postedBy}</span>
                 )}
               </Link>
 
