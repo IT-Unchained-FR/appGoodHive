@@ -22,13 +22,13 @@ interface CompanyInfoGuardProps {
 
 const placeholders = [
   "Connect Wallet to see",
-  "Sign up to view",
+  "Connect to view",
   "Connect to reveal",
-  "Login to see company",
-  "Sign in to view",
+  "Connect to see company",
+  "Connect Wallet to view",
   "Connect Wallet to reveal",
-  "Sign up to see",
-  "Login to view company",
+  "Connect to see",
+  "Connect Wallet here",
 ];
 
 const classNames = (...values: Array<string | false | undefined>) =>
@@ -196,24 +196,18 @@ export const CompanyInfoGuard = ({
           ) : (
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-1 font-semibold leading-none">
-                <span>Sign in to reveal</span>
+                <span>Connect to reveal</span>
               </div>
               <p className="text-[11px] leading-tight text-white/90">
-                Create an account or connect your wallet to view this company.
+                Connect your wallet to view this company.
               </p>
               <div className="flex gap-1.5 pt-0.5">
-                <Link
-                  href="/auth/signup"
-                  className="inline-flex items-center justify-center rounded-md bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-indigo-600 shadow-sm transition hover:bg-white"
-                >
-                  Sign up
-                </Link>
                 <button
                   type="button"
                   onClick={handleConnectWallet}
-                  className="inline-flex items-center justify-center rounded-md border border-white/50 bg-indigo-400/70 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-indigo-400"
+                  className="inline-flex items-center justify-center rounded-md bg-white/90 px-3 py-1.5 text-[11px] font-semibold text-amber-700 shadow-sm transition hover:bg-white"
                 >
-                  Connect wallet
+                  Connect Wallet
                 </button>
               </div>
             </div>

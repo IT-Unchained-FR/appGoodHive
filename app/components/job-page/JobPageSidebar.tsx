@@ -41,7 +41,6 @@ interface JobPageSidebarProps {
 export const JobPageSidebar = ({ job }: JobPageSidebarProps) => {
   const { isAuthenticated } = useAuth();
   const { connect } = useConnectModal();
-  const safeCompanyName = isAuthenticated ? job.company.name : "this company";
 
   const handleConnectWallet = () => {
     if (connect) {
@@ -229,12 +228,11 @@ export const JobPageSidebar = ({ job }: JobPageSidebarProps) => {
             <div className={styles.lockedPanel}>
               <h4 className={styles.contactSubtitle}>Company profile locked</h4>
               <p className={styles.lockedText}>
-                Sign up or connect your wallet to view company links and contact details.
+                Connect your wallet to view company links and contact details.
               </p>
               <div className={styles.lockedActions}>
-                <Link href="/auth/signup" className={styles.primaryCta}>Sign up</Link>
-                <button type="button" onClick={handleConnectWallet} className={styles.secondaryCta}>
-                  Connect wallet
+                <button type="button" onClick={handleConnectWallet} className={styles.primaryCta}>
+                  Connect Wallet
                 </button>
               </div>
             </div>
@@ -266,7 +264,7 @@ export const JobPageSidebar = ({ job }: JobPageSidebarProps) => {
         <h3 className={styles.cardTitle}>Contact GoodHive</h3>
         <div className={styles.contactGoodHive}>
           <p className={styles.contactDescription}>
-            Have questions about {safeCompanyName}? Send us a message and we'll help you connect!
+            Have questions about this job? Send us a message and we'll help you connect!
           </p>
           <button className={styles.sendMessageButton}>
             <Mail className={styles.buttonIcon} />
