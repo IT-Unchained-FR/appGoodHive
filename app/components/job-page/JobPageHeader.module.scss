@@ -192,6 +192,15 @@
   }
 }
 
+.blurredText {
+  filter: blur(1.5px);
+  color: #9ca3af;
+}
+
+.blurredRow {
+  color: #9ca3af;
+}
+
 .locationInfo {
   display: flex;
   align-items: center;

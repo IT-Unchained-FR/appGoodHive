@@ -12,6 +12,7 @@ import Link from "next/link";
 import { projectTypes, projectDuration } from "@/app/constants/common";
 import { generateJobTypeEngage } from "@/app/utils/generate-job-type-engage";
 import styles from "./JobPageHeader.module.scss";
+import { CompanyInfoGuard } from "@/app/components/CompanyInfoGuard";
 
 interface JobPageHeaderProps {
   job: {
@@ -44,6 +45,7 @@ export const JobPageHeader = ({ job }: JobPageHeaderProps) => {
   const [isApplicationPopupOpen, setIsApplicationPopupOpen] = useState(false);
   const [isVerificationPopupOpen, setIsVerificationPopupOpen] = useState(false);
   const [isOnboardingPopupOpen, setIsOnboardingPopupOpen] = useState(false);
+  const safeCompanyName = isAuthenticated ? job.company.name : "this company";
 
   const getRelativeTime = (dateString: string) => {
     const now = new Date();
@@ -121,7 +123,7 @@ export const JobPageHeader = ({ job }: JobPageHeaderProps) => {
       try {
         await navigator.share({
           title: job.title,
-          text: `Check out this job opportunity at ${job.company.name}`,
+          text: `Check out this job opportunity at ${safeCompanyName}`,
           url: window.location.href,
         });
       } catch (error) {
@@ -160,10 +162,11 @@ export const JobPageHeader = ({ job }: JobPageHeaderProps) => {
               {job.company.logo ? (
                 <Image
                   src={job.company.logo}
-                  alt={`${job.company.name} logo`}
+                  alt={isAuthenticated ? `${job.company.name} logo` : "Hidden company logo"}
                   width={64}
                   height={64}
                   className={styles.logoImage}
+                  style={!isAuthenticated ? { filter: "blur(6px)" } : undefined}
                 />
               ) : (
                 <div className={styles.logoPlaceholder}>
@@ -176,13 +179,38 @@ export const JobPageHeader = ({ job }: JobPageHeaderProps) => {
             <div className={styles.jobInfo}>
               <h1 className={styles.jobTitle}>{job.title}</h1>
               <div className={styles.companyInfo}>
-                <Link href={`/companies/${job.company.id}`} className={styles.companyName}>
-                  {job.company.name}
-                </Link>
-                <div className={styles.locationInfo}>
-                  <MapPin className={styles.metaIcon} />
-                  <span>{job.city}, {job.country}</span>
-                </div>
+                {isAuthenticated ? (
+                  <Link href={`/companies/${job.company.id}`} className={styles.companyName}>
+                    {job.company.name}
+                  </Link>
+                ) : (
+                  <CompanyInfoGuard
+                    value={undefined}
+                    seed={job.id}
+                    isVisible={false}
+                    textClassName={`${styles.companyName} ${styles.blurredText}`}
+                    sizeClassName={styles.companyName}
+                    placement="bottom"
+                  />
+                )}
+                {isAuthenticated ? (
+                  <div className={styles.locationInfo}>
+                    <MapPin className={styles.metaIcon} />
+                    <span>{job.city}, {job.country}</span>
+                  </div>
+                ) : (
+                  <div className={`${styles.locationInfo} ${styles.blurredRow}`}>
+                    <MapPin className={styles.metaIcon} />
+                    <CompanyInfoGuard
+                      value="Hidden location"
+                      seed={`${job.id}-location`}
+                      isVisible={false}
+                      textClassName={styles.blurredText}
+                      compact
+                      placement="bottom"
+                    />
+                  </div>
+                )}
                 <div className={styles.postedInfo}>
                   <Calendar className={styles.postedIcon} />
                   <span>Posted {getRelativeTime(job.postedAt)}</span>

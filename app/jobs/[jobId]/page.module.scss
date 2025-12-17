@@ -379,6 +379,16 @@
   }
 }
 
+.relatedHeadingGuard {
+  font-size: inherit;
+  font-weight: inherit;
+  color: #9ca3af;
+  filter: blur(1.5px);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 // Responsive adjustments
 @media (max-width: 480px) {
   .contentContainer {

@@ -5,10 +5,12 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { generateCountryFlag } from "@utils/generate-country-flag";
-import type { FC } from "react";
+import type { FC, MouseEvent } from "react";
 import LastActiveStatus from "./LastActiveStatus";
 import { OptimizedJobBalance } from "./OptimizedJobBalance";
 import { analytics } from "@/lib/analytics";
+import { useAuth } from "@/app/contexts/AuthContext";
+import { CompanyInfoGuard } from "./CompanyInfoGuard";
 
 interface Props {
   jobId?: string; // UUID string
@@ -80,6 +82,7 @@ export const Card: FC<Props> = ({
     return `Open to ${openToTypes.slice(0, -1).join(", ")} & ${openToTypes[openToTypes.length - 1]}`;
   };
 
+  const { isAuthenticated } = useAuth();
 
   // Function to strip HTML tags (CSS line-clamp handles truncation)
   const stripHtmlAndCrop = (html: string, maxLength: number) => {
@@ -123,6 +126,15 @@ export const Card: FC<Props> = ({
 
   // Generate consistent badge for all job cards
   const shouldShowBadge = type === "company" || type === "job"; // Only show badges for job cards
+
+  const hideCompanyDetails = type === "job" && !isAuthenticated;
+
+  const handleCompanyClick = (event: MouseEvent) => {
+    if (hideCompanyDetails) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  };
 
   return (
     <div className="group relative bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/40 rounded-2xl border border-amber-100/60 shadow-sm hover:shadow-2xl hover:border-[#FFC905]/30 transition-all duration-300 ease-in-out overflow-hidden cursor-pointer flex flex-col backdrop-blur-sm">
@@ -173,10 +185,11 @@ export const Card: FC<Props> = ({
               <Image
                 className="object-cover w-full h-full"
                 src={profileImage}
-                alt="Company logo"
+                alt={hideCompanyDetails ? "Company logo hidden" : "Company logo"}
                 width={48}
                 height={48}
                 sizes="(max-width: 640px) 40px, 48px"
+                style={hideCompanyDetails ? { filter: "blur(8px)" } : undefined}
               />
             </div>
             {/* Bee accent on company logo */}
@@ -200,9 +213,22 @@ export const Card: FC<Props> = ({
                   jobId ? `/companies/${uniqueId}` : `/talents/${uniqueId}`
                 }
                 className="text-xs sm:text-sm font-medium text-gray-600 hover:text-[#FFC905] transition-colors truncate max-w-[120px]"
-                title={postedBy}
+                title={!hideCompanyDetails ? postedBy : "Sign in to reveal"}
+                onClick={handleCompanyClick}
               >
-                {postedBy}
+                {hideCompanyDetails ? (
+                  <CompanyInfoGuard
+                    value={undefined}
+                    seed={jobId || uniqueId || title}
+                    isVisible={false}
+                    compact
+                    textClassName="!text-xs sm:!text-sm !font-medium tracking-wide text-gray-500"
+                    blurAmount="blur-[8px]"
+                    placement="top"
+                  />
+                ) : (
+                  postedBy
+                )}
               </Link>
 
               {/* Modern Country Flag Display */}
