@@ -29,18 +29,21 @@ export const RelatedJobsSection = ({ companyName, relatedJobs }: RelatedJobsSect
   return (
     <section className={styles.section}>
       <h2 className={styles.sectionTitle}>
-        More Jobs from{" "}
+        More Jobs from
         {isAuthenticated ? (
-          companyName
+          <span className="ml-2">{companyName}</span>
         ) : (
-          <CompanyInfoGuard
-            value={undefined}
-            seed={`${companyName}-related`}
-            isVisible={false}
-            textClassName={styles.relatedHeadingGuard}
-            sizeClassName={styles.relatedHeadingGuard}
-            placement="bottom"
-          />
+          <span className="ml-2">
+            <CompanyInfoGuard
+              value={undefined}
+              seed={`${companyName}-related`}
+              isVisible={false}
+              textClassName={styles.relatedHeadingGuard}
+              sizeClassName={styles.relatedHeadingGuard}
+              blurAmount="blur-[10px]"
+              placement="bottom"
+            />
+          </span>
         )}
       </h2>
       <div className={styles.relatedJobs}>

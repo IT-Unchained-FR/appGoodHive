@@ -143,7 +143,7 @@ export const CompanyInfoGuard = ({
           className={classNames(
             "inline-flex items-center gap-1",
             textClassName,
-            !isVisible && `${blurAmount} text-gray-400 opacity-70`,
+            !isVisible && `${blurAmount} text-amber-600 opacity-75`,
             sizeClass,
           )}
           style={blurMaskStyle}
@@ -151,7 +151,7 @@ export const CompanyInfoGuard = ({
           <span
             aria-label={isVisible ? value : "Company hidden"}
             style={!isVisible ? {
-              filter: "brightness(1.1)",
+              filter: "brightness(1.15)",
               letterSpacing: "0.5px",
             } : undefined}
           >
