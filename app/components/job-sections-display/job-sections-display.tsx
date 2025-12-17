@@ -1,8 +1,11 @@
 "use client";
 
 import { IJobSection } from "@/interfaces/job-offer";
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
+import { ChevronDownIcon, ChevronUpIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 import React, { useState } from "react";
+import { useAuth } from "@/app/contexts/AuthContext";
+import { useConnectModal } from "thirdweb/react";
+import { connectModalOptions } from "@/lib/auth/walletConfig";
 
 interface JobSectionDisplayProps {
   section: IJobSection;
@@ -16,9 +19,17 @@ export const JobSectionDisplay: React.FC<JobSectionDisplayProps> = ({
   onToggle,
 }) => {
   const [internalExpanded, setInternalExpanded] = useState(isExpanded);
+  const { isAuthenticated } = useAuth();
+  const { connect } = useConnectModal();
 
   const expanded = onToggle ? isExpanded : internalExpanded;
   const handleToggle = onToggle || (() => setInternalExpanded(!internalExpanded));
+
+  const handleConnectWallet = () => {
+    if (connect) {
+      connect(connectModalOptions);
+    }
+  };
 
   return (
     <div className="border border-yellow-200 rounded-xl mb-6 bg-white overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:border-yellow-400">
@@ -42,10 +53,31 @@ export const JobSectionDisplay: React.FC<JobSectionDisplayProps> = ({
       {/* Section Content */}
       {expanded && (
         <div className="px-6 pb-6 pt-4 bg-[#fef5cf]/30">
-          <div
-            className="prose prose-lg max-w-none text-gray-700 job-section-content leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: section.content }}
-          />
+          {isAuthenticated ? (
+            <div
+              className="prose prose-lg max-w-none text-gray-700 job-section-content leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: section.content }}
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+              <div className="mb-6 p-4 rounded-full bg-gradient-to-br from-amber-100 to-yellow-100">
+                <LockClosedIcon className="w-12 h-12 text-amber-600" />
+              </div>
+              <h4 className="text-xl font-semibold text-gray-900 mb-3">
+                Content Locked
+              </h4>
+              <p className="text-gray-600 mb-6 max-w-md">
+                Connect your wallet to view the full job description and unlock all details about this position.
+              </p>
+              <button
+                onClick={handleConnectWallet}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold rounded-lg shadow-md hover:from-amber-600 hover:to-yellow-600 transition-all duration-200 hover:shadow-lg transform hover:-translate-y-0.5"
+              >
+                <LockClosedIcon className="w-5 h-5" />
+                Connect Wallet to View
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
