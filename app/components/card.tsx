@@ -5,10 +5,12 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { generateCountryFlag } from "@utils/generate-country-flag";
-import type { FC } from "react";
+import type { FC, MouseEvent } from "react";
 import LastActiveStatus from "./LastActiveStatus";
 import { OptimizedJobBalance } from "./OptimizedJobBalance";
 import { analytics } from "@/lib/analytics";
+import { useAuth } from "@/app/contexts/AuthContext";
+import { CompanyInfoGuard } from "./CompanyInfoGuard";
 
 interface Props {
   jobId?: string; // UUID string
@@ -80,6 +82,7 @@ export const Card: FC<Props> = ({
     return `Open to ${openToTypes.slice(0, -1).join(", ")} & ${openToTypes[openToTypes.length - 1]}`;
   };
 
+  const { isAuthenticated } = useAuth();
 
   // Function to strip HTML tags (CSS line-clamp handles truncation)
   const stripHtmlAndCrop = (html: string, maxLength: number) => {
@@ -124,10 +127,19 @@ export const Card: FC<Props> = ({
   // Generate consistent badge for all job cards
   const shouldShowBadge = type === "company" || type === "job"; // Only show badges for job cards
 
+  const hideCompanyDetails = type === "job" && !isAuthenticated;
+
+  const handleCompanyClick = (event: MouseEvent) => {
+    if (hideCompanyDetails) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  };
+
   return (
-    <div className="group relative bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/40 rounded-2xl border border-amber-100/60 shadow-sm hover:shadow-2xl hover:border-[#FFC905]/30 transition-all duration-300 ease-in-out overflow-hidden cursor-pointer flex flex-col backdrop-blur-sm">
+    <div className="group relative bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/40 rounded-2xl border border-amber-100/60 shadow-sm hover:shadow-2xl hover:border-[#FFC905]/30 transition-all duration-300 ease-in-out cursor-pointer flex flex-col backdrop-blur-sm">
       {/* Honey comb pattern background accent */}
-      <div className="absolute top-0 right-0 w-20 h-20 opacity-20 pointer-events-none">
+      <div className="absolute top-0 right-0 w-20 h-20 opacity-20 pointer-events-none overflow-hidden rounded-2xl">
         <svg
           viewBox="0 0 24 24"
           fill="currentColor"
@@ -168,22 +180,59 @@ export const Card: FC<Props> = ({
       <div className="p-4 flex flex-col h-full">
         {/* Header Section */}
         <div className="flex items-start gap-2 sm:gap-3 mb-3">
-          <div className="relative flex-shrink-0">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-amber-100 to-yellow-200 overflow-hidden ring-2 ring-amber-200 shadow-sm border border-amber-200">
-              <Image
-                className="object-cover w-full h-full"
-                src={profileImage}
-                alt="Company logo"
-                width={48}
-                height={48}
-                sizes="(max-width: 640px) 40px, 48px"
-              />
+          {hideCompanyDetails ? (
+            <CompanyInfoGuard
+              isVisible={false}
+              seed={jobId || uniqueId || title}
+              compact
+              placement="top"
+              className="relative flex-shrink-0"
+            >
+              <div className="relative flex-shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-amber-100 to-yellow-200 overflow-hidden ring-2 ring-amber-200 shadow-sm border border-amber-200">
+                  <Image
+                    className="object-cover w-full h-full"
+                    src={profileImage}
+                    alt="Company logo hidden"
+                    width={48}
+                    height={48}
+                    sizes="(max-width: 640px) 40px, 48px"
+                    style={{
+                      filter: "blur(10px) brightness(1.05)",
+                      opacity: 0.65,
+                      WebkitMaskImage:
+                        "radial-gradient(circle at center, rgba(0,0,0,0.95) 50%, rgba(0,0,0,0.5) 70%, transparent 90%)",
+                      maskImage:
+                        "radial-gradient(circle at center, rgba(0,0,0,0.95) 50%, rgba(0,0,0,0.5) 70%, transparent 90%)",
+                      transform: "scale(1.05)",
+                      transition: "all 0.3s ease",
+                    }}
+                  />
+                </div>
+                {/* Bee accent on company logo */}
+                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-[#FFC905] rounded-full flex items-center justify-center text-[10px] sm:text-xs shadow-sm">
+                  🐝
+                </div>
+              </div>
+            </CompanyInfoGuard>
+          ) : (
+            <div className="relative flex-shrink-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-amber-100 to-yellow-200 overflow-hidden ring-2 ring-amber-200 shadow-sm border border-amber-200">
+                <Image
+                  className="object-cover w-full h-full"
+                  src={profileImage}
+                  alt="Company logo"
+                  width={48}
+                  height={48}
+                  sizes="(max-width: 640px) 40px, 48px"
+                />
+              </div>
+              {/* Bee accent on company logo */}
+              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-[#FFC905] rounded-full flex items-center justify-center text-[10px] sm:text-xs shadow-sm">
+                🐝
+              </div>
             </div>
-            {/* Bee accent on company logo */}
-            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-[#FFC905] rounded-full flex items-center justify-center text-[10px] sm:text-xs shadow-sm">
-              🐝
-            </div>
-          </div>
+          )}
 
           <div className="flex-1 min-w-0">
             {/* Single line title with native tooltip */}
@@ -199,10 +248,25 @@ export const Card: FC<Props> = ({
                 href={
                   jobId ? `/companies/${uniqueId}` : `/talents/${uniqueId}`
                 }
-                className="text-xs sm:text-sm font-medium text-gray-600 hover:text-[#FFC905] transition-colors truncate max-w-[120px]"
-                title={postedBy}
+                className="relative inline-flex max-w-[150px] min-w-0 items-center text-xs sm:text-sm font-medium text-gray-600 hover:text-[#FFC905] transition-colors"
+                title={!hideCompanyDetails ? postedBy : "Sign in to reveal"}
+                onClick={handleCompanyClick}
               >
-                {postedBy}
+                {hideCompanyDetails ? (
+                  <span className="overflow-visible">
+                    <CompanyInfoGuard
+                      value={undefined}
+                      seed={jobId || uniqueId || title}
+                      isVisible={false}
+                      compact
+                      textClassName="!text-xs sm:!text-sm !font-medium tracking-wide text-gray-500"
+                      blurAmount="blur-[3px]"
+                      placement="top"
+                    />
+                  </span>
+                ) : (
+                  <span className="truncate">{postedBy}</span>
+                )}
               </Link>
 
               {/* Modern Country Flag Display */}

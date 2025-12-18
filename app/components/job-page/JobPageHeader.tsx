@@ -12,6 +12,7 @@ import Link from "next/link";
 import { projectTypes, projectDuration } from "@/app/constants/common";
 import { generateJobTypeEngage } from "@/app/utils/generate-job-type-engage";
 import styles from "./JobPageHeader.module.scss";
+import { CompanyInfoGuard } from "@/app/components/CompanyInfoGuard";
 
 interface JobPageHeaderProps {
   job: {
@@ -157,7 +158,28 @@ export const JobPageHeader = ({ job }: JobPageHeaderProps) => {
           <div className={styles.headerMain}>
             {/* Company Logo */}
             <div className={styles.companyLogo}>
-              {job.company.logo ? (
+              {!isAuthenticated && job.company.logo ? (
+                <CompanyInfoGuard
+                  value={undefined}
+                  seed={`${job.id}-logo`}
+                  isVisible={false}
+                  compact
+                  placement="top"
+                >
+                  <Image
+                    src={job.company.logo}
+                    alt="Hidden company logo"
+                    width={64}
+                    height={64}
+                    className={styles.logoImage}
+                    style={{
+                      filter: "blur(10px) brightness(1.1)",
+                      opacity: 0.6,
+                      transition: "all 0.3s ease"
+                    }}
+                  />
+                </CompanyInfoGuard>
+              ) : job.company.logo ? (
                 <Image
                   src={job.company.logo}
                   alt={`${job.company.name} logo`}
@@ -176,9 +198,21 @@ export const JobPageHeader = ({ job }: JobPageHeaderProps) => {
             <div className={styles.jobInfo}>
               <h1 className={styles.jobTitle}>{job.title}</h1>
               <div className={styles.companyInfo}>
-                <Link href={`/companies/${job.company.id}`} className={styles.companyName}>
-                  {job.company.name}
-                </Link>
+                {isAuthenticated ? (
+                  <Link href={`/companies/${job.company.id}`} className={styles.companyName}>
+                    {job.company.name}
+                  </Link>
+                ) : (
+                  <CompanyInfoGuard
+                    value={undefined}
+                    seed={job.id}
+                    isVisible={false}
+                    textClassName={styles.companyName}
+                    sizeClassName={styles.companyName}
+                    blurAmount="blur-[10px]"
+                    placement="bottom"
+                  />
+                )}
                 <div className={styles.locationInfo}>
                   <MapPin className={styles.metaIcon} />
                   <span>{job.city}, {job.country}</span>

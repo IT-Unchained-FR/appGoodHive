@@ -6,6 +6,7 @@ import { JobSectionsDisplay } from "@/app/components/job-sections-display/job-se
 import styles from "./page.module.scss";
 import { JobPageAnalytics } from "@/app/components/job-page/JobPageAnalytics";
 import sql from "@/lib/db";
+import { RelatedJobsSection } from "@/app/components/job-page/RelatedJobsSection";
 
 interface Job {
   id: string;
@@ -304,30 +305,10 @@ export default async function JobPage({
             )}
 
             {/* Related Jobs */}
-            {job.relatedJobs && job.relatedJobs.length > 0 && (
-              <section className={styles.section}>
-                <h2 className={styles.sectionTitle}>More Jobs from {job.company.name}</h2>
-                <div className={styles.relatedJobs}>
-                  {job.relatedJobs.map((relatedJob) => (
-                    <a
-                      key={relatedJob.id}
-                      href={`/jobs/${relatedJob.id}`}
-                      className={styles.relatedJobCard}
-                    >
-                      <h3 className={styles.relatedJobTitle}>{relatedJob.title}</h3>
-                      <p className={styles.relatedJobMeta}>
-                        {relatedJob.city}, {relatedJob.country} • {new Intl.NumberFormat('en-US', {
-                          style: 'currency',
-                          currency: relatedJob.currency === 'USDC' ? 'USD' : relatedJob.currency,
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 0,
-                        }).format(relatedJob.budget)}
-                      </p>
-                    </a>
-                  ))}
-                </div>
-              </section>
-            )}
+            <RelatedJobsSection
+              companyName={job.company.name}
+              relatedJobs={job.relatedJobs}
+            />
           </main>
 
           {/* Sidebar */}

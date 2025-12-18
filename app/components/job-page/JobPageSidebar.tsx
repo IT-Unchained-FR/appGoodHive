@@ -5,6 +5,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { OptimizedJobBalance } from "@/app/components/OptimizedJobBalance";
 import styles from "./JobPageSidebar.module.scss";
+import { useAuth } from "@/app/contexts/AuthContext";
+import { CompanyInfoGuard } from "@/app/components/CompanyInfoGuard";
+import { useConnectModal } from "thirdweb/react";
+import { connectModalOptions } from "@/lib/auth/walletConfig";
 
 interface JobPageSidebarProps {
   job: {
@@ -35,6 +39,15 @@ interface JobPageSidebarProps {
 }
 
 export const JobPageSidebar = ({ job }: JobPageSidebarProps) => {
+  const { isAuthenticated } = useAuth();
+  const { connect } = useConnectModal();
+
+  const handleConnectWallet = () => {
+    if (connect) {
+      connect(connectModalOptions);
+    }
+  };
+
   const getRelativeTime = (dateString: string) => {
     const now = new Date();
     const posted = new Date(dateString);
@@ -96,10 +109,15 @@ export const JobPageSidebar = ({ job }: JobPageSidebarProps) => {
             {job.company.logo ? (
               <Image
                 src={job.company.logo}
-                alt={`${job.company.name} logo`}
+                alt={isAuthenticated ? `${job.company.name} logo` : "Hidden company logo"}
                 width={48}
                 height={48}
                 className={styles.logoImage}
+                style={!isAuthenticated ? {
+                  filter: "blur(10px) brightness(1.1)",
+                  opacity: 0.6,
+                  transition: "all 0.3s ease"
+                } : undefined}
               />
             ) : (
               <div className={styles.logoPlaceholder}>
@@ -108,71 +126,117 @@ export const JobPageSidebar = ({ job }: JobPageSidebarProps) => {
             )}
           </div>
           <div className={styles.companyInfo}>
-            <Link href={`/companies/${job.company.id}`} className={styles.companyName}>
-              {job.company.name}
-            </Link>
-            {job.company.headline && (
+            {isAuthenticated ? (
+              <Link href={`/companies/${job.company.id}`} className={styles.companyName}>
+                {job.company.name}
+              </Link>
+            ) : (
+              <CompanyInfoGuard
+                value={undefined}
+                seed={job.id}
+                isVisible={false}
+                textClassName={`${styles.companyName} ${styles.blurredText}`}
+                sizeClassName={styles.companyName}
+                placement="right"
+              />
+            )}
+            {job.company.headline && isAuthenticated && (
               <div
                 className={styles.companyHeadline}
                 dangerouslySetInnerHTML={{ __html: job.company.headline }}
+              />
+            )}
+            {job.company.headline && !isAuthenticated && (
+              <CompanyInfoGuard
+                value={undefined}
+                seed={`${job.id}-headline`}
+                isVisible={false}
+                textClassName={`${styles.companyHeadline} ${styles.blurredText}`}
+                sizeClassName={styles.companyHeadline}
+                placement="right"
               />
             )}
           </div>
         </div>
 
         {(job.company.city || job.company.country) && (
-          <div className={styles.companyDetail}>
+          <div className={`${styles.companyDetail} ${!isAuthenticated ? styles.blurredRow : ""}`}>
             <MapPin className={styles.detailIcon} />
-            <span>
-              {job.company.city && job.company.country
-                ? `${job.company.city}, ${job.company.country}`
-                : job.company.city || job.company.country}
-            </span>
+            {isAuthenticated ? (
+              <span>
+                {job.company.city && job.company.country
+                  ? `${job.company.city}, ${job.company.country}`
+                  : job.company.city || job.company.country}
+              </span>
+            ) : (
+              <CompanyInfoGuard
+                value="Hidden location"
+                seed={`${job.id}-location`}
+                isVisible={false}
+                textClassName={styles.blurredText}
+                compact
+                placement="right"
+              />
+            )}
           </div>
         )}
 
         {/* Enhanced Company Contact Information */}
         {(job.company.website || job.company.linkedin || job.company.twitter || job.company.email) && (
-          <div className={styles.companyContactSection}>
-            <h4 className={styles.contactSubtitle}>Connect with {job.company.name}</h4>
-            <div className={styles.contactGrid}>
-              {job.company.email && (
-                <div className={styles.contactItem}>
-                  <Mail className={styles.contactIcon} />
-                  <a href={`mailto:${job.company.email}`} className={styles.contactLink}>
-                    {job.company.email}
-                  </a>
-                </div>
-              )}
+          isAuthenticated ? (
+            <div className={styles.companyContactSection}>
+              <h4 className={styles.contactSubtitle}>Connect with {job.company.name}</h4>
+              <div className={styles.contactGrid}>
+                {job.company.email && (
+                  <div className={styles.contactItem}>
+                    <Mail className={styles.contactIcon} />
+                    <a href={`mailto:${job.company.email}`} className={styles.contactLink}>
+                      {job.company.email}
+                    </a>
+                  </div>
+                )}
 
-              {job.company.website && (
-                <div className={styles.contactItem}>
-                  <Globe className={styles.contactIcon} />
-                  <a href={job.company.website} target="_blank" rel="noopener noreferrer" className={styles.contactLink}>
-                    {job.company.website.replace(/^https?:\/\//, '')}
-                  </a>
-                </div>
-              )}
+                {job.company.website && (
+                  <div className={styles.contactItem}>
+                    <Globe className={styles.contactIcon} />
+                    <a href={job.company.website} target="_blank" rel="noopener noreferrer" className={styles.contactLink}>
+                      {job.company.website.replace(/^https?:\/\//, '')}
+                    </a>
+                  </div>
+                )}
 
-              {job.company.linkedin && (
-                <div className={styles.contactItem}>
-                  <Linkedin className={styles.contactIcon} />
-                  <a href={job.company.linkedin} target="_blank" rel="noopener noreferrer" className={styles.contactLink}>
-                    LinkedIn Profile
-                  </a>
-                </div>
-              )}
+                {job.company.linkedin && (
+                  <div className={styles.contactItem}>
+                    <Linkedin className={styles.contactIcon} />
+                    <a href={job.company.linkedin} target="_blank" rel="noopener noreferrer" className={styles.contactLink}>
+                      LinkedIn Profile
+                    </a>
+                  </div>
+                )}
 
-              {job.company.twitter && (
-                <div className={styles.contactItem}>
-                  <Twitter className={styles.contactIcon} />
-                  <a href={job.company.twitter} target="_blank" rel="noopener noreferrer" className={styles.contactLink}>
-                    @{job.company.twitter.split('/').pop()}
-                  </a>
-                </div>
-              )}
+                {job.company.twitter && (
+                  <div className={styles.contactItem}>
+                    <Twitter className={styles.contactIcon} />
+                    <a href={job.company.twitter} target="_blank" rel="noopener noreferrer" className={styles.contactLink}>
+                      @{job.company.twitter.split('/').pop()}
+                    </a>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className={styles.lockedPanel}>
+              <h4 className={styles.contactSubtitle}>Company profile locked</h4>
+              <p className={styles.lockedText}>
+                Connect your wallet to view company links and contact details.
+              </p>
+              <div className={styles.lockedActions}>
+                <button type="button" onClick={handleConnectWallet} className={styles.primaryCta}>
+                  Connect Wallet
+                </button>
+              </div>
+            </div>
+          )
         )}
       </div>
 
@@ -200,7 +264,7 @@ export const JobPageSidebar = ({ job }: JobPageSidebarProps) => {
         <h3 className={styles.cardTitle}>Contact GoodHive</h3>
         <div className={styles.contactGoodHive}>
           <p className={styles.contactDescription}>
-            Have questions about {job.company.name}? Send us a message and we'll help you connect!
+            Have questions about this job? Send us a message and we'll help you connect!
           </p>
           <button className={styles.sendMessageButton}>
             <Mail className={styles.buttonIcon} />
