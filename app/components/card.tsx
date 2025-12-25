@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import { generateCountryFlag } from "@utils/generate-country-flag";
 import type { FC, MouseEvent } from "react";
+import { useState } from "react";
 import LastActiveStatus from "./LastActiveStatus";
 import { OptimizedJobBalance } from "./OptimizedJobBalance";
 import { analytics } from "@/lib/analytics";
@@ -84,7 +85,10 @@ export const Card: FC<Props> = ({
 
   const { isAuthenticated } = useAuth();
 
-  // Function to strip HTML tags (CSS line-clamp handles truncation)
+  // State for handling image loading errors
+  const [imageError, setImageError] = useState(false);
+
+  // Function to strip HTML tags (CSS line-clamp handles visual truncation)
   const stripHtmlAndCrop = (html: string, maxLength: number) => {
     const tmp = document.createElement("div");
     tmp.innerHTML = html;
@@ -97,8 +101,13 @@ export const Card: FC<Props> = ({
   // Increase char limit since CSS line-clamp handles visual truncation
   const croppedDescription = stripHtmlAndCrop(description, 200);
 
-  // Profile image
-  const profileImage = image ? image : "/img/placeholder-image.png";
+  // Profile image with bee-themed fallback for talents
+  const getFallbackImage = () => {
+    if (type === "talent") return "/img/client-bee.png"; // Bee-themed for talents
+    return "/img/placeholder-image.png";
+  };
+
+  const profileImage = (imageError || !image) ? getFallbackImage() : image;
 
   // Know more link
   const knowMoreLink =
@@ -187,6 +196,7 @@ export const Card: FC<Props> = ({
               compact
               placement="top"
               className="relative flex-shrink-0"
+              redirectUrl={knowMoreLink}
             >
               <div className="relative flex-shrink-0">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-amber-100 to-yellow-200 overflow-hidden ring-2 ring-amber-200 shadow-sm border border-amber-200">
@@ -197,6 +207,7 @@ export const Card: FC<Props> = ({
                     width={48}
                     height={48}
                     sizes="(max-width: 640px) 40px, 48px"
+                    onError={() => setImageError(true)}
                     style={{
                       filter: "blur(10px) brightness(1.05)",
                       opacity: 0.65,
@@ -225,6 +236,7 @@ export const Card: FC<Props> = ({
                   width={48}
                   height={48}
                   sizes="(max-width: 640px) 40px, 48px"
+                  onError={() => setImageError(true)}
                 />
               </div>
               {/* Bee accent on company logo */}
@@ -262,6 +274,7 @@ export const Card: FC<Props> = ({
                       textClassName="!text-xs sm:!text-sm !font-medium tracking-wide text-gray-500"
                       blurAmount="blur-[3px]"
                       placement="top"
+                      redirectUrl={knowMoreLink}
                     />
                   </span>
                 ) : (
@@ -342,9 +355,11 @@ export const Card: FC<Props> = ({
         {/* Footer */}
         <div className="pt-3 border-t border-amber-200/50 mt-auto">
           <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between text-xs text-gray-500">
-              <span className="truncate">{postedOn}</span>
-            </div>
+            {type !== "talent" && (
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <span className="truncate">{postedOn}</span>
+              </div>
+            )}
 
             {/* Open to badges */}
             {(type === "company" || type === "job") && (

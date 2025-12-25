@@ -1,7 +1,7 @@
 "use client";
 
 import { MapPin, Clock, DollarSign, Calendar, Building, Users } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { JobApplicationPopup } from "@/app/components/job-application-popup/job-application-popup";
 import OnboardingPopup from "@/app/components/onboarding-popup/OnboardingPopup";
@@ -51,6 +51,7 @@ export const JobSummarySection = ({
   const [isApplicationPopupOpen, setIsApplicationPopupOpen] = useState(false);
   const [isVerificationPopupOpen, setIsVerificationPopupOpen] = useState(false);
   const [isOnboardingPopupOpen, setIsOnboardingPopupOpen] = useState(false);
+  const [isCheckingVerification, setIsCheckingVerification] = useState(false);
 
   // Debug logging to check what data we're receiving
   console.log('JobSummarySection job data:', job);
@@ -77,15 +78,45 @@ export const JobSummarySection = ({
     }).format(amount);
   };
 
-  const handleApplyClick = () => {
-    // Check if user is authenticated and has verified talent status
-    if (isAuthenticated && user && user.talent_status === "approved") {
-      setIsApplicationPopupOpen(true);
-    } else {
-      // Show verification popup for unverified or unauthenticated users
+  const handleApplyClick = useCallback(async () => {
+    if (!isAuthenticated || !user) {
       setIsVerificationPopupOpen(true);
+      return;
     }
-  };
+
+    // Check real-time verification status from database
+    setIsCheckingVerification(true);
+    try {
+      const response = await fetch("/api/talents/verification-status");
+
+      if (response.ok) {
+        const { isApproved } = await response.json();
+
+        if (isApproved) {
+          setIsApplicationPopupOpen(true);
+        } else {
+          setIsVerificationPopupOpen(true);
+        }
+      } else {
+        // Fallback to cookie-based check if API fails
+        if (user.talent_status === "approved") {
+          setIsApplicationPopupOpen(true);
+        } else {
+          setIsVerificationPopupOpen(true);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking verification status:", error);
+      // Fallback to cookie-based check on error
+      if (user.talent_status === "approved") {
+        setIsApplicationPopupOpen(true);
+      } else {
+        setIsVerificationPopupOpen(true);
+      }
+    } finally {
+      setIsCheckingVerification(false);
+    }
+  }, [isAuthenticated, user]);
 
   const handleContinueToOnboarding = () => {
     setIsVerificationPopupOpen(false);

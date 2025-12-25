@@ -5,7 +5,10 @@ import { ChevronDownIcon, ChevronUpIcon, LockClosedIcon } from "@heroicons/react
 import React, { useState } from "react";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useConnectModal } from "thirdweb/react";
-import { connectModalOptions } from "@/lib/auth/walletConfig";
+import { connectModalOptions, supportedWallets } from "@/lib/auth/walletConfig";
+import { thirdwebClient } from "@/clients";
+import { activeChain } from "@/config/chains";
+import { ReturnUrlManager } from "@/app/utils/returnUrlManager";
 
 interface JobSectionDisplayProps {
   section: IJobSection;
@@ -27,7 +30,17 @@ export const JobSectionDisplay: React.FC<JobSectionDisplayProps> = ({
 
   const handleConnectWallet = () => {
     if (connect) {
-      connect(connectModalOptions);
+      // Store current URL for redirect after auth
+      if (typeof window !== 'undefined') {
+        ReturnUrlManager.setProtectedRouteAccess(window.location.pathname);
+      }
+
+      connect({
+        client: thirdwebClient,
+        wallets: supportedWallets,
+        chain: activeChain,
+        ...connectModalOptions,
+      });
     }
   };
 
