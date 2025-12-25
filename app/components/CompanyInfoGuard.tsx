@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useMemo, useState, useRef, useEffect, type ReactNode } from "react";
 import { useConnectModal } from "thirdweb/react";
-import { connectModalOptions } from "@/lib/auth/walletConfig";
+import { connectModalOptions, supportedWallets } from "@/lib/auth/walletConfig";
+import { thirdwebClient } from "@/clients";
+import { activeChain } from "@/config/chains";
+import { ReturnUrlManager } from "@/app/utils/returnUrlManager";
 
 type TooltipPlacement = "top" | "bottom" | "left" | "right";
 
@@ -18,6 +21,7 @@ interface CompanyInfoGuardProps {
   placement?: TooltipPlacement;
   compact?: boolean;
   children?: ReactNode;
+  redirectUrl?: string; // URL to redirect to after authentication
 }
 
 const placeholders = [
@@ -55,6 +59,7 @@ export const CompanyInfoGuard = ({
   placement = "bottom",
   compact = false,
   children,
+  redirectUrl,
 }: CompanyInfoGuardProps) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const { connect } = useConnectModal();
@@ -78,7 +83,18 @@ export const CompanyInfoGuard = ({
 
   const handleConnectWallet = () => {
     if (connect) {
-      connect(connectModalOptions);
+      // Store destination URL for redirect after auth
+      if (typeof window !== 'undefined') {
+        const urlToStore = redirectUrl || window.location.pathname;
+        ReturnUrlManager.setProtectedRouteAccess(urlToStore);
+      }
+
+      connect({
+        client: thirdwebClient,
+        wallets: supportedWallets,
+        chain: activeChain,
+        ...connectModalOptions,
+      });
     }
   };
 

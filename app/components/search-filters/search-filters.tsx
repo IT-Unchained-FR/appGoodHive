@@ -726,7 +726,11 @@ export const SearchFilters = ({
                         applyFilters({ keywords: keywordQuery });
                       }
                     }}
-                    placeholder="Job title, skill, company or keyword"
+                    placeholder={
+                      isSearchTalent
+                        ? "Developer, designer, role, or skill"
+                        : "Job title, company, or keyword"
+                    }
                     name="keywords"
                     autoComplete="off"
                     spellCheck={false}

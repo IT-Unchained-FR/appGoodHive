@@ -26,6 +26,7 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
   );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -113,9 +114,10 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
           >
             <Image
               className="object-cover"
-              src={image_url || "/img/placeholder-image.png"}
+              src={(imageError || !image_url) ? "/img/client-bee.png" : image_url}
               alt="profile-picture"
               fill
+              onError={() => setImageError(true)}
             />
           </div>
         </div>

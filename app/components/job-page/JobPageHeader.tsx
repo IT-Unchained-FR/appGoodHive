@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { MapPin, Clock, DollarSign, Calendar, Building, Share2, ArrowLeft, Users, Timer } from "lucide-react";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { OptimizedJobBalance } from "@/app/components/OptimizedJobBalance";
@@ -45,6 +45,7 @@ export const JobPageHeader = ({ job }: JobPageHeaderProps) => {
   const [isApplicationPopupOpen, setIsApplicationPopupOpen] = useState(false);
   const [isVerificationPopupOpen, setIsVerificationPopupOpen] = useState(false);
   const [isOnboardingPopupOpen, setIsOnboardingPopupOpen] = useState(false);
+  const [isCheckingVerification, setIsCheckingVerification] = useState(false);
 
   const getRelativeTime = (dateString: string) => {
     const now = new Date();
@@ -104,13 +105,45 @@ export const JobPageHeader = ({ job }: JobPageHeaderProps) => {
     }
   };
 
-  const handleApplyClick = () => {
-    if (isAuthenticated && user && user.talent_status === "approved") {
-      setIsApplicationPopupOpen(true);
-    } else {
+  const handleApplyClick = useCallback(async () => {
+    if (!isAuthenticated || !user) {
       setIsVerificationPopupOpen(true);
+      return;
     }
-  };
+
+    // Check real-time verification status from database
+    setIsCheckingVerification(true);
+    try {
+      const response = await fetch("/api/talents/verification-status");
+
+      if (response.ok) {
+        const { isApproved } = await response.json();
+
+        if (isApproved) {
+          setIsApplicationPopupOpen(true);
+        } else {
+          setIsVerificationPopupOpen(true);
+        }
+      } else {
+        // Fallback to cookie-based check if API fails
+        if (user.talent_status === "approved") {
+          setIsApplicationPopupOpen(true);
+        } else {
+          setIsVerificationPopupOpen(true);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking verification status:", error);
+      // Fallback to cookie-based check on error
+      if (user.talent_status === "approved") {
+        setIsApplicationPopupOpen(true);
+      } else {
+        setIsVerificationPopupOpen(true);
+      }
+    } finally {
+      setIsCheckingVerification(false);
+    }
+  }, [isAuthenticated, user]);
 
   const handleContinueToOnboarding = () => {
     setIsVerificationPopupOpen(false);
