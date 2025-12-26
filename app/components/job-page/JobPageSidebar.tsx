@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { MapPin, DollarSign, Clock, Calendar, Building, Users, Globe, Linkedin, Twitter, Mail } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -39,8 +40,41 @@ interface JobPageSidebarProps {
 }
 
 export const JobPageSidebar = ({ job }: JobPageSidebarProps) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { connect } = useConnectModal();
+  const [isApprovedTalent, setIsApprovedTalent] = useState(false);
+  const [isCheckingVerification, setIsCheckingVerification] = useState(false);
+
+  // Check if user is an approved talent
+  useEffect(() => {
+    const checkVerificationStatus = async () => {
+      if (!isAuthenticated || !user) {
+        setIsApprovedTalent(false);
+        return;
+      }
+
+      setIsCheckingVerification(true);
+      try {
+        const response = await fetch("/api/talents/verification-status");
+
+        if (response.ok) {
+          const { isApproved } = await response.json();
+          setIsApprovedTalent(isApproved);
+        } else {
+          // Fallback to cookie-based check if API fails
+          setIsApprovedTalent(user.talent_status === "approved");
+        }
+      } catch (error) {
+        console.error("Error checking verification status:", error);
+        // Fallback to cookie-based check on error
+        setIsApprovedTalent(user.talent_status === "approved");
+      } finally {
+        setIsCheckingVerification(false);
+      }
+    };
+
+    checkVerificationStatus();
+  }, [isAuthenticated, user]);
 
   const handleConnectWallet = () => {
     if (connect) {
@@ -251,12 +285,24 @@ export const JobPageSidebar = ({ job }: JobPageSidebarProps) => {
       {/* Get in Touch Section */}
       <div className={styles.card}>
         <h3 className={styles.cardTitle}>Get in Touch</h3>
-        <div className={styles.accessRestricted}>
-          <div className={styles.restrictedContent}>
-            <h4 className={styles.restrictedTitle}>Access Restricted</h4>
-            <p className={styles.restrictedText}>Contact details are available to validated talents.</p>
+        {isApprovedTalent ? (
+          <div className={styles.contactGoodHive}>
+            <p className={styles.contactDescription}>
+              Ready to apply? Contact the company directly using the information in the "About the Company" section above, or reach out to GoodHive if you have any questions.
+            </p>
+            <button className={styles.sendMessageButton}>
+              <Mail className={styles.buttonIcon} />
+              Send us a Message
+            </button>
           </div>
-        </div>
+        ) : (
+          <div className={styles.accessRestricted}>
+            <div className={styles.restrictedContent}>
+              <h4 className={styles.restrictedTitle}>Access Restricted</h4>
+              <p className={styles.restrictedText}>Contact details are available to validated talents.</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Contact GoodHive Section */}
