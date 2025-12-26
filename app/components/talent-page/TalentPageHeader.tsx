@@ -92,8 +92,10 @@ export const TalentPageHeader = ({
           {location && (
             <div className={styles.location}>
               <MapPin size={18} />
-              {countryFlag && <span className={styles.flag}>{countryFlag}</span>}
               <span>{location}</span>
+              {countryFlag && (
+                <span className={styles.flag}>{countryFlag}</span>
+              )}
             </div>
           )}
 
