@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { MapPin, Mail, Briefcase, Award, Users } from "lucide-react";
 import LastActiveStatus from "@/app/components/LastActiveStatus";
+import { generateCountryFlag } from "@/app/utils/generate-country-flag";
 import styles from "./TalentPageHeader.module.scss";
 
 interface TalentPageHeaderProps {
@@ -46,17 +47,8 @@ export const TalentPageHeader = ({
   const fullName = `${first_name} ${last_name}`;
   const location = city && country ? `${city}, ${country}` : city || country || "";
 
-  // Convert country code to flag emoji
-  const getCountryFlag = (countryCode: string) => {
-    if (!countryCode || countryCode.length !== 2) return "";
-    const codePoints = countryCode
-      .toUpperCase()
-      .split("")
-      .map((char) => 127397 + char.charCodeAt(0));
-    return String.fromCodePoint(...codePoints);
-  };
-
-  const countryFlag = country ? getCountryFlag(country) : "";
+  // Generate country flag URL
+  const countryFlag = country ? generateCountryFlag(country) : null;
 
   // Check if role is approved
   const isRoleApproved = (role: string) => {
@@ -94,7 +86,16 @@ export const TalentPageHeader = ({
               <MapPin size={18} />
               <span>{location}</span>
               {countryFlag && (
-                <span className={styles.flag}>{countryFlag}</span>
+                <div className={styles.flag}>
+                  <div className={styles.flagImage}>
+                    <Image
+                      src={countryFlag}
+                      alt={`${country} flag`}
+                      fill
+                      className={styles.flagImg}
+                    />
+                  </div>
+                </div>
               )}
             </div>
           )}
