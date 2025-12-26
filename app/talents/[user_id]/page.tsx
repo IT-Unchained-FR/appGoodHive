@@ -7,33 +7,29 @@ import TalentsCVSection from "@/app/components/talents/TalentsCVSection";
 import BeeHiveSpinner from "@/app/components/spinners/bee-hive-spinner";
 import { TalentPageHeader } from "@/app/components/talent-page/TalentPageHeader";
 import { TalentPageSidebar } from "@/app/components/talent-page/TalentPageSidebar";
+import { useAuth } from "@/app/contexts/AuthContext";
 import styles from "./page.module.scss";
 import "react-quill/dist/quill.snow.css";
 import "@/app/styles/rich-text.css";
 
 interface MyProfilePageProps {
-  params: Promise<{
+  params: {
     user_id: string;
-  }>;
+  };
 }
 
 export default function MyProfilePage({ params }: MyProfilePageProps) {
-  const [userId, setUserId] = useState<string>("");
+  const { user } = useAuth();
   const [profileData, setProfileData] = useState<TalentProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Unwrap params
   useEffect(() => {
-    params.then((p) => setUserId(p.user_id));
-  }, [params]);
-
-  useEffect(() => {
-    if (!userId) return;
+    if (!params.user_id) return;
 
     const fetchProfileData = async () => {
       try {
-        const data = await fetch(`/api/talents/my-profile?user_id=${userId}`);
+        const data = await fetch(`/api/talents/my-profile?user_id=${params.user_id}`);
         const userProfileData = await data.json();
         setProfileData(userProfileData);
         setIsLoading(false);
@@ -45,7 +41,7 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
     };
 
     fetchProfileData();
-  }, [userId]);
+  }, [params.user_id]);
 
   // Loading state
   if (isLoading || !profileData) {
@@ -142,10 +138,7 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
           {description && (
             <section className={styles.section}>
               <h2 className={styles.sectionTitle}>Bio</h2>
-              <div
-                className={`${styles.bioContent} rich-text-content`}
-                dangerouslySetInnerHTML={{ __html: description }}
-              />
+              <ProfileAboutWork about_work={description} />
             </section>
           )}
 
@@ -171,11 +164,15 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
             </section>
           )}
 
-          {/* Portfolio/CV Section */}
-          {cv_url && (
+          {/* Portfolio/CV Section - Only visible to verified users */}
+          {cv_url && user && (
+            user.talent_status === "approved" ||
+            user.mentor_status === "approved" ||
+            user.recruiter_status === "approved"
+          ) && (
             <section className={styles.section}>
               <h2 className={styles.sectionTitle}>Portfolio & Resume</h2>
-              <TalentsCVSection cv_url={cv_url} talent_status={talent_status} />
+              <TalentsCVSection cv_url={cv_url} talent_status={talent_status} approved={approved} />
             </section>
           )}
         </main>

@@ -46,6 +46,18 @@ export const TalentPageHeader = ({
   const fullName = `${first_name} ${last_name}`;
   const location = city && country ? `${city}, ${country}` : city || country || "";
 
+  // Convert country code to flag emoji
+  const getCountryFlag = (countryCode: string) => {
+    if (!countryCode || countryCode.length !== 2) return "";
+    const codePoints = countryCode
+      .toUpperCase()
+      .split("")
+      .map((char) => 127397 + char.charCodeAt(0));
+    return String.fromCodePoint(...codePoints);
+  };
+
+  const countryFlag = country ? getCountryFlag(country) : "";
+
   // Check if role is approved
   const isRoleApproved = (role: string) => {
     return approved_roles?.some((r: any) => r.role === role);
@@ -80,6 +92,7 @@ export const TalentPageHeader = ({
           {location && (
             <div className={styles.location}>
               <MapPin size={18} />
+              {countryFlag && <span className={styles.flag}>{countryFlag}</span>}
               <span>{location}</span>
             </div>
           )}

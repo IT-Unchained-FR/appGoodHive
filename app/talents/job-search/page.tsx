@@ -86,7 +86,7 @@ export const revalidate = 0;
 export default async function JobSearchPage({
   searchParams,
 }: {
-  searchParams: {
+  searchParams: Promise<{
     search?: string;
     location?: string;
     country?: string;
@@ -103,11 +103,12 @@ export default async function JobSearchPage({
     datePosted?: string;
     budgetRange?: string;
     sort?: string;
-  };
+  }>;
 }) {
-  console.log("Search params received:", searchParams);
+  const params = await searchParams;
+  console.log("Search params received:", params);
 
-  const query = { items: itemsPerPage, ...searchParams };
+  const query = { items: itemsPerPage, ...params };
   let { jobs, count } = (await fetchJobs(query)) || {
     jobs: [],
     count: 0,
@@ -117,22 +118,22 @@ export default async function JobSearchPage({
 
   if (
     (!jobs || jobs.length === 0) &&
-    (searchParams.country || searchParams.countryCode)
+    (params.country || params.countryCode)
   ) {
-    const countryLabel = searchParams.country || searchParams.countryCode;
+    const countryLabel = params.country || params.countryCode;
     const fallbackQuery = {
       ...query,
       location: "",
-      country: searchParams.country,
-      countryCode: searchParams.countryCode,
+      country: params.country,
+      countryCode: params.countryCode,
     };
 
     const fallbackResult = await fetchJobs(fallbackQuery);
     if (fallbackResult?.jobs?.length) {
       jobs = fallbackResult.jobs;
       count = fallbackResult.count;
-      fallbackMessage = searchParams.location
-        ? `No exact matches found in ${searchParams.location}. Showing jobs in ${countryLabel}.`
+      fallbackMessage = params.location
+        ? `No exact matches found in ${params.location}. Showing jobs in ${countryLabel}.`
         : `Showing jobs in ${countryLabel}.`;
     }
   }
@@ -142,7 +143,7 @@ export default async function JobSearchPage({
   console.log("First job:", jobs[0]);
 
   const openToRecruiterFilter =
-    searchParams.openToRecruiter ?? searchParams.recruiter;
+    params.openToRecruiter ?? params.recruiter;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 relative overflow-hidden">
@@ -221,11 +222,11 @@ export default async function JobSearchPage({
         )}
 
         {/* Active Filters Display */}
-        {Object.keys(searchParams).some(
+        {Object.keys(params).some(
           (key) =>
             key !== "page" &&
             key !== "items" &&
-            searchParams[key as keyof typeof searchParams],
+            params[key as keyof typeof params],
         ) && (
           <div className="max-w-4xl mx-auto mb-8 px-4 sm:px-0">
             <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 shadow-lg border border-amber-100/50">
@@ -239,46 +240,46 @@ export default async function JobSearchPage({
               </div>
               <div className="flex flex-wrap gap-2 sm:gap-3">
                 {/* Do not display a chip for free-text keyword search */}
-                {searchParams.location && (
+                {params.location && (
                   <span className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 text-blue-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
                     <MapPin className="w-4 h-4 mr-1" /> Location:{" "}
-                    {searchParams.location}
+                    {params.location}
                   </span>
                 )}
-                {searchParams.country && (
+                {params.country && (
                   <span className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 text-blue-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
                     <MapPin className="w-4 h-4 mr-1" /> Country:{" "}
-                    {searchParams.country}
+                    {params.country}
                   </span>
                 )}
-                {searchParams.name && (
+                {params.name && (
                   <span className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 text-green-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
                     <Building className="w-4 h-4 mr-1" /> Company:{" "}
-                    {searchParams.name}
+                    {params.name}
                   </span>
                 )}
-                {searchParams.datePosted && searchParams.datePosted !== "any" && (
+                {params.datePosted && params.datePosted !== "any" && (
                   <span className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 text-amber-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
                     <CalendarClock className="w-4 h-4 mr-1" /> Posted:{" "}
-                    {DATE_POSTED_LABELS[searchParams.datePosted] ?? "Recent"}
+                    {DATE_POSTED_LABELS[params.datePosted] ?? "Recent"}
                   </span>
                 )}
-                {searchParams.jobType && searchParams.jobType !== "all" && (
+                {params.jobType && params.jobType !== "all" && (
                   <span className="bg-gradient-to-r from-slate-50 to-zinc-50 border border-slate-200 text-slate-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
                     <BriefcaseBusiness className="w-4 h-4 mr-1" /> Type:{" "}
-                    {JOB_TYPE_LABELS[searchParams.jobType] ?? searchParams.jobType}
+                    {JOB_TYPE_LABELS[params.jobType] ?? params.jobType}
                   </span>
                 )}
-                {searchParams.engagement && searchParams.engagement !== "any" && (
+                {params.engagement && params.engagement !== "any" && (
                   <span className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 text-amber-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
                     <Briefcase className="w-4 h-4 mr-1" /> Engagement:{" "}
-                    {ENGAGEMENT_LABELS[searchParams.engagement] ?? searchParams.engagement}
+                    {ENGAGEMENT_LABELS[params.engagement] ?? params.engagement}
                   </span>
                 )}
-                {searchParams.budgetRange && (
+                {params.budgetRange && (
                   <span className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 text-emerald-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
                     <Wallet className="w-4 h-4 mr-1" /> Budget:{" "}
-                    {formatBudgetRange(searchParams.budgetRange)}
+                    {formatBudgetRange(params.budgetRange)}
                   </span>
                 )}
                 {openToRecruiterFilter === "true" && (
@@ -286,20 +287,20 @@ export default async function JobSearchPage({
                     <UserCheck className="w-4 h-4 mr-1" /> Open to Recruiters
                   </span>
                 )}
-                {searchParams.mentor === "true" && (
+                {params.mentor === "true" && (
                   <span className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 text-purple-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
                     <GraduationCap className="w-4 h-4 mr-1" /> Open to Mentors
                   </span>
                 )}
-                {searchParams.openToTalents === "true" && (
+                {params.openToTalents === "true" && (
                   <span className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 text-green-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
                     <User className="w-4 h-4 mr-1" /> Open to Talents
                   </span>
                 )}
-                {searchParams.sort && searchParams.sort !== "latest" && (
+                {params.sort && params.sort !== "latest" && (
                   <span className="bg-gradient-to-r from-sky-50 to-blue-50 border border-sky-200 text-sky-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
                     <ArrowDownUp className="w-4 h-4 mr-1" /> Sort:{" "}
-                    {SORT_LABELS[searchParams.sort] ?? searchParams.sort}
+                    {SORT_LABELS[params.sort] ?? params.sort}
                   </span>
                 )}
               </div>
@@ -343,7 +344,7 @@ export default async function JobSearchPage({
                   itemsPerPage={itemsPerPage}
                   totalItems={count}
                   query={query}
-                  activePage={Number(searchParams.page) || 1}
+                  activePage={Number(params.page) || 1}
                 />
               </div>
             </div>

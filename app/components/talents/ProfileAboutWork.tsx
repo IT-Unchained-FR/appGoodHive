@@ -10,7 +10,7 @@ interface Props {
 const ProfileAboutWork: React.FC<Props> = ({ about_work }) => {
   const [extendedAboutWork, setExtendedAboutWork] = React.useState(false);
 
-  const maximum_charecter = 500;
+  const maximum_charecter = 1000;
   const plain_text = about_work?.replace(/<[^>]*>/g, "") || "";
 
   if (plain_text.length > maximum_charecter) {
@@ -24,7 +24,7 @@ const ProfileAboutWork: React.FC<Props> = ({ about_work }) => {
           />
           <button
             type="button"
-            className="mt-3 text-sm font-medium text-amber-600 hover:text-amber-700 transition-colors cursor-pointer"
+            className="mt-4 px-4 py-2 text-sm font-semibold text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-all cursor-pointer border border-amber-200"
             onClick={() => setExtendedAboutWork(false)}
           >
             Show Less
@@ -49,7 +49,7 @@ const ProfileAboutWork: React.FC<Props> = ({ about_work }) => {
           />
           <button
             type="button"
-            className="mt-3 text-sm font-medium text-amber-600 hover:text-amber-700 transition-colors cursor-pointer"
+            className="mt-4 px-4 py-2 text-sm font-semibold text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-all cursor-pointer border border-amber-200"
             onClick={() => setExtendedAboutWork(true)}
           >
             Show More

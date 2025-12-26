@@ -115,7 +115,7 @@ export default function TalentResult({ talents }: { talents: TalentData[] }) {
                         : new Date(talent.last_active).toISOString()
                       : "Recently active"
                   }
-                  image={talent.imageUrl || "/img/talent_img.png"}
+                  image={talent.imageUrl || "/img/talent_avatar.png"}
                   country={talent.country || ""}
                   city={talent.city || "Remote"}
                   budget={Number(talent.rate) || 0}
