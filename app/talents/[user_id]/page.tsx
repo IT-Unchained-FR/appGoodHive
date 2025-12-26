@@ -194,7 +194,6 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
             github={github}
             twitter={twitter}
             portfolio={portfolio}
-            telegram={telegram}
             stackoverflow={stackoverflow}
           />
         </aside>

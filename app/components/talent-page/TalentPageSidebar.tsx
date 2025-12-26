@@ -24,7 +24,6 @@ interface TalentPageSidebarProps {
   github?: string;
   twitter?: string;
   portfolio?: string;
-  telegram?: string;
   stackoverflow?: string;
 }
 
@@ -43,7 +42,6 @@ export const TalentPageSidebar = ({
   github,
   twitter,
   portfolio,
-  telegram,
   stackoverflow,
 }: TalentPageSidebarProps) => {
   // Social links array
@@ -52,7 +50,6 @@ export const TalentPageSidebar = ({
     { name: "GitHub", url: github, icon: Github },
     { name: "Twitter", url: twitter, icon: Twitter },
     { name: "Portfolio", url: portfolio, icon: Globe },
-    { name: "Telegram", url: telegram, icon: Link2 },
     { name: "Stack Overflow", url: stackoverflow, icon: Link2 },
   ].filter((link) => link.url);
 
