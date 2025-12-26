@@ -43,17 +43,16 @@ const TalentsCVSection: React.FC<TalentsCVSectionTypes> = ({
     return (
       <div>
         {cv_url && talent_status === "approved" && (
-          <>
-            <h3 className="text-[#4E4E4E] text-lg font-bold mb-3">
-              Resume/CV:
-            </h3>
-
-            <div className="relative w-12 h-10 mb-7">
-              <Link href={cv_url as any} target="_blank">
-                <Image src="/icons/resume.svg" alt="resume-icon" fill />
-              </Link>
+          <Link
+            href={cv_url as any}
+            target="_blank"
+            className="inline-flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-lg hover:from-amber-100 hover:to-yellow-100 transition-all duration-200 text-amber-900 font-medium"
+          >
+            <div className="relative w-8 h-8">
+              <Image src="/icons/resume.svg" alt="resume-icon" fill />
             </div>
-          </>
+            <span>View Resume/CV</span>
+          </Link>
         )}
       </div>
     );

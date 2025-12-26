@@ -1,0 +1,142 @@
+// Work Preferences Card Styles
+// Display work preferences like remote, freelance, timezone, languages
+
+.preferencesCard {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  @media (max-width: 768px) {
+    padding: 1.25rem;
+  }
+}
+
+.cardTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 1.25rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #fef3c7;
+}
+
+.preferencesList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.preferenceItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #f3f4f6;
+  }
+
+  @media (max-width: 640px) {
+    padding: 0.625rem;
+  }
+}
+
+.preferenceIcon {
+  width: 18px;
+  height: 18px;
+  color: #f59e0b;
+  flex-shrink: 0;
+
+  @media (max-width: 640px) {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.preferenceLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  flex: 1;
+
+  @media (max-width: 640px) {
+    font-size: 0.8125rem;
+  }
+}
+
+.preferenceValue {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: #6b7280;
+
+  @media (max-width: 640px) {
+    font-size: 0.8125rem;
+  }
+}
+
+// Language tags
+.languages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.languageTag {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+  border: 1px solid #f59e0b;
+  padding: 0.25rem 0.625rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+
+  @media (max-width: 640px) {
+    font-size: 0.6875rem;
+    padding: 0.1875rem 0.5rem;
+  }
+}
+
+// Empty state
+.emptyState {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #9ca3af;
+  font-size: 0.875rem;
+
+  svg {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 0.75rem;
+    color: #d1d5db;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+// Check icon for boolean preferences
+.checkIcon {
+  width: 14px;
+  height: 14px;
+  color: #10b981;
+  margin-left: auto;
+  flex-shrink: 0;
+
+  @media (max-width: 640px) {
+    width: 12px;
+    height: 12px;
+  }
+}

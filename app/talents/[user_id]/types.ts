@@ -31,4 +31,12 @@ export interface TalentProfileData {
   approved: boolean;
   approved_roles: object[] | null;
   last_active?: string | Date;
+  // New stats fields
+  years_experience?: number;
+  jobs_completed?: number;
+  response_time?: string;
+  rating?: number;
+  // New preference fields
+  timezone?: string;
+  languages?: string[] | string;
 }

@@ -1,39 +1,39 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
-import { TalentSocialMedia } from "@/app/components/talents/profile-social-media";
-import { TalentContactBtn } from "@/app/components/talents/talent-contact-btn";
 import { TalentProfileData } from "./types";
-import { generateAvailabilityStatus } from "./utils";
 import ProfileAboutWork from "@/app/components/talents/ProfileAboutWork";
 import TalentsCVSection from "@/app/components/talents/TalentsCVSection";
 import BeeHiveSpinner from "@/app/components/spinners/bee-hive-spinner";
-import LastActiveStatus from "@/app/components/LastActiveStatus";
+import { TalentPageHeader } from "@/app/components/talent-page/TalentPageHeader";
+import { TalentPageSidebar } from "@/app/components/talent-page/TalentPageSidebar";
+import styles from "./page.module.scss";
 import "react-quill/dist/quill.snow.css";
 import "@/app/styles/rich-text.css";
 
 interface MyProfilePageProps {
-  params: {
+  params: Promise<{
     user_id: string;
-  };
+  }>;
 }
 
-export default async function MyProfilePage(context: MyProfilePageProps) {
-  const { params } = context;
-  const [profileData, setProfileData] = useState<TalentProfileData | null>(
-    null,
-  );
+export default function MyProfilePage({ params }: MyProfilePageProps) {
+  const [userId, setUserId] = useState<string>("");
+  const [profileData, setProfileData] = useState<TalentProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [imageError, setImageError] = useState(false);
+
+  // Unwrap params
+  useEffect(() => {
+    params.then((p) => setUserId(p.user_id));
+  }, [params]);
 
   useEffect(() => {
+    if (!userId) return;
+
     const fetchProfileData = async () => {
       try {
-        const data = await fetch(
-          `/api/talents/my-profile?user_id=${params.user_id}`,
-        );
+        const data = await fetch(`/api/talents/my-profile?user_id=${userId}`);
         const userProfileData = await data.json();
         setProfileData(userProfileData);
         setIsLoading(false);
@@ -45,14 +45,25 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
     };
 
     fetchProfileData();
-  }, [params.user_id]);
+  }, [userId]);
 
-  if (error) {
-    return <p className="text-red-500">{error}</p>;
+  // Loading state
+  if (isLoading || !profileData) {
+    return (
+      <div className={styles.loadingContainer}>
+        <BeeHiveSpinner size="large" />
+      </div>
+    );
   }
 
-  if (isLoading || !profileData) {
-    return <BeeHiveSpinner size="large" />;
+  // Error state
+  if (error) {
+    return (
+      <div className={styles.errorContainer}>
+        <p className={styles.errorTitle}>Error Loading Profile</p>
+        <p className={styles.errorMessage}>{error}</p>
+      </div>
+    );
   }
 
   const {
@@ -76,129 +87,121 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
     freelance_only,
     remote_only,
     talent_status,
-    mentor_status,
-    recruiter_status,
     twitter,
     talent,
     recruiter,
     mentor,
     approved,
     approved_roles,
+    last_active,
+    // New fields (may not be in API yet)
+    years_experience,
+    jobs_completed,
+    response_time,
+    rating,
+    timezone,
+    languages,
   } = profileData;
 
-  const availabilityStatus = generateAvailabilityStatus(
-    freelance_only,
-    remote_only,
-  );
-
+  // Pending approval state
   if (!approved) {
     return (
-      <div>
-        <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
-          🚀 This account is still under review. Account will be live soon.
-        </p>
+      <div className={styles.pageContainer}>
+        <div className={styles.pendingMessage}>
+          <p className={styles.pendingText}>
+            🚀 This account is still under review. Account will be live soon.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <main className="relative pt-16">
-      <div className="container mx-auto mb-20 bg-white w-full relative rounded-2xl flex flex-col items-center p-5 z-20 shadow-[2px_7px_20px_4px_#e2e8f0]">
-        <div className="flex flex-col items-center justify-center w-full mt-5 mb-5">
-          <div
-            className="relative h-[180px] w-[180px] flex items-center justify-center cursor-pointer bg-gray-100"
-            style={{
-              clipPath:
-                "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)",
-            }}
-          >
-            <Image
-              className="object-cover"
-              src={(imageError || !image_url) ? "/img/client-bee.png" : image_url}
-              alt="profile-picture"
-              fill
-              onError={() => setImageError(true)}
-            />
-          </div>
-        </div>
-        <h1 className="text-[#4E4E4E] text-3xl font-bold mb-3">
-          {`${first_name} ${last_name}`}
-        </h1>
-        <h3 className="text-[#4E4E4E] text-xl font-bold mb-3">{title}</h3>
-        <h4 className="text-[#4E4E4E] text-base mb-4">
-          {city}, {country}
-        </h4>
-        <div className="mb-4">
-          {profileData.last_active && (
-            <LastActiveStatus lastActiveTime={profileData.last_active} />
-          )}
-        </div>
-        {rate && (
-          <h4 className="text-[#4E4E4E] text-base font-medium mb-7">
-            {rate} USD/hr
-          </h4>
-        )}
-        {availabilityStatus && (
-          <h4 className="text-[#4E4E4E] text-base font-medium mb-7">
-            {availabilityStatus}
-          </h4>
-        )}
+    <div className={styles.pageContainer}>
+      {/* Hero Header */}
+      <TalentPageHeader
+        first_name={first_name}
+        last_name={last_name}
+        title={title}
+        city={city}
+        country={country}
+        image_url={image_url}
+        last_active={last_active}
+        email={email}
+        talent={talent}
+        mentor={mentor}
+        recruiter={recruiter}
+        approved_roles={approved_roles}
+      />
 
-        {talent &&
-          approved_roles?.some((role: any) => role.role === "talent") && (
-            <h4 className="text-[#4E4E4E] text-base font-medium mb-7">
-              • I can help you as a talent
-            </h4>
+      {/* Two-Column Content Grid */}
+      <div className={styles.contentGrid}>
+        {/* Main Content (Left Column) */}
+        <main className={styles.mainContent}>
+          {/* Bio Section */}
+          {description && (
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Bio</h2>
+              <div
+                className={`${styles.bioContent} rich-text-content`}
+                dangerouslySetInnerHTML={{ __html: description }}
+              />
+            </section>
           )}
 
-        {mentor &&
-          approved_roles?.some((role: any) => role.role === "mentor") && (
-            <h4 className="text-[#4E4E4E] text-base font-medium mb-7">
-              • I can help you as a mentor
-            </h4>
+          {/* About Work Section */}
+          {about_work && (
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>About My Work</h2>
+              <ProfileAboutWork about_work={about_work} />
+            </section>
           )}
 
-        {recruiter &&
-          approved_roles?.some((role: any) => role.role === "recruiter") && (
-            <h4 className="text-[#4E4E4E] text-base font-medium mb-7">
-              • I can help you as a recruiter
-            </h4>
+          {/* Skills Section */}
+          {skills && (
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Skills & Expertise</h2>
+              <div className={styles.skillsContainer}>
+                {skills.split(",").map((skill, index) => (
+                  <span key={index} className={styles.skillTag}>
+                    {skill.trim()}
+                  </span>
+                ))}
+              </div>
+            </section>
           )}
-        <div className="flex w-full justify-center gap-5 mb-12">
-          <TalentContactBtn toEmail={email} toUserName={first_name} />
-        </div>
-        <div className="flex flex-col w-1/2">
-          <h3 className="text-[#4E4E4E] text-lg font-bold mb-5">Bio:</h3>
-          <div
-            className="w-full mb-10 text-ellipsis overflow-hidden rich-text-content"
-            dangerouslySetInnerHTML={{ __html: description || "" }}
-          />
-          <ProfileAboutWork about_work={about_work} />
-          <TalentSocialMedia
-            twitter={twitter}
+
+          {/* Portfolio/CV Section */}
+          {cv_url && (
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Portfolio & Resume</h2>
+              <TalentsCVSection cv_url={cv_url} talent_status={talent_status} />
+            </section>
+          )}
+        </main>
+
+        {/* Sidebar (Right Column) */}
+        <aside className={styles.sidebar}>
+          <TalentPageSidebar
+            years_experience={years_experience}
+            jobs_completed={jobs_completed}
+            response_time={response_time}
+            rating={rating}
+            remote_only={remote_only}
+            freelance_only={freelance_only}
+            timezone={timezone}
+            languages={languages}
+            rate={rate}
+            availability={true} // Can be made dynamic based on availability field
             linkedin={linkedin}
-            telegram={telegram}
             github={github}
-            stackoverflow={stackoverflow}
+            twitter={twitter}
             portfolio={portfolio}
+            telegram={telegram}
+            stackoverflow={stackoverflow}
           />
-          <h3 className="text-[#4E4E4E] text-lg font-bold mb-5">
-            Specialization and Skills
-          </h3>
-          <div className="flex flex-wrap gap-2 mb-10">
-            {skills &&
-              skills.split(",").map((skill) => (
-                <div
-                  key={skill}
-                  className="border-[#FFC905] flex items-center bg-gray-200 rounded-full px-4 py-1 text-sm m-1"
-                >
-                  <p>{skill}</p>
-                </div>
-              ))}
-          </div>
-          <TalentsCVSection cv_url={cv_url} talent_status={talent_status} />
-        </div>
+        </aside>
       </div>
-    </main>
+    </div>
   );
 }

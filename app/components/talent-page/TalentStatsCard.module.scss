@@ -1,0 +1,155 @@
+// Talent Stats Card Styles
+// Display key metrics about the talent
+
+.statsCard {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  @media (max-width: 768px) {
+    padding: 1.25rem;
+  }
+}
+
+.cardTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 1.25rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #fef3c7;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
+.statItem {
+  text-align: center;
+  padding: 1rem;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border-radius: 12px;
+  border: 1px solid #fde68a;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(245, 158, 11, 0.2);
+  }
+
+  @media (max-width: 640px) {
+    padding: 0.875rem;
+  }
+}
+
+.statIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 0.5rem;
+  color: #f59e0b;
+
+  @media (max-width: 640px) {
+    width: 32px;
+    height: 32px;
+  }
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.statValue {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #f59e0b;
+  display: block;
+  margin-bottom: 0.25rem;
+  line-height: 1;
+
+  @media (max-width: 640px) {
+    font-size: 1.5rem;
+  }
+}
+
+.statLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+
+  @media (max-width: 640px) {
+    font-size: 0.6875rem;
+  }
+}
+
+// Rating stars
+.ratingStars {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
+
+  svg {
+    width: 16px;
+    height: 16px;
+
+    &.filled {
+      fill: #f59e0b;
+      color: #f59e0b;
+    }
+
+    &.empty {
+      fill: none;
+      color: #d1d5db;
+    }
+  }
+
+  @media (max-width: 640px) {
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
+}
+
+// Empty state when no stats available
+.emptyState {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #9ca3af;
+  font-size: 0.875rem;
+
+  svg {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 0.75rem;
+    color: #d1d5db;
+  }
+
+  p {
+    margin: 0;
+  }
+}

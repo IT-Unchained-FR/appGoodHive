@@ -16,23 +16,23 @@ const ProfileAboutWork: React.FC<Props> = ({ about_work }) => {
   if (plain_text.length > maximum_charecter) {
     if (extendedAboutWork) {
       return (
-        <div className="w-full h-full mb-10 text-ellipsis overflow-hidden">
-          <h3 className="text-[#4E4E4E] text-lg font-bold mb-5">About Work:</h3>
+        <div className="w-full">
           <div
             className="rich-text-content"
+            style={{ fontSize: "1rem", lineHeight: "1.7", color: "#374151" }}
             dangerouslySetInnerHTML={{ __html: about_work }}
           />
-          <span
-            className="text-[#FFC905] text-decoration-none cursor-pointer"
+          <button
+            type="button"
+            className="mt-3 text-sm font-medium text-amber-600 hover:text-amber-700 transition-colors cursor-pointer"
             onClick={() => setExtendedAboutWork(false)}
           >
-            ...Show Less
-          </span>
+            Show Less
+          </button>
         </div>
       );
     } else {
       // For truncated view, use a div with the first part of the HTML
-      // This is a simplistic approach - a better solution might parse the HTML properly
       const truncatedHtml = about_work.substring(
         0,
         about_work.indexOf(
@@ -41,30 +41,29 @@ const ProfileAboutWork: React.FC<Props> = ({ about_work }) => {
       );
 
       return (
-        <div className="w-full h-full mb-10 text-ellipsis overflow-hidden">
-          <h3 className="text-[#4E4E4E] text-lg font-bold mb-5">About Work:</h3>
-
+        <div className="w-full">
           <div
             className="rich-text-content"
+            style={{ fontSize: "1rem", lineHeight: "1.7", color: "#374151" }}
             dangerouslySetInnerHTML={{ __html: truncatedHtml }}
           />
-          <span
-            className="text-[#FFC905] text-decoration-none cursor-pointer"
+          <button
+            type="button"
+            className="mt-3 text-sm font-medium text-amber-600 hover:text-amber-700 transition-colors cursor-pointer"
             onClick={() => setExtendedAboutWork(true)}
           >
-            ...Show More
-          </span>
+            Show More
+          </button>
         </div>
       );
     }
   }
 
   return (
-    <div className="w-full h-full mb-10 text-ellipsis overflow-hidden">
-      <h3 className="text-[#4E4E4E] text-lg font-bold mb-5">About Work:</h3>
-
+    <div className="w-full">
       <div
         className="rich-text-content"
+        style={{ fontSize: "1rem", lineHeight: "1.7", color: "#374151" }}
         dangerouslySetInnerHTML={{ __html: about_work }}
       />
     </div>
