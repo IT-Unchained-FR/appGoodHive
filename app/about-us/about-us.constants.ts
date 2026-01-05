@@ -1,93 +1,74 @@
+import { Compass, Rocket, Users } from "lucide-react";
+
 export const ABOUT_CONTENT = {
   hero: {
-    title: "About GoodHive",
-    subtitle: "Building the Future of Web3 Recruitment",
+    title: "Designing the people layer of Web3",
+    subtitle: "Explore the Platform",
     description:
-      "GoodHive is revolutionizing how companies and talent connect in the Web3 space. We're creating a decentralized, transparent, and efficient recruitment platform that empowers both employers and job seekers.",
+      "Communities, incentives, and trust at the core of recruitment.",
   },
   philosophy: {
     title: "Our Philosophy",
     description:
-      "Our philosophy is simple: hire great people and give them the resources and support to do their best work. We believe in transparency, collaboration, and empowering our community to thrive in the decentralized future.",
+      "Recruitment works better when it is driven by trust, not volume. We believe communities outperform platforms when incentives are aligned.",
   },
   mission: {
     title: "Our Mission",
     description:
-      "To create the leading Web3 talent marketplace where opportunities buzz with potential and every connection leads to meaningful collaboration.",
+      "To help Web3 companies hire faster and better through peer recommended talent. No cold sourcing. No noise. Just trusted human connections.",
   },
 };
 
 export const TEAM_MEMBERS = [
   {
     id: 1,
-    name: "Zaid Schwartz",
+    name: "Benoit Kulesza",
     role: "Founder & CEO",
-    description:
-      "Former co-founder of Opendoor. Early staff at Spotify and Clearbit.",
-    imageUrl: "/img/team/member1.jpg",
+    description: "Builds collaborative systems for the future of work",
     backgroundColor: "#d4e5e0",
+    linkedin: "https://www.linkedin.com/in/benoitkulesza/",
+    twitter: "https://twitter.com/benoitkulesza",
   },
   {
     id: 2,
-    name: "Lily-Rose Chedjou",
-    role: "Engineering Manager",
-    description:
-      "Lead engineering teams at Netflix, Pitch, and Protocol Labs",
-    imageUrl: "/img/team/member2.jpg",
+    name: "Hayat Outahar",
+    role: "Co-Founder & Community",
+    description: "Explores micronations and community driven Web3 governance",
     backgroundColor: "#e5d8d0",
+    linkedin: "https://www.linkedin.com/in/hayatoutahar/",
+    twitter: "https://twitter.com/HayatOutahar",
   },
   {
     id: 3,
-    name: "Amélie Laurent",
-    role: "Product Designer",
-    description: "Founding design team at Figma. Former Pleo, Stripe, and Tile.",
-    imageUrl: "/img/team/member3.jpg",
+    name: "Nicolas Wagner",
+    role: "Co-founder & CTO",
+    description: "Builds decentralized governance for the future of work",
     backgroundColor: "#e8d8e5",
+    linkedin: "https://www.linkedin.com/in/nicolas-wagner/",
   },
   {
     id: 4,
-    name: "Riley O'Moore",
-    role: "Frontend Developer",
-    description:
-      "Former frontend dev for Linear, Coinbase, and Postscript.",
-    imageUrl: "/img/team/member4.jpg",
+    name: "Juhan Jubayer",
+    role: "Founding Builder & Senior Product Engineer",
+    description: "Builds scalable Web3 products and user experiences",
     backgroundColor: "#f5ecd0",
+    linkedin: "https://www.linkedin.com/in/juhan-jubayer/",
   },
   {
     id: 5,
-    name: "Cameron Mitchell",
-    role: "UX Researcher",
-    description:
-      "Lead user research at Stripe, Contractor.io, and Facebook.",
-    imageUrl: "/img/team/member5.jpg",
+    name: "Sabbir Rifat",
+    role: "Founding Builder & Principal Frontend Engineer",
+    description: "Designs scalable frontends for collaborative Web3 products",
     backgroundColor: "#d0e0f0",
+    linkedin: "https://www.linkedin.com/in/sabbir-rifat/",
   },
   {
     id: 6,
-    name: "Jordan Park",
-    role: "Backend Engineer",
-    description:
-      "Built distributed systems at Amazon and Cloudflare. Web3 infrastructure specialist.",
-    imageUrl: "/img/team/member6.jpg",
+    name: "Chaharane Abdallah",
+    role: "Founding Builder & Marketing Manager",
+    description: "Drives Web3 growth through community and marketing",
     backgroundColor: "#dfe5d4",
-  },
-  {
-    id: 7,
-    name: "Sofia Chen",
-    role: "Marketing Lead",
-    description:
-      "Growth marketing at Notion and Airtable. Community building expert.",
-    imageUrl: "/img/team/member7.jpg",
-    backgroundColor: "#e5e0d8",
-  },
-  {
-    id: 8,
-    name: "Alex Thompson",
-    role: "DevOps Lead",
-    description:
-      "Infrastructure at GitHub, GitLab, and HashiCorp. Blockchain deployment specialist.",
-    imageUrl: "/img/team/member8.jpg",
-    backgroundColor: "#d8e0e8",
+    linkedin: "https://www.linkedin.com/in/chaharane-abdallah-50617424b/",
   },
 ];
 
@@ -96,20 +77,18 @@ export const VIDEO_CONFIG = {
   title: "GoodHive: Revolutionizing Recruitment for Clients and Web3 Talent!",
 };
 
-import { Compass, Rocket, Users } from "lucide-react";
-
 export const IMPACT_METRICS = [
   {
     id: "companies",
-    value: "220+",
-    label: "Partner companies",
-    description: "Web3 teams discovering talent through GoodHive.",
+    value: "50+",
+    label: "Partner Companies",
+    description: "discovering talent through GoodHive",
   },
   {
-    id: "placements",
-    value: "1.2k",
-    label: "Successful placements",
-    description: "Matches completed across engineering, design, and product.",
+    id: "talents",
+    value: "1.5k",
+    label: "Web3 Talents",
+    description: "within the extended community",
   },
 ];
 
@@ -131,33 +110,40 @@ export const VALUE_PILLARS = [
     icon: Users,
     title: "Community First",
     description:
-      "We build with our ecosystem. Every feature is co-created with founders, contributors, and talent to keep incentives aligned.",
+      "Our community is the product. Talents co build the network and share the value they create.",
   },
 ];
 
 export const JOURNEY_MOMENTS = [
   {
-    id: "inception",
+    id: "foundations",
     year: "2019",
-    label: "Journey Start",
-    title: "Vision takes shape",
+    label: "FOUNDATIONS - 2019",
+    title: "Designed with talents, from day one",
     description:
-      "A small founding crew left traditional recruitment to design a decentralized alternative focused on trust and transparency.",
+      "Inspired by the collaborative economy, the project started with IT Unchained and real tech hires. Through hundreds of talent interviews, we tested how community driven recruitment could actually work.",
   },
   {
-    id: "launch",
-    year: "2021",
-    label: "Namba to Shibu",
-    title: "Marketplace launches",
+    id: "community-emerges",
+    year: "2022",
+    label: "Community Emerges - 2022",
+    title: "A Web3 talent community takes shape",
     description:
-      "GoodHive opens to the public, onboarding the first cohort of DAOs, Web3 studios, and independent builders.",
+      "Web3TalentFair launched as Europe's first Web3 job fair focused on talents and the future of work. It connected thousands builders and companies and laid the foundations of the GoodHive network.",
   },
   {
-    id: "growth",
-    year: "2023",
-    label: "Onexand Point",
-    title: "Global expansion",
+    id: "product-ready",
+    year: "2025",
+    label: "Product Ready - 2025",
+    title: "GoodHive is ready for real hiring",
     description:
-      "We introduce compliance tooling, escrow, and community governance to power cross-border collaboration at scale.",
+      "After extensive testing with talents and companies, GoodHive enters production. A platform built to onboard Web3 talents, support hiring teams, and scale collaborative recruitment.",
   },
 ];
+
+export const TEAM_SECTION_CONTENT = {
+  eyebrow: "The Team",
+  title: "Built by Web3 natives and multidisciplinary builders",
+  description:
+    "An ecosystem of builders, educators, developers, and contributors exploring decentralized governance, collaborative systems, and the future of work.",
+};

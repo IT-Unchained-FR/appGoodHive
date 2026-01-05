@@ -1,11 +1,11 @@
-"use client";
-
 import Link from "next/link";
+import { Linkedin, Twitter } from "lucide-react";
 import {
   ABOUT_CONTENT,
   IMPACT_METRICS,
   JOURNEY_MOMENTS,
   TEAM_MEMBERS,
+  TEAM_SECTION_CONTENT,
   VALUE_PILLARS,
   VIDEO_CONFIG,
 } from "./about-us.constants";
@@ -24,17 +24,13 @@ export default function AboutUsPage() {
         <div className={styles.container}>
           <div className={styles.heroLayout}>
             <div className={styles.heroContent}>
-              <span className={styles.subtitleBadge}>
+              <Link href="/" className={styles.subtitleBadge}>
                 {ABOUT_CONTENT.hero.subtitle}
-              </span>
+              </Link>
               <h1 className={styles.heroTitle}>
                 {ABOUT_CONTENT.hero.title}
-                <span className={styles.titleAccent}>
-                  {" "}
-                  for builders who lead with trust.
-                </span>
               </h1>
-              <p className={styles.heroDescription}>
+              <p className={styles.heroSubtitle}>
                 {ABOUT_CONTENT.hero.description}
               </p>
 
@@ -179,14 +175,14 @@ export default function AboutUsPage() {
       <section className={styles.teamSection}>
         <div className={styles.container}>
           <div className={styles.sectionHeader}>
-            <span className={styles.sectionEyebrow}>The Team</span>
+            <span className={styles.sectionEyebrow}>
+              {TEAM_SECTION_CONTENT.eyebrow}
+            </span>
             <h2 className={styles.sectionTitle}>
-              Meet the people shaping the hive
+              {TEAM_SECTION_CONTENT.title}
             </h2>
             <p className={styles.sectionDescription}>
-              From product strategy to research and engineering, our team blends
-              experience from leading Web2 and Web3 companies with a bias for
-              action.
+              {TEAM_SECTION_CONTENT.description}
             </p>
           </div>
 
@@ -207,6 +203,33 @@ export default function AboutUsPage() {
                   <h3 className={styles.teamName}>{member.name}</h3>
                   <p className={styles.teamRole}>{member.role}</p>
                   <p className={styles.teamBio}>{member.description}</p>
+
+                  {(member.linkedin || member.twitter) && (
+                    <div className={styles.teamSocial}>
+                      {member.linkedin && (
+                        <a
+                          href={member.linkedin}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.socialButton}
+                          aria-label={`${member.name} LinkedIn`}
+                        >
+                          <Linkedin size={18} />
+                        </a>
+                      )}
+                      {member.twitter && (
+                        <a
+                          href={member.twitter}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.socialButton}
+                          aria-label={`${member.name} Twitter`}
+                        >
+                          <Twitter size={18} />
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
               </article>
             ))}

@@ -120,6 +120,15 @@
   font-weight: 600;
   border: 1px solid rgba(234, 179, 8, 0.45);
   width: fit-content;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(254, 243, 199, 1);
+    border-color: rgba(234, 179, 8, 0.65);
+    transform: translateY(-1px);
+  }
 }
 
 .heroTitle {
@@ -158,6 +167,19 @@
 
   @media (min-width: 1400px) {
     font-size: 1.125rem;
+    line-height: 1.7;
+  }
+}
+
+.heroSubtitle {
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: #475569;
+  max-width: 38rem;
+  margin-top: 0.5rem;
+
+  @media (min-width: 1400px) {
+    font-size: 1.25rem;
     line-height: 1.7;
   }
 }
@@ -883,7 +905,7 @@
   padding: 1.5rem 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.3rem;
+  gap: 1rem;
   box-shadow: 0 18px 40px -28px rgba(217, 119, 6, 0.45);
   transition:
     transform 0.25s ease,
@@ -963,6 +985,41 @@
   font-size: 0.98rem;
   color: #475569;
   line-height: 1.6;
+}
+
+.teamSocial {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(234, 179, 8, 0.15);
+}
+
+.socialButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.5rem;
+  background: rgba(254, 243, 199, 0.5);
+  color: #b45309;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  text-decoration: none;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #f97316;
+    border-color: rgba(249, 115, 22, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px -4px rgba(249, 115, 22, 0.4);
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 @keyframes mediaPulse {
