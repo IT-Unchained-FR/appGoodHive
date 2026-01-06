@@ -1,5 +1,5 @@
 import ContactForm from "@components/contact-form";
-import { MessageCircle, Phone, Mail, MapPin, Clock, Users, Sparkles } from "lucide-react";
+import { MessageCircle, Phone, Mail, MapPin, Clock, Users, Sparkles, Briefcase } from "lucide-react";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -12,8 +12,21 @@ export const metadata: Metadata = {
 
 export default function ContactFormPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 relative overflow-hidden">
-      {/* Decorative Background Elements */}
+    <>
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes borderGlow {
+            0% {
+              background-position: 0% 50%;
+            }
+            100% {
+              background-position: 300% 50%;
+            }
+          }
+        `
+      }} />
+      <main className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 relative overflow-hidden">
+        {/* Decorative Background Elements */}
       <div className="absolute inset-0">
         {/* Honeycomb Pattern */}
         <div className="absolute top-0 left-0 w-full h-full opacity-5">
@@ -119,15 +132,32 @@ export default function ContactFormPage() {
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-4 p-4 rounded-2xl bg-amber-50 hover:bg-amber-100 transition-colors duration-300">
-                    <div className="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center">
-                      <Phone className="w-6 h-6 text-white" />
+                  <a
+                    href="https://calendly.com/benoit-kulesza/virtual-coffe-10-mins"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group relative flex items-center space-x-4 p-[3px] rounded-2xl transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl cursor-pointer overflow-hidden"
+                    style={{
+                      background: 'linear-gradient(90deg, #f59e0b, #f97316, #fbbf24, #f59e0b)',
+                      backgroundSize: '300% 100%',
+                      animation: 'borderGlow 3s linear infinite',
+                    }}
+                  >
+                    {/* Inner background */}
+                    <div className="relative flex items-center space-x-4 w-full p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-yellow-50 group-hover:from-amber-100 group-hover:to-yellow-100 transition-colors duration-300">
+                      {/* Content */}
+                      <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-full flex items-center justify-center shadow-lg group-hover:shadow-2xl transition-shadow duration-300">
+                        <Phone className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900 flex items-center">
+                          Schedule a Call
+                          <span className="ml-2 text-amber-600 group-hover:translate-x-1 transition-transform duration-300">→</span>
+                        </h3>
+                        <p className="text-gray-600">Book a 10-minute virtual coffee ☕</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">Schedule a Call</h3>
-                      <p className="text-gray-600">Book a 15-minute consultation</p>
-                    </div>
-                  </div>
+                  </a>
                   
                   <div className="flex items-center space-x-4 p-4 rounded-2xl bg-amber-50 hover:bg-amber-100 transition-colors duration-300">
                     <div className="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center">
@@ -150,7 +180,7 @@ export default function ContactFormPage() {
                 
                 <div className="grid grid-cols-2 gap-6">
                   <div className="text-center p-4 rounded-2xl bg-gradient-to-br from-amber-100 to-yellow-100">
-                    <div className="text-2xl font-bold text-amber-600 mb-1">24h</div>
+                    <div className="text-2xl font-bold text-amber-600 mb-1">{"< 12h"}</div>
                     <div className="text-sm text-gray-600">Email Response</div>
                   </div>
                   <div className="text-center p-4 rounded-2xl bg-gradient-to-br from-amber-100 to-yellow-100">
@@ -188,23 +218,23 @@ export default function ContactFormPage() {
                 Ready to Transform Your Career or Team?
               </h3>
               <p className="text-amber-100 mb-6 max-w-2xl mx-auto">
-                Join thousands of Web3 professionals and companies who trust GoodHive 
+                Join thousands of Web3 professionals and companies who trust GoodHive
                 to make the perfect match in the decentralized economy.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <a
-                  href="/talents/register"
+                  href="/companies/search-talents"
                   className="inline-flex items-center justify-center px-8 py-4 bg-white text-amber-600 font-semibold rounded-2xl hover:bg-amber-50 transform hover:-translate-y-1 transition-all duration-300 shadow-lg"
                 >
                   <Users className="w-5 h-5 mr-2" />
                   Find Talent
                 </a>
                 <a
-                  href="/companies/register"
+                  href="/talents/job-search"
                   className="inline-flex items-center justify-center px-8 py-4 bg-amber-600 text-white font-semibold rounded-2xl hover:bg-amber-700 transform hover:-translate-y-1 transition-all duration-300 shadow-lg"
                 >
-                  <MessageCircle className="w-5 h-5 mr-2" />
-                  Join as Company
+                  <Briefcase className="w-5 h-5 mr-2" />
+                  Find Jobs
                 </a>
               </div>
             </div>
@@ -212,5 +242,6 @@ export default function ContactFormPage() {
         </div>
       </div>
     </main>
+    </>
   );
 }
