@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Linkedin, Twitter } from "lucide-react";
 import {
   ABOUT_CONTENT,
@@ -28,7 +29,10 @@ export default function AboutUsPage() {
                 {ABOUT_CONTENT.hero.subtitle}
               </Link>
               <h1 className={styles.heroTitle}>
-                {ABOUT_CONTENT.hero.title}
+                About GoodHive{" "}
+                <span className={styles.titleAccent}>
+                  for builders who lead with trust.
+                </span>
               </h1>
               <p className={styles.heroSubtitle}>
                 {ABOUT_CONTENT.hero.description}
@@ -38,7 +42,7 @@ export default function AboutUsPage() {
                 <Link href="/contact" className={styles.primaryButton}>
                   Talk to our team
                 </Link>
-                <Link href="/companies" className={styles.secondaryButton}>
+                <Link href="/" className={styles.secondaryButton}>
                   Explore the platform
                 </Link>
               </div>
@@ -99,12 +103,10 @@ export default function AboutUsPage() {
           <div className={styles.sectionHeader}>
             <span className={styles.sectionEyebrow}>Why GoodHive</span>
             <h2 className={styles.sectionTitle}>
-              A platform shaped by our values
+              Designing the people layer of Web3
             </h2>
             <p className={styles.sectionDescription}>
-              We align incentives between talent, companies, and the broader
-              ecosystem by staying grounded in principles that keep the network
-              healthy.
+              Communities, incentives, and trust at the core of recruitment.
             </p>
           </div>
 
@@ -190,13 +192,23 @@ export default function AboutUsPage() {
             {TEAM_MEMBERS.map((member) => (
               <article key={member.id} className={styles.teamCard}>
                 <div className={styles.teamPortrait}>
-                  <span className={styles.teamInitials}>
-                    {member.name
-                      .split(" ")
-                      .slice(0, 2)
-                      .map((part) => part.charAt(0))
-                      .join("")}
-                  </span>
+                  {member.image ? (
+                    <Image
+                      src={member.image}
+                      alt={member.name}
+                      width={200}
+                      height={200}
+                      className={styles.teamImage}
+                    />
+                  ) : (
+                    <span className={styles.teamInitials}>
+                      {member.name
+                        .split(" ")
+                        .slice(0, 2)
+                        .map((part) => part.charAt(0))
+                        .join("")}
+                    </span>
+                  )}
                   <div className={styles.portraitGlow} />
                 </div>
                 <div className={styles.teamCopy}>

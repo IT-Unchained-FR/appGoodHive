@@ -2,10 +2,10 @@ import { Compass, Rocket, Users } from "lucide-react";
 
 export const ABOUT_CONTENT = {
   hero: {
-    title: "Designing the people layer of Web3",
+    title: "About GoodHive for builders who lead with trust.",
     subtitle: "Explore the Platform",
     description:
-      "Communities, incentives, and trust at the core of recruitment.",
+      "GoodHive is revolutionizing how companies and talent connect in the Web3 space. We're creating a decentralized, transparent, and efficient recruitment platform that empowers both employers and job seekers.",
   },
   philosophy: {
     title: "Our Philosophy",
@@ -26,8 +26,9 @@ export const TEAM_MEMBERS = [
     role: "Founder & CEO",
     description: "Builds collaborative systems for the future of work",
     backgroundColor: "#d4e5e0",
+    image: "/img/team/benoit-kulesza.png",
     linkedin: "https://www.linkedin.com/in/benoitkulesza/",
-    twitter: "https://twitter.com/benoitkulesza",
+    twitter: "https://twitter.com/Benoitk14",
   },
   {
     id: 2,
@@ -35,6 +36,7 @@ export const TEAM_MEMBERS = [
     role: "Co-Founder & Community",
     description: "Explores micronations and community driven Web3 governance",
     backgroundColor: "#e5d8d0",
+    image: "/img/team/hayat-outahar.png",
     linkedin: "https://www.linkedin.com/in/hayatoutahar/",
     twitter: "https://twitter.com/HayatOutahar",
   },
@@ -44,15 +46,19 @@ export const TEAM_MEMBERS = [
     role: "Co-founder & CTO",
     description: "Builds decentralized governance for the future of work",
     backgroundColor: "#e8d8e5",
-    linkedin: "https://www.linkedin.com/in/nicolas-wagner/",
+    image: "/img/team/nicolas-wagner.png",
+    linkedin: "https://www.linkedin.com/in/wagner-nicolas-dev/",
+    twitter: "https://twitter.com/w_n1c01a5",
   },
   {
     id: 4,
-    name: "Juhan Jubayer",
+    name: "Jubayer Juhan",
     role: "Founding Builder & Senior Product Engineer",
     description: "Builds scalable Web3 products and user experiences",
     backgroundColor: "#f5ecd0",
-    linkedin: "https://www.linkedin.com/in/juhan-jubayer/",
+    image: "/img/team/juhan-jubayer.png",
+    linkedin: "https://www.linkedin.com/in/jubayerjuhan/",
+    twitter: "https://twitter.com/XUHANJJ",
   },
   {
     id: 5,
@@ -60,6 +66,7 @@ export const TEAM_MEMBERS = [
     role: "Founding Builder & Principal Frontend Engineer",
     description: "Designs scalable frontends for collaborative Web3 products",
     backgroundColor: "#d0e0f0",
+    image: "/img/team/sabbir-rifat.png",
     linkedin: "https://www.linkedin.com/in/sabbir-rifat/",
   },
   {
@@ -68,6 +75,7 @@ export const TEAM_MEMBERS = [
     role: "Founding Builder & Marketing Manager",
     description: "Drives Web3 growth through community and marketing",
     backgroundColor: "#dfe5d4",
+    image: "/img/team/chaharane-abdallah.png",
     linkedin: "https://www.linkedin.com/in/chaharane-abdallah-50617424b/",
   },
 ];
