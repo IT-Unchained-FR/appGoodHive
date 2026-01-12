@@ -269,15 +269,53 @@ export default function AdminManageTalents() {
       header: "Mentor Status",
       width: "8%",
       sortable: true,
-      render: (value, row) => (
-        <Badge
-          className={`${
-            row.mentor === true ? "bg-green-500" : "bg-orange-500"
-          } text-white`}
-        >
-          {row.mentor ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
-        </Badge>
-      ),
+      render: (value, row) => {
+        const isMentorApplicant = row.mentor === true;
+        const mentorStatus = row.mentor_status;
+
+        // Applied for mentor and approved
+        if (isMentorApplicant && mentorStatus === 'approved') {
+          return (
+            <Badge className="bg-green-500 text-white">
+              <Check className="h-3 w-3" />
+            </Badge>
+          );
+        }
+
+        // Applied for mentor but pending approval
+        if (isMentorApplicant && mentorStatus === 'pending') {
+          return (
+            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+              Pending
+            </Badge>
+          );
+        }
+
+        // Applied for mentor but deferred (come back later)
+        if (isMentorApplicant && mentorStatus === 'deferred') {
+          return (
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200" title={row.mentor_status_reason || 'Reapply later'}>
+              Deferred
+            </Badge>
+          );
+        }
+
+        // Applied for mentor but rejected
+        if (isMentorApplicant && mentorStatus === 'rejected') {
+          return (
+            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200" title={row.mentor_status_reason || 'Rejected'}>
+              Rejected
+            </Badge>
+          );
+        }
+
+        // Did not apply for mentor
+        return (
+          <Badge className="bg-orange-500 text-white">
+            <X className="h-3 w-3" />
+          </Badge>
+        );
+      },
     },
     {
       key: "recruiter",
@@ -436,6 +474,18 @@ export default function AdminManageTalents() {
                 { value: 'recruiter', label: 'Recruiter' },
               ],
             },
+            {
+              key: 'mentorStatus',
+              label: 'Mentor Status',
+              options: [
+                { value: 'all', label: 'All mentor statuses' },
+                { value: 'approved', label: '✓ Approved mentors' },
+                { value: 'pending', label: '⏳ Pending review' },
+                { value: 'deferred', label: '🔄 Deferred (reapply later)' },
+                { value: 'rejected', label: '✗ Rejected' },
+                { value: 'not-applied', label: 'Not applied' },
+              ],
+            },
           ],
           sortOptions: [
             { value: 'latest', label: 'Latest first' },
@@ -572,8 +622,30 @@ function TalentCard({
             <Badge className={talent.talent ? "bg-green-500 text-white" : "bg-orange-500 text-white"}>
               Talent {talent.talent ? "Yes" : "No"}
             </Badge>
-            <Badge className={talent.mentor ? "bg-green-500 text-white" : "bg-orange-500 text-white"}>
-              Mentor {talent.mentor ? "Yes" : "No"}
+            <Badge
+              className={
+                talent.mentor && talent.mentor_status === 'approved'
+                  ? "bg-green-500 text-white"
+                  : talent.mentor && talent.mentor_status === 'pending'
+                  ? "bg-yellow-500 text-white"
+                  : talent.mentor && talent.mentor_status === 'deferred'
+                  ? "bg-blue-500 text-white"
+                  : talent.mentor && talent.mentor_status === 'rejected'
+                  ? "bg-red-500 text-white"
+                  : "bg-orange-500 text-white"
+              }
+              title={talent.mentor_status_reason || undefined}
+            >
+              Mentor{" "}
+              {talent.mentor && talent.mentor_status === 'approved'
+                ? "Approved"
+                : talent.mentor && talent.mentor_status === 'pending'
+                ? "Pending"
+                : talent.mentor && talent.mentor_status === 'deferred'
+                ? "Deferred"
+                : talent.mentor && talent.mentor_status === 'rejected'
+                ? "Rejected"
+                : "No"}
             </Badge>
             <Badge className={talent.recruiter ? "bg-green-500 text-white" : "bg-orange-500 text-white"}>
               Recruiter {talent.recruiter ? "Yes" : "No"}

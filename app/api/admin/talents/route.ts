@@ -11,6 +11,7 @@ export async function GET(req: NextRequest) {
     const dateRange = searchParams.get('dateRange');
     const status = searchParams.get('status');
     const role = searchParams.get('role');
+    const mentorStatus = searchParams.get('mentorStatus');
     const sort = searchParams.get('sort') || 'latest';
 
     // Pagination parameters
@@ -41,44 +42,59 @@ export async function GET(req: NextRequest) {
       };
 
       if (dateRange in ranges) {
-        conditions.push(sql`created_at >= ${ranges[dateRange]}`);
+        conditions.push(sql`t.created_at >= ${ranges[dateRange]}`);
       } else if (dateRange.includes(',')) {
         const [start, end] = dateRange.split(',');
         const startDate = new Date(start);
         const endDate = new Date(end);
         endDate.setHours(23, 59, 59, 999);
-        conditions.push(sql`created_at BETWEEN ${startDate} AND ${endDate}`);
+        conditions.push(sql`t.created_at BETWEEN ${startDate} AND ${endDate}`);
       }
     }
 
     // Approval status filter
     if (status && status !== 'all') {
       if (status === 'approved') {
-        conditions.push(sql`approved = true`);
+        conditions.push(sql`t.approved = true`);
       } else if (status === 'pending') {
-        conditions.push(sql`approved = false OR approved IS NULL`);
+        conditions.push(sql`t.approved = false OR t.approved IS NULL`);
       }
     }
 
     // Role filter (talent/mentor/recruiter)
     if (role && role !== 'all') {
       if (role === 'talent') {
-        conditions.push(sql`talent = true`);
+        conditions.push(sql`t.talent = true`);
       } else if (role === 'mentor') {
-        conditions.push(sql`mentor = true`);
+        conditions.push(sql`t.mentor = true`);
       } else if (role === 'recruiter') {
-        conditions.push(sql`recruiter = true`);
+        conditions.push(sql`t.recruiter = true`);
+      }
+    }
+
+    // Mentor status filter (approved/pending/deferred/rejected/not-applied)
+    if (mentorStatus && mentorStatus !== 'all') {
+      if (mentorStatus === 'approved') {
+        conditions.push(sql`t.mentor = true AND u.mentor_status = 'approved'`);
+      } else if (mentorStatus === 'pending') {
+        conditions.push(sql`t.mentor = true AND u.mentor_status = 'pending'`);
+      } else if (mentorStatus === 'deferred') {
+        conditions.push(sql`t.mentor = true AND u.mentor_status = 'deferred'`);
+      } else if (mentorStatus === 'rejected') {
+        conditions.push(sql`t.mentor = true AND u.mentor_status = 'rejected'`);
+      } else if (mentorStatus === 'not-applied') {
+        conditions.push(sql`(t.mentor = false OR t.mentor IS NULL)`);
       }
     }
 
     // Build sort clause
     const sortMap: Record<string, any> = {
-      latest: sql`created_at DESC`,
-      oldest: sql`created_at ASC`,
-      'name-asc': sql`LOWER(first_name) ASC, LOWER(last_name) ASC`,
-      'name-desc': sql`LOWER(first_name) DESC, LOWER(last_name) DESC`,
-      'email-asc': sql`LOWER(email) ASC`,
-      'email-desc': sql`LOWER(email) DESC`,
+      latest: sql`t.created_at DESC`,
+      oldest: sql`t.created_at ASC`,
+      'name-asc': sql`LOWER(t.first_name) ASC, LOWER(t.last_name) ASC`,
+      'name-desc': sql`LOWER(t.first_name) DESC, LOWER(t.last_name) DESC`,
+      'email-asc': sql`LOWER(t.email) ASC`,
+      'email-desc': sql`LOWER(t.email) DESC`,
     };
     const orderBy = sortMap[sort] || sortMap.latest;
 
@@ -95,15 +111,27 @@ export async function GET(req: NextRequest) {
     // Get total count for pagination
     const countResult = await sql`
       SELECT COUNT(*) as total
-      FROM goodhive.talents
+      FROM goodhive.talents t
+      LEFT JOIN goodhive.users u ON t.user_id = u.userid
       ${whereClause ? sql`WHERE ${whereClause}` : sql``}
     `;
     const total = parseInt(countResult[0].total, 10);
 
-    // Execute query with filters and pagination
+    // Execute query with filters and pagination, joining with users table for status fields
     const talents = await sql`
-      SELECT *
-      FROM goodhive.talents
+      SELECT
+        t.*,
+        u.mentor_status,
+        u.talent_status,
+        u.recruiter_status,
+        u.mentor_deferred_until,
+        u.talent_deferred_until,
+        u.recruiter_deferred_until,
+        u.mentor_status_reason,
+        u.talent_status_reason,
+        u.recruiter_status_reason
+      FROM goodhive.talents t
+      LEFT JOIN goodhive.users u ON t.user_id = u.userid
       ${whereClause ? sql`WHERE ${whereClause}` : sql``}
       ORDER BY ${orderBy}
       LIMIT ${limit}

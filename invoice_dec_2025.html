@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice - December 2025</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            margin: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            max-width: 750px;
+            margin: 0 auto;
+            padding: 25px;
+            background: white;
+            color: #333;
+        }
+
+        .header {
+            text-align: right;
+            margin-bottom: 15px;
+        }
+
+        .invoice-title {
+            font-size: 38px;
+            font-weight: normal;
+            letter-spacing: 8px;
+            color: #666;
+            margin: 0;
+        }
+
+        .invoice-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .left-column, .right-column {
+            width: 48%;
+        }
+
+        .section-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .company-info {
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .date-section {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+
+        .items-table th {
+            text-align: left;
+            padding: 10px 10px;
+            border-bottom: 2px solid #333;
+            font-weight: bold;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .items-table td {
+            padding: 10px 10px;
+            border-bottom: 1px solid #ddd;
+            vertical-align: top;
+        }
+
+        .description {
+            font-weight: bold;
+        }
+
+        .description-detail {
+            font-size: 11px;
+            color: #666;
+            font-weight: normal;
+            margin-top: 3px;
+        }
+
+        .hours, .rate, .total {
+            text-align: right;
+            font-weight: bold;
+        }
+
+        .subtotal-row {
+            border-top: 2px solid #333;
+            border-bottom: none;
+        }
+
+        .subtotal-row td {
+            padding: 12px 10px 8px;
+            border-bottom: none;
+            font-weight: bold;
+        }
+
+        .total-hours {
+            text-align: right;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .final-total {
+            font-size: 18px;
+        }
+
+        .separator-line {
+            height: 2px;
+            background-color: #333;
+            margin: 15px 0 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="invoice-title">INVOICE</h1>
+    </div>
+
+    <div class="invoice-info">
+        <div class="left-column">
+            <div class="section-title">ISSUED BY:</div>
+            <div class="company-info">
+                <strong>Jubayer Juhan</strong><br>
+                347/2. Nahar Niloy, Dhanmondi<br>
+                Dhaka 1207
+            </div>
+
+            <div class="section-title">BILL TO:</div>
+            <div class="company-info">
+                <strong>IT Unchained SAS</strong><br>
+                39 rue de l'Arrivée<br>
+                95880 Enghien les Bains
+            </div>
+        </div>
+
+        <div class="right-column">
+            <div class="section-title">DATE:</div>
+            <div class="company-info">JAN 6, 2026</div>
+
+            <div class="section-title">PAY TO:</div>
+            <div class="company-info">
+                Bank: Banking Circle S.A.<br>
+                IBAN: LU494080000097867881<br>
+                BIC: BCIRLULL<br>
+                Beneficiary: Jubayer Hossain
+            </div>
+        </div>
+    </div>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th style="width: 50%;">DESCRIPTION</th>
+                <th style="width: 15%;">HOURS</th>
+                <th style="width: 15%;">RATE</th>
+                <th style="width: 20%;">TOTAL</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <div class="description">Admin panel & company dashboard systems</div>
+                    <div class="description-detail">(server-side pagination, filtering, validation, mobile design; dashboard analytics, job balance, fund management)</div>
+                </td>
+                <td class="hours">15</td>
+                <td class="rate">$13</td>
+                <td class="total">$195</td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="description">Job system enhancement & redesign</div>
+                    <div class="description-detail">(modern job pages, URL structure, apply functionality; blockchain integration, company logos, fund display)</div>
+                </td>
+                <td class="hours">8</td>
+                <td class="rate">$13</td>
+                <td class="total">$104</td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="description">Analytics, authentication & search features</div>
+                    <div class="description-detail">(event tracking, Vercel Analytics, blockchain analytics; privacy features, blur effects; Google Places API, location filtering)</div>
+                </td>
+                <td class="hours">9</td>
+                <td class="rate">$13</td>
+                <td class="total">$117</td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="description">AI features & infrastructure setup</div>
+                    <div class="description-detail">(AI job creation, profile generation; CI/CD automation, staging pipeline, Google Cloud SQL migration)</div>
+                </td>
+                <td class="hours">6</td>
+                <td class="rate">$13</td>
+                <td class="total">$78</td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="description">Talent profile page modernization</div>
+                    <div class="description-detail">(responsive layout redesign, country flag display, UI enhancements, async params handling)</div>
+                </td>
+                <td class="hours">4</td>
+                <td class="rate">$13</td>
+                <td class="total">$52</td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="description">UI updates & performance optimization</div>
+                    <div class="description-detail">(About Us & Contact pages, team photos, Calendly integration; dev server optimization, mobile responsiveness)</div>
+                </td>
+                <td class="hours">4</td>
+                <td class="rate">$13</td>
+                <td class="total">$52</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="separator-line"></div>
+
+    <table class="items-table">
+        <tbody>
+            <tr>
+                <td style="width: 50%;"></td>
+                <td style="width: 15%; text-align: right;" class="total-hours">Hours: 46</td>
+                <td style="width: 15%;"></td>
+                <td style="width: 20%; text-align: right; font-weight: bold;">$598</td>
+            </tr>
+            <tr class="subtotal-row">
+                <td style="width: 65%;"></td>
+                <td style="width: 15%; text-align: right;">SUBTOTAL</td>
+                <td style="width: 10%; text-align: right;">Tax</td>
+                <td style="width: 10%; text-align: right;">0%</td>
+            </tr>
+            <tr>
+                <td style="width: 65%;"></td>
+                <td style="width: 15%;"></td>
+                <td style="width: 10%; text-align: right; font-weight: bold;" class="final-total">TOTAL</td>
+                <td style="width: 10%; text-align: right; font-weight: bold;" class="final-total">$598</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
