@@ -12,6 +12,7 @@ import { OptimizedJobBalance } from "./OptimizedJobBalance";
 import { analytics } from "@/lib/analytics";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { CompanyInfoGuard } from "./CompanyInfoGuard";
+import { useAuthCheck } from "@/app/hooks/useAuthCheck";
 
 interface Props {
   jobId?: string; // UUID string
@@ -84,6 +85,7 @@ export const Card: FC<Props> = ({
   };
 
   const { isAuthenticated } = useAuth();
+  const { checkAuthAndShowConnectPrompt } = useAuthCheck();
 
   // State for handling image loading errors
   const [imageError, setImageError] = useState(false);
@@ -143,6 +145,10 @@ export const Card: FC<Props> = ({
       event.preventDefault();
       event.stopPropagation();
     }
+  };
+
+  const handleConnectWallet = () => {
+    checkAuthAndShowConnectPrompt("view hourly rate", "access-protected");
   };
 
   return (
@@ -389,12 +395,17 @@ export const Card: FC<Props> = ({
 
                     {/* Blur overlay for non-authenticated users */}
                     {!isAuthenticated && (
-                      <div className="absolute inset-0 backdrop-blur-sm bg-white/10 flex items-center justify-center z-10 rounded-xl">
+                      <button
+                        type="button"
+                        onClick={handleConnectWallet}
+                        aria-label="Connect to view rate"
+                        className="absolute inset-0 backdrop-blur-sm bg-white/10 flex items-center justify-center z-10 rounded-xl cursor-pointer"
+                      >
                         <div className="text-center px-2">
                           <div className="text-white/90 text-xs font-semibold mb-1">🔒 Connect to View Rate</div>
                           <div className="text-white/70 text-[10px]">Sign in to see hourly rates</div>
                         </div>
-                      </div>
+                      </button>
                     )}
 
                     {/* Content */}
