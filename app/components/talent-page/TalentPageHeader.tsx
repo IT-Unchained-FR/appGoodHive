@@ -5,6 +5,10 @@ import Image from "next/image";
 import { MapPin, Mail, Briefcase, Award, Users } from "lucide-react";
 import LastActiveStatus from "@/app/components/LastActiveStatus";
 import { generateCountryFlag } from "@/app/utils/generate-country-flag";
+import { useAuth } from "@/app/contexts/AuthContext";
+import { CompanyInfoGuard } from "@/app/components/CompanyInfoGuard";
+import { useConnectModal } from "thirdweb/react";
+import { connectModalOptions } from "@/lib/auth/walletConfig";
 import styles from "./TalentPageHeader.module.scss";
 
 interface TalentPageHeaderProps {
@@ -37,10 +41,18 @@ export const TalentPageHeader = ({
   approved_roles,
 }: TalentPageHeaderProps) => {
   const [imageError, setImageError] = useState(false);
+  const { isAuthenticated } = useAuth();
+  const { connect } = useConnectModal();
 
   const handleContactClick = () => {
     if (email) {
       window.location.href = `mailto:${email}`;
+    }
+  };
+
+  const handleConnectWallet = () => {
+    if (connect) {
+      connect(connectModalOptions);
     }
   };
 
@@ -78,7 +90,21 @@ export const TalentPageHeader = ({
 
         {/* Info Section */}
         <div className={styles.infoSection}>
-          <h1 className={styles.name}>{fullName}</h1>
+          {isAuthenticated ? (
+            <h1 className={styles.name}>{fullName}</h1>
+          ) : (
+            <h1 className={styles.name}>
+              <CompanyInfoGuard
+                value={undefined}
+                seed={`${first_name}-${last_name}`}
+                isVisible={false}
+                textClassName={styles.name}
+                sizeClassName={styles.name}
+                blurAmount="blur-[8px]"
+                placement="bottom"
+              />
+            </h1>
+          )}
           <h2 className={styles.title}>{title}</h2>
 
           {location && (
@@ -132,8 +158,8 @@ export const TalentPageHeader = ({
         </div>
 
         {/* CTA Section */}
-        {email && (
-          <div className={styles.ctaSection}>
+        <div className={styles.ctaSection}>
+          {isAuthenticated && email ? (
             <button
               type="button"
               onClick={handleContactClick}
@@ -143,8 +169,17 @@ export const TalentPageHeader = ({
               <Mail size={18} />
               Contact Me
             </button>
-          </div>
-        )}
+          ) : (
+            <button
+              type="button"
+              onClick={handleConnectWallet}
+              className={`${styles.ctaButton} ${styles.connectButton}`}
+              aria-label="Connect to view contact"
+            >
+              🔒 Connect to View Contact
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

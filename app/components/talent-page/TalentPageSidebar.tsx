@@ -3,6 +3,9 @@
 import { DollarSign, CheckCircle, XCircle, Linkedin, Github, Twitter, Globe, ExternalLink, Link2 } from "lucide-react";
 import { TalentStatsCard } from "./TalentStatsCard";
 import { WorkPreferencesCard } from "./WorkPreferencesCard";
+import { useAuth } from "@/app/contexts/AuthContext";
+import { useConnectModal } from "thirdweb/react";
+import { connectModalOptions } from "@/lib/auth/walletConfig";
 import styles from "./TalentPageSidebar.module.scss";
 
 interface TalentPageSidebarProps {
@@ -44,6 +47,15 @@ export const TalentPageSidebar = ({
   portfolio,
   stackoverflow,
 }: TalentPageSidebarProps) => {
+  const { isAuthenticated } = useAuth();
+  const { connect } = useConnectModal();
+
+  const handleConnectWallet = () => {
+    if (connect) {
+      connect(connectModalOptions);
+    }
+  };
+
   // Social links array
   const socialLinks = [
     { name: "LinkedIn", url: linkedin, icon: Linkedin },
@@ -75,59 +87,95 @@ export const TalentPageSidebar = ({
 
       {/* Availability & Rate Card */}
       {rate && (
-        <div className={styles.availabilityCard}>
+        <div className={`${styles.availabilityCard} ${!isAuthenticated ? styles.blurredCard : ''}`}>
           <h3 className={styles.availabilityTitle}>Hourly Rate</h3>
-          <div className={styles.rateDisplay}>
-            <DollarSign
-              size={24}
-              style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }}
-            />
-            {rate}
-            <span className={styles.rateCurrency}>/hr</span>
-          </div>
 
-          {availability !== undefined && (
-            <div className={styles.availabilityStatus}>
-              {availability ? (
-                <>
-                  <CheckCircle size={16} />
-                  Available for hire
-                </>
-              ) : (
-                <>
-                  <XCircle size={16} />
-                  Not available
-                </>
+          {isAuthenticated ? (
+            <>
+              <div className={styles.rateDisplay}>
+                <DollarSign
+                  size={24}
+                  style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }}
+                />
+                {rate}
+                <span className={styles.rateCurrency}>/hr</span>
+              </div>
+
+              {availability !== undefined && (
+                <div className={styles.availabilityStatus}>
+                  {availability ? (
+                    <>
+                      <CheckCircle size={16} />
+                      Available for hire
+                    </>
+                  ) : (
+                    <>
+                      <XCircle size={16} />
+                      Not available
+                    </>
+                  )}
+                </div>
               )}
+            </>
+          ) : (
+            <div className={styles.blurredContent}>
+              <div className={styles.rateDisplay} style={{ filter: 'blur(8px)', opacity: 0.5 }}>
+                <DollarSign size={24} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} />
+                XXX
+                <span className={styles.rateCurrency}>/hr</span>
+              </div>
+              <button onClick={handleConnectWallet} className={styles.connectButton}>
+                🔒 Connect to View Rate
+              </button>
             </div>
           )}
         </div>
       )}
 
       {/* Social Links Card */}
-      <div className={styles.socialCard}>
+      <div className={`${styles.socialCard} ${!isAuthenticated ? styles.blurredCard : ''}`}>
         <h3 className={styles.socialTitle}>Connect</h3>
 
-        {hasSocialLinks ? (
-          <div className={styles.socialLinks}>
-            {socialLinks.map((link, index) => (
-              <a
-                key={index}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.socialLink}
-              >
-                <link.icon className={styles.socialIcon} />
-                <span className={styles.socialName}>{link.name}</span>
-                <ExternalLink className={styles.externalIcon} />
-              </a>
-            ))}
-          </div>
+        {isAuthenticated ? (
+          hasSocialLinks ? (
+            <div className={styles.socialLinks}>
+              {socialLinks.map((link, index) => (
+                <a
+                  key={index}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.socialLink}
+                >
+                  <link.icon className={styles.socialIcon} />
+                  <span className={styles.socialName}>{link.name}</span>
+                  <ExternalLink className={styles.externalIcon} />
+                </a>
+              ))}
+            </div>
+          ) : (
+            <div className={styles.emptyState}>
+              <Link2 />
+              <p>No social links available</p>
+            </div>
+          )
         ) : (
-          <div className={styles.emptyState}>
-            <Link2 />
-            <p>No social links available</p>
+          <div className={styles.blurredContent}>
+            <div className={styles.socialLinks} style={{ filter: 'blur(8px)', opacity: 0.5 }}>
+              <div className={styles.socialLink}>
+                <Linkedin className={styles.socialIcon} />
+                <span className={styles.socialName}>LinkedIn</span>
+                <ExternalLink className={styles.externalIcon} />
+              </div>
+              <div className={styles.socialLink}>
+                <Github className={styles.socialIcon} />
+                <span className={styles.socialName}>GitHub</span>
+                <ExternalLink className={styles.externalIcon} />
+              </div>
+            </div>
+            <button onClick={handleConnectWallet} className={styles.connectButton}>
+              🔒 Connect to View Links
+            </button>
           </div>
         )}
       </div>
