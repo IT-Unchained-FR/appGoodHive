@@ -155,9 +155,11 @@ export async function fetchTalents({
     if (normalizedSort === "alphabetical") {
       orderClause = "ORDER BY LOWER(first_name) ASC NULLS LAST, LOWER(last_name) ASC";
     } else if (normalizedSort === "rate_high") {
-      orderClause = "ORDER BY CAST(NULLIF(rate, '') AS NUMERIC) DESC NULLS LAST, last_active DESC";
+      orderClause =
+        "ORDER BY COALESCE(max_rate, min_rate, NULLIF(rate, '')::NUMERIC) DESC NULLS LAST, last_active DESC";
     } else if (normalizedSort === "rate_low") {
-      orderClause = "ORDER BY CAST(NULLIF(rate, '') AS NUMERIC) ASC NULLS LAST, last_active DESC";
+      orderClause =
+        "ORDER BY COALESCE(min_rate, max_rate, NULLIF(rate, '')::NUMERIC) ASC NULLS LAST, last_active DESC";
     }
 
     // Main query
@@ -181,7 +183,18 @@ export async function fetchTalents({
         email: talent.email,
         aboutWork: safeBase64Decode(talent.about_work),
         telegram: talent.telegram,
-        rate: talent.rate,
+        minRate:
+          talent.min_rate !== null && talent.min_rate !== undefined
+            ? Number(talent.min_rate)
+            : talent.rate
+              ? Number(talent.rate)
+              : undefined,
+        maxRate:
+          talent.max_rate !== null && talent.max_rate !== undefined
+            ? Number(talent.max_rate)
+            : talent.rate
+              ? Number(talent.rate)
+              : undefined,
         currency: talent.currency,
         imageUrl: talent.image_url,
         walletAddress: talent.wallet_address,

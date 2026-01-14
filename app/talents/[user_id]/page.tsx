@@ -73,6 +73,8 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
     description,
     email,
     city,
+    min_rate,
+    max_rate,
     rate,
     country,
     linkedin,
@@ -188,7 +190,8 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
             freelance_only={freelance_only}
             timezone={timezone}
             languages={languages}
-            rate={rate}
+            min_rate={min_rate ?? rate}
+            max_rate={max_rate ?? rate}
             availability={true} // Can be made dynamic based on availability field
             linkedin={linkedin}
             github={github}

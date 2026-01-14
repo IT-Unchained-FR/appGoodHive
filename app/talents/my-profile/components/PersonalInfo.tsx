@@ -202,22 +202,41 @@ export const PersonalInfo = ({
           )}
         </div>
         <div className="flex-1">
-          <label
-            htmlFor="rate"
-            className="inline-block ml-3 text-base text-black form-label"
-          >
-            Rate (USD/Hour)
+          <label className="inline-block ml-3 text-base text-black form-label">
+            Hourly Rate Range (USD/Hour)
           </label>
-          <input
-            className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-            placeholder="Your rate per hour"
-            type="number"
-            maxLength={255}
-            value={profileData?.rate || ""}
-            onChange={(e) => onInputChange("rate", Number(e.target.value))}
-          />
-          {errors.rate && (
-            <p className="text-red-500 text-sm mt-1">{errors.rate}</p>
+          <div className="grid grid-cols-2 gap-3">
+            <input
+              className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+              placeholder="Min"
+              type="number"
+              maxLength={255}
+              value={profileData?.min_rate ?? ""}
+              onChange={(e) =>
+                onInputChange(
+                  "min_rate",
+                  e.target.value === "" ? undefined : Number(e.target.value),
+                )
+              }
+            />
+            <input
+              className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+              placeholder="Max"
+              type="number"
+              maxLength={255}
+              value={profileData?.max_rate ?? ""}
+              onChange={(e) =>
+                onInputChange(
+                  "max_rate",
+                  e.target.value === "" ? undefined : Number(e.target.value),
+                )
+              }
+            />
+          </div>
+          {(errors.min_rate || errors.max_rate) && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.min_rate || errors.max_rate}
+            </p>
           )}
         </div>
       </div>

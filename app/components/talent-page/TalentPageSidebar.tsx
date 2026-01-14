@@ -7,6 +7,7 @@ import { useAuth } from "@/app/contexts/AuthContext";
 import { useConnectModal } from "thirdweb/react";
 import { connectModalOptions } from "@/lib/auth/walletConfig";
 import styles from "./TalentPageSidebar.module.scss";
+import { formatRateRange } from "@/app/utils/format-rate-range";
 
 interface TalentPageSidebarProps {
   // Stats
@@ -20,6 +21,8 @@ interface TalentPageSidebarProps {
   timezone?: string;
   languages?: string[] | string;
   // Availability & Rate
+  min_rate?: number;
+  max_rate?: number;
   rate?: number;
   availability?: boolean;
   // Social Links
@@ -39,6 +42,8 @@ export const TalentPageSidebar = ({
   freelance_only,
   timezone,
   languages,
+  min_rate,
+  max_rate,
   rate,
   availability,
   linkedin,
@@ -66,6 +71,10 @@ export const TalentPageSidebar = ({
   ].filter((link) => link.url);
 
   const hasSocialLinks = socialLinks.length > 0;
+  const rateLabel = formatRateRange({
+    minRate: min_rate ?? rate,
+    maxRate: max_rate ?? rate,
+  });
 
   return (
     <div className={styles.sidebarContainer}>
@@ -86,7 +95,7 @@ export const TalentPageSidebar = ({
       />
 
       {/* Availability & Rate Card */}
-      {rate && (
+      {rateLabel && (
         <div className={`${styles.availabilityCard} ${!isAuthenticated ? styles.blurredCard : ''}`}>
           <h3 className={styles.availabilityTitle}>Hourly Rate</h3>
 
@@ -97,7 +106,7 @@ export const TalentPageSidebar = ({
                   size={24}
                   style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }}
                 />
-                {rate}
+                {rateLabel}
                 <span className={styles.rateCurrency}>/hr</span>
               </div>
 

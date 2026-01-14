@@ -971,6 +971,8 @@ CREATE TABLE goodhive.talents (
     telegram character varying(255),
     currency character varying(100),
     rate character varying(20),
+    min_rate numeric(10,2),
+    max_rate numeric(10,2),
     about_work character varying(1000000),
     skills character varying(1000000),
     image_url character varying(255),
@@ -1800,4 +1802,3 @@ ALTER TABLE ONLY goodhive.job_sections
 --
 
 \unrestrict FobAh0DFL3aM9CxbU3ZAzCAiOFoTA7h7F7aOFQIbEtTHUDBD83vCy1YGrxMZbhb
-

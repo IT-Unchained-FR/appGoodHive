@@ -100,6 +100,8 @@ const createProfileWithChatGPT = async (pdfText: string) => {
       github: "",
       portfolio: "",
       skills: "JavaScript, React, Node.js, Python, AWS, Docker",
+      min_rate: 75,
+      max_rate: 75,
       rate: 75,
       experience: [
         {

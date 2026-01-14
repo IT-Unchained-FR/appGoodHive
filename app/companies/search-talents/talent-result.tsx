@@ -18,7 +18,8 @@ export interface TalentData {
   email: string;
   aboutWork: string;
   telegram: string;
-  rate: string;
+  minRate?: number;
+  maxRate?: number;
   currency: string;
   imageUrl: string;
   walletAddress: string;
@@ -118,7 +119,8 @@ export default function TalentResult({ talents }: { talents: TalentData[] }) {
                   image={talent.imageUrl || ""}
                   country={talent.country || ""}
                   city={talent.city || "Remote"}
-                  budget={Number(talent.rate) || 0}
+                  rateMin={talent.minRate}
+                  rateMax={talent.maxRate}
                   projectType="hourly"
                   currency={talent.currency || "€"}
                   description={talent.description || "No description available."}

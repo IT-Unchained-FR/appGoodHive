@@ -22,6 +22,8 @@ export async function POST(request: Request) {
     email,
     telegram,
     about_work,
+    min_rate,
+    max_rate,
     rate,
     skills,
     image_url,
@@ -57,6 +59,8 @@ export async function POST(request: Request) {
       phone_number,
       email,
       about_work,
+      min_rate: min_rate ?? rate,
+      max_rate: max_rate ?? rate,
       rate,
       skills,
       image_url,
@@ -177,6 +181,8 @@ export async function GET(request: NextRequest) {
         email,
         telegram,
         about_work,
+        min_rate,
+        max_rate,
         rate,
         skills,
         image_url,
@@ -218,6 +224,18 @@ export async function GET(request: NextRequest) {
       ...talent,
       description: safeBase64Decode(talent.description),
       about_work: safeBase64Decode(talent.about_work),
+      min_rate:
+        talent.min_rate !== null && talent.min_rate !== undefined
+          ? Number(talent.min_rate)
+          : talent.rate
+            ? Number(talent.rate)
+            : undefined,
+      max_rate:
+        talent.max_rate !== null && talent.max_rate !== undefined
+          ? Number(talent.max_rate)
+          : talent.rate
+            ? Number(talent.rate)
+            : undefined,
       approved_roles: users.length > 0 ? users[0].approved_roles : [],
     };
 

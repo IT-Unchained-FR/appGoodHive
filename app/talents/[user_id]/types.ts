@@ -11,7 +11,9 @@ export interface TalentProfileData {
   phone_number: string;
   phone_country_code: string;
   city: string;
-  rate: number;
+  min_rate?: number;
+  max_rate?: number;
+  rate?: number;
   country: string;
   linkedin: string;
   telegram: string;

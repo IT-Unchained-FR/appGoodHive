@@ -11,6 +11,8 @@ export type ProfileData = {
   phone_number?: string;
   email: string;
   about_work?: string;
+  min_rate?: number;
+  max_rate?: number;
   rate?: number;
   freelance_only?: boolean;
   remote_only?: boolean;

@@ -10,7 +10,8 @@ interface Talent {
   email: string;
   aboutWork: string;
   telegram: string;
-  rate: number;
+  minRate?: number;
+  maxRate?: number;
   currency: string;
   skills: string[];
   imageUrl: string;

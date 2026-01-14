@@ -54,6 +54,8 @@ export type ProfileData = {
   phone_number?: string;
   email: string;
   about_work?: string;
+  min_rate?: number;
+  max_rate?: number;
   rate?: number;
   freelance_only?: boolean;
   remote_only?: boolean;
@@ -326,6 +328,18 @@ export default function ProfilePage() {
       // Make skills mandatory for review submission
       if (!selectedSkills.length) {
         newErrors.skills = "Skills are required";
+      }
+
+      const minRate = data.min_rate;
+      const maxRate = data.max_rate;
+      const hasMinRate = minRate !== undefined && minRate !== null;
+      const hasMaxRate = maxRate !== undefined && maxRate !== null;
+
+      if (hasMinRate !== hasMaxRate) {
+        newErrors.min_rate = "Provide both minimum and maximum rates";
+        newErrors.max_rate = "Provide both minimum and maximum rates";
+      } else if (hasMinRate && hasMaxRate && Number(minRate) > Number(maxRate)) {
+        newErrors.max_rate = "Maximum rate must be at least minimum rate";
       }
 
       if (!data.talent && !data.mentor && !data.recruiter) {
@@ -631,11 +645,13 @@ export default function ProfilePage() {
         }
       }
 
-      // Set rate if available
-      if (generatedData.rate) {
+      const generatedMinRate = generatedData.min_rate ?? generatedData.rate;
+      const generatedMaxRate = generatedData.max_rate ?? generatedData.rate;
+      if (generatedMinRate !== undefined || generatedMaxRate !== undefined) {
         setProfileData((prev) => ({
           ...prev,
-          rate: generatedData.rate,
+          min_rate: generatedMinRate ?? prev.min_rate,
+          max_rate: generatedMaxRate ?? prev.max_rate,
         }));
       }
 
@@ -1100,24 +1116,41 @@ export default function ProfilePage() {
               )}
             </div>
             <div className="flex-1">
-              <label
-                htmlFor="rate"
-                className="inline-block ml-3 text-base text-black form-label"
-              >
-                Rate (USD/Hour)
+              <label className="inline-block ml-3 text-base text-black form-label">
+                Hourly Rate Range (USD/Hour)
               </label>
-              <input
-                className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
-                placeholder="Your rate per hour"
-                type="number"
-                maxLength={255}
-                value={profileData?.rate || ""}
-                onChange={(e) =>
-                  handleInputChange("rate", Number(e.target.value))
-                }
-              />
-              {errors.rate && (
-                <p className="text-red-500 text-sm mt-1">{errors.rate}</p>
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  placeholder="Min"
+                  type="number"
+                  maxLength={255}
+                  value={profileData?.min_rate ?? ""}
+                  onChange={(e) =>
+                    handleInputChange(
+                      "min_rate",
+                      e.target.value === "" ? undefined : Number(e.target.value),
+                    )
+                  }
+                />
+                <input
+                  className="form-control block w-full px-4 py-2 text-base font-normal text-gray-600 bg-white bg-clip-padding border border-solid border-[#FFC905] rounded-full hover:shadow-lg transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-[#FF8C05] focus:outline-none"
+                  placeholder="Max"
+                  type="number"
+                  maxLength={255}
+                  value={profileData?.max_rate ?? ""}
+                  onChange={(e) =>
+                    handleInputChange(
+                      "max_rate",
+                      e.target.value === "" ? undefined : Number(e.target.value),
+                    )
+                  }
+                />
+              </div>
+              {(errors.min_rate || errors.max_rate) && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.min_rate || errors.max_rate}
+                </p>
               )}
             </div>
           </div>

@@ -38,7 +38,8 @@ ${pdfText}
   "github": "string (URL if found)", 
   "portfolio": "string (URL if found)",
   "skills": "string (comprehensive comma-separated list including ALL technical skills, programming languages, frameworks, tools, databases, cloud platforms, methodologies, soft skills, languages, and domain expertise)",
-  "rate": "number (suggested hourly rate in USD based on experience level and expertise)",
+  "min_rate": "number (minimum suggested hourly rate in USD based on experience level and expertise)",
+  "max_rate": "number (maximum suggested hourly rate in USD based on experience level and expertise)",
   "experience": [
     {
       "title": "string",
@@ -123,7 +124,7 @@ ${pdfText}
 
 5. **QUALITY STANDARDS**:
    - Enhanced job descriptions that sound professional and impactful
-   - Competitive hourly rate based on experience level and market standards
+   - Competitive hourly rate range based on experience level and market standards
    - Proper date formatting (YYYY-MM)
    - Valid JSON structure
    - No information gaps or omissions

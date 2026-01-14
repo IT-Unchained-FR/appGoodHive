@@ -45,7 +45,8 @@ export function EditTalentModal({
         phone_country_code: talent.phone_country_code || "",
         phone_number: talent.phone_number || "",
         about_work: talent.about_work || "",
-        rate: talent.rate || 0,
+        min_rate: talent.min_rate ?? talent.rate ?? undefined,
+        max_rate: talent.max_rate ?? talent.rate ?? undefined,
         freelance_only: talent.freelance_only || false,
         remote_only: talent.remote_only || false,
         skills: talent.skills || "",
@@ -199,15 +200,33 @@ export function EditTalentModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="rate">Rate</Label>
-              <Input
-                id="rate"
-                type="number"
-                value={formData.rate || 0}
-                onChange={(e) =>
-                  setFormData({ ...formData, rate: Number(e.target.value) })
-                }
-              />
+              <Label>Hourly Rate (Min / Max)</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  id="min_rate"
+                  type="number"
+                  placeholder="Min"
+                  value={formData.min_rate ?? ""}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      min_rate: e.target.value === "" ? undefined : Number(e.target.value),
+                    })
+                  }
+                />
+                <Input
+                  id="max_rate"
+                  type="number"
+                  placeholder="Max"
+                  value={formData.max_rate ?? ""}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      max_rate: e.target.value === "" ? undefined : Number(e.target.value),
+                    })
+                  }
+                />
+              </div>
             </div>
             <div>
               <Label htmlFor="skills">Skills</Label>

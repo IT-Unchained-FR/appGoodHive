@@ -17,6 +17,7 @@ import { Metadata } from "next";
 
 import { getProfileData } from "@/lib/fetch-profile-data";
 import Image from "next/image";
+import { formatRateRange } from "@/app/utils/format-rate-range";
 
 export const metadata: Metadata = {
   title: "Talent Profile - Admin View | GoodHive",
@@ -47,7 +48,9 @@ type UserProfile = {
   skills: string;
   freelance_only: boolean;
   remote_only: boolean;
-  rate: number;
+  min_rate?: number;
+  max_rate?: number;
+  rate?: number;
   last_active: string;
   availability: boolean;
   talent_status: string;
@@ -78,6 +81,12 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
       minute: "2-digit",
     });
   };
+  const rateLabel = formatRateRange({
+    minRate: user.min_rate ?? user.rate,
+    maxRate: user.max_rate ?? user.rate,
+    currency: "$",
+    suffix: "/hr",
+  });
   return (
     <div className="my-8 bg-white shadow-lg rounded-lg overflow-hidden max-w-3xl mx-auto">
       <div className="bg-gradient-to-r from-yellow-300 to-yellow-500 p-6 text-white">
@@ -163,7 +172,7 @@ export default async function MyProfilePage(context: MyProfilePageProps) {
           </div>
           <div className="flex items-center space-x-2 text-gray-600">
             <DollarSign size={18} />
-            <span>${user.rate}/hr</span>
+            <span>{rateLabel}</span>
           </div>
           {/* <div className="flex items-center space-x-2 text-gray-600">
             <User size={18} />

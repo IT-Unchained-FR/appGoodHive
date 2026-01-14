@@ -21,5 +21,32 @@ export const talentProfileValidation = yup.object().shape({
   cv_url: yup.string().url("Invalid URL format").required("CV URL is required"),
   skills: yup.mixed().required("Skills are required"),
   telegram: yup.string().required("Telegram is required"),
-  rate: yup.number(),
-});
+  min_rate: yup
+    .number()
+    .transform((value, originalValue) =>
+      originalValue === "" || originalValue === null ? undefined : value,
+    )
+    .min(0, "Minimum rate must be at least 0"),
+  max_rate: yup
+    .number()
+    .transform((value, originalValue) =>
+      originalValue === "" || originalValue === null ? undefined : value,
+    )
+    .min(0, "Maximum rate must be at least 0")
+    .when("min_rate", (minRate, schema) =>
+      minRate !== undefined
+        ? schema.min(minRate as number, "Maximum rate must be at least minimum rate")
+        : schema,
+    ),
+}).test(
+  "rate-range",
+  "Provide both minimum and maximum hourly rates",
+  (value) => {
+    const minRate = value?.min_rate;
+    const maxRate = value?.max_rate;
+    if (minRate === undefined && maxRate === undefined) {
+      return true;
+    }
+    return minRate !== undefined && maxRate !== undefined;
+  },
+);

@@ -13,6 +13,7 @@ import { analytics } from "@/lib/analytics";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { CompanyInfoGuard } from "./CompanyInfoGuard";
 import { useAuthCheck } from "@/app/hooks/useAuthCheck";
+import { formatRateRange } from "@/app/utils/format-rate-range";
 
 interface Props {
   jobId?: string; // UUID string
@@ -25,7 +26,9 @@ interface Props {
   image: string;
   country: string;
   city: string;
-  budget: number;
+  budget?: number;
+  rateMin?: number;
+  rateMax?: number;
   projectType: string;
   currency: string;
   description: string;
@@ -55,7 +58,9 @@ export const Card: FC<Props> = ({
   city,
   description,
   skills,
-  budget,
+  budget = 0,
+  rateMin,
+  rateMax,
   projectType,
   currency = "",
   escrowAmount,
@@ -150,6 +155,13 @@ export const Card: FC<Props> = ({
   const handleConnectWallet = () => {
     checkAuthAndShowConnectPrompt("view hourly rate", "access-protected");
   };
+
+  const rateMinValue =
+    type === "talent" ? (rateMin ?? (budget > 0 ? budget : undefined)) : undefined;
+  const rateMaxValue =
+    type === "talent" ? (rateMax ?? (budget > 0 ? budget : undefined)) : undefined;
+  const rateLabel = formatRateRange({ minRate: rateMinValue, maxRate: rateMaxValue });
+  const showRate = Boolean(rateLabel);
 
   return (
     <div className="group relative bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/40 rounded-2xl border border-amber-100/60 shadow-sm hover:shadow-2xl hover:border-[#FFC905]/30 transition-all duration-300 ease-in-out cursor-pointer flex flex-col backdrop-blur-sm">
@@ -388,7 +400,7 @@ export const Card: FC<Props> = ({
             {type === "talent" && (
               <>
                 <LastActiveStatus lastActiveTime={postedOn} />
-                {budget > 0 && (
+                {showRate && (
                   <div className={`relative bg-gradient-to-br from-emerald-500 via-green-500 to-teal-600 rounded-xl p-3 shadow-lg hover:shadow-xl transition-all duration-300 group overflow-hidden ${!isAuthenticated ? 'cursor-pointer' : ''}`}>
                     {/* Shine effect */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
@@ -421,7 +433,7 @@ export const Card: FC<Props> = ({
                           <div className="text-[10px] text-white/80 font-medium uppercase tracking-wide">Hourly Rate</div>
                           <div className="text-xl font-bold text-white flex items-baseline gap-0.5">
                             <span className="text-base">{currency}</span>
-                            <span>{budget}</span>
+                            <span>{rateLabel}</span>
                             <span className="text-sm font-medium text-white/90">/hr</span>
                           </div>
                         </div>

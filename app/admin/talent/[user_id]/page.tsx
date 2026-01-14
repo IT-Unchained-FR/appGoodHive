@@ -21,6 +21,7 @@ import { getProfileData } from "@/lib/fetch-profile-data";
 import Image from "next/image";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import SafeHTML from "@/app/components/SafeHTML";
+import { formatRateRange } from "@/app/utils/format-rate-range";
 
 export const metadata: Metadata = {
   title: "Admin Talent Management - GoodHive",
@@ -150,10 +151,17 @@ export default async function Page(context: MyProfilePageProps) {
               <Globe size={18} />
               <span>{user.remote_only ? "Remote Only" : "Open to On-site"}</span>
             </div>
-            <div className="flex items-center space-x-2 text-gray-600">
-              <DollarSign size={18} />
-              <span>${user.rate}/hr</span>
-            </div>
+          <div className="flex items-center space-x-2 text-gray-600">
+            <DollarSign size={18} />
+            <span>
+              {formatRateRange({
+                minRate: user.min_rate ?? user.rate,
+                maxRate: user.max_rate ?? user.rate,
+                currency: "$",
+                suffix: "/hr",
+              })}
+            </span>
+          </div>
             {/* <div className="flex items-center space-x-2 text-gray-600">
               <User size={18} />
               <span>ID: {user.id}</span>
