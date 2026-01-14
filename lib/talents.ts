@@ -36,6 +36,8 @@ export async function fetchTalents({
   remoteOnly = "",
   freelanceOnly = "",
   sort = "recent",
+  minRate = "",
+  maxRate = "",
 }: {
   search?: string;
   location?: string;
@@ -49,6 +51,8 @@ export async function fetchTalents({
   remoteOnly?: string;
   freelanceOnly?: string;
   sort?: string;
+  minRate?: string;
+  maxRate?: string;
 }) {
   try {
     // Build dynamic WHERE conditions
@@ -132,6 +136,28 @@ export async function fetchTalents({
 
     if (freelanceOnly === "true") {
       whereConditions.push("COALESCE(freelance_only::text, 'false') = 'true'");
+    }
+
+    // Rate range filter - uses min_rate/max_rate with fallback to legacy rate field
+    // For legacy users who only have 'rate', we treat it as both min and max
+    if (minRate) {
+      const minRateNum = parseFloat(minRate);
+      if (!isNaN(minRateNum)) {
+        whereConditions.push(
+          `COALESCE(max_rate, min_rate, NULLIF(rate, '')::NUMERIC) >= $${++paramIndex}`
+        );
+        params.push(minRateNum);
+      }
+    }
+
+    if (maxRate) {
+      const maxRateNum = parseFloat(maxRate);
+      if (!isNaN(maxRateNum)) {
+        whereConditions.push(
+          `COALESCE(min_rate, max_rate, NULLIF(rate, '')::NUMERIC) <= $${++paramIndex}`
+        );
+        params.push(maxRateNum);
+      }
     }
 
     const whereClause = whereConditions.join(" AND ");

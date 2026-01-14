@@ -17,6 +17,7 @@ import {
   Clock,
   Globe2,
   BriefcaseBusiness,
+  DollarSign,
 } from "lucide-react";
 
 const TALENT_SORT_LABELS: Record<string, string> = {
@@ -54,6 +55,8 @@ export default async function SearchTalentsPage({
     remoteOnly?: string;
     freelanceOnly?: string;
     sort?: string;
+    minRate?: string;
+    maxRate?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -210,6 +213,16 @@ export default async function SearchTalentsPage({
                 {params.freelanceOnly === "true" && (
                   <span className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 text-amber-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
                     <BriefcaseBusiness className="w-4 h-4 mr-1" /> Freelance Only
+                  </span>
+                )}
+                {(params.minRate || params.maxRate) && (
+                  <span className="bg-gradient-to-r from-green-50 to-teal-50 border border-green-200 text-green-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
+                    <DollarSign className="w-4 h-4 mr-1" /> Rate:{" "}
+                    {params.minRate && params.maxRate
+                      ? `$${params.minRate}–$${params.maxRate}/hr`
+                      : params.minRate
+                        ? `$${params.minRate}+/hr`
+                        : `Up to $${params.maxRate}/hr`}
                   </span>
                 )}
                 {params.sort && params.sort !== "recent" && (

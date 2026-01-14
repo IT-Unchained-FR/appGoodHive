@@ -16,6 +16,7 @@ const PUBLIC_PATHS = [
   "/",
   "/about-us",  // Public about us page
   "/blog",  // Allow access to blog pages
+  "/contact",  // Public contact page
   "/talents/job-search",
   "/companies/search-talents",
   "/talents/",  // Allow viewing talent profiles

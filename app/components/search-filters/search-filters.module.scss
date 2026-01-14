@@ -705,3 +705,78 @@
     font-size: 0.9rem;
   }
 }
+
+/* Rate filter styles */
+.rateFilterInputs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rateInput {
+  flex: 1;
+  min-width: 0;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(229, 231, 235, 0.9);
+  background: white;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.85rem;
+  color: var(--gh-gray-700);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rateInput:focus {
+  outline: none;
+  border-color: var(--gh-amber-400);
+  box-shadow: 0 8px 16px -12px rgba(245, 158, 11, 0.45);
+}
+
+.rateInput::placeholder {
+  color: var(--gh-gray-400);
+}
+
+/* Hide number input spinners */
+.rateInput::-webkit-outer-spin-button,
+.rateInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.rateInput[type=number] {
+  -moz-appearance: textfield;
+}
+
+.rateSeparator {
+  font-size: 0.9rem;
+  color: var(--gh-gray-400);
+  flex-shrink: 0;
+}
+
+.applyRateButton {
+  width: 100%;
+  border: none;
+  border-radius: 0.75rem;
+  background: linear-gradient(90deg, var(--gh-amber-500), var(--gh-yellow-500));
+  color: white;
+  padding: 0.65rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.2s ease, box-shadow 0.2s ease;
+}
+
+.applyRateButton:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 8px 18px -10px rgba(245, 158, 11, 0.5);
+}
+
+.rateFilterRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rateFilterRow .drawerInput {
+  flex: 1;
+  min-width: 0;
+}

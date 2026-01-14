@@ -87,6 +87,8 @@ type FilterUpdates = {
   availability?: boolean;
   remoteOnly?: boolean;
   freelanceOnly?: boolean;
+  minRate?: string;
+  maxRate?: string;
 };
 
 type SortOption = {
@@ -250,6 +252,8 @@ export const SearchFilters = ({
   const [remoteOnlyPreference, setRemoteOnlyPreference] = useState(false);
   const [freelanceOnlyPreference, setFreelanceOnlyPreference] = useState(false);
   const [sortOrder, setSortOrder] = useState(defaultSort);
+  const [minRateFilter, setMinRateFilter] = useState("");
+  const [maxRateFilter, setMaxRateFilter] = useState("");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   useEffect(() => {
@@ -278,6 +282,9 @@ export const SearchFilters = ({
     setAvailabilityOnly(searchParams.get("availability") === "true");
     setRemoteOnlyPreference(searchParams.get("remoteOnly") === "true");
     setFreelanceOnlyPreference(searchParams.get("freelanceOnly") === "true");
+
+    setMinRateFilter(searchParams.get("minRate") || "");
+    setMaxRateFilter(searchParams.get("maxRate") || "");
 
     setSortOrder(searchParams.get("sort") || defaultSort);
   }, [searchParams, defaultSort]);
@@ -426,6 +433,20 @@ export const SearchFilters = ({
         } else {
           params.delete("freelanceOnly");
         }
+
+        const nextMinRate = updates.minRate ?? minRateFilter;
+        if (nextMinRate.trim()) {
+          params.set("minRate", nextMinRate.trim());
+        } else {
+          params.delete("minRate");
+        }
+
+        const nextMaxRate = updates.maxRate ?? maxRateFilter;
+        if (nextMaxRate.trim()) {
+          params.set("maxRate", nextMaxRate.trim());
+        } else {
+          params.delete("maxRate");
+        }
       }
 
       const query = params.toString();
@@ -454,6 +475,8 @@ export const SearchFilters = ({
       openToRecruiter,
       openToTalents,
       remoteOnlyPreference,
+      minRateFilter,
+      maxRateFilter,
       router,
       searchParams,
       sortOrder,
@@ -521,6 +544,8 @@ export const SearchFilters = ({
     setAvailabilityOnly(false);
     setRemoteOnlyPreference(false);
     setFreelanceOnlyPreference(false);
+    setMinRateFilter("");
+    setMaxRateFilter("");
     setSortOrder(defaultSort);
     setIsDrawerOpen(false);
     router.replace(basePath, { scroll: false });
@@ -550,7 +575,9 @@ export const SearchFilters = ({
         onlyRecruiter ||
         availabilityOnly ||
         remoteOnlyPreference ||
-        freelanceOnlyPreference);
+        freelanceOnlyPreference ||
+        Boolean(minRateFilter.trim()) ||
+        Boolean(maxRateFilter.trim()));
 
     const sortActive = sortOrder !== defaultSort;
 
@@ -574,6 +601,8 @@ export const SearchFilters = ({
     openToRecruiter,
     openToTalents,
     remoteOnlyPreference,
+    minRateFilter,
+    maxRateFilter,
     sortOrder,
     country,
   ]);
@@ -702,6 +731,16 @@ export const SearchFilters = ({
     },
     [applyFilters],
   );
+
+  const handleRateFilterApply = useCallback(() => {
+    applyFilters({ minRate: minRateFilter, maxRate: maxRateFilter });
+  }, [applyFilters, minRateFilter, maxRateFilter]);
+
+  const handleClearRateFilter = useCallback(() => {
+    setMinRateFilter("");
+    setMaxRateFilter("");
+    applyFilters({ minRate: "", maxRate: "" });
+  }, [applyFilters]);
 
   const jobSortOptions = JOB_SORT_OPTIONS;
   const talentSortOptions = TALENT_SORT_OPTIONS;
@@ -994,6 +1033,57 @@ export const SearchFilters = ({
                     </div>
                   )}
                 </FilterChip>
+
+                <FilterChip
+                  label="Hourly rate"
+                  active={Boolean(minRateFilter.trim()) || Boolean(maxRateFilter.trim())}
+                >
+                  {(close) => (
+                    <div className={styles.panelList}>
+                      <div className={styles.rateFilterInputs}>
+                        <input
+                          type="number"
+                          value={minRateFilter}
+                          onChange={(e) => setMinRateFilter(e.target.value)}
+                          placeholder="Min $"
+                          min="0"
+                          className={styles.rateInput}
+                        />
+                        <span className={styles.rateSeparator}>–</span>
+                        <input
+                          type="number"
+                          value={maxRateFilter}
+                          onChange={(e) => setMaxRateFilter(e.target.value)}
+                          placeholder="Max $"
+                          min="0"
+                          className={styles.rateInput}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className={styles.applyRateButton}
+                        onClick={() => {
+                          handleRateFilterApply();
+                          close();
+                        }}
+                      >
+                        Apply
+                      </button>
+                      {(minRateFilter || maxRateFilter) && (
+                        <button
+                          type="button"
+                          className={styles.chipClearLink}
+                          onClick={() => {
+                            handleClearRateFilter();
+                            close();
+                          }}
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </FilterChip>
               </>
             )}
 
@@ -1267,6 +1357,31 @@ export const SearchFilters = ({
                                 checked={freelanceOnlyPreference}
                                 label="Freelance only"
                                 onChange={handleFreelancePreferenceChange}
+                              />
+                            </div>
+                          </div>
+
+                          <div className={styles.drawerFieldGroup}>
+                            <label className={styles.drawerFieldLabel}>
+                              Hourly rate (USD)
+                            </label>
+                            <div className={styles.rateFilterRow}>
+                              <input
+                                type="number"
+                                value={minRateFilter}
+                                onChange={(e) => setMinRateFilter(e.target.value)}
+                                placeholder="Min"
+                                min="0"
+                                className={styles.drawerInput}
+                              />
+                              <span className={styles.rateSeparator}>–</span>
+                              <input
+                                type="number"
+                                value={maxRateFilter}
+                                onChange={(e) => setMaxRateFilter(e.target.value)}
+                                placeholder="Max"
+                                min="0"
+                                className={styles.drawerInput}
                               />
                             </div>
                           </div>
