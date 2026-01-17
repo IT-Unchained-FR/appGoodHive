@@ -59,7 +59,7 @@ export const TalentSocialMedia: FC<Props> = (props) => {
         <div className="flex gap-2">
           {linkedin && (
             <Link
-              href={{ pathname: linkedin }}
+              href={linkedin}
               target="_blank"
               className="relative w-7 h-7 rounded-full"
             >
@@ -79,7 +79,7 @@ export const TalentSocialMedia: FC<Props> = (props) => {
 
           {github && (
             <Link
-              href={{ pathname: github }}
+              href={github}
               target="_blank"
               className="relative w-7 h-7 rounded-full"
             >
@@ -88,7 +88,7 @@ export const TalentSocialMedia: FC<Props> = (props) => {
           )}
           {stackoverflow && (
             <Link
-              href={{ pathname: stackoverflow }}
+              href={stackoverflow}
               target="_blank"
               className="relative w-7 h-7 rounded-full"
             >
@@ -97,7 +97,7 @@ export const TalentSocialMedia: FC<Props> = (props) => {
           )}
           {twitter && (
             <Link
-              href={{ pathname: twitter }}
+              href={twitter}
               target="_blank"
               className="relative w-7 h-7 rounded-full"
             >
@@ -111,7 +111,7 @@ export const TalentSocialMedia: FC<Props> = (props) => {
           )}
           {portfolio && (
             <Link
-              href={{ pathname: portfolio }}
+              href={portfolio}
               target="_blank"
               className="relative w-7 h-7 rounded-full"
             >
