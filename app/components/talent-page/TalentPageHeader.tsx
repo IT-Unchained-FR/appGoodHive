@@ -9,6 +9,9 @@ import { useAuth } from "@/app/contexts/AuthContext";
 import { CompanyInfoGuard } from "@/app/components/CompanyInfoGuard";
 import { useConnectModal } from "thirdweb/react";
 import { connectModalOptions } from "@/lib/auth/walletConfig";
+import { MessageBoxModal } from "@/app/components/message-box-modal";
+import { useAuthCheck } from "@/app/hooks/useAuthCheck";
+import toast from "react-hot-toast";
 import styles from "./TalentPageHeader.module.scss";
 
 interface TalentPageHeaderProps {
@@ -41,12 +44,102 @@ export const TalentPageHeader = ({
   approved_roles,
 }: TalentPageHeaderProps) => {
   const [imageError, setImageError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isPopupModal, setIsPopupModal] = useState(false);
   const { isAuthenticated } = useAuth();
   const { connect } = useConnectModal();
+  const { user_id: currentUserId, checkAuthAndShowConnectPrompt } = useAuthCheck();
 
-  const handleContactClick = () => {
-    if (email) {
-      window.location.href = `mailto:${email}`;
+  const handleContactClick = async () => {
+    // Check if user is authenticated first
+    if (!checkAuthAndShowConnectPrompt("contact this talent")) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const companyData = await fetch(
+        `/api/companies/my-profile?userId=${currentUserId}`,
+      );
+
+      if (!companyData.ok) {
+        toast.error("You don't have a company profile yet! Please create one.");
+        setIsLoading(false);
+        return;
+      }
+
+      const userProfile = await companyData.json();
+      if (!userProfile.approved) {
+        setIsLoading(false);
+        toast.error(
+          "Only verified companies can contact talent! Please wait for your company to be verified.",
+        );
+        return;
+      }
+      setIsLoading(false);
+      setIsPopupModal(true);
+    } catch (error) {
+      setIsLoading(false);
+      toast.error("Something went wrong. Please try again.");
+    }
+  };
+
+  const handlePopupModalClose = () => {
+    setIsPopupModal(false);
+  };
+
+  const handleSubmitMessage = async (message: string) => {
+    if (!message) {
+      toast.error("Please enter a message!");
+      return;
+    }
+    if (!currentUserId) {
+      checkAuthAndShowConnectPrompt("send a message");
+      return;
+    }
+    try {
+      setIsPopupModal(false);
+      const companyData = await fetch(
+        `/api/companies/my-profile?userId=${currentUserId}`,
+      );
+
+      if (!companyData.ok) {
+        toast.error("You don't have a company profile yet! Please create one.");
+        return;
+      }
+
+      const userProfile = await companyData.json();
+      if (!userProfile.approved) {
+        toast.error(
+          "Only verified companies can contact talent! Please wait for your company to be verified.",
+        );
+        return;
+      }
+
+      const fullName = `${first_name} ${last_name}`;
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        body: JSON.stringify({
+          name: userProfile?.designation,
+          toUserName: fullName,
+          email: email,
+          type: "contact-talent",
+          subject: `Goodhive - ${userProfile?.designation} interested in your profile`,
+          userEmail: userProfile?.email,
+          message,
+          userProfile: `${window.location.origin}/companies/${currentUserId}`,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!response.ok) {
+        throw new Error("Something went wrong!");
+      } else {
+        toast.success("Message sent successfully!");
+      }
+    } catch (error) {
+      toast.error("Something went wrong!");
     }
   };
 
@@ -165,9 +258,19 @@ export const TalentPageHeader = ({
               onClick={handleContactClick}
               className={styles.ctaButton}
               aria-label={`Contact ${fullName}`}
+              disabled={isLoading}
             >
-              <Mail size={18} />
-              Contact Me
+              {isLoading ? (
+                <>
+                  <span className={styles.spinner}></span>
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <Mail size={18} />
+                  Contact Me
+                </>
+              )}
             </button>
           ) : (
             <button
@@ -180,6 +283,16 @@ export const TalentPageHeader = ({
             </button>
           )}
         </div>
+
+        {/* Message Modal */}
+        {isPopupModal && (
+          <MessageBoxModal
+            title="Write your message:"
+            messageLengthLimit={30}
+            onSubmit={handleSubmitMessage}
+            onClose={handlePopupModalClose}
+          />
+        )}
       </div>
     </div>
   );
