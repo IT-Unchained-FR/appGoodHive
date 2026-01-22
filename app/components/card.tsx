@@ -365,10 +365,50 @@ export const Card: FC<Props> = ({
               )}
             </div>
           )}
-        </div>
 
-        {/* Spacer to push footer to bottom */}
-        <div className="flex-grow"></div>
+          {type === "talent" && showRate && (
+            <div className="mt-3">
+              {!isAuthenticated ? (
+                <button
+                  type="button"
+                  onClick={handleConnectWallet}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50/80 px-3 py-1 text-[11px] font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100"
+                  aria-label="Connect to view rate"
+                >
+                  <svg
+                    className="h-3.5 w-3.5 text-emerald-600"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M5 8a5 5 0 1110 0v2h1a1 1 0 011 1v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a1 1 0 011-1h1V8zm2 0a3 3 0 116 0v2H7V8z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  Connect to View Rate
+                </button>
+              ) : (
+                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 px-3 py-1 text-[11px] font-semibold text-emerald-800 shadow-sm">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                    <svg
+                      className="h-3.5 w-3.5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.5a.75.75 0 00-1.5 0v.16c-.62.08-1.19.3-1.67.63-.62.44-1.08 1.13-1.08 1.96 0 .84.46 1.52 1.08 1.96.46.32 1.02.54 1.67.63v1.47c-.37-.1-.69-.28-.93-.52a.75.75 0 10-1.06 1.06c.47.47 1.12.77 1.99.86v.15a.75.75 0 001.5 0v-.15c.62-.08 1.19-.3 1.67-.63.62-.44 1.08-1.12 1.08-1.96 0-.83-.46-1.52-1.08-1.96-.46-.33-1.02-.55-1.67-.63V8.97c.37.1.69.28.93.52a.75.75 0 101.06-1.06c-.47-.47-1.12-.77-1.99-.86V6.5z" />
+                    </svg>
+                  </span>
+                  <span className="text-emerald-700">{currency}</span>
+                  <span>{rateLabel}</span>
+                  <span className="text-emerald-600">/hr</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Footer */}
         <div className="pt-3 border-t border-amber-200/50 mt-auto">
@@ -400,54 +440,6 @@ export const Card: FC<Props> = ({
             {type === "talent" && (
               <>
                 <LastActiveStatus lastActiveTime={postedOn} />
-                {showRate && (
-                  <div className={`relative bg-gradient-to-br from-emerald-500 via-green-500 to-teal-600 rounded-xl p-3 shadow-lg hover:shadow-xl transition-all duration-300 group overflow-hidden ${!isAuthenticated ? 'cursor-pointer' : ''}`}>
-                    {/* Shine effect */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-
-                    {/* Blur overlay for non-authenticated users */}
-                    {!isAuthenticated && (
-                      <button
-                        type="button"
-                        onClick={handleConnectWallet}
-                        aria-label="Connect to view rate"
-                        className="absolute inset-0 backdrop-blur-sm bg-white/10 flex items-center justify-center z-10 rounded-xl cursor-pointer"
-                      >
-                        <div className="text-center px-2">
-                          <div className="text-white/90 text-xs font-semibold mb-1">🔒 Connect to View Rate</div>
-                          <div className="text-white/70 text-[10px]">Sign in to see hourly rates</div>
-                        </div>
-                      </button>
-                    )}
-
-                    {/* Content */}
-                    <div className="relative flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                          <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <div>
-                          <div className="text-[10px] text-white/80 font-medium uppercase tracking-wide">Hourly Rate</div>
-                          <div className="text-xl font-bold text-white flex items-baseline gap-0.5">
-                            <span className="text-base">{currency}</span>
-                            <span>{rateLabel}</span>
-                            <span className="text-sm font-medium text-white/90">/hr</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Sparkle icon */}
-                      <div className="text-yellow-300 animate-pulse">
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                )}
                 {(freelancer || remote) && (
                   <div className="flex items-center gap-1 text-xs">
                     {freelancer && remote ? (
