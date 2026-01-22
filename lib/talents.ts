@@ -1,5 +1,6 @@
 import sql from "@/lib/db";
 import { getCountrySearchTerms } from "@/lib/country-mapping";
+import { getViewerApproval, maskName } from "@/lib/access-control";
 
 function contains(str: string) {
   return "%" + str.toLowerCase() + "%";
@@ -38,6 +39,7 @@ export async function fetchTalents({
   sort = "recent",
   minRate = "",
   maxRate = "",
+  viewerUserId,
 }: {
   search?: string;
   location?: string;
@@ -53,8 +55,12 @@ export async function fetchTalents({
   sort?: string;
   minRate?: string;
   maxRate?: string;
+  viewerUserId?: string;
 }) {
   try {
+    const { isApproved: canViewSensitive } =
+      await getViewerApproval(viewerUserId);
+
     // Build dynamic WHERE conditions
     let whereConditions = ["approved = true"];
     let params: any[] = [];
@@ -197,18 +203,20 @@ export async function fetchTalents({
     console.log("Talents found:", talentsCursor.length);
 
     const talents: any[] = talentsCursor.map((talent) => {
+      const maskedName = maskName(talent.first_name, talent.last_name);
+
       return {
         title: talent.title,
         description: safeBase64Decode(talent.description),
-        firstName: talent.first_name,
-        lastName: talent.last_name,
+        firstName: canViewSensitive ? talent.first_name : maskedName.firstName,
+        lastName: canViewSensitive ? talent.last_name : maskedName.lastName,
         country: talent.country,
         city: talent.city,
-        phoneCountryCode: talent.phone_country_code,
+        phoneCountryCode: canViewSensitive ? talent.phone_country_code : undefined,
         skills: talent.skills?.split(",") || [],
-        email: talent.email,
+        email: canViewSensitive ? talent.email : undefined,
         aboutWork: safeBase64Decode(talent.about_work),
-        telegram: talent.telegram,
+        telegram: canViewSensitive ? talent.telegram : undefined,
         minRate:
           talent.min_rate !== null && talent.min_rate !== undefined
             ? Number(talent.min_rate)
@@ -223,7 +231,7 @@ export async function fetchTalents({
               : undefined,
         currency: talent.currency,
         imageUrl: talent.image_url,
-        walletAddress: talent.wallet_address,
+        walletAddress: canViewSensitive ? talent.wallet_address : undefined,
         freelancer: talent.freelance_only ? true : false,
         remote: talent.remote_only ? true : false,
         availability: talent.availability,

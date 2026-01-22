@@ -15,9 +15,9 @@ export interface TalentData {
   city: string;
   phoneCountryCode: string;
   skills: string[];
-  email: string;
+  email?: string;
   aboutWork: string;
-  telegram: string;
+  telegram?: string;
   minRate?: number;
   maxRate?: number;
   currency: string;

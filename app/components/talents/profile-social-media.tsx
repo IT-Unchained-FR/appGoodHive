@@ -3,8 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { FC, useEffect, useState } from "react";
-
-import Cookies from "js-cookie";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 type Props = {
   linkedin?: string;
@@ -18,34 +17,16 @@ type Props = {
 export const TalentSocialMedia: FC<Props> = (props) => {
   const { linkedin, telegram, github, stackoverflow, portfolio, twitter } =
     props;
+  const { user } = useAuth();
   const [isShowDetails, setIsShowDetails] = useState(false);
 
-  const user_id = Cookies.get("user_id");
-
-  const fetchCompanyData = async () => {
-    const userDataResponse = await fetch(
-      `/api/companies/my-profile?userId=${user_id}`,
-    );
-
-    if (!userDataResponse.ok) {
-      setIsShowDetails(false);
-      return;
-    }
-
-    const userProfile = await userDataResponse.json();
-    if (userProfile.approved) {
-      setIsShowDetails(true);
-      return;
-    } else {
-      setIsShowDetails(false);
-    }
-  };
   useEffect(() => {
-    if (user_id) {
-      fetchCompanyData();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user_id]);
+    const canViewSensitive =
+      !!user &&
+      (user.talent_status === "approved" ||
+        user.recruiter_status === "approved");
+    setIsShowDetails(canViewSensitive);
+  }, [user]);
 
   return (
     <div className="flex flex-col mb-10">

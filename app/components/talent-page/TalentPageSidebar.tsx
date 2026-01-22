@@ -52,8 +52,13 @@ export const TalentPageSidebar = ({
   portfolio,
   stackoverflow,
 }: TalentPageSidebarProps) => {
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const { connect } = useConnectModal();
+
+  const canViewSensitive =
+    !!user &&
+    (user.talent_status === "approved" ||
+      user.recruiter_status === "approved");
 
   const handleConnectWallet = () => {
     if (connect) {
@@ -96,10 +101,10 @@ export const TalentPageSidebar = ({
 
       {/* Availability & Rate Card */}
       {rateLabel && (
-        <div className={`${styles.availabilityCard} ${!isAuthenticated ? styles.blurredCard : ''}`}>
+        <div className={`${styles.availabilityCard} ${!canViewSensitive ? styles.blurredCard : ''}`}>
           <h3 className={styles.availabilityTitle}>Hourly Rate</h3>
 
-          {isAuthenticated ? (
+          {canViewSensitive ? (
             <>
               <div className={styles.rateDisplay}>
                 <DollarSign
@@ -142,10 +147,10 @@ export const TalentPageSidebar = ({
       )}
 
       {/* Social Links Card */}
-      <div className={`${styles.socialCard} ${!isAuthenticated ? styles.blurredCard : ''}`}>
+      <div className={`${styles.socialCard} ${!canViewSensitive ? styles.blurredCard : ''}`}>
         <h3 className={styles.socialTitle}>Connect</h3>
 
-        {isAuthenticated ? (
+        {canViewSensitive ? (
           hasSocialLinks ? (
             <div className={styles.socialLinks}>
               {socialLinks.map((link, index) => (

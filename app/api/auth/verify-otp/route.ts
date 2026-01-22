@@ -224,6 +224,9 @@ export async function POST(req: Request) {
       thirdweb_wallet_address: user.thirdweb_wallet_address,
       auth_method: user.auth_method,
       email_verified: true,
+      talent_status: user.talent_status || "pending",
+      mentor_status: user.mentor_status || "pending",
+      recruiter_status: user.recruiter_status || "pending",
     }), {
       httpOnly: false,
       secure: process.env.NODE_ENV === "production",

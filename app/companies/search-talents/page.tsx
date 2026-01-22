@@ -2,6 +2,7 @@ import TalentResult from "./talent-result";
 import { Pagination } from "@/app/components/pagination";
 import { fetchTalents } from "@/lib/talents";
 import { Metadata } from "next";
+import { cookies } from "next/headers";
 import {
   ArrowDownUp,
   Users,
@@ -60,6 +61,7 @@ export default async function SearchTalentsPage({
   }>;
 }) {
   const params = await searchParams;
+  const viewerUserId = cookies().get("user_id")?.value;
   console.log("Search params received:", params);
 
   const currentPage = Number(params.page) || 1;
@@ -85,7 +87,10 @@ export default async function SearchTalentsPage({
     )
   };
 
-  const { talents, count } = (await fetchTalents(fetchQuery)) || {
+  const { talents, count } = (await fetchTalents({
+    ...fetchQuery,
+    viewerUserId,
+  })) || {
     talents: [],
     count: 0,
   };

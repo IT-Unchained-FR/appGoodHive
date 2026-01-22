@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { MapPin, Mail, Briefcase, Award, Users } from "lucide-react";
+import { MapPin, Mail, Briefcase, Award, Users, Lock } from "lucide-react";
 import LastActiveStatus from "@/app/components/LastActiveStatus";
 import { generateCountryFlag } from "@/app/utils/generate-country-flag";
 import { useAuth } from "@/app/contexts/AuthContext";
@@ -46,7 +46,7 @@ export const TalentPageHeader = ({
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isPopupModal, setIsPopupModal] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const { connect } = useConnectModal();
   const { user_id: currentUserId, checkAuthAndShowConnectPrompt } = useAuthCheck();
 
@@ -149,6 +149,10 @@ export const TalentPageHeader = ({
     }
   };
 
+  const canViewSensitive =
+    !!user &&
+    (user.talent_status === "approved" ||
+      user.recruiter_status === "approved");
   const fullName = `${first_name} ${last_name}`;
   const location = city && country ? `${city}, ${country}` : city || country || "";
 
@@ -183,7 +187,7 @@ export const TalentPageHeader = ({
 
         {/* Info Section */}
         <div className={styles.infoSection}>
-          {isAuthenticated ? (
+          {canViewSensitive ? (
             <h1 className={styles.name}>{fullName}</h1>
           ) : (
             <h1 className={styles.name}>
@@ -191,6 +195,7 @@ export const TalentPageHeader = ({
                 value={undefined}
                 seed={`${first_name}-${last_name}`}
                 isVisible={false}
+                allowTooltip={false}
                 textClassName={styles.name}
                 sizeClassName={styles.name}
                 blurAmount="blur-[8px]"
@@ -252,7 +257,7 @@ export const TalentPageHeader = ({
 
         {/* CTA Section */}
         <div className={styles.ctaSection}>
-          {isAuthenticated && email ? (
+          {canViewSensitive && email ? (
             <button
               type="button"
               onClick={handleContactClick}
@@ -279,7 +284,8 @@ export const TalentPageHeader = ({
               className={`${styles.ctaButton} ${styles.connectButton}`}
               aria-label="Connect to view contact"
             >
-              🔒 Connect to View Contact
+              <Lock size={18} />
+              Connect to View Contact
             </button>
           )}
         </div>

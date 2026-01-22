@@ -492,24 +492,7 @@ export async function POST(req: Request) {
         });
       }
 
-      // Fetch actual approval status from talents table
-      let talentApprovalStatus = "pending";
-      try {
-        const talentProfile = await sql`
-          SELECT approved
-          FROM goodhive.talents
-          WHERE user_id = ${user.userid}
-          LIMIT 1
-        `;
-
-        if (talentProfile.length > 0 && talentProfile[0].approved === true) {
-          talentApprovalStatus = "approved";
-        } else if (talentProfile.length > 0) {
-          talentApprovalStatus = "pending";
-        }
-      } catch (error) {
-        console.error("Error fetching talent approval status:", error);
-      }
+      const talentApprovalStatus = user.talent_status || "pending";
 
       response.cookies.set(
         "loggedIn_user",

@@ -14,6 +14,7 @@ interface CompanyInfoGuardProps {
   value?: string;
   seed?: string;
   isVisible: boolean;
+  allowTooltip?: boolean;
   className?: string;
   textClassName?: string;
   sizeClassName?: string;
@@ -52,6 +53,7 @@ export const CompanyInfoGuard = ({
   value,
   seed = "company",
   isVisible,
+  allowTooltip = true,
   className,
   textClassName,
   sizeClassName,
@@ -99,6 +101,9 @@ export const CompanyInfoGuard = ({
   };
 
   const handleMouseEnter = () => {
+    if (!allowTooltip) {
+      return;
+    }
     if (hideTimeoutRef.current) {
       clearTimeout(hideTimeoutRef.current);
       hideTimeoutRef.current = null;
@@ -107,6 +112,9 @@ export const CompanyInfoGuard = ({
   };
 
   const handleMouseLeave = () => {
+    if (!allowTooltip) {
+      return;
+    }
     hideTimeoutRef.current = setTimeout(() => {
       setShowTooltip(false);
     }, 150);
@@ -176,7 +184,7 @@ export const CompanyInfoGuard = ({
         </span>
       )}
 
-      {!isVisible && (
+      {!isVisible && allowTooltip && (
         <div
           className={classNames(
             tooltipBase,

@@ -169,6 +169,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
           email: userData.email,
           wallet_address: userData.wallet_address,
           auth_method: userData.auth_method || "email",
+          talent_status: userData.talent_status,
+          mentor_status: userData.mentor_status,
+          recruiter_status: userData.recruiter_status,
         };
 
         login(user);

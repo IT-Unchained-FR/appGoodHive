@@ -1,4 +1,5 @@
 import sql from "@/lib/db";
+import { getViewerApproval, maskName } from "@/lib/access-control";
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -159,6 +160,8 @@ export async function GET(request: NextRequest) {
     // Get user_id from query parameters
     const { searchParams } = new URL(request.url);
     const user_id = searchParams.get("user_id");
+    const viewerUserId =
+      request.headers.get("x-user-id") || request.cookies.get("user_id")?.value;
 
     if (!user_id) {
       return NextResponse.json(
@@ -212,6 +215,10 @@ export async function GET(request: NextRequest) {
     }
 
     const talent = talents[0];
+    const { isApproved: isViewerApproved } =
+      await getViewerApproval(viewerUserId);
+    const canViewSensitive =
+      isViewerApproved || (viewerUserId && viewerUserId === user_id);
 
     // Get approved roles from users table
     const users = await sql`
@@ -220,10 +227,23 @@ export async function GET(request: NextRequest) {
       WHERE userid = ${user_id}
     `;
 
+    const maskedName = maskName(talent.first_name, talent.last_name);
     const profileData = {
       ...talent,
-      description: safeBase64Decode(talent.description),
-      about_work: safeBase64Decode(talent.about_work),
+      first_name: canViewSensitive ? talent.first_name : maskedName.firstName,
+      last_name: canViewSensitive ? talent.last_name : maskedName.lastName,
+      email: canViewSensitive ? talent.email : null,
+      phone_country_code: canViewSensitive ? talent.phone_country_code : null,
+      phone_number: canViewSensitive ? talent.phone_number : null,
+      telegram: canViewSensitive ? talent.telegram : null,
+      linkedin: canViewSensitive ? talent.linkedin : null,
+      github: canViewSensitive ? talent.github : null,
+      twitter: canViewSensitive ? talent.twitter : null,
+      portfolio: canViewSensitive ? talent.portfolio : null,
+      stackoverflow: canViewSensitive ? talent.stackoverflow : null,
+      cv_url: canViewSensitive ? talent.cv_url : null,
+      description: canViewSensitive ? safeBase64Decode(talent.description) : null,
+      about_work: canViewSensitive ? safeBase64Decode(talent.about_work) : null,
       min_rate:
         talent.min_rate !== null && talent.min_rate !== undefined
           ? Number(talent.min_rate)
