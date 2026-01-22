@@ -34,9 +34,57 @@ export default function AdminTalentApproval() {
   const [selectedItems, setSelectedItems] = useState<ProfileData[]>([]);
   const [showBulkApproval, setShowBulkApproval] = useState(false);
 
+  const getTalentStatus = (user: ProfileData) => {
+    const status = user.talent_status;
+    if (status === "approved" || user.approved) {
+      return "approved";
+    }
+    if (status === "deferred") {
+      return "deferred";
+    }
+    if (status === "rejected") {
+      return "rejected";
+    }
+    if (status === "pending" || status === "in_review" || user.inReview) {
+      return "in_review";
+    }
+    return "in_review";
+  };
+
   const handleApproveClick = (user: ProfileData) => {
     setSelectedUser(user);
     setShowApprovePopup(true);
+  };
+
+  const handleStatusUpdate = async (
+    user: ProfileData,
+    status: "approved" | "in_review" | "rejected" | "deferred",
+  ) => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/admin/talents/status", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.user_id,
+          status,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update talent status");
+      }
+
+      toast.success("Talent status updated");
+      fetchPendingUsers();
+    } catch (error) {
+      console.error("Error updating talent status:", error);
+      toast.error("Failed to update talent status");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleItemSelection = (user: ProfileData) => {
@@ -158,27 +206,36 @@ export default function AdminTalentApproval() {
       header: "Status",
       width: "12%",
       exportValue: (row: ProfileData) => {
-        if (row.approved) return "Approved";
-        if (row.inReview) return "Pending";
-        return "Rejected";
+        const status = getTalentStatus(row);
+        if (status === "approved") return "Approved";
+        if (status === "deferred") return "Deferred";
+        if (status === "rejected") return "Rejected";
+        return "In Review";
       },
       render: (_value: unknown, row: ProfileData) => {
-        if (row.approved) {
+        const status = getTalentStatus(row);
+        if (status === "approved") {
           return (
             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
               Approved
             </Badge>
           );
-        } else if (row.inReview) {
+        } else if (status === "deferred") {
           return (
-            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-              Pending
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+              Deferred
+            </Badge>
+          );
+        } else if (status === "rejected") {
+          return (
+            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+              Rejected
             </Badge>
           );
         } else {
           return (
-            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-              Rejected
+            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+              In Review
             </Badge>
           );
         }
@@ -280,6 +337,33 @@ export default function AdminTalentApproval() {
               >
                 Approve
               </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  handleStatusUpdate(row, "in_review");
+                }}
+              >
+                Mark In Review
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  handleStatusUpdate(row, "deferred");
+                }}
+              >
+                Mark Deferred
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  handleStatusUpdate(row, "rejected");
+                }}
+              >
+                Reject
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -294,7 +378,7 @@ export default function AdminTalentApproval() {
 
       // Default to pending status if not specified
       if (!params.has('status')) {
-        params.set('status', 'pending');
+        params.set('status', 'in_review');
       }
 
       const url = `/api/admin/talents/pending${params.toString() ? `?${params.toString()}` : ''}`;
@@ -341,8 +425,9 @@ export default function AdminTalentApproval() {
           config={{
             dateFilter: true,
             statusFilter: [
-              { value: 'pending', label: 'Pending' },
+              { value: 'in_review', label: 'In Review' },
               { value: 'approved', label: 'Approved' },
+              { value: 'deferred', label: 'Deferred' },
               { value: 'rejected', label: 'Rejected' },
               { value: 'all', label: 'All statuses' },
             ],
@@ -361,6 +446,7 @@ export default function AdminTalentApproval() {
             sortOptions: [
               { value: 'latest', label: 'Latest first' },
               { value: 'oldest', label: 'Oldest first' },
+              { value: 'status', label: 'Status' },
               { value: 'name-asc', label: 'Name A-Z' },
               { value: 'name-desc', label: 'Name Z-A' },
               { value: 'email-asc', label: 'Email A-Z' },
@@ -408,7 +494,9 @@ export default function AdminTalentApproval() {
               selected={selectedItems.some((item) => item.user_id === user.user_id)}
               onSelect={() => toggleItemSelection(user)}
               onApprove={() => handleApproveClick(user)}
-              onReject={() => handleBulkReject([user.user_id])}
+              onReview={() => handleStatusUpdate(user, "in_review")}
+              onDefer={() => handleStatusUpdate(user, "deferred")}
+              onReject={() => handleStatusUpdate(user, "rejected")}
             />
           )}
         />
@@ -465,34 +553,50 @@ function TalentApprovalCard({
   selected,
   onSelect,
   onApprove,
+  onReview,
+  onDefer,
   onReject,
 }: {
   user: ProfileData;
   selected: boolean;
   onSelect: () => void;
   onApprove: () => void;
+  onReview: () => void;
+  onDefer: () => void;
   onReject: () => void;
 }) {
   const getStatusBadge = () => {
-    if (user.approved) {
+    const status = user.talent_status;
+    if (status === "approved" || user.approved) {
       return (
         <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
           Approved
         </Badge>
       );
-    } else if (user.inReview) {
+    } else if (status === "deferred") {
       return (
-        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-          Pending
+        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+          Deferred
         </Badge>
       );
-    } else {
+    } else if (status === "rejected") {
       return (
         <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
           Rejected
         </Badge>
       );
+    } else if (status === "pending" || status === "in_review" || user.inReview) {
+      return (
+        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+          In Review
+        </Badge>
+      );
     }
+    return (
+      <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+        In Review
+      </Badge>
+    );
   };
 
   return (
@@ -535,6 +639,12 @@ function TalentApprovalCard({
       <div className="flex flex-wrap gap-2">
         <Button size="sm" variant="outline" onClick={onApprove}>
           Approve
+        </Button>
+        <Button size="sm" variant="outline" onClick={onReview}>
+          In Review
+        </Button>
+        <Button size="sm" variant="outline" onClick={onDefer}>
+          Defer
         </Button>
         <Button size="sm" variant="destructive" onClick={onReject}>
           Reject

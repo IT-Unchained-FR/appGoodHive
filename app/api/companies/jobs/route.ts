@@ -20,9 +20,19 @@ export async function GET(request: NextRequest) {
     const jobsQuery = await sql`
       SELECT
         jo.*,
-        c.image_url as company_logo_url
+        c.image_url as company_logo_url,
+        COALESCE(app_counts.total_applications, 0) as application_count,
+        COALESCE(app_counts.new_applications, 0) as new_application_count
       FROM goodhive.job_offers jo
       LEFT JOIN goodhive.companies c ON jo.user_id = c.user_id
+      LEFT JOIN (
+        SELECT
+          job_id,
+          COUNT(*) as total_applications,
+          COUNT(*) FILTER (WHERE status = 'new') as new_applications
+        FROM goodhive.job_applications
+        GROUP BY job_id
+      ) app_counts ON jo.id = app_counts.job_id
       WHERE jo.user_id = ${userId}
     `;
 
@@ -51,6 +61,8 @@ export async function GET(request: NextRequest) {
       talent: item.talent === "true" || item.talent === true,
       postedAt: item.posted_at,
       block_id: item.block_id,
+      applicationCount: Number(item.application_count),
+      newApplicationCount: Number(item.new_application_count),
     }));
 
     return new Response(JSON.stringify(jobs), { status: 200 });

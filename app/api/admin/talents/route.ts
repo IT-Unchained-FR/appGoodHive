@@ -55,9 +55,13 @@ export async function GET(req: NextRequest) {
     // Approval status filter
     if (status && status !== 'all') {
       if (status === 'approved') {
-        conditions.push(sql`t.approved = true`);
-      } else if (status === 'pending') {
-        conditions.push(sql`t.approved = false OR t.approved IS NULL`);
+        conditions.push(sql`(u.talent_status = 'approved' OR t.approved = true)`);
+      } else if (status === 'pending' || status === 'in_review') {
+        conditions.push(sql`(u.talent_status IN ('pending', 'in_review') OR t.inreview = true)`);
+      } else if (status === 'deferred') {
+        conditions.push(sql`u.talent_status = 'deferred'`);
+      } else if (status === 'rejected') {
+        conditions.push(sql`(u.talent_status = 'rejected' OR (u.talent_status IS NULL AND t.approved = false AND t.inreview = false))`);
       }
     }
 
@@ -95,6 +99,13 @@ export async function GET(req: NextRequest) {
       'name-desc': sql`LOWER(t.first_name) DESC, LOWER(t.last_name) DESC`,
       'email-asc': sql`LOWER(t.email) ASC`,
       'email-desc': sql`LOWER(t.email) DESC`,
+      status: sql`CASE
+        WHEN u.talent_status = 'approved' OR t.approved = true THEN 1
+        WHEN u.talent_status IN ('pending', 'in_review') OR t.inreview = true THEN 2
+        WHEN u.talent_status = 'deferred' THEN 3
+        WHEN u.talent_status = 'rejected' OR (t.approved = false AND t.inreview = false) THEN 4
+        ELSE 5
+      END, t.created_at DESC`,
     };
     const orderBy = sortMap[sort] || sortMap.latest;
 

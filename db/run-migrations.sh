@@ -20,24 +20,29 @@ echo "================================"
 
 # Run each migration
 echo ""
-echo "[1/4] Adding created_at to referrals table..."
+echo "[1/5] Adding created_at to referrals table..."
 psql "$DATABASE_URL" -f db/migrations/add-created-at-to-referrals.sql
 echo "✓ Migration 1 complete"
 
 echo ""
-echo "[2/4] Adding performance indexes..."
+echo "[2/5] Adding performance indexes..."
 psql "$DATABASE_URL" -f db/migrations/add-admin-filter-indexes.sql
 echo "✓ Migration 2 complete"
 
 echo ""
-echo "[3/4] Adding created_at to all tables..."
+echo "[3/5] Adding created_at to all tables..."
 psql "$DATABASE_URL" -f db/migrations/add-created-at-to-all-tables.sql
 echo "✓ Migration 3 complete"
 
 echo ""
-echo "[4/4] Adding min/max hourly rate fields to talents..."
+echo "[4/5] Adding min/max hourly rate fields to talents..."
 psql "$DATABASE_URL" -f database/migrations/add_talent_rate_range.sql
 echo "✓ Migration 4 complete"
+
+echo ""
+echo "[5/5] Adding job applications table..."
+psql "$DATABASE_URL" -f db/migrations/add-job-applications.sql
+echo "✓ Migration 5 complete"
 
 echo ""
 echo "================================"

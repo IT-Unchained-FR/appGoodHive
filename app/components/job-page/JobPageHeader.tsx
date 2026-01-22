@@ -20,8 +20,11 @@ interface JobPageHeaderProps {
     title: string;
     company: {
       id: string;
+      userId?: string;
       name: string;
       logo?: string;
+      email?: string;
+      walletAddress?: string;
       city?: string;
       country?: string;
     };
@@ -114,7 +117,9 @@ export const JobPageHeader = ({ job }: JobPageHeaderProps) => {
     // Check real-time verification status from database
     setIsCheckingVerification(true);
     try {
-      const response = await fetch("/api/talents/verification-status");
+      const response = await fetch("/api/talents/verification-status", {
+        headers: user?.user_id ? { "x-user-id": user.user_id } : undefined,
+      });
 
       if (response.ok) {
         const { isApproved } = await response.json();
@@ -356,7 +361,7 @@ export const JobPageHeader = ({ job }: JobPageHeaderProps) => {
         />
       )}
 
-      {isApplicationPopupOpen && (
+      {isApplicationPopupOpen && job.company.userId && (
         <JobApplicationPopup
           isOpen={isApplicationPopupOpen}
           onClose={() => setIsApplicationPopupOpen(false)}
@@ -364,6 +369,7 @@ export const JobPageHeader = ({ job }: JobPageHeaderProps) => {
           companyName={job.company.name}
           companyEmail={job.company.email || ""}
           jobId={job.id}
+          companyUserId={job.company.userId}
           walletAddress={job.company.walletAddress || job.company.id}
         />
       )}

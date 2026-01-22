@@ -3,7 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get("x-user-id");
+    const userId =
+      request.headers.get("x-user-id") ||
+      request.nextUrl.searchParams.get("userId") ||
+      request.cookies.get("user_id")?.value;
 
     if (!userId) {
       return NextResponse.json(

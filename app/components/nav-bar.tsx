@@ -488,7 +488,7 @@ export const NavBar = () => {
                   chain={activeChain}
                   onDisconnect={handleWalletDisconnect}
                   theme="light"
-                  autoConnect={false}
+                  autoConnect
                   connectButton={{
                     label: "Connect Wallet",
                   }}

@@ -13,6 +13,7 @@ interface JobSummaryProps {
     id: number;
     title: string;
     companyName: string;
+    companyUserId?: string;
     description?: string;
     city: string;
     country: string;
@@ -87,7 +88,9 @@ export const JobSummarySection = ({
     // Check real-time verification status from database
     setIsCheckingVerification(true);
     try {
-      const response = await fetch("/api/talents/verification-status");
+      const response = await fetch("/api/talents/verification-status", {
+        headers: user?.user_id ? { "x-user-id": user.user_id } : undefined,
+      });
 
       if (response.ok) {
         const { isApproved } = await response.json();
@@ -254,14 +257,15 @@ export const JobSummarySection = ({
       )}
 
       {/* Job Application Popup */}
-      {isApplicationPopupOpen && companyEmail && walletAddress && (
+      {isApplicationPopupOpen && companyEmail && walletAddress && job.companyUserId && (
         <JobApplicationPopup
           isOpen={isApplicationPopupOpen}
           onClose={() => setIsApplicationPopupOpen(false)}
           jobTitle={job.title}
           companyName={job.companyName}
           companyEmail={companyEmail}
-          jobId={job.id}
+          jobId={String(job.id)}
+          companyUserId={job.companyUserId}
           walletAddress={walletAddress}
         />
       )}

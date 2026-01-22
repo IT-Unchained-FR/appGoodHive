@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
 
     // Get filter parameters
     const dateRange = searchParams.get('dateRange');
-    const status = searchParams.get('status') || 'pending'; // Default to pending
+    const status = searchParams.get('status') || 'in_review'; // Default to in review
     const role = searchParams.get('role');
     const sort = searchParams.get('sort') || 'latest';
 
@@ -20,12 +20,14 @@ export async function GET(req: NextRequest) {
 
     // Status filter: pending, approved, rejected, all
     if (status && status !== 'all') {
-      if (status === 'pending') {
-        conditions.push(`talents.inreview = true`);
+      if (status === 'pending' || status === 'in_review') {
+        conditions.push(`(talents.inreview = true OR users.talent_status IN ('pending', 'in_review'))`);
       } else if (status === 'approved') {
-        conditions.push(`talents.approved = true`);
+        conditions.push(`(talents.approved = true OR users.talent_status = 'approved')`);
+      } else if (status === 'deferred') {
+        conditions.push(`users.talent_status = 'deferred'`);
       } else if (status === 'rejected') {
-        conditions.push(`talents.approved = false AND talents.inreview = false`);
+        conditions.push(`(users.talent_status = 'rejected' OR (users.talent_status IS NULL AND talents.approved = false AND talents.inreview = false))`);
       }
     }
 
@@ -79,6 +81,13 @@ export async function GET(req: NextRequest) {
       'name-desc': 'LOWER(talents.first_name) DESC, LOWER(talents.last_name) DESC',
       'email-asc': 'LOWER(talents.email) ASC',
       'email-desc': 'LOWER(talents.email) DESC',
+      status: `CASE
+        WHEN users.talent_status = 'approved' OR talents.approved = true THEN 1
+        WHEN users.talent_status IN ('pending', 'in_review') OR talents.inreview = true THEN 2
+        WHEN users.talent_status = 'deferred' THEN 3
+        WHEN users.talent_status = 'rejected' OR (talents.approved = false AND talents.inreview = false) THEN 4
+        ELSE 5
+      END, talents.created_at DESC`,
     };
     const orderBy = sortMap[sort] || sortMap.latest;
 
@@ -87,6 +96,7 @@ export async function GET(req: NextRequest) {
       SELECT
         talents.*,
         talents.inreview AS "inReview",
+        users.talent_status AS talent_status,
         users.referred_by,
         users.approved_roles,
         users.created_at AS user_created_at

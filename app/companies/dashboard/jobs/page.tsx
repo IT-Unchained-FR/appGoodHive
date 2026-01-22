@@ -22,6 +22,7 @@ import {
 import { Loader } from "@components/loader";
 import JobBalance from "@/app/components/JobBalance";
 import FundManager from "@/app/components/FundManager";
+import { JobApplicationsDrawer } from "@/app/components/applications";
 
 interface Job {
   id: string;
@@ -46,6 +47,8 @@ interface Job {
   talent: boolean;
   postedAt: string;
   block_id?: string;
+  applicationCount: number;
+  newApplicationCount: number;
 }
 
 export default function JobsManagement() {
@@ -57,6 +60,8 @@ export default function JobsManagement() {
   const [selectedJobs, setSelectedJobs] = useState<string[]>([]);
   const [showFundManager, setShowFundManager] = useState(false);
   const [selectedJobForFunding, setSelectedJobForFunding] = useState<Job | null>(null);
+  const [showApplicationsDrawer, setShowApplicationsDrawer] = useState(false);
+  const [selectedJobForApplications, setSelectedJobForApplications] = useState<Job | null>(null);
   const userId = Cookies.get("user_id");
 
   useEffect(() => {
@@ -136,6 +141,16 @@ export default function JobsManagement() {
     setShowFundManager(false);
     setSelectedJobForFunding(null);
     refreshJobs(); // Refresh jobs after funding operations
+  };
+
+  const openApplicationsDrawer = (job: Job) => {
+    setSelectedJobForApplications(job);
+    setShowApplicationsDrawer(true);
+  };
+
+  const closeApplicationsDrawer = () => {
+    setShowApplicationsDrawer(false);
+    setSelectedJobForApplications(null);
   };
 
   if (isLoading) {
@@ -341,10 +356,23 @@ export default function JobsManagement() {
 
                       {/* Stats */}
                       <div className="flex justify-between items-center text-sm text-gray-600 mb-6">
-                        <div className="flex items-center">
-                          <Users className="w-4 h-4 mr-1 text-purple-500" />
-                          <span>0 applications</span>
-                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openApplicationsDrawer(job);
+                          }}
+                          className="flex items-center hover:text-purple-700 transition-colors group"
+                        >
+                          <Users className="w-4 h-4 mr-1 text-purple-500 group-hover:text-purple-700" />
+                          <span className="group-hover:underline">
+                            {job.applicationCount} application{job.applicationCount !== 1 ? 's' : ''}
+                          </span>
+                          {job.newApplicationCount > 0 && (
+                            <span className="ml-1.5 px-1.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">
+                              {job.newApplicationCount} new
+                            </span>
+                          )}
+                        </button>
                         <div className="flex items-center">
                           <Eye className="w-4 h-4 mr-1 text-blue-500" />
                           <span>0 views</span>
@@ -423,6 +451,23 @@ export default function JobsManagement() {
                                     showCurrency={true}
                                   />
                                 )}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openApplicationsDrawer(job);
+                                  }}
+                                  className="inline-flex items-center hover:text-purple-700 transition-colors group"
+                                >
+                                  <Users className="w-4 h-4 mr-1 text-purple-500 group-hover:text-purple-700" />
+                                  <span className="group-hover:underline">
+                                    {job.applicationCount} application{job.applicationCount !== 1 ? 's' : ''}
+                                  </span>
+                                  {job.newApplicationCount > 0 && (
+                                    <span className="ml-1.5 px-1.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">
+                                      {job.newApplicationCount} new
+                                    </span>
+                                  )}
+                                </button>
                               </div>
                             </div>
 
@@ -483,6 +528,18 @@ export default function JobsManagement() {
           jobChainId={137} // Polygon
           jobChainLabel="Polygon"
           onClose={closeFundManager}
+        />
+      )}
+
+      {/* Applications Drawer */}
+      {showApplicationsDrawer && selectedJobForApplications && userId && (
+        <JobApplicationsDrawer
+          isOpen={showApplicationsDrawer}
+          onClose={closeApplicationsDrawer}
+          jobId={selectedJobForApplications.id}
+          jobTitle={selectedJobForApplications.title}
+          companyUserId={userId}
+          applicationCount={selectedJobForApplications.applicationCount}
         />
       )}
     </div>

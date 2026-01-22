@@ -16,6 +16,7 @@ interface JobApplicationPopupProps {
   companyName: string;
   companyEmail: string;
   jobId: string; // UUID string
+  companyUserId: string; // Company's user ID for the job owner
   walletAddress: string;
 }
 
@@ -49,6 +50,7 @@ export const JobApplicationPopup: React.FC<JobApplicationPopupProps> = ({
   companyName,
   companyEmail,
   jobId,
+  companyUserId,
   walletAddress,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -97,7 +99,35 @@ export const JobApplicationPopup: React.FC<JobApplicationPopupProps> = ({
 
       const userProfile = await userDataResponse.json();
 
-      // Prepare email data
+      // First, save application to database
+      const applicationData = {
+        jobId,
+        applicantUserId: logged_in_user_id,
+        companyUserId,
+        applicantName: data.name,
+        applicantEmail: data.email,
+        coverLetter: data.coverLetter,
+        portfolioLink: data.portfolioLink || null,
+      };
+
+      const submitResponse = await fetch("/api/applications/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(applicationData),
+      });
+
+      if (!submitResponse.ok) {
+        const errorData = await submitResponse.json();
+        if (errorData.code === "DUPLICATE_APPLICATION") {
+          toast.error("You have already applied to this job.");
+          return;
+        }
+        throw new Error(errorData.message || "Failed to save application");
+      }
+
+      // Then, send email notification
       const emailData = {
         name: data.name,
         toUserName: companyName,
@@ -125,7 +155,12 @@ export const JobApplicationPopup: React.FC<JobApplicationPopupProps> = ({
         reset();
         onClose();
       } else {
-        throw new Error("Failed to send application");
+        // Application saved but email failed - still consider it a success
+        toast.success(
+          "🍯 Application submitted! (Email notification may be delayed)",
+        );
+        reset();
+        onClose();
       }
     } catch (error) {
       console.error("Error sending application:", error);

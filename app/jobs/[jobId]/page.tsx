@@ -136,6 +136,7 @@ async function getJob(jobId: string): Promise<Job | null> {
       // Company information
       company: {
         id: jobData.user_id,
+        userId: jobData.user_id,
         name: jobData.company_name || jobData.designation,
         logo: jobData.company_logo,
         headline: jobData.headline,

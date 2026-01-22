@@ -48,6 +48,46 @@ export default function AdminManageTalents() {
   const getSafeValue = (value?: string | null) =>
     value && value !== "null" ? value : undefined;
 
+  const getTalentApprovalStatus = (row: ProfileData) => {
+    if (row.talent_status === "approved" || row.approved) return "approved";
+    if (row.talent_status === "deferred") return "deferred";
+    if (row.talent_status === "rejected") return "rejected";
+    if (row.talent_status === "pending" || row.talent_status === "in_review" || row.inreview) {
+      return "in_review";
+    }
+    return "in_review";
+  };
+
+  const renderTalentApprovalBadge = (row: ProfileData) => {
+    const status = getTalentApprovalStatus(row);
+    if (status === "approved") {
+      return (
+        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+          Approved
+        </Badge>
+      );
+    }
+    if (status === "deferred") {
+      return (
+        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+          Deferred
+        </Badge>
+      );
+    }
+    if (status === "rejected") {
+      return (
+        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+          Rejected
+        </Badge>
+      );
+    }
+    return (
+      <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+        In Review
+      </Badge>
+    );
+  };
+
   const getAuthHeaders = () => {
     const token = Cookies.get("admin_token");
     if (!token) {
@@ -265,6 +305,20 @@ export default function AdminManageTalents() {
       ),
     },
     {
+      key: "talent_status",
+      header: "Talent Approval",
+      width: "10%",
+      sortable: true,
+      exportValue: (row) => {
+        const status = getTalentApprovalStatus(row);
+        if (status === "approved") return "Approved";
+        if (status === "deferred") return "Deferred";
+        if (status === "rejected") return "Rejected";
+        return "In Review";
+      },
+      render: (_value, row) => renderTalentApprovalBadge(row),
+    },
+    {
       key: "mentor",
       header: "Mentor Status",
       width: "8%",
@@ -461,7 +515,9 @@ export default function AdminManageTalents() {
           statusFilter: [
             { value: 'all', label: 'All statuses' },
             { value: 'approved', label: 'Approved' },
-            { value: 'pending', label: 'Pending' },
+            { value: 'in_review', label: 'In Review' },
+            { value: 'deferred', label: 'Deferred' },
+            { value: 'rejected', label: 'Rejected' },
           ],
           customFilters: [
             {
@@ -490,6 +546,7 @@ export default function AdminManageTalents() {
           sortOptions: [
             { value: 'latest', label: 'Latest first' },
             { value: 'oldest', label: 'Oldest first' },
+            { value: 'status', label: 'Status' },
             { value: 'name-asc', label: 'Name A-Z' },
             { value: 'name-desc', label: 'Name Z-A' },
             { value: 'email-asc', label: 'Email A-Z' },
@@ -622,6 +679,7 @@ function TalentCard({
             <Badge className={talent.talent ? "bg-green-500 text-white" : "bg-orange-500 text-white"}>
               Talent {talent.talent ? "Yes" : "No"}
             </Badge>
+            {renderTalentApprovalBadge(talent)}
             <Badge
               className={
                 talent.mentor && talent.mentor_status === 'approved'

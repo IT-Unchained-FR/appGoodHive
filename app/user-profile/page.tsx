@@ -24,9 +24,9 @@ export interface UserProfile {
   id: number;
   userid: string;
   email: string | null;
-  talent_status: "pending" | "approved";
-  mentor_status: "pending" | "approved";
-  recruiter_status: "pending" | "approved";
+  talent_status: "pending" | "in_review" | "approved" | "deferred" | "rejected";
+  mentor_status: "pending" | "in_review" | "approved" | "deferred" | "rejected";
+  recruiter_status: "pending" | "in_review" | "approved" | "deferred" | "rejected";
   wallet_address?: string;
   thirdweb_wallet_address?: string;
 }
@@ -290,7 +290,7 @@ export default function UserProfilePage() {
                 userProfile.mentor_status,
                 userProfile.recruiter_status,
               ]
-                .filter((s) => s === "pending")
+                .filter((s) => s === "pending" || s === "in_review")
                 .length.toString()}
               label="Pending Approvals"
               color="yellow"
@@ -324,7 +324,7 @@ interface InfoItemProps {
 interface RoleStatusCardProps {
   icon: React.ElementType;
   title: string;
-  status: "pending" | "approved";
+  status: "pending" | "in_review" | "approved" | "deferred" | "rejected";
   description: string;
 }
 
@@ -406,8 +406,14 @@ function RoleStatusCard({
   status,
   description,
 }: RoleStatusCardProps) {
+  const normalizedStatus =
+    status === "in_review" ? "pending" : status;
+
   const getStatusIcon = () => {
-    return status === "approved" ? CheckCircle : Clock;
+    if (normalizedStatus === "approved") return CheckCircle;
+    if (normalizedStatus === "rejected") return XCircle;
+    if (normalizedStatus === "deferred") return Clock;
+    return Clock;
   };
 
   const StatusIcon = getStatusIcon();
@@ -415,7 +421,13 @@ function RoleStatusCard({
   return (
     <div className={styles.roleStatusCard}>
       <div
-        className={`${styles.icon} ${status === "approved" ? styles.approved : styles.pending}`}
+        className={`${styles.icon} ${normalizedStatus === "approved"
+          ? styles.approved
+          : normalizedStatus === "rejected"
+          ? styles.rejected
+          : normalizedStatus === "deferred"
+          ? styles.deferred
+          : styles.pending}`}
       >
         <Icon className={styles.iconSvg} />
       </div>
@@ -424,12 +436,24 @@ function RoleStatusCard({
           <h3 className={styles.title}>{title}</h3>
           <div className={styles.status}>
             <StatusIcon
-              className={`${styles.statusIcon} ${status === "approved" ? styles.approved : styles.pending}`}
+              className={`${styles.statusIcon} ${normalizedStatus === "approved"
+                ? styles.approved
+                : normalizedStatus === "rejected"
+                ? styles.rejected
+                : normalizedStatus === "deferred"
+                ? styles.deferred
+                : styles.pending}`}
             />
             <span
-              className={`${styles.statusBadge} ${status === "approved" ? styles.approved : styles.pending}`}
+              className={`${styles.statusBadge} ${normalizedStatus === "approved"
+                ? styles.approved
+                : normalizedStatus === "rejected"
+                ? styles.rejected
+                : normalizedStatus === "deferred"
+                ? styles.deferred
+                : styles.pending}`}
             >
-              {status.charAt(0).toUpperCase() + status.slice(1)}
+              {normalizedStatus === "pending" ? "In Review" : normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1)}
             </span>
           </div>
         </div>

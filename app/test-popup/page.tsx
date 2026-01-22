@@ -39,7 +39,8 @@ export default function TestPopupPage() {
         jobTitle="Senior Frontend Developer"
         companyName="TechHive Solutions"
         companyEmail="jobs@techhive.com"
-        jobId={123}
+        jobId="123"
+        companyUserId="test-company-user-id"
         walletAddress="0x1234567890abcdef"
       />
     </div>

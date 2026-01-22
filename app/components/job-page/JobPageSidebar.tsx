@@ -55,7 +55,9 @@ export const JobPageSidebar = ({ job }: JobPageSidebarProps) => {
 
       setIsCheckingVerification(true);
       try {
-        const response = await fetch("/api/talents/verification-status");
+        const response = await fetch("/api/talents/verification-status", {
+          headers: user?.user_id ? { "x-user-id": user.user_id } : undefined,
+        });
 
         if (response.ok) {
           const { isApproved } = await response.json();

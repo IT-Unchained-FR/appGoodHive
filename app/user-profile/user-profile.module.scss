@@ -462,6 +462,14 @@
       background: linear-gradient(to right, #eab308, #ca8a04);
     }
 
+    &.deferred {
+      background: linear-gradient(to right, #60a5fa, #3b82f6);
+    }
+
+    &.rejected {
+      background: linear-gradient(to right, #f87171, #ef4444);
+    }
+
     .iconSvg {
       width: 24px;
       height: 24px;
@@ -500,6 +508,14 @@
           &.pending {
             color: #eab308;
           }
+
+          &.deferred {
+            color: #3b82f6;
+          }
+
+          &.rejected {
+            color: #ef4444;
+          }
         }
 
         .statusBadge {
@@ -516,6 +532,16 @@
           &.pending {
             background-color: #fef3c7;
             color: #92400e;
+          }
+
+          &.deferred {
+            background-color: #dbeafe;
+            color: #1e3a8a;
+          }
+
+          &.rejected {
+            background-color: #fee2e2;
+            color: #991b1b;
           }
         }
       }

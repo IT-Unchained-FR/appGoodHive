@@ -287,7 +287,7 @@ export const JobCard: FC<Props> = ({
           </div>
         </div>
       </div>
-      {isJobApplicationPopup && (
+      {isJobApplicationPopup && user_id && (
         <JobApplicationPopup
           isOpen={isJobApplicationPopup}
           onClose={onJobApplicationPopupCloseHandler}
@@ -295,6 +295,7 @@ export const JobCard: FC<Props> = ({
           companyName={postedBy}
           companyEmail={companyEmail || ""}
           jobId={id}
+          companyUserId={user_id}
           walletAddress={walletAddress}
         />
       )}
