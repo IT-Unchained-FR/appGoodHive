@@ -14,6 +14,7 @@
     "migrate:otp": "tsx app/db/run-otp-migration.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
     "@aws-sdk/client-s3": "^3.327.0",
     "@aws-sdk/signature-v4-crt": "^3.310.0",
     "@dnd-kit/core": "^6.3.1",
@@ -51,6 +52,7 @@
     "@typescript-eslint/eslint-plugin": "^5.58.0",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
+    "airtable": "^0.12.2",
     "autoprefixer": "10.4.22",
     "aws-crt": "^1.15.16",
     "axios": "^1.7.9",

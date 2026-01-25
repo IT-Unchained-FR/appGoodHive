@@ -231,6 +231,10 @@
   z-index: 60;
 }
 
+.ratePanel {
+  width: min(20rem, calc(100vw - 2.5rem));
+}
+
 .panelList {
   display: grid;
   gap: 0.55rem;

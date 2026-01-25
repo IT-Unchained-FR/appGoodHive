@@ -131,18 +131,18 @@ export const TalentPageSidebar = ({
                 </div>
               )}
             </>
-          ) : (
-            <div className={styles.blurredContent}>
-              <div className={styles.rateDisplay} style={{ filter: 'blur(8px)', opacity: 0.5 }}>
-                <DollarSign size={24} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} />
-                XXX
-                <span className={styles.rateCurrency}>/hr</span>
-              </div>
-              <button onClick={handleConnectWallet} className={styles.connectButton}>
-                🔒 Connect to View Rate
-              </button>
+        ) : (
+          <div className={styles.blurredContent}>
+            <div className={styles.rateDisplay} style={{ filter: "blur(8px)", opacity: 0.5 }}>
+              <DollarSign size={24} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} />
+              {rateLabel}
+              <span className={styles.rateCurrency}>/hr</span>
             </div>
-          )}
+            <button onClick={handleConnectWallet} className={styles.connectButton}>
+              🔒 Connect to View Rate
+            </button>
+          </div>
+        )}
         </div>
       )}
 

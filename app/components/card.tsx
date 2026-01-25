@@ -89,7 +89,7 @@ export const Card: FC<Props> = ({
     return `Open to ${openToTypes.slice(0, -1).join(", ")} & ${openToTypes[openToTypes.length - 1]}`;
   };
 
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { checkAuthAndShowConnectPrompt } = useAuthCheck();
 
   // State for handling image loading errors
@@ -162,6 +162,9 @@ export const Card: FC<Props> = ({
     type === "talent" ? (rateMax ?? (budget > 0 ? budget : undefined)) : undefined;
   const rateLabel = formatRateRange({ minRate: rateMinValue, maxRate: rateMaxValue });
   const showRate = Boolean(rateLabel);
+  const canViewSensitive =
+    !!user &&
+    (user.talent_status === "approved" || user.recruiter_status === "approved");
 
   return (
     <div className="group relative bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/40 rounded-2xl border border-amber-100/60 shadow-sm hover:shadow-2xl hover:border-[#FFC905]/30 transition-all duration-300 ease-in-out cursor-pointer flex flex-col backdrop-blur-sm">
@@ -368,11 +371,11 @@ export const Card: FC<Props> = ({
 
           {type === "talent" && showRate && (
             <div className="mt-3">
-              {!isAuthenticated ? (
+              {!canViewSensitive ? (
                 <button
                   type="button"
                   onClick={handleConnectWallet}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50/80 px-3 py-1 text-[11px] font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100"
+                  className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50/80 px-3 py-1 text-[11px] font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100"
                   aria-label="Connect to view rate"
                 >
                   <svg
@@ -387,7 +390,14 @@ export const Card: FC<Props> = ({
                       clipRule="evenodd"
                     />
                   </svg>
-                  Connect to View Rate
+                  <span
+                    className="inline-flex items-center gap-1"
+                    style={{ filter: "blur(6px)", opacity: 0.7 }}
+                  >
+                    <span className="text-emerald-700">{currency}</span>
+                    <span>{rateLabel}</span>
+                    <span className="text-emerald-600">/hr</span>
+                  </span>
                 </button>
               ) : (
                 <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 px-3 py-1 text-[11px] font-semibold text-emerald-800 shadow-sm">

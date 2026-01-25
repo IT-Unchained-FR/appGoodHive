@@ -99,10 +99,16 @@ type SortOption = {
 type FilterChipProps = {
   label: string;
   active?: boolean;
+  panelClassName?: string;
   children: (close: () => void) => ReactNode;
 };
 
-const FilterChip = ({ label, active = false, children }: FilterChipProps) => (
+const FilterChip = ({
+  label,
+  active = false,
+  panelClassName,
+  children,
+}: FilterChipProps) => (
   <Popover className={styles.filterChip}>
     {({ open, close }) => (
       <>
@@ -124,7 +130,7 @@ const FilterChip = ({ label, active = false, children }: FilterChipProps) => (
           leaveFrom="opacity-100 translate-y-0"
           leaveTo="opacity-0 translate-y-1"
         >
-          <Popover.Panel className={styles.chipPanel}>
+          <Popover.Panel className={clsx(styles.chipPanel, panelClassName)}>
             {children(close)}
           </Popover.Panel>
         </Transition>
@@ -1037,6 +1043,7 @@ export const SearchFilters = ({
                 <FilterChip
                   label="Hourly rate"
                   active={Boolean(minRateFilter.trim()) || Boolean(maxRateFilter.trim())}
+                  panelClassName={styles.ratePanel}
                 >
                   {(close) => (
                     <div className={styles.panelList}>

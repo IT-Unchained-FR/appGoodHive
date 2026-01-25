@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MCP_DIR="$(dirname "$SCRIPT_DIR")"
+PROJECT_ROOT="$(cd "$MCP_DIR/.." && pwd)"
+
+# If Airtable env vars are missing, try loading them from local env files first.
+if [[ -z "${AIRTABLE_BASE_ID:-}" || -z "${AIRTABLE_API_KEY:-}" ]]; then
+  ORIG_AIRTABLE_BASE_ID="${AIRTABLE_BASE_ID:-}"
+  ORIG_AIRTABLE_API_KEY="${AIRTABLE_API_KEY:-}"
+
+  for ENV_FILE in "$PROJECT_ROOT/.env.local" "$PROJECT_ROOT/.env"; do
+    if [[ -f "$ENV_FILE" ]]; then
+      set -a
+      # shellcheck disable=SC1090
+      source "$ENV_FILE"
+      set +a
+    fi
+  done
+
+  # Restore any values that were already set before sourcing env files.
+  if [[ -n "$ORIG_AIRTABLE_BASE_ID" ]]; then
+    AIRTABLE_BASE_ID="$ORIG_AIRTABLE_BASE_ID"
+  fi
+  if [[ -n "$ORIG_AIRTABLE_API_KEY" ]]; then
+    AIRTABLE_API_KEY="$ORIG_AIRTABLE_API_KEY"
+  fi
+fi
+
+# Load Airtable env from .mcp.json when not already provided.
+CONFIG_PATH="$PROJECT_ROOT/.mcp.json"
+if [[ -f "$CONFIG_PATH" ]]; then
+  if [[ -z "${AIRTABLE_BASE_ID:-}" ]]; then
+    AIRTABLE_BASE_ID="$(
+      node -e "const c=require(process.argv[1]); console.log(c?.mcpServers?.airtable?.env?.AIRTABLE_BASE_ID||'')" "$CONFIG_PATH"
+    )"
+  fi
+
+  if [[ -z "${AIRTABLE_API_KEY:-}" ]]; then
+    AIRTABLE_API_KEY="$(
+      node -e "const c=require(process.argv[1]); console.log(c?.mcpServers?.airtable?.env?.AIRTABLE_API_KEY||'')" "$CONFIG_PATH"
+    )"
+  fi
+
+  export AIRTABLE_BASE_ID
+  export AIRTABLE_API_KEY
+fi
+
+# Run the TypeScript MCP server using tsx
+# Use npx to find tsx from node_modules
+cd "$PROJECT_ROOT"
+exec npx tsx "$MCP_DIR/airtable-mcp-server/index.ts"
