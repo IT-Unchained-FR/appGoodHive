@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get('status');
     const hasProfile = searchParams.get('hasProfile');
     const sort = searchParams.get('sort') || 'latest';
+    const searchQuery = searchParams.get('q')?.trim() || '';
 
     // Pagination parameters
     const page = parseInt(searchParams.get('page') || '1', 10);
@@ -61,6 +62,22 @@ export async function GET(req: NextRequest) {
       conditions.push(sql`t.user_id IS NOT NULL`);
     } else if (hasProfile === 'no') {
       conditions.push(sql`t.user_id IS NULL`);
+    }
+
+    // Search filter
+    if (searchQuery) {
+      const normalizedQuery = searchQuery.toLowerCase();
+      const likePattern = `%${normalizedQuery}%`;
+
+      conditions.push(sql`
+        (
+          LOWER(COALESCE(u.email, '')) LIKE ${likePattern}
+          OR LOWER(COALESCE(u.wallet_address, '')) LIKE ${likePattern}
+          OR CAST(u.userid AS TEXT) = ${searchQuery}
+          OR LOWER(COALESCE(t.first_name, '')) LIKE ${likePattern}
+          OR LOWER(COALESCE(t.last_name, '')) LIKE ${likePattern}
+        )
+      `);
     }
 
     // Build sort clause

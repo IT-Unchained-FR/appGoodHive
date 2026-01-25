@@ -40,6 +40,7 @@ interface User {
 export default function AdminManageUsers() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const activeSearchQuery = searchParams.get("q")?.trim() || "";
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -361,9 +362,19 @@ export default function AdminManageUsers() {
           <h2 className="text-xl font-semibold mb-1">
             All Users Under GoodHive&apos;s System
           </h2>
-          <p className="text-sm text-muted-foreground">
-            {users?.length || 0} users
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm text-muted-foreground">
+              {users?.length || 0} users
+            </p>
+            {activeSearchQuery && (
+              <Badge
+                variant="secondary"
+                className="border border-amber-200 bg-amber-50 text-amber-800"
+              >
+                Search: {activeSearchQuery}
+              </Badge>
+            )}
+          </div>
         </div>
       </div>
 
@@ -378,6 +389,12 @@ export default function AdminManageUsers() {
             { value: 'recruiter', label: 'Recruiter' },
           ],
           customFilters: [
+            {
+              key: 'q',
+              label: 'Search',
+              type: 'text',
+              placeholder: 'Email, wallet, user ID, or name...',
+            },
             {
               key: 'hasProfile',
               label: 'Talent Profile',
