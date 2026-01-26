@@ -144,6 +144,8 @@ export const Card: FC<Props> = ({
   const shouldShowBadge = type === "company" || type === "job"; // Only show badges for job cards
 
   const hideCompanyDetails = type === "job" && !isAuthenticated;
+  const hideTalentDetails = type === "talent" && !canViewSensitive;
+  const hidePostedBy = hideCompanyDetails || hideTalentDetails;
 
   const handleCompanyClick = (event: MouseEvent) => {
     if (hideCompanyDetails) {
@@ -282,16 +284,17 @@ export const Card: FC<Props> = ({
                   jobId ? `/companies/${uniqueId}` : `/talents/${uniqueId}`
                 }
                 className="relative inline-flex max-w-[150px] min-w-0 items-center text-xs sm:text-sm font-medium text-gray-600 hover:text-[#FFC905] transition-colors"
-                title={!hideCompanyDetails ? postedBy : "Sign in to reveal"}
+                title={!hidePostedBy ? postedBy : "Sign in to reveal"}
                 onClick={handleCompanyClick}
               >
-                {hideCompanyDetails ? (
+                {hidePostedBy ? (
                   <span className="overflow-visible">
                     <CompanyInfoGuard
                       value={undefined}
                       seed={jobId || uniqueId || title}
                       isVisible={false}
                       compact
+                      placeholder={hideTalentDetails ? "Connect to view talent" : undefined}
                       textClassName="!text-xs sm:!text-sm !font-medium tracking-wide text-gray-500"
                       blurAmount="blur-[3px]"
                       placement="top"

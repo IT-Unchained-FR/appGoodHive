@@ -14,6 +14,7 @@ interface CompanyInfoGuardProps {
   value?: string;
   seed?: string;
   isVisible: boolean;
+  placeholder?: string;
   allowTooltip?: boolean;
   className?: string;
   textClassName?: string;
@@ -53,6 +54,7 @@ export const CompanyInfoGuard = ({
   value,
   seed = "company",
   isVisible,
+  placeholder,
   allowTooltip = true,
   className,
   textClassName,
@@ -67,12 +69,12 @@ export const CompanyInfoGuard = ({
   const { connect } = useConnectModal();
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const placeholder = useMemo(
-    () => pickPlaceholder(seed || value || "company"),
-    [seed, value],
+  const resolvedPlaceholder = useMemo(
+    () => placeholder || pickPlaceholder(seed || value || "company"),
+    [placeholder, seed, value],
   );
 
-  const displayValue = isVisible ? value || placeholder : placeholder;
+  const displayValue = isVisible ? value || resolvedPlaceholder : resolvedPlaceholder;
 
   const tooltipPosition =
     placement === "top"
