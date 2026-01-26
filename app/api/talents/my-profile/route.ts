@@ -1,5 +1,5 @@
 import sql from "@/lib/db";
-import { getViewerApproval, maskName, maskNameInText } from "@/lib/access-control";
+import { getViewerAccess, maskName, maskNameInText } from "@/lib/access-control";
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -215,10 +215,10 @@ export async function GET(request: NextRequest) {
     }
 
     const talent = talents[0];
-    const { isApproved: isViewerApproved } =
-      await getViewerApproval(viewerUserId);
-    const canViewSensitive =
-      isViewerApproved || (viewerUserId && viewerUserId === user_id);
+    const viewerAccess = await getViewerAccess(viewerUserId);
+    const isOwner = viewerUserId && viewerUserId === user_id;
+    const canViewSensitive = viewerAccess.isApproved || isOwner;
+    const canViewBasic = viewerAccess.isAuthenticated || isOwner;
 
     // Get approved roles from users table
     const users = await sql`
@@ -236,8 +236,8 @@ export async function GET(request: NextRequest) {
       : null;
     const profileData = {
       ...talent,
-      first_name: canViewSensitive ? talent.first_name : maskedName.firstName,
-      last_name: canViewSensitive ? talent.last_name : maskedName.lastName,
+      first_name: canViewBasic ? talent.first_name : maskedName.firstName,
+      last_name: canViewBasic ? talent.last_name : maskedName.lastName,
       email: canViewSensitive ? talent.email : null,
       phone_country_code: canViewSensitive ? talent.phone_country_code : null,
       phone_number: canViewSensitive ? talent.phone_number : null,

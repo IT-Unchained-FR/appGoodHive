@@ -6,6 +6,11 @@ type ViewerApproval = {
   isApproved: boolean;
 };
 
+export type ViewerAccess = ViewerApproval & {
+  isAuthenticated: boolean;
+  tier: "public" | "registered" | "approved";
+};
+
 export async function getViewerApproval(
   viewerUserId?: string | null,
 ): Promise<ViewerApproval> {
@@ -30,6 +35,49 @@ export async function getViewerApproval(
     isApprovedTalent,
     isApprovedCompany,
     isApproved: isApprovedTalent || isApprovedCompany,
+  };
+}
+
+export async function getViewerAccess(
+  viewerUserId?: string | null,
+): Promise<ViewerAccess> {
+  if (!viewerUserId) {
+    return {
+      isApprovedTalent: false,
+      isApprovedCompany: false,
+      isApproved: false,
+      isAuthenticated: false,
+      tier: "public",
+    };
+  }
+
+  const rows = await sql`
+    SELECT talent_status, recruiter_status
+    FROM goodhive.users
+    WHERE userid = ${viewerUserId}
+  `;
+
+  if (rows.length === 0) {
+    return {
+      isApprovedTalent: false,
+      isApprovedCompany: false,
+      isApproved: false,
+      isAuthenticated: false,
+      tier: "public",
+    };
+  }
+
+  const isApprovedTalent = rows[0].talent_status === "approved";
+  const isApprovedCompany = rows[0].recruiter_status === "approved";
+  const isApproved = isApprovedTalent || isApprovedCompany;
+  const tier: ViewerAccess["tier"] = isApproved ? "approved" : "registered";
+
+  return {
+    isApprovedTalent,
+    isApprovedCompany,
+    isApproved,
+    isAuthenticated: true,
+    tier,
   };
 }
 

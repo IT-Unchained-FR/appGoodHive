@@ -1,6 +1,6 @@
 import sql from "@/lib/db";
 import { getCountrySearchTerms } from "@/lib/country-mapping";
-import { getViewerApproval, maskName } from "@/lib/access-control";
+import { getViewerAccess, maskName, maskNameInText } from "@/lib/access-control";
 
 function contains(str: string) {
   return "%" + str.toLowerCase() + "%";
@@ -58,8 +58,9 @@ export async function fetchTalents({
   viewerUserId?: string;
 }) {
   try {
-    const { isApproved: canViewSensitive } =
-      await getViewerApproval(viewerUserId);
+    const viewerAccess = await getViewerAccess(viewerUserId);
+    const canViewSensitive = viewerAccess.isApproved;
+    const canViewBasic = viewerAccess.isAuthenticated;
 
     // Build dynamic WHERE conditions
     let whereConditions = ["approved = true"];
@@ -205,17 +206,24 @@ export async function fetchTalents({
     const talents: any[] = talentsCursor.map((talent) => {
       const maskedName = maskName(talent.first_name, talent.last_name);
 
+      const description = safeBase64Decode(talent.description);
+      const aboutWork = safeBase64Decode(talent.about_work);
+
       return {
         title: talent.title,
-        description: safeBase64Decode(talent.description),
-        firstName: canViewSensitive ? talent.first_name : maskedName.firstName,
-        lastName: canViewSensitive ? talent.last_name : maskedName.lastName,
+        description: canViewSensitive
+          ? description
+          : maskNameInText(description, talent.first_name, talent.last_name),
+        firstName: canViewBasic ? talent.first_name : maskedName.firstName,
+        lastName: canViewBasic ? talent.last_name : maskedName.lastName,
         country: talent.country,
         city: talent.city,
         phoneCountryCode: canViewSensitive ? talent.phone_country_code : undefined,
         skills: talent.skills?.split(",") || [],
         email: canViewSensitive ? talent.email : undefined,
-        aboutWork: safeBase64Decode(talent.about_work),
+        aboutWork: canViewSensitive
+          ? aboutWork
+          : maskNameInText(aboutWork, talent.first_name, talent.last_name),
         telegram: canViewSensitive ? talent.telegram : undefined,
         minRate:
           talent.min_rate !== null && talent.min_rate !== undefined

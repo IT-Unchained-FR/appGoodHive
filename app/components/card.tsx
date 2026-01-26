@@ -144,7 +144,7 @@ export const Card: FC<Props> = ({
   const shouldShowBadge = type === "company" || type === "job"; // Only show badges for job cards
 
   const hideCompanyDetails = type === "job" && !isAuthenticated;
-  const hideTalentDetails = type === "talent" && !canViewSensitive;
+  const hideTalentDetails = type === "talent" && !isAuthenticated;
   const hidePostedBy = hideCompanyDetails || hideTalentDetails;
 
   const handleCompanyClick = (event: MouseEvent) => {

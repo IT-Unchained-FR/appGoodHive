@@ -28,6 +28,7 @@ interface TalentPageHeaderProps {
   recruiter?: boolean;
   approved_roles?: object[] | null;
   canViewSensitive?: boolean;
+  canViewBasic?: boolean;
 }
 
 export const TalentPageHeader = ({
@@ -44,6 +45,7 @@ export const TalentPageHeader = ({
   recruiter,
   approved_roles,
   canViewSensitive: canViewSensitiveProp,
+  canViewBasic: canViewBasicProp,
 }: TalentPageHeaderProps) => {
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -157,6 +159,10 @@ export const TalentPageHeader = ({
       : !!user &&
         (user.talent_status === "approved" ||
           user.recruiter_status === "approved");
+  const canViewBasic =
+    typeof canViewBasicProp === "boolean"
+      ? canViewBasicProp
+      : !!user;
   const fullName = `${first_name} ${last_name}`;
   const location = city && country ? `${city}, ${country}` : city || country || "";
 
@@ -191,7 +197,7 @@ export const TalentPageHeader = ({
 
         {/* Info Section */}
         <div className={styles.infoSection}>
-          {canViewSensitive ? (
+          {canViewBasic ? (
             <h1 className={styles.name}>{fullName}</h1>
           ) : (
             <h1 className={styles.name}>
@@ -200,6 +206,7 @@ export const TalentPageHeader = ({
                 seed={`${first_name}-${last_name}`}
                 isVisible={false}
                 allowTooltip={false}
+                placeholder="Connect to view talent"
                 textClassName={styles.name}
                 sizeClassName={styles.name}
                 blurAmount="blur-[8px]"

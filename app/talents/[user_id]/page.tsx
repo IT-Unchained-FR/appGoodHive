@@ -19,7 +19,7 @@ interface MyProfilePageProps {
 }
 
 export default function MyProfilePage({ params }: MyProfilePageProps) {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [profileData, setProfileData] = useState<TalentProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -106,6 +106,7 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
     (!!user &&
       (user.talent_status === "approved" ||
         user.recruiter_status === "approved"));
+  const canViewBasic = isAuthenticated || user?.user_id === profileData.user_id;
 
   // Pending approval state
   if (!approved) {
@@ -137,6 +138,7 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
         recruiter={recruiter}
         approved_roles={approved_roles}
         canViewSensitive={canViewSensitive}
+        canViewBasic={canViewBasic}
       />
 
       {/* Two-Column Content Grid */}
