@@ -100,8 +100,8 @@ const ProfileStatus = ({ profileData }: { profileData: ProfileData }) => {
   return (
     <p className="px-4 py-3 text-xl font-medium text-center text-red-500 rounded-md shadow-md bg-yellow-50">
       {unapprovedProfile
-        ? "🚀 Your profile is pending approval. Check your email to schedule your interview."
-        : "🚀 Profile saved! Complete the mandatory fields and submit for review when ready."}
+        ? "⏳ Profile submitted for review. You'll get an email once it's approved."
+        : "✅ Profile saved. Complete required fields and submit for review to get verified."}
     </p>
   );
 };

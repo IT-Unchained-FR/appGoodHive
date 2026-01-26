@@ -937,7 +937,7 @@ export default function MyProfile() {
                   </div>
                   <div>
                     <h3 className="text-white font-bold text-lg mb-1">Under Review</h3>
-                    <p className="text-blue-100">Your profile is pending approval. It will be live soon after review.</p>
+                    <p className="text-blue-100">Profile submitted for review. You'll be notified once it's approved.</p>
                   </div>
                 </div>
               </div>
@@ -954,7 +954,7 @@ export default function MyProfile() {
                   </div>
                   <div>
                     <h3 className="text-white font-bold text-lg mb-1">Almost Ready!</h3>
-                    <p className="text-amber-100">Your profile is saved. Complete the mandatory fields and submit for review when ready.</p>
+                    <p className="text-amber-100">Profile saved. Complete required fields and submit for review to get verified.</p>
                   </div>
                   <div className="absolute -right-4 -top-4 w-16 h-16 bg-white bg-opacity-10 rounded-full"></div>
                 </div>
