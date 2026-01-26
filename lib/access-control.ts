@@ -98,6 +98,33 @@ export function maskName(firstName?: string | null, lastName?: string | null) {
   };
 }
 
+export function maskInitials(firstName?: string | null, lastName?: string | null) {
+  const safeFirst = (firstName || "").trim();
+  const safeLast = (lastName || "").trim();
+  const firstInitial = safeFirst ? `${safeFirst[0]}.` : "T.";
+  const lastInitial = safeLast ? `${safeLast[0]}.` : "P.";
+  return {
+    firstName: firstInitial,
+    lastName: lastInitial,
+  };
+}
+
+export function formatNameForTier(
+  firstName: string | null | undefined,
+  lastName: string | null | undefined,
+  tier: ViewerAccess["tier"],
+) {
+  if (tier === "approved") {
+    return { firstName: firstName || "", lastName: lastName || "" };
+  }
+
+  if (tier === "registered") {
+    return maskName(firstName, lastName);
+  }
+
+  return maskInitials(firstName, lastName);
+}
+
 const escapeRegExp = (value: string) =>
   value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
