@@ -111,6 +111,12 @@ export default function JobsManagement() {
     return matchesSearch && matchesFilter;
   });
 
+  const jobStats = {
+    draft: jobs.filter((job) => !job.block_id).length,
+    published: jobs.filter((job) => job.block_id).length,
+    funded: jobs.filter((job) => job.escrowAmount > 0).length,
+  };
+
   const getJobStatus = (job: Job) => {
     if (!job.block_id) return { label: "Draft", color: "bg-gray-100 text-gray-800", icon: Clock };
     if (job.escrowAmount > 0) return { label: "Funded", color: "bg-green-100 text-green-800", icon: CheckCircle2 };
@@ -227,6 +233,22 @@ export default function JobsManagement() {
           <Plus className="w-4 h-4 mr-2" />
           Create New Job
         </Link>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Drafts</p>
+          <p className="text-2xl font-bold text-gray-900 mt-2">{jobStats.draft}</p>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Published</p>
+          <p className="text-2xl font-bold text-gray-900 mt-2">{jobStats.published}</p>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Funded</p>
+          <p className="text-2xl font-bold text-gray-900 mt-2">{jobStats.funded}</p>
+        </div>
       </div>
 
       {/* Filters and Search */}

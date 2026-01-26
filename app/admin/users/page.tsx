@@ -28,9 +28,9 @@ interface User {
   first_name: string;
   last_name: string;
   userid: string;
-  talent_status: "approved" | "pending";
-  mentor_status: "approved" | "pending";
-  recruiter_status: "approved" | "pending";
+  talent_status: "approved" | "pending" | "in_review" | "rejected" | null;
+  mentor_status: "approved" | "pending" | "in_review" | "rejected" | null;
+  recruiter_status: "approved" | "pending" | "in_review" | "rejected" | null;
   wallet_address?: string;
   last_active: string;
   has_talent_profile: boolean;
@@ -251,9 +251,19 @@ export default function AdminManageUsers() {
               Mentor
             </Badge>
           )}
+          {(row.mentor_status === "pending" || row.mentor_status === "in_review") && (
+            <Badge className="bg-amber-500 text-white hover:bg-amber-600 text-xs">
+              Mentor (Pending)
+            </Badge>
+          )}
           {row.recruiter_status === "approved" && (
             <Badge className="bg-green-500 text-white hover:bg-green-600 text-xs">
               Recruiter
+            </Badge>
+          )}
+          {(row.recruiter_status === "pending" || row.recruiter_status === "in_review") && (
+            <Badge className="bg-amber-500 text-white hover:bg-amber-600 text-xs">
+              Recruiter (Pending)
             </Badge>
           )}
           {row.talent_status === "approved" && (
@@ -261,9 +271,20 @@ export default function AdminManageUsers() {
               Talent
             </Badge>
           )}
+          {(row.talent_status === "pending" || row.talent_status === "in_review") && (
+            <Badge className="bg-amber-500 text-white hover:bg-amber-600 text-xs">
+              Talent (Pending)
+            </Badge>
+          )}
           {row.mentor_status !== "approved" &&
             row.recruiter_status !== "approved" &&
-            row.talent_status !== "approved" && (
+            row.talent_status !== "approved" &&
+            row.mentor_status !== "pending" &&
+            row.recruiter_status !== "pending" &&
+            row.talent_status !== "pending" &&
+            row.mentor_status !== "in_review" &&
+            row.recruiter_status !== "in_review" &&
+            row.talent_status !== "in_review" && (
               <Badge className="bg-gray-500 text-white hover:bg-gray-600 text-xs">
                 No Roles
               </Badge>
@@ -496,9 +517,19 @@ function UserCard({ user }: { user: User }) {
             Mentor
           </Badge>
         )}
+        {(user.mentor_status === "pending" || user.mentor_status === "in_review") && (
+          <Badge className="bg-amber-500 text-white hover:bg-amber-600 text-xs">
+            Mentor (Pending)
+          </Badge>
+        )}
         {user.recruiter_status === "approved" && (
           <Badge className="bg-green-500 text-white hover:bg-green-600 text-xs">
             Recruiter
+          </Badge>
+        )}
+        {(user.recruiter_status === "pending" || user.recruiter_status === "in_review") && (
+          <Badge className="bg-amber-500 text-white hover:bg-amber-600 text-xs">
+            Recruiter (Pending)
           </Badge>
         )}
         {user.talent_status === "approved" && (
@@ -506,9 +537,20 @@ function UserCard({ user }: { user: User }) {
             Talent
           </Badge>
         )}
+        {(user.talent_status === "pending" || user.talent_status === "in_review") && (
+          <Badge className="bg-amber-500 text-white hover:bg-amber-600 text-xs">
+            Talent (Pending)
+          </Badge>
+        )}
         {user.mentor_status !== "approved" &&
           user.recruiter_status !== "approved" &&
-          user.talent_status !== "approved" && (
+          user.talent_status !== "approved" &&
+          user.mentor_status !== "pending" &&
+          user.recruiter_status !== "pending" &&
+          user.talent_status !== "pending" &&
+          user.mentor_status !== "in_review" &&
+          user.recruiter_status !== "in_review" &&
+          user.talent_status !== "in_review" && (
             <Badge className="bg-gray-500 text-white hover:bg-gray-600 text-xs">
               No Roles
             </Badge>

@@ -23,6 +23,10 @@ export const pageLinks = [
     name: "Blog",
     url: "/blog",
   },
+  {
+    name: "Webinar",
+    url: "/blockchain-webinar",
+  },
 ];
 
 export const socialLinks = [

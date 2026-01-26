@@ -169,6 +169,7 @@ export const TalentPageHeader = ({
       : !!user &&
         (user.talent_status === "approved" ||
           user.recruiter_status === "approved");
+  const isApprovalLocked = isAuthenticated && !canViewSensitive;
   const canViewBasic =
     typeof canViewBasicProp === "boolean"
       ? canViewBasicProp
@@ -303,10 +304,10 @@ export const TalentPageHeader = ({
               type="button"
               onClick={handleApprovalCtaClick}
               className={`${styles.ctaButton} ${styles.connectButton}`}
-              aria-label={isAuthenticated ? "Get approved to contact" : "Connect wallet to contact"}
+              aria-label={isApprovalLocked ? "Get approved to contact" : "Connect wallet to contact"}
             >
               <Lock size={18} />
-              {isAuthenticated ? "Get Approved to Contact" : "Connect Wallet to Contact"}
+              {isApprovalLocked ? "Get approved to contact" : "Connect wallet to contact"}
             </button>
           )}
         </div>

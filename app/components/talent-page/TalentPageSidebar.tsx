@@ -66,9 +66,13 @@ export const TalentPageSidebar = ({
       : !!user &&
         (user.talent_status === "approved" ||
           user.recruiter_status === "approved");
-  const connectLabel = isAuthenticated
-    ? "Get approved to view"
-    : "Connect wallet to view";
+  const isApprovalLocked = isAuthenticated && !canViewSensitive;
+  const rateCtaLabel = isAuthenticated
+    ? "Get approved to view rate"
+    : "Connect wallet to view rate";
+  const linksCtaLabel = isAuthenticated
+    ? "Get approved to view links"
+    : "Connect wallet to view links";
 
   const handleConnectWallet = () => {
     if (connect) {
@@ -77,7 +81,7 @@ export const TalentPageSidebar = ({
   };
 
   const handleApprovalCtaClick = () => {
-    if (isAuthenticated && !canViewSensitive) {
+    if (isApprovalLocked) {
       setShowApprovalPrompt(true);
       return;
     }
@@ -159,7 +163,7 @@ export const TalentPageSidebar = ({
             </div>
             <button onClick={handleApprovalCtaClick} className={styles.connectButton}>
               <Lock size={16} />
-              {connectLabel} rate
+              {rateCtaLabel}
             </button>
           </div>
         )}
@@ -211,7 +215,7 @@ export const TalentPageSidebar = ({
             </div>
             <button onClick={handleApprovalCtaClick} className={`${styles.connectButton} ${styles.outlineButton}`}>
               <Lock size={16} />
-              {connectLabel} links
+              {linksCtaLabel}
             </button>
           </div>
         )}
