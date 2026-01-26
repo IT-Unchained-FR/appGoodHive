@@ -85,9 +85,16 @@ export function maskName(firstName?: string | null, lastName?: string | null) {
   const safeFirst = (firstName || "").trim();
   const safeLast = (lastName || "").trim();
 
+  const scramble = (value: string) => {
+    if (!value) return "";
+    const first = value[0];
+    const rest = value.slice(1).replace(/[A-Za-z0-9]/g, "*");
+    return `${first}${rest || "*"}`;
+  };
+
   return {
-    firstName: safeFirst ? `${safeFirst[0]}.` : "Talent",
-    lastName: safeLast ? `${safeLast[0]}.` : "Professional",
+    firstName: safeFirst ? scramble(safeFirst) : "Talent",
+    lastName: safeLast ? scramble(safeLast) : "Professional",
   };
 }
 
