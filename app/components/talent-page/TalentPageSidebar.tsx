@@ -1,6 +1,6 @@
 "use client";
 
-import { DollarSign, CheckCircle, XCircle, Linkedin, Github, Twitter, Globe, ExternalLink, Link2 } from "lucide-react";
+import { DollarSign, CheckCircle, XCircle, Linkedin, Github, Twitter, Globe, ExternalLink, Link2, Lock } from "lucide-react";
 import { TalentStatsCard } from "./TalentStatsCard";
 import { WorkPreferencesCard } from "./WorkPreferencesCard";
 import { useAuth } from "@/app/contexts/AuthContext";
@@ -54,7 +54,7 @@ export const TalentPageSidebar = ({
   stackoverflow,
   canViewSensitive: canViewSensitiveProp,
 }: TalentPageSidebarProps) => {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { connect } = useConnectModal();
 
   const canViewSensitive =
@@ -63,6 +63,9 @@ export const TalentPageSidebar = ({
       : !!user &&
         (user.talent_status === "approved" ||
           user.recruiter_status === "approved");
+  const connectLabel = isAuthenticated
+    ? "Get approved to view"
+    : "Connect wallet to view";
 
   const handleConnectWallet = () => {
     if (connect) {
@@ -143,7 +146,8 @@ export const TalentPageSidebar = ({
               <span className={styles.rateCurrency}>/hr</span>
             </div>
             <button onClick={handleConnectWallet} className={styles.connectButton}>
-              🔒 Connect to View Rate
+              <Lock size={16} />
+              {connectLabel} rate
             </button>
           </div>
         )}
@@ -191,8 +195,9 @@ export const TalentPageSidebar = ({
                 <ExternalLink className={styles.externalIcon} />
               </div>
             </div>
-            <button onClick={handleConnectWallet} className={styles.connectButton}>
-              🔒 Connect to View Links
+            <button onClick={handleConnectWallet} className={`${styles.connectButton} ${styles.outlineButton}`}>
+              <Lock size={16} />
+              {connectLabel} links
             </button>
           </div>
         )}

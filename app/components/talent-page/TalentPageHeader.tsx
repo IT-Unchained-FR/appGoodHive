@@ -50,7 +50,7 @@ export const TalentPageHeader = ({
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isPopupModal, setIsPopupModal] = useState(false);
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { connect } = useConnectModal();
   const { user_id: currentUserId, checkAuthAndShowConnectPrompt } = useAuthCheck();
 
@@ -293,10 +293,10 @@ export const TalentPageHeader = ({
               type="button"
               onClick={handleConnectWallet}
               className={`${styles.ctaButton} ${styles.connectButton}`}
-              aria-label="Connect to view contact"
+              aria-label={isAuthenticated ? "Get approved to contact" : "Connect wallet to contact"}
             >
               <Lock size={18} />
-              Connect to View Contact
+              {isAuthenticated ? "Get Approved to Contact" : "Connect Wallet to Contact"}
             </button>
           )}
         </div>
