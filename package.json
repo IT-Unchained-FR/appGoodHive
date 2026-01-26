@@ -11,7 +11,8 @@
     "vercel-build": "NODE_OPTIONS='--max-old-space-size=4096' NEXT_TELEMETRY_DISABLED=1 next build",
     "lint": "next lint",
     "migrate": "tsx app/db/run-migration.ts",
-    "migrate:otp": "tsx app/db/run-otp-migration.ts"
+    "migrate:otp": "tsx app/db/run-otp-migration.ts",
+    "status-sync-check": "tsx scripts/status-sync-check.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
