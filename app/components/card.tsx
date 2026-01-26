@@ -378,11 +378,11 @@ export const Card: FC<Props> = ({
                 <button
                   type="button"
                   onClick={handleConnectWallet}
-                  className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50/80 px-3 py-1 text-[11px] font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100"
+                  className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/80 px-3 py-1 text-[10px] font-medium text-gray-600 shadow-sm transition hover:bg-gray-50"
                   aria-label="Connect to view rate"
                 >
                   <svg
-                    className="h-3.5 w-3.5 text-emerald-600"
+                    className="h-3.5 w-3.5 text-gray-500"
                     viewBox="0 0 20 20"
                     fill="currentColor"
                     aria-hidden="true"
@@ -397,14 +397,14 @@ export const Card: FC<Props> = ({
                     className="inline-flex items-center gap-1"
                     style={{ filter: "blur(6px)", opacity: 0.7 }}
                   >
-                    <span className="text-emerald-700">{currency}</span>
+                    <span className="text-gray-600">{currency}</span>
                     <span>{rateLabel}</span>
-                    <span className="text-emerald-600">/hr</span>
+                    <span className="text-gray-500">/hr</span>
                   </span>
                 </button>
               ) : (
-                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 px-3 py-1 text-[11px] font-semibold text-emerald-800 shadow-sm">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/80 px-3 py-1 text-[10px] font-medium text-gray-700 shadow-sm">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 text-gray-600">
                     <svg
                       className="h-3.5 w-3.5"
                       viewBox="0 0 20 20"
@@ -414,9 +414,9 @@ export const Card: FC<Props> = ({
                       <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.5a.75.75 0 00-1.5 0v.16c-.62.08-1.19.3-1.67.63-.62.44-1.08 1.13-1.08 1.96 0 .84.46 1.52 1.08 1.96.46.32 1.02.54 1.67.63v1.47c-.37-.1-.69-.28-.93-.52a.75.75 0 10-1.06 1.06c.47.47 1.12.77 1.99.86v.15a.75.75 0 001.5 0v-.15c.62-.08 1.19-.3 1.67-.63.62-.44 1.08-1.12 1.08-1.96 0-.83-.46-1.52-1.08-1.96-.46-.33-1.02-.55-1.67-.63V8.97c.37.1.69.28.93.52a.75.75 0 101.06-1.06c-.47-.47-1.12-.77-1.99-.86V6.5z" />
                     </svg>
                   </span>
-                  <span className="text-emerald-700">{currency}</span>
+                  <span className="text-gray-600">{currency}</span>
                   <span>{rateLabel}</span>
-                  <span className="text-emerald-600">/hr</span>
+                  <span className="text-gray-500">/hr</span>
                 </div>
               )}
             </div>
