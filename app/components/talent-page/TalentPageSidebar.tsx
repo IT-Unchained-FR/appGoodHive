@@ -183,17 +183,19 @@ export const TalentPageSidebar = ({
           )
         ) : (
           <div className={styles.blurredContent}>
-            <div className={styles.socialLinks} style={{ filter: 'blur(8px)', opacity: 0.5 }}>
-              <div className={styles.socialLink}>
-                <Linkedin className={styles.socialIcon} />
-                <span className={styles.socialName}>LinkedIn</span>
-                <ExternalLink className={styles.externalIcon} />
-              </div>
-              <div className={styles.socialLink}>
-                <Github className={styles.socialIcon} />
-                <span className={styles.socialName}>GitHub</span>
-                <ExternalLink className={styles.externalIcon} />
-              </div>
+            <div className={styles.lockedSocialList}>
+              {(hasSocialLinks ? socialLinks : [
+                { name: "LinkedIn", icon: Linkedin },
+                { name: "GitHub", icon: Github },
+                { name: "Twitter", icon: Twitter },
+                { name: "Portfolio", icon: Globe },
+              ]).map((link, index) => (
+                <div key={index} className={styles.lockedSocialItem}>
+                  <link.icon className={styles.socialIcon} />
+                  <span className={styles.socialName}>{link.name}</span>
+                  <Lock className={styles.externalIcon} />
+                </div>
+              ))}
             </div>
             <button onClick={handleConnectWallet} className={`${styles.connectButton} ${styles.outlineButton}`}>
               <Lock size={16} />
