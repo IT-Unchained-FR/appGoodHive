@@ -124,49 +124,32 @@ export const TalentPageSidebar = ({
 
       {/* Availability & Rate Card */}
       {rateLabel && (
-        <div className={`${styles.availabilityCard} ${!canViewSensitive ? styles.blurredCard : ''}`}>
+        <div className={styles.availabilityCard}>
           <h3 className={styles.availabilityTitle}>Hourly Rate</h3>
-
-          {canViewSensitive ? (
-            <>
-              <div className={styles.rateDisplay}>
-                <DollarSign
-                  size={24}
-                  style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }}
-                />
-                {rateLabel}
-                <span className={styles.rateCurrency}>/hr</span>
-              </div>
-
-              {availability !== undefined && (
-                <div className={styles.availabilityStatus}>
-                  {availability ? (
-                    <>
-                      <CheckCircle size={16} />
-                      Available for hire
-                    </>
-                  ) : (
-                    <>
-                      <XCircle size={16} />
-                      Not available
-                    </>
-                  )}
-                </div>
-              )}
-            </>
-        ) : (
-          <div className={styles.blurredContent}>
-            <div className={styles.rateDisplay} style={{ filter: "blur(8px)", opacity: 0.5 }}>
-              <DollarSign size={24} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} />
-              {rateLabel}
-              <span className={styles.rateCurrency}>/hr</span>
-            </div>
-            <button onClick={handleApprovalCtaClick} className={styles.connectButton}>
-              <Lock size={16} />
-              {rateCtaLabel}
-            </button>
+          <div className={styles.rateDisplay}>
+            <DollarSign
+              size={24}
+              style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }}
+            />
+            {rateLabel}
+            <span className={styles.rateCurrency}>/hr</span>
           </div>
-        )}
+
+          {availability !== undefined && (
+            <div className={styles.availabilityStatus}>
+              {availability ? (
+                <>
+                  <CheckCircle size={16} />
+                  Available for hire
+                </>
+              ) : (
+                <>
+                  <XCircle size={16} />
+                  Not available
+                </>
+              )}
+            </div>
+          )}
         </div>
       )}
 
