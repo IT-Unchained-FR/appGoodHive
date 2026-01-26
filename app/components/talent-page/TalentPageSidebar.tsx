@@ -31,6 +31,7 @@ interface TalentPageSidebarProps {
   twitter?: string;
   portfolio?: string;
   stackoverflow?: string;
+  canViewSensitive?: boolean;
 }
 
 export const TalentPageSidebar = ({
@@ -51,14 +52,17 @@ export const TalentPageSidebar = ({
   twitter,
   portfolio,
   stackoverflow,
+  canViewSensitive: canViewSensitiveProp,
 }: TalentPageSidebarProps) => {
   const { user } = useAuth();
   const { connect } = useConnectModal();
 
   const canViewSensitive =
-    !!user &&
-    (user.talent_status === "approved" ||
-      user.recruiter_status === "approved");
+    typeof canViewSensitiveProp === "boolean"
+      ? canViewSensitiveProp
+      : !!user &&
+        (user.talent_status === "approved" ||
+          user.recruiter_status === "approved");
 
   const handleConnectWallet = () => {
     if (connect) {

@@ -109,9 +109,10 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
   } = profileData;
 
   const canViewSensitive =
-    !!user &&
-    (user.talent_status === "approved" ||
-      user.recruiter_status === "approved");
+    user?.user_id === profileData.user_id ||
+    (!!user &&
+      (user.talent_status === "approved" ||
+        user.recruiter_status === "approved"));
 
   const handleConnectWallet = () => {
     if (connect) {
@@ -156,6 +157,7 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
         mentor={mentor}
         recruiter={recruiter}
         approved_roles={approved_roles}
+        canViewSensitive={canViewSensitive}
       />
 
       {/* Two-Column Content Grid */}
@@ -266,6 +268,7 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
             twitter={twitter}
             portfolio={portfolio}
             stackoverflow={stackoverflow}
+            canViewSensitive={canViewSensitive}
           />
         </aside>
       </div>

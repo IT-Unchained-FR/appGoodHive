@@ -27,6 +27,7 @@ interface TalentPageHeaderProps {
   mentor?: boolean;
   recruiter?: boolean;
   approved_roles?: object[] | null;
+  canViewSensitive?: boolean;
 }
 
 export const TalentPageHeader = ({
@@ -42,6 +43,7 @@ export const TalentPageHeader = ({
   mentor,
   recruiter,
   approved_roles,
+  canViewSensitive: canViewSensitiveProp,
 }: TalentPageHeaderProps) => {
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -150,9 +152,11 @@ export const TalentPageHeader = ({
   };
 
   const canViewSensitive =
-    !!user &&
-    (user.talent_status === "approved" ||
-      user.recruiter_status === "approved");
+    typeof canViewSensitiveProp === "boolean"
+      ? canViewSensitiveProp
+      : !!user &&
+        (user.talent_status === "approved" ||
+          user.recruiter_status === "approved");
   const fullName = `${first_name} ${last_name}`;
   const location = city && country ? `${city}, ${country}` : city || country || "";
 
