@@ -11,6 +11,7 @@ import { useConnectModal } from "thirdweb/react";
 import { connectModalOptions } from "@/lib/auth/walletConfig";
 import { MessageBoxModal } from "@/app/components/message-box-modal";
 import { useAuthCheck } from "@/app/hooks/useAuthCheck";
+import ApprovalPromptModal from "./ApprovalPromptModal";
 import toast from "react-hot-toast";
 import styles from "./TalentPageHeader.module.scss";
 
@@ -50,6 +51,7 @@ export const TalentPageHeader = ({
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isPopupModal, setIsPopupModal] = useState(false);
+  const [showApprovalPrompt, setShowApprovalPrompt] = useState(false);
   const { user, isAuthenticated } = useAuth();
   const { connect } = useConnectModal();
   const { user_id: currentUserId, checkAuthAndShowConnectPrompt } = useAuthCheck();
@@ -151,6 +153,14 @@ export const TalentPageHeader = ({
     if (connect) {
       connect(connectModalOptions);
     }
+  };
+
+  const handleApprovalCtaClick = () => {
+    if (isAuthenticated && !canViewSensitive) {
+      setShowApprovalPrompt(true);
+      return;
+    }
+    handleConnectWallet();
   };
 
   const canViewSensitive =
@@ -291,7 +301,7 @@ export const TalentPageHeader = ({
           ) : (
             <button
               type="button"
-              onClick={handleConnectWallet}
+              onClick={handleApprovalCtaClick}
               className={`${styles.ctaButton} ${styles.connectButton}`}
               aria-label={isAuthenticated ? "Get approved to contact" : "Connect wallet to contact"}
             >
@@ -310,6 +320,11 @@ export const TalentPageHeader = ({
             onClose={handlePopupModalClose}
           />
         )}
+
+        <ApprovalPromptModal
+          open={showApprovalPrompt}
+          onClose={() => setShowApprovalPrompt(false)}
+        />
       </div>
     </div>
   );

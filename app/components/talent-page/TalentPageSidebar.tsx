@@ -8,6 +8,8 @@ import { useConnectModal } from "thirdweb/react";
 import { connectModalOptions } from "@/lib/auth/walletConfig";
 import styles from "./TalentPageSidebar.module.scss";
 import { formatRateRange } from "@/app/utils/format-rate-range";
+import ApprovalPromptModal from "./ApprovalPromptModal";
+import { useState } from "react";
 
 interface TalentPageSidebarProps {
   // Stats
@@ -56,6 +58,7 @@ export const TalentPageSidebar = ({
 }: TalentPageSidebarProps) => {
   const { user, isAuthenticated } = useAuth();
   const { connect } = useConnectModal();
+  const [showApprovalPrompt, setShowApprovalPrompt] = useState(false);
 
   const canViewSensitive =
     typeof canViewSensitiveProp === "boolean"
@@ -71,6 +74,14 @@ export const TalentPageSidebar = ({
     if (connect) {
       connect(connectModalOptions);
     }
+  };
+
+  const handleApprovalCtaClick = () => {
+    if (isAuthenticated && !canViewSensitive) {
+      setShowApprovalPrompt(true);
+      return;
+    }
+    handleConnectWallet();
   };
 
   // Social links array
@@ -89,7 +100,8 @@ export const TalentPageSidebar = ({
   });
 
   return (
-    <div className={styles.sidebarContainer}>
+    <>
+      <div className={styles.sidebarContainer}>
       {/* Stats Card */}
       <TalentStatsCard
         years_experience={years_experience}
@@ -145,7 +157,7 @@ export const TalentPageSidebar = ({
               {rateLabel}
               <span className={styles.rateCurrency}>/hr</span>
             </div>
-            <button onClick={handleConnectWallet} className={styles.connectButton}>
+            <button onClick={handleApprovalCtaClick} className={styles.connectButton}>
               <Lock size={16} />
               {connectLabel} rate
             </button>
@@ -197,13 +209,19 @@ export const TalentPageSidebar = ({
                 </div>
               ))}
             </div>
-            <button onClick={handleConnectWallet} className={`${styles.connectButton} ${styles.outlineButton}`}>
+            <button onClick={handleApprovalCtaClick} className={`${styles.connectButton} ${styles.outlineButton}`}>
               <Lock size={16} />
               {connectLabel} links
             </button>
           </div>
         )}
       </div>
-    </div>
+      </div>
+
+      <ApprovalPromptModal
+        open={showApprovalPrompt}
+        onClose={() => setShowApprovalPrompt(false)}
+      />
+    </>
   );
 };
