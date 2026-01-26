@@ -42,3 +42,30 @@ export function maskName(firstName?: string | null, lastName?: string | null) {
     lastName: safeLast ? `${safeLast[0]}.` : "Professional",
   };
 }
+
+const escapeRegExp = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const maskToken = (value: string) =>
+  value.replace(/[A-Za-z0-9]/g, "*");
+
+export function maskNameInText(
+  text?: string | null,
+  firstName?: string | null,
+  lastName?: string | null,
+) {
+  if (!text) return text || "";
+
+  const safeFirst = (firstName || "").trim();
+  const safeLast = (lastName || "").trim();
+  const fullName = `${safeFirst} ${safeLast}`.trim();
+
+  const patterns = [fullName, safeFirst, safeLast].filter(
+    (value) => value.length > 1,
+  );
+
+  return patterns.reduce((result, value) => {
+    const regex = new RegExp(`\\b${escapeRegExp(value)}\\b`, "gi");
+    return result.replace(regex, (match) => maskToken(match));
+  }, text);
+}

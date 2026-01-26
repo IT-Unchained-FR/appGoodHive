@@ -1,5 +1,5 @@
 import sql from "@/lib/db";
-import { getViewerApproval, maskName } from "@/lib/access-control";
+import { getViewerApproval, maskName, maskNameInText } from "@/lib/access-control";
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -228,6 +228,12 @@ export async function GET(request: NextRequest) {
     `;
 
     const maskedName = maskName(talent.first_name, talent.last_name);
+    const decodedDescription = talent.description
+      ? safeBase64Decode(talent.description)
+      : null;
+    const decodedAboutWork = talent.about_work
+      ? safeBase64Decode(talent.about_work)
+      : null;
     const profileData = {
       ...talent,
       first_name: canViewSensitive ? talent.first_name : maskedName.firstName,
@@ -242,8 +248,12 @@ export async function GET(request: NextRequest) {
       portfolio: canViewSensitive ? talent.portfolio : null,
       stackoverflow: canViewSensitive ? talent.stackoverflow : null,
       cv_url: canViewSensitive ? talent.cv_url : null,
-      description: canViewSensitive ? safeBase64Decode(talent.description) : null,
-      about_work: canViewSensitive ? safeBase64Decode(talent.about_work) : null,
+      description: canViewSensitive
+        ? decodedDescription
+        : maskNameInText(decodedDescription, talent.first_name, talent.last_name),
+      about_work: canViewSensitive
+        ? decodedAboutWork
+        : maskNameInText(decodedAboutWork, talent.first_name, talent.last_name),
       min_rate:
         talent.min_rate !== null && talent.min_rate !== undefined
           ? Number(talent.min_rate)
