@@ -13,6 +13,7 @@ import {
   DollarSign,
   Users,
   Eye,
+  Download,
   MoreVertical,
   CheckCircle2,
   Clock,
@@ -114,6 +115,56 @@ export default function JobsManagement() {
     if (!job.block_id) return { label: "Draft", color: "bg-gray-100 text-gray-800", icon: Clock };
     if (job.escrowAmount > 0) return { label: "Funded", color: "bg-green-100 text-green-800", icon: CheckCircle2 };
     return { label: "Published", color: "bg-blue-100 text-blue-800", icon: AlertCircle };
+  };
+
+  const handleExportCsv = () => {
+    if (!filteredJobs.length) return;
+
+    const headers = [
+      "Title",
+      "Status",
+      "Project Type",
+      "Budget",
+      "Currency",
+      "Chain",
+      "Location",
+      "Posted At",
+    ];
+
+    const rows = filteredJobs.map((job) => {
+      const status = getJobStatus(job).label;
+      const location = [job.city, job.country].filter(Boolean).join(", ");
+      return [
+        job.title,
+        status,
+        job.projectType,
+        job.budget,
+        job.currency || "",
+        job.chain,
+        location,
+        job.postedAt,
+      ];
+    });
+
+    const csv = [
+      headers.join(","),
+      ...rows.map((row) =>
+        row
+          .map((value) => {
+            const stringValue = String(value ?? "").replace(/"/g, '""');
+            return `"${stringValue}"`;
+          })
+          .join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `jobs-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
   };
 
   const handleSelectJob = (jobId: string) => {
@@ -220,6 +271,16 @@ export default function JobsManagement() {
               <List className="w-4 h-4" />
             </button>
           </div>
+
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
+            disabled={!filteredJobs.length}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export CSV
+          </button>
         </div>
       </div>
 
