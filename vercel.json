@@ -10,7 +10,7 @@
       ]
     }
   ],
-  "buildCommand": "NODE_OPTIONS='--max-old-space-size=4096' NEXT_TELEMETRY_DISABLED=1 next build",
-  "installCommand": "yarn install --network-timeout 300000",
+  "buildCommand": "NODE_OPTIONS='--max-old-space-size=4096' NEXT_TELEMETRY_DISABLED=1 pnpm run build",
+  "installCommand": "pnpm install",
   "framework": "nextjs"
 }
