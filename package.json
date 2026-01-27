@@ -2,6 +2,7 @@
   "name": "goodhive",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.0.0",
   "scripts": {
     "dev": "NODE_OPTIONS='--max-old-space-size=4096 --experimental-worker' next dev",
     "dev:fast": "NODE_OPTIONS='--max-old-space-size=4096 --experimental-worker --enable-source-maps' next dev --turbo",
