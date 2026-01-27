@@ -101,12 +101,14 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
     languages,
   } = profileData;
 
+  const isOwner = user?.user_id === profileData.user_id;
   const canViewSensitive =
-    user?.user_id === profileData.user_id ||
+    isOwner ||
     (!!user &&
       (user.talent_status === "approved" ||
         user.recruiter_status === "approved"));
-  const canViewBasic = isAuthenticated || user?.user_id === profileData.user_id;
+  const canViewBasic = isAuthenticated || isOwner;
+  const canViewResume = isOwner || user?.recruiter_status === "approved";
 
   // Pending approval state
   if (!approved) {
@@ -176,7 +178,7 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
           )}
 
           {/* Portfolio/CV Section - Only visible to verified users */}
-          {cv_url && canViewSensitive && (
+          {cv_url && canViewResume && (
             <section className={styles.section}>
               <h2 className={styles.sectionTitle}>Portfolio & Resume</h2>
               <TalentsCVSection cv_url={cv_url} talent_status={talent_status} approved={approved} />
