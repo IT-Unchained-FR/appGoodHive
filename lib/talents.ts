@@ -144,13 +144,13 @@ export async function fetchTalents({
       whereConditions.push("COALESCE(freelance_only::text, 'false') = 'true'");
     }
 
-    // Rate range filter - uses min_rate/max_rate with fallback to legacy rate field
-    // For legacy users who only have 'rate', we treat it as both min and max
+    // Rate range filter - strict containment
+    // For legacy users who only have 'rate', treat it as both min and max
     if (minRate) {
       const minRateNum = parseFloat(minRate);
       if (!isNaN(minRateNum)) {
         whereConditions.push(
-          `COALESCE(max_rate, min_rate, NULLIF(rate, '')::NUMERIC) >= $${++paramIndex}`
+          `COALESCE(min_rate, NULLIF(rate, '')::NUMERIC, max_rate) >= $${++paramIndex}`
         );
         params.push(minRateNum);
       }
@@ -160,7 +160,7 @@ export async function fetchTalents({
       const maxRateNum = parseFloat(maxRate);
       if (!isNaN(maxRateNum)) {
         whereConditions.push(
-          `COALESCE(min_rate, max_rate, NULLIF(rate, '')::NUMERIC) <= $${++paramIndex}`
+          `COALESCE(max_rate, NULLIF(rate, '')::NUMERIC, min_rate) <= $${++paramIndex}`
         );
         params.push(maxRateNum);
       }
