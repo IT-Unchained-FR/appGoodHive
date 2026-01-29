@@ -16,6 +16,8 @@ const PUBLIC_PATHS = [
   "/",
   "/about-us",  // Public about us page
   "/blog",  // Allow access to blog pages
+  "/faq",  // Public FAQ page
+  "/blockchain-webinar",  // Public webinar page
   "/contact",  // Public contact page
   "/talents/job-search",
   "/companies/search-talents",
