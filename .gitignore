@@ -58,3 +58,6 @@ goodhive-build.tar.gz
 # Temporary documentation files
 .temp-docs/
 *.temp.md
+
+# Invoices
+invoice*
