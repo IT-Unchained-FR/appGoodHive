@@ -5,15 +5,23 @@ import styles from "./message-box-modal.module.scss";
 interface Props {
   title: string;
   messageLengthLimit: number;
-  onSubmit: (coverLetter: string) => void;
+  initialEmail?: string;
+  onSubmit: (message: string, email: string) => void;
   onClose: () => void;
 }
 
 export const MessageBoxModal: FC<Props> = (props) => {
-  const { title, messageLengthLimit, onClose, onSubmit } = props;
+  const { title, messageLengthLimit, initialEmail, onClose, onSubmit } = props;
   const [message, setMessage] = useState("");
+  const [email, setEmail] = useState(initialEmail || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    if (initialEmail) {
+      setEmail(initialEmail);
+    }
+  }, [initialEmail]);
 
   useEffect(() => {
     // Trigger entrance animation
@@ -31,6 +39,10 @@ export const MessageBoxModal: FC<Props> = (props) => {
     setMessage(e.target.value);
   };
 
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+  };
+
   const handleClose = () => {
     setIsVisible(false);
     // Delay actual close to allow exit animation
@@ -46,19 +58,19 @@ export const MessageBoxModal: FC<Props> = (props) => {
   };
 
   const onClickSubmitHandler = async () => {
-    if (message.length < messageLengthLimit) {
+    if (message.length < messageLengthLimit || !email) {
       return; // Character count will show validation
     }
 
     setIsSubmitting(true);
     try {
-      await onSubmit(message);
+      await onSubmit(message, email);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const isValid = message.length >= messageLengthLimit;
+  const isValid = message.length >= messageLengthLimit && email.length > 0;
   const characterCountClass = message.length >= messageLengthLimit ? styles.valid : styles.invalid;
 
   return (
@@ -85,7 +97,7 @@ export const MessageBoxModal: FC<Props> = (props) => {
             </div>
             <div className={styles.titleSection}>
               <h2 id="modal-title" className={styles.title}>
-                Contact Company
+                {title}
               </h2>
               <p className={styles.subtitle}>
                 Send a message to the hive
@@ -105,6 +117,18 @@ export const MessageBoxModal: FC<Props> = (props) => {
         {/* Modal Body */}
         <div className={styles.modalBody}>
           <div className={styles.inputSection}>
+            <label htmlFor="email-input" className={styles.label}>
+              Your Email
+            </label>
+            <input
+              id="email-input"
+              type="email"
+              className={styles.textarea}
+              style={{ minHeight: '40px', height: '40px', resize: 'none', marginBottom: '16px', paddingTop: '8px' }}
+              placeholder="name@company.com"
+              value={email}
+              onChange={handleEmailChange}
+            />
             <label htmlFor="message-textarea" className={styles.label}>
               Your Message
             </label>

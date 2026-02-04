@@ -17,6 +17,7 @@ export const CompanyContactBtn = ({ toEmail, toUserName }: Props) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isPopupModal, setIsPopupModal] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [currentUserEmail, setCurrentUserEmail] = useState("");
   const { user_id, checkAuthAndShowConnectPrompt } = useAuthCheck();
 
   useEffect(() => {
@@ -61,6 +62,9 @@ export const CompanyContactBtn = ({ toEmail, toUserName }: Props) => {
       );
       return;
     } else {
+      if (userProfile.email) {
+        setCurrentUserEmail(userProfile.email);
+      }
       setIsPopupModal(true);
     }
   };
@@ -70,7 +74,7 @@ export const CompanyContactBtn = ({ toEmail, toUserName }: Props) => {
     setIsLoading(false);
   };
 
-  const onSubmitHandler = async (message: string) => {
+  const onSubmitHandler = async (message: string, email: string) => {
     if (!message) {
       toast.error("Please complete the form!");
       return;
@@ -100,7 +104,7 @@ export const CompanyContactBtn = ({ toEmail, toUserName }: Props) => {
           email: toEmail,
           type: "contact-company",
           subject: `Goodhive - ${userProfile?.first_name} send you a message`,
-          userEmail: userProfile?.email,
+          userEmail: email, // Use email from modal
           message,
           userProfile: `${window.location.origin}/talents/${user_id}`,
         }),
@@ -178,7 +182,8 @@ export const CompanyContactBtn = ({ toEmail, toUserName }: Props) => {
       {/* Enhanced Modal */}
       {isPopupModal && (
         <MessageBoxModal
-          title="Write your message:"
+          title={`Contact ${toUserName}`}
+          initialEmail={currentUserEmail}
           messageLengthLimit={30}
           onSubmit={onSubmitHandler}
           onClose={onPopupModalCloseHandler}

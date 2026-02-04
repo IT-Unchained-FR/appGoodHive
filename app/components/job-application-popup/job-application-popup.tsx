@@ -79,11 +79,39 @@ export const JobApplicationPopup: React.FC<JobApplicationPopupProps> = ({
     formState: { errors },
     reset,
     watch,
+    setValue,
   } = useForm<FormData>({
     resolver: yupResolver(schema),
   });
 
   const coverLetterValue = watch("coverLetter", "");
+
+  useEffect(() => {
+    if (isOpen && logged_in_user_id) {
+      const fetchUserProfile = async () => {
+        try {
+          const response = await fetch(
+            `/api/talents/my-profile?user_id=${logged_in_user_id}`
+          );
+          if (response.ok) {
+            const userData = await response.json();
+            if (userData) {
+              setValue("name", `${userData.first_name || ""} ${userData.last_name || ""}`.trim());
+              setValue("email", userData.email || "");
+              if (userData.portfolio) {
+                setValue("portfolioLink", userData.portfolio);
+              } else if (userData.linkedin) {
+                setValue("portfolioLink", userData.linkedin);
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching user profile for prefill:", error);
+        }
+      };
+      fetchUserProfile();
+    }
+  }, [isOpen, logged_in_user_id, setValue]);
 
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);

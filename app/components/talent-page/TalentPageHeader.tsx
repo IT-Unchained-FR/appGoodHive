@@ -11,6 +11,7 @@ import { useConnectModal } from "thirdweb/react";
 import { connectModalOptions } from "@/lib/auth/walletConfig";
 import { MessageBoxModal } from "@/app/components/message-box-modal";
 import { useAuthCheck } from "@/app/hooks/useAuthCheck";
+import { ReturnUrlManager } from "@/app/utils/returnUrlManager";
 import ApprovalPromptModal from "./ApprovalPromptModal";
 import toast from "react-hot-toast";
 import styles from "./TalentPageHeader.module.scss";
@@ -52,6 +53,7 @@ export const TalentPageHeader = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isPopupModal, setIsPopupModal] = useState(false);
   const [showApprovalPrompt, setShowApprovalPrompt] = useState(false);
+  const [currentCompanyEmail, setCurrentCompanyEmail] = useState("");
   const { user, isAuthenticated } = useAuth();
   const { connect } = useConnectModal();
   const { user_id: currentUserId, checkAuthAndShowConnectPrompt } = useAuthCheck();
@@ -82,6 +84,11 @@ export const TalentPageHeader = ({
         );
         return;
       }
+      
+      if (userProfile.email) {
+        setCurrentCompanyEmail(userProfile.email);
+      }
+      
       setIsLoading(false);
       setIsPopupModal(true);
     } catch (error) {
@@ -94,7 +101,7 @@ export const TalentPageHeader = ({
     setIsPopupModal(false);
   };
 
-  const handleSubmitMessage = async (message: string) => {
+  const handleSubmitMessage = async (message: string, emailFromModal: string) => {
     if (!message) {
       toast.error("Please enter a message!");
       return;
@@ -128,10 +135,10 @@ export const TalentPageHeader = ({
         body: JSON.stringify({
           name: userProfile?.designation,
           toUserName: fullName,
-          email: email,
+          email: email, // This is the talent's email from props
           type: "contact-talent",
           subject: `Goodhive - ${userProfile?.designation} interested in your profile`,
-          userEmail: userProfile?.email,
+          userEmail: emailFromModal, // Use email from modal
           message,
           userProfile: `${window.location.origin}/companies/${currentUserId}`,
         }),
@@ -150,6 +157,11 @@ export const TalentPageHeader = ({
   };
 
   const handleConnectWallet = () => {
+    // Set return URL so user comes back here after connecting
+    if (typeof window !== "undefined") {
+      ReturnUrlManager.setProtectedRouteAccess(window.location.pathname);
+    }
+    
     if (connect) {
       connect(connectModalOptions);
     }
@@ -315,7 +327,8 @@ export const TalentPageHeader = ({
         {/* Message Modal */}
         {isPopupModal && (
           <MessageBoxModal
-            title="Write your message:"
+            title={`Contact ${fullName}`}
+            initialEmail={currentCompanyEmail}
             messageLengthLimit={30}
             onSubmit={handleSubmitMessage}
             onClose={handlePopupModalClose}

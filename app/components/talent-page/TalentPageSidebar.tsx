@@ -6,6 +6,7 @@ import { WorkPreferencesCard } from "./WorkPreferencesCard";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useConnectModal } from "thirdweb/react";
 import { connectModalOptions } from "@/lib/auth/walletConfig";
+import { ReturnUrlManager } from "@/app/utils/returnUrlManager";
 import styles from "./TalentPageSidebar.module.scss";
 import { formatRateRange } from "@/app/utils/format-rate-range";
 import ApprovalPromptModal from "./ApprovalPromptModal";
@@ -75,6 +76,11 @@ export const TalentPageSidebar = ({
     : "Connect wallet to view links";
 
   const handleConnectWallet = () => {
+    // Set return URL so user comes back here after connecting
+    if (typeof window !== "undefined") {
+      ReturnUrlManager.setProtectedRouteAccess(window.location.pathname);
+    }
+
     if (connect) {
       connect(connectModalOptions);
     }
