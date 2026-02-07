@@ -57,6 +57,10 @@ export default async function Page(context: MyProfilePageProps) {
       minute: "2-digit",
     });
   };
+
+  const isApprovedTalent =
+    user.talent_status === "approved" || user.approved === true;
+
   return (
     <AdminPageLayout
       title={`${user.first_name} ${user.last_name}`}
@@ -234,7 +238,11 @@ export default async function Page(context: MyProfilePageProps) {
           )}
 
           <div className="border-t pt-4">
-            <CvAdminManager userId={user_id} initialCvUrl={user.cv_url} />
+            <CvAdminManager
+              userId={user_id}
+              initialCvUrl={user.cv_url}
+              isApproved={isApprovedTalent}
+            />
           </div>
 
           <div className="border-t pt-4 flex flex-wrap gap-4">

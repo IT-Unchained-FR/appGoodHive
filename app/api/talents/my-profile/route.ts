@@ -45,9 +45,11 @@ export async function POST(request: Request) {
     user_id,
     validate,
     referred_by,
+    clear_cv,
   } = await request.json();
 
   try {
+    const shouldClearCv = clear_cv === true;
     // Filter out undefined, null, and empty string fields
     const fields = {
       title,
@@ -84,9 +86,17 @@ export async function POST(request: Request) {
       inReview: validate === true ? true : false,
     };
 
-    const filteredFields = Object.entries(fields).filter(
-      ([, value]) => value !== undefined && value !== null && value !== "",
-    );
+    const filteredFields = Object.entries(fields).filter(([key, value]) => {
+      if (value === undefined || value === "") {
+        return false;
+      }
+
+      if (value === null) {
+        return key === "cv_url" && shouldClearCv;
+      }
+
+      return true;
+    });
 
     const columns = filteredFields.map(([key]) => key).join(", ");
     const values = filteredFields.map(([, value]) => value);
