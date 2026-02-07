@@ -7,8 +7,6 @@ import LastActiveStatus from "@/app/components/LastActiveStatus";
 import { generateCountryFlag } from "@/app/utils/generate-country-flag";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { CompanyInfoGuard } from "@/app/components/CompanyInfoGuard";
-import { useConnectModal } from "thirdweb/react";
-import { connectModalOptions } from "@/lib/auth/walletConfig";
 import { MessageBoxModal } from "@/app/components/message-box-modal";
 import { useAuthCheck } from "@/app/hooks/useAuthCheck";
 import { ReturnUrlManager } from "@/app/utils/returnUrlManager";
@@ -55,8 +53,8 @@ export const TalentPageHeader = ({
   const [showApprovalPrompt, setShowApprovalPrompt] = useState(false);
   const [currentCompanyEmail, setCurrentCompanyEmail] = useState("");
   const { user, isAuthenticated } = useAuth();
-  const { connect } = useConnectModal();
-  const { user_id: currentUserId, checkAuthAndShowConnectPrompt } = useAuthCheck();
+  const { user_id: currentUserId, checkAuthAndShowConnectPrompt, openConnectModal } =
+    useAuthCheck();
 
   const handleContactClick = async () => {
     // Check if user is authenticated first
@@ -162,9 +160,7 @@ export const TalentPageHeader = ({
       ReturnUrlManager.setProtectedRouteAccess(window.location.pathname);
     }
     
-    if (connect) {
-      connect(connectModalOptions);
-    }
+    void openConnectModal();
   };
 
   const handleApprovalCtaClick = () => {

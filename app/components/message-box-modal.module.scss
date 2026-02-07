@@ -150,6 +150,30 @@
       margin-bottom: 0.75rem;
     }
 
+    .inputField {
+      width: 100%;
+      height: 44px;
+      padding: 0 1.25rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 16px;
+      font-size: 1rem;
+      line-height: 1.2;
+      transition: all 0.3s ease;
+      background: #ffffff;
+      margin-bottom: 1rem;
+
+      &:focus {
+        outline: none;
+        border-color: #fbbf24;
+        box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1);
+        background: #fffef7;
+      }
+
+      &::placeholder {
+        color: #9ca3af;
+      }
+    }
+
     .textarea {
       width: 100%;
       min-height: 160px;

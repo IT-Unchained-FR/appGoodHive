@@ -123,8 +123,7 @@ export const MessageBoxModal: FC<Props> = (props) => {
             <input
               id="email-input"
               type="email"
-              className={styles.textarea}
-              style={{ minHeight: '40px', height: '40px', resize: 'none', marginBottom: '16px', paddingTop: '8px' }}
+              className={styles.inputField}
               placeholder="name@company.com"
               value={email}
               onChange={handleEmailChange}

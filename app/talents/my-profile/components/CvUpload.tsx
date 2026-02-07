@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Info } from "lucide-react";
 import { ProfileData } from "../types";
 
 interface CvUploadProps {
@@ -20,9 +21,19 @@ export const CvUpload = ({
     <div className="mt-4">
       <label
         htmlFor="cv"
-        className="inline-block ml-3 text-base text-black form-label"
+        className="inline-flex items-center gap-2 ml-3 text-base text-black form-label"
       >
         CV*
+        <span className="relative inline-flex items-center group">
+          <Info size={16} className="text-amber-700" />
+          <span className="absolute left-1/2 top-full z-10 hidden w-64 -translate-x-1/2 translate-y-2 rounded-md bg-white px-3 py-2 text-xs text-gray-700 shadow-lg ring-1 ring-amber-200 group-hover:block">
+            Want to change your CV?{" "}
+            <Link href="/contact-us" className="text-amber-700 underline">
+              Contact us
+            </Link>
+            .
+          </span>
+        </span>
       </label>
       {isUploadedCvLink || profileData.cv_url ? (
         <div className="flex items-center gap-3 p-3">

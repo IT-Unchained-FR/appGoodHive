@@ -3,7 +3,6 @@ import {
   Calendar,
   CheckCircle,
   DollarSign,
-  FileText,
   Github,
   Globe,
   Linkedin,
@@ -22,6 +21,7 @@ import Image from "next/image";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import SafeHTML from "@/app/components/SafeHTML";
 import { formatRateRange } from "@/app/utils/format-rate-range";
+import CvAdminManager from "./CvAdminManager";
 
 export const metadata: Metadata = {
   title: "Admin Talent Management - GoodHive",
@@ -233,18 +233,11 @@ export default async function Page(context: MyProfilePageProps) {
             </div>
           )}
 
+          <div className="border-t pt-4">
+            <CvAdminManager userId={user_id} initialCvUrl={user.cv_url} />
+          </div>
+
           <div className="border-t pt-4 flex flex-wrap gap-4">
-            {user.cv_url && (
-              <a
-                href={user.cv_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center space-x-2 text-blue-600 hover:underline"
-              >
-                <FileText size={18} />
-                <span>View CV</span>
-              </a>
-            )}
             {user.linkedin && (
               <a
                 href={user.linkedin}

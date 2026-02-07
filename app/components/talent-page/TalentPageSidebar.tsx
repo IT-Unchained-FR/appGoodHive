@@ -4,13 +4,12 @@ import { DollarSign, CheckCircle, XCircle, Linkedin, Github, Twitter, Globe, Ext
 import { TalentStatsCard } from "./TalentStatsCard";
 import { WorkPreferencesCard } from "./WorkPreferencesCard";
 import { useAuth } from "@/app/contexts/AuthContext";
-import { useConnectModal } from "thirdweb/react";
-import { connectModalOptions } from "@/lib/auth/walletConfig";
 import { ReturnUrlManager } from "@/app/utils/returnUrlManager";
 import styles from "./TalentPageSidebar.module.scss";
 import { formatRateRange } from "@/app/utils/format-rate-range";
 import ApprovalPromptModal from "./ApprovalPromptModal";
 import { useState } from "react";
+import { useAuthCheck } from "@/app/hooks/useAuthCheck";
 
 interface TalentPageSidebarProps {
   // Stats
@@ -58,7 +57,7 @@ export const TalentPageSidebar = ({
   canViewSensitive: canViewSensitiveProp,
 }: TalentPageSidebarProps) => {
   const { user, isAuthenticated } = useAuth();
-  const { connect } = useConnectModal();
+  const { openConnectModal } = useAuthCheck();
   const [showApprovalPrompt, setShowApprovalPrompt] = useState(false);
 
   const canViewSensitive =
@@ -81,9 +80,7 @@ export const TalentPageSidebar = ({
       ReturnUrlManager.setProtectedRouteAccess(window.location.pathname);
     }
 
-    if (connect) {
-      connect(connectModalOptions);
-    }
+    void openConnectModal();
   };
 
   const handleApprovalCtaClick = () => {

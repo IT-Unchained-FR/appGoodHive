@@ -3,22 +3,98 @@
 import { useAuth } from "@/app/contexts/AuthContext";
 import { thirdwebClient } from "@/clients";
 import { activeChain } from "@/config/chains";
+import {
+  authenticateWithWallet,
+  detectWalletType,
+  extractWalletAuthData,
+  getEmailFromInAppWallet,
+} from "@/lib/auth/thirdwebAuth";
 import { connectModalOptions, supportedWallets } from "@/lib/auth/walletConfig";
-import { useActiveAccount, useConnectModal } from "thirdweb/react";
 import { ReturnUrlManager } from "@/app/utils/returnUrlManager";
 import Cookies from "js-cookie";
+import { useCallback, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
-import { useCallback, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { useActiveAccount, useConnectModal } from "thirdweb/react";
 
 export function useAuthCheck() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, login } = useAuth();
   const account = useActiveAccount();
   const pathname = usePathname();
   const user_id = Cookies.get("user_id");
   const { connect, isConnecting } = useConnectModal();
   const connectInFlightRef = useRef(false);
   const modalTriggerPathnameRef = useRef<string | null>(null);
+  const authInFlightRef = useRef(false);
+
+  const authenticateWalletAccount = useCallback(
+    async (accountToAuth?: any) => {
+      const targetAccount = accountToAuth || account;
+
+      if (!targetAccount?.address) {
+        return false;
+      }
+
+      if (authInFlightRef.current || isAuthenticated || user_id) {
+        return true;
+      }
+
+      authInFlightRef.current = true;
+
+      try {
+        let extractedEmail: string | undefined;
+        let isThirdwebWallet = false;
+
+        try {
+          const email = await getEmailFromInAppWallet(thirdwebClient);
+          if (email) {
+            extractedEmail = email;
+            isThirdwebWallet = true;
+          }
+        } catch (error) {
+          console.debug("No in-app wallet email detected:", error);
+        }
+
+        const walletData = extractWalletAuthData(
+          targetAccount,
+          extractedEmail,
+          isThirdwebWallet,
+        );
+
+        if (!walletData) {
+          return false;
+        }
+
+        if (!walletData.isThirdwebWallet) {
+          const typeInfo = await detectWalletType(targetAccount.address);
+          if (typeInfo.isThirdwebWallet) {
+            walletData.isThirdwebWallet = true;
+            walletData.walletType = "in-app";
+            if (!walletData.email && typeInfo.userInfo?.primaryEmail) {
+              walletData.email = typeInfo.userInfo.primaryEmail;
+            }
+          }
+        } else {
+          walletData.walletType = "in-app";
+        }
+
+        const authResult = await authenticateWithWallet(walletData);
+
+        if (authResult.success && authResult.user) {
+          login(authResult.user);
+          return true;
+        }
+
+        return false;
+      } catch (error) {
+        console.error("Wallet authentication failed:", error);
+        return false;
+      } finally {
+        authInFlightRef.current = false;
+      }
+    },
+    [account, isAuthenticated, login, user_id],
+  );
 
   const openConnectModal = useCallback(async () => {
     if (connectInFlightRef.current || isConnecting) {
@@ -29,19 +105,35 @@ export function useAuthCheck() {
     modalTriggerPathnameRef.current = pathname;
 
     try {
-      await connect({
+      if (account?.address && !isAuthenticated && !user_id) {
+        await authenticateWalletAccount(account);
+        return;
+      }
+
+      const wallet = await connect({
         client: thirdwebClient,
         wallets: supportedWallets,
         chain: activeChain,
         ...connectModalOptions,
       });
+
+      const connectedAccount = await wallet?.getAccount?.();
+      await authenticateWalletAccount(connectedAccount);
     } catch (error) {
       console.debug("Connect modal dismissed", error);
     } finally {
       connectInFlightRef.current = false;
       modalTriggerPathnameRef.current = null;
     }
-  }, [connect, isConnecting, pathname]);
+  }, [
+    account,
+    authenticateWalletAccount,
+    connect,
+    isAuthenticated,
+    isConnecting,
+    pathname,
+    user_id,
+  ]);
 
   const checkAuthAndShowConnectPrompt = useCallback(
     (

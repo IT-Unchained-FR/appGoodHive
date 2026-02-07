@@ -9,7 +9,9 @@ import styles from "./JobPageSidebar.module.scss";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { CompanyInfoGuard } from "@/app/components/CompanyInfoGuard";
 import { useConnectModal } from "thirdweb/react";
-import { connectModalOptions } from "@/lib/auth/walletConfig";
+import { connectModalOptions, supportedWallets } from "@/lib/auth/walletConfig";
+import { thirdwebClient } from "@/clients";
+import { activeChain } from "@/config/chains";
 
 interface JobPageSidebarProps {
   job: {
@@ -80,7 +82,12 @@ export const JobPageSidebar = ({ job }: JobPageSidebarProps) => {
 
   const handleConnectWallet = () => {
     if (connect) {
-      connect(connectModalOptions);
+      connect({
+        client: thirdwebClient,
+        wallets: supportedWallets,
+        chain: activeChain,
+        ...connectModalOptions,
+      });
     }
   };
 
