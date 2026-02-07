@@ -178,3 +178,12 @@ jobs:
             echo "❌ Deployment failed!"
             exit 1
           fi
+
+      - name: Trigger fork sync
+        if: success()
+        run: |
+          curl -L -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.FORK_SYNC_TOKEN }}" \
+            https://api.github.com/repos/IT-Unchained-FR/appGoodHive/dispatches \
+            -d '{"event_type":"sync-upstream"}'
