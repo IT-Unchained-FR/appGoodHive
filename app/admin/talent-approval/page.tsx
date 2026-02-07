@@ -379,6 +379,10 @@ export default function AdminTalentApproval() {
       setLoading(true);
       const params = new URLSearchParams(searchParams.toString());
 
+      if (!params.has("status")) {
+        params.set("status", "all");
+      }
+
       const url = `/api/admin/talents/pending${params.toString() ? `?${params.toString()}` : ''}`;
       const response = await fetch(url, {
         headers: {
