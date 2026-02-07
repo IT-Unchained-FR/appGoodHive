@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
     // Build WHERE clause
     const whereClause = conditions.length > 0
       ? `WHERE ${conditions.join(' AND ')}`
-      : 'WHERE talents.inreview = true';
+      : 'WHERE 1=1';
 
     // Build sort clause
     const sortMap: Record<string, string> = {
