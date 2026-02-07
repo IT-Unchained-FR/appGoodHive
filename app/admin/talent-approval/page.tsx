@@ -25,16 +25,18 @@ import { BulkApproval } from "@/app/components/admin/BulkApproval";
 import toast from "react-hot-toast";
 import moment from "moment";
 
+type ProfileDataWithName = ProfileData & { name?: string };
+
 export default function AdminTalentApproval() {
   const searchParams = useSearchParams();
-  const [users, setUsers] = useState<ProfileData[]>([]);
+  const [users, setUsers] = useState<ProfileDataWithName[]>([]);
   const [loading, setLoading] = useState(false);
   const [showApprovePopup, setShowApprovePopup] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
-  const [selectedItems, setSelectedItems] = useState<ProfileData[]>([]);
+  const [selectedUser, setSelectedUser] = useState<ProfileDataWithName | null>(null);
+  const [selectedItems, setSelectedItems] = useState<ProfileDataWithName[]>([]);
   const [showBulkApproval, setShowBulkApproval] = useState(false);
 
-  const getTalentStatus = (user: ProfileData) => {
+  const getTalentStatus = (user: ProfileDataWithName) => {
     const status = user.talent_status;
     if (status === "approved" || user.approved) {
       return "approved";
@@ -51,13 +53,13 @@ export default function AdminTalentApproval() {
     return "in_review";
   };
 
-  const handleApproveClick = (user: ProfileData) => {
+  const handleApproveClick = (user: ProfileDataWithName) => {
     setSelectedUser(user);
     setShowApprovePopup(true);
   };
 
   const handleStatusUpdate = async (
-    user: ProfileData,
+    user: ProfileDataWithName,
     status: "approved" | "in_review" | "rejected" | "deferred",
   ) => {
     try {
@@ -87,7 +89,7 @@ export default function AdminTalentApproval() {
     }
   };
 
-  const toggleItemSelection = (user: ProfileData) => {
+  const toggleItemSelection = (user: ProfileDataWithName) => {
     setSelectedItems((prev) => {
       const exists = prev.find((item) => item.user_id === user.user_id);
       if (exists) {
@@ -167,12 +169,12 @@ export default function AdminTalentApproval() {
     }
   };
 
-  const columns: Column<ProfileData>[] = [
+  const columns: Column<ProfileDataWithName>[] = [
     {
       key: "select",
       header: "",
       width: "5%",
-      render: (_value: unknown, row: ProfileData) => (
+      render: (_value: unknown, row: ProfileDataWithName) => (
         <Checkbox
           checked={selectedItems.some((item) => item.user_id === row.user_id)}
           onCheckedChange={() => toggleItemSelection(row)}
@@ -185,9 +187,10 @@ export default function AdminTalentApproval() {
       header: "Name",
       width: "22%",
       sortable: true,
-      exportValue: (row: ProfileData) => `${row.first_name || ''} ${row.last_name || ''}`.trim(),
-      render: (_value: unknown, row: ProfileData) => {
-        const fullName = `${row.first_name} ${row.last_name}`;
+      exportValue: (row: ProfileDataWithName) =>
+        `${row.first_name || ""} ${row.last_name || ""}`.trim(),
+      render: (_value: unknown, row: ProfileDataWithName) => {
+        const fullName = `${row.first_name || ""} ${row.last_name || ""}`.trim();
         return (
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex flex-col min-w-0">
@@ -205,14 +208,14 @@ export default function AdminTalentApproval() {
       key: "status",
       header: "Status",
       width: "12%",
-      exportValue: (row: ProfileData) => {
+      exportValue: (row: ProfileDataWithName) => {
         const status = getTalentStatus(row);
         if (status === "approved") return "Approved";
         if (status === "deferred") return "Deferred";
         if (status === "rejected") return "Rejected";
         return "In Review";
       },
-      render: (_value: unknown, row: ProfileData) => {
+      render: (_value: unknown, row: ProfileDataWithName) => {
         const status = getTalentStatus(row);
         if (status === "approved") {
           return (
@@ -245,14 +248,14 @@ export default function AdminTalentApproval() {
       key: "applied_for",
       header: "Applied For",
       width: "12%",
-      exportValue: (row: ProfileData) => {
+      exportValue: (row: ProfileDataWithName) => {
         const roles: string[] = [];
         if (row.talent) roles.push("Talent");
         if (row.mentor) roles.push("Mentor");
         if (row.recruiter) roles.push("Recruiter");
         return roles.join(", ") || "";
       },
-      render: (_value: unknown, row: ProfileData) => {
+      render: (_value: unknown, row: ProfileDataWithName) => {
         return (
           <div className="flex flex-col gap-2 w-full justify-center items-center">
             {row.talent && (
@@ -297,11 +300,11 @@ export default function AdminTalentApproval() {
       header: "Created on",
       width: "13%",
       sortable: true,
-      exportValue: (row: ProfileData) => {
+      exportValue: (row: ProfileDataWithName) => {
         const createdAt = row.user_created_at || row.created_at;
         return createdAt ? moment(createdAt).format("MMM D, YYYY") : "N/A";
       },
-      render: (value: string, row: ProfileData) => {
+      render: (value: string, row: ProfileDataWithName) => {
         const createdAt = row.user_created_at || value;
         return createdAt ? moment(createdAt).format("MMM D, YYYY") : "N/A";
       },
@@ -310,7 +313,7 @@ export default function AdminTalentApproval() {
       key: "actions",
       header: "Actions",
       width: "8%",
-      render: (_value: unknown, row: ProfileData) => (
+      render: (_value: unknown, row: ProfileDataWithName) => (
         <div className="flex justify-end">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -395,7 +398,11 @@ export default function AdminTalentApproval() {
         return;
       }
 
-      setUsers(data);
+      const usersWithName = data.map((user: ProfileData) => ({
+        ...user,
+        name: `${user.first_name || ""} ${user.last_name || ""}`.trim(),
+      }));
+      setUsers(usersWithName);
     } catch (error) {
       console.error("Failed to fetch pending users:", error);
       setUsers([]);
