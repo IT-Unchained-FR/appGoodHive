@@ -485,9 +485,18 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
     <div className={styles.widgetRoot}>
       <div className={`${styles.panel} ${isOpen ? styles.panelOpen : ""}`}>
         <div className={styles.header}>
-          <div>
-            <p className={styles.headerTitle}>{SUPERBOT_NAME}</p>
-            <p className={styles.headerSubtitle}>GoodHive helper for hiring and talent.</p>
+          <div className={styles.headerIdentity}>
+            <div className={styles.headerAvatar} aria-hidden="true">
+              <img
+                src="/img/goodhive_logo_icon_64.png"
+                alt=""
+                className={styles.headerAvatarIcon}
+              />
+            </div>
+            <div>
+              <p className={styles.headerTitle}>{SUPERBOT_NAME}</p>
+              <p className={styles.headerSubtitle}>GoodHive helper for hiring and talent.</p>
+            </div>
           </div>
           <div className={styles.headerActions}>
             <div className={styles.headerStatus}>

@@ -3,7 +3,7 @@
   right: 24px;
   bottom: 24px;
   z-index: 60;
-  font-family: "Montserrat", sans-serif;
+  font-family: "Sora", "Manrope", "Montserrat", sans-serif;
 }
 
 .panel {
@@ -14,13 +14,13 @@
   max-width: 92vw;
   height: 620px;
   max-height: 80vh;
-  background:
-    radial-gradient(circle at 10% 10%, rgba(255, 201, 5, 0.12), transparent 50%),
-    radial-gradient(circle at 90% 0%, rgba(245, 158, 11, 0.18), transparent 45%),
-    #fffdf7;
-  border-radius: 22px;
-  border: 1px solid rgba(245, 158, 11, 0.25);
-  box-shadow: 0 24px 60px rgba(17, 24, 39, 0.25);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(255, 255, 255, 0.92));
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow:
+    0 28px 80px rgba(15, 23, 42, 0.24),
+    0 10px 24px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(16px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -37,26 +37,54 @@
 }
 
 .header {
-  padding: 18px 20px 16px;
-  background: linear-gradient(135deg, #fff3c4, #ffedb0);
-  border-bottom: 1px solid rgba(245, 158, 11, 0.25);
+  padding: 16px 18px 14px;
+  background: linear-gradient(135deg, rgba(255, 247, 214, 0.95), rgba(255, 237, 186, 0.85));
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
+.headerIdentity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.headerAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 10px 18px rgba(15, 23, 42, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+
+.headerAvatarIcon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 6px;
+}
+
 .headerTitle {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
-  color: #2d2a1f;
+  color: #0f172a;
+  letter-spacing: 0.01em;
 }
 
 .headerSubtitle {
   margin: 4px 0 0;
   font-size: 12px;
-  color: #6b5a2e;
+  color: #475569;
 }
 
 .headerStatus {
@@ -66,7 +94,11 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #6b5a2e;
+  color: #475569;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .headerDot {
@@ -84,9 +116,9 @@
 
 .headerButton {
   border: none;
-  background: rgba(45, 42, 31, 0.08);
-  color: #2d2a1f;
-  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.06);
+  color: #0f172a;
+  border-radius: 10px;
   width: 28px;
   height: 28px;
   display: inline-flex;
@@ -102,6 +134,9 @@
   flex-direction: column;
   gap: 12px;
   overflow-y: auto;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(255, 186, 73, 0.06), transparent 55%),
+    radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.05), transparent 50%);
 }
 
 .message {
@@ -122,21 +157,21 @@
 .bubble {
   padding: 12px 14px;
   border-radius: 10px;
-  box-shadow: 0 8px 16px rgba(17, 24, 39, 0.08);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
   font-size: 13px;
   line-height: 1.5;
   white-space: pre-wrap;
 }
 
 .bubbleUser {
-  background: linear-gradient(135deg, #f59e0b, #f97316);
+  background: linear-gradient(135deg, #f59e0b, #fb923c);
   color: #fff;
 }
 
 .bubbleBot {
-  background: #ffffff;
-  border: 1px solid rgba(245, 158, 11, 0.15);
-  color: #2f2b22;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  color: #0f172a;
 }
 
 .textBlock {
@@ -159,6 +194,7 @@
   font-weight: 600;
   font-size: 13px;
   letter-spacing: 0.01em;
+  color: #111827;
 }
 
 .list {
@@ -174,7 +210,7 @@
 }
 
 .link {
-  color: #b45309;
+  color: #c2410c;
   text-decoration: underline;
   word-break: break-word;
 }
@@ -203,35 +239,37 @@
   font-size: 12px;
   border: none;
   border-radius: 10px;
-  background: #f59e0b;
+  background: linear-gradient(135deg, #f59e0b, #f97316);
   color: #1f1300;
   font-weight: 600;
   cursor: pointer;
+  box-shadow: 0 8px 16px rgba(249, 115, 22, 0.24);
 }
 
 .actionButtonSecondary {
   padding: 8px 12px;
   font-size: 12px;
   border-radius: 10px;
-  border: 1px solid rgba(245, 158, 11, 0.35);
-  background: #fff7e6;
-  color: #3b2f1a;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(255, 255, 255, 0.9);
+  color: #0f172a;
   font-weight: 600;
   cursor: pointer;
 }
 
 .typing {
-  color: #6b5a2e;
+  color: #475569;
   font-size: 12px;
 }
 
 .suggestions {
   padding: 6px 14px 8px;
-  border-top: 1px solid rgba(245, 158, 11, 0.2);
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
   display: flex;
   flex-direction: column;
   gap: 6px;
   position: relative;
+  background: rgba(248, 250, 252, 0.75);
 }
 
 .suggestionsLabel {
@@ -239,7 +277,7 @@
   font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #8a6c2f;
+  color: #64748b;
 }
 
 .suggestionsRowWrap {
@@ -270,9 +308,9 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: rgba(45, 42, 31, 0.85);
-  border: 1px solid rgba(0, 0, 0, 0.35);
-  color: #fff7e6;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(15, 23, 42, 0.35);
+  color: #f8fafc;
   font-size: 12px;
   font-weight: 700;
   display: flex;
@@ -293,7 +331,7 @@
   top: 0;
   width: 48px;
   height: 100%;
-  background: linear-gradient(90deg, rgba(255, 253, 247, 0), rgba(255, 253, 247, 0.95));
+  background: linear-gradient(90deg, rgba(248, 250, 252, 0), rgba(248, 250, 252, 0.95));
   pointer-events: none;
   z-index: 1;
 }
@@ -303,9 +341,9 @@
 }
 
 .suggestionPill {
-  border: 1px solid rgba(245, 158, 11, 0.25);
-  background: #fff3c4;
-  color: #3b2f1a;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(255, 255, 255, 0.9);
+  color: #0f172a;
   border-radius: 10px;
   padding: 6px 10px;
   font-size: 11px;
@@ -314,22 +352,22 @@
 }
 
 .composer {
-  border-top: 1px solid rgba(245, 158, 11, 0.2);
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
   padding: 12px 14px 16px;
   display: flex;
   gap: 10px;
   align-items: center;
-  background: #fffaf0;
+  background: rgba(255, 255, 255, 0.85);
 }
 
 .input {
   flex: 1;
   border-radius: 10px;
-  border: 1px solid rgba(245, 158, 11, 0.35);
+  border: 1px solid rgba(148, 163, 184, 0.35);
   padding: 12px 14px;
   font-size: 13px;
   background: #ffffff;
-  color: #2d2a1f;
+  color: #0f172a;
   outline: none;
   resize: none;
   min-height: 44px;
@@ -339,7 +377,8 @@
 
 .input:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.45);
 }
 
 .input::placeholder {
@@ -350,10 +389,11 @@
   padding: 9px 16px;
   border-radius: 10px;
   border: none;
-  background: #f59e0b;
+  background: linear-gradient(135deg, #f59e0b, #f97316);
   color: #1f1300;
   font-weight: 600;
   cursor: pointer;
+  box-shadow: 0 10px 18px rgba(249, 115, 22, 0.28);
 }
 
 .toggleButton {
@@ -362,9 +402,9 @@
   height: 64px;
   border-radius: 50%;
   border: none;
-  background: radial-gradient(circle at 30% 30%, #fff6cf, #f59e0b 60%, #f97316 100%);
-  box-shadow: 0 12px 24px rgba(245, 158, 11, 0.35);
-  color: #2d2a1f;
+  background: radial-gradient(circle at 30% 30%, #fff7ed, #f59e0b 60%, #f97316 100%);
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.2);
+  color: #0f172a;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -376,7 +416,7 @@
   position: absolute;
   inset: -6px;
   border-radius: 50%;
-  border: 2px solid rgba(245, 158, 11, 0.5);
+  border: 2px solid rgba(249, 115, 22, 0.5);
   animation: ringPulse 2.6s ease-in-out infinite;
 }
 
