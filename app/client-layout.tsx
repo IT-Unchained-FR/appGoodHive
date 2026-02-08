@@ -13,6 +13,7 @@ import OnboardingPopup from "./components/Onboarding/OnboardingPopup";
 import ReferralCodeHandler from "./components/referralCodeHandler/ReferralCodeHandler";
 import { Providers } from "./providers";
 import { AnalyticsProvider } from "./components/AnalyticsProvider";
+import { SuperbotWidget } from "./components/superbot/SuperbotWidget";
 
 interface ClientLayoutProps {
   children: ReactNode;
@@ -23,6 +24,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   const isAdminSection = pathname?.startsWith("/admin");
+  const showSuperbot = !isAdminSection;
 
   useEffect(() => {
     try {
@@ -79,6 +81,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
           </div>
         </Suspense>
         {!isAdminSection && <Footer />}
+        {showSuperbot ? <SuperbotWidget /> : null}
       </div>
     </Providers>
   );

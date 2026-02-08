@@ -209,3 +209,62 @@
     @apply bg-background text-foreground;
   }
 }
+
+.saas-card {
+  background: #ffffff;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 16px;
+  box-shadow: 0 14px 30px rgba(17, 24, 39, 0.08);
+}
+
+.saas-button {
+  background: #f59e0b;
+  color: #1f1300;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 10px 18px rgba(245, 158, 11, 0.2);
+}
+
+.saas-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 20px rgba(245, 158, 11, 0.3);
+}
+
+.saas-input {
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 10px;
+  padding: 8px 12px;
+  background: #fffaf0;
+  color: #2d2a1f;
+  outline: none;
+}
+
+.saas-input:focus {
+  border-color: rgba(245, 158, 11, 0.6);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
+}
+
+.saas-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.saas-badge-neutral {
+  background: rgba(245, 158, 11, 0.15);
+  color: #7a5c22;
+}
+
+.saas-badge-success {
+  background: rgba(34, 197, 94, 0.15);
+  color: #166534;
+}
