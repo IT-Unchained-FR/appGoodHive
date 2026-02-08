@@ -1,4 +1,5 @@
 import { GoogleAuth } from "google-auth-library";
+import { getGoogleAuthOptions } from "./googleAuth";
 
 export type RagContext = {
   text: string;
@@ -19,6 +20,7 @@ const DEFAULT_TOP_K = 6;
 
 const auth = new GoogleAuth({
   scopes: ["https://www.googleapis.com/auth/cloud-platform"],
+  ...(getGoogleAuthOptions() ?? {}),
 });
 
 const parseBoolean = (value?: string) => {

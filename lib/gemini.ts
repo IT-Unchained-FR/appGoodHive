@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { VertexAI } from "@google-cloud/vertexai";
+import { getGoogleAuthOptions } from "./googleAuth";
 
 const geminiApiKey = process.env.GEMINI_API_KEY;
 const vertexProject = process.env.VERTEX_AI_PROJECT ?? process.env.GOOGLE_CLOUD_PROJECT;
@@ -11,7 +12,11 @@ const getVertexClient = () => {
   if (!vertexProject) {
     return null;
   }
-  return new VertexAI({ project: vertexProject, location: vertexLocation });
+  return new VertexAI({
+    project: vertexProject,
+    location: vertexLocation,
+    googleAuthOptions: getGoogleAuthOptions(),
+  });
 };
 
 const getGeminiClient = () => {
