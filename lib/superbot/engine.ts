@@ -236,6 +236,21 @@ async function handleStart(params: {
         session.channel = "telegram";
         session.step = "chat";
 
+        // Record consent for the Telegram handoff explicitly.
+        await sql`
+          INSERT INTO goodhive.consents (session_id, channel, type, metadata)
+          VALUES (
+            ${session.id},
+            'telegram',
+            'telegram_start',
+            ${JSON.stringify({
+              payload,
+              handoff: "web_to_telegram",
+              ...(meta ?? {}),
+            })}
+          );
+        `;
+
         await send({
           text: "✨ **Connected!** Your web chat history is now available here on Telegram.",
           actions: buildProfileActions(),
