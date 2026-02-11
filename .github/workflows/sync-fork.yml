@@ -37,8 +37,8 @@ jobs:
           else
             TOKEN="${{ secrets.GITHUB_TOKEN }}"
           fi
-          # Add fork remote with authentication token
-          git remote add fork https://${TOKEN}@github.com/IT-Unchained-FR/appGoodHive.git
+          # Add fork remote with token as password (required for authenticated push)
+          git remote add fork https://x-access-token:${TOKEN}@github.com/IT-Unchained-FR/appGoodHive.git
 
       - name: Fetch from fork to check access
         run: |
@@ -57,4 +57,3 @@ jobs:
       - name: Verify sync
         run: |
           echo "Sync completed. Check https://github.com/IT-Unchained-FR/appGoodHive/tree/main"
-
