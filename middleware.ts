@@ -35,6 +35,11 @@ const PUBLIC_PATHS = [
   "/api/companies/jobs",  // For viewing company jobs
   "/api/companies/job-data",  // For viewing single job
   "/api/talents/my-profile",  // For viewing talent details
+  "/api/superbot/chat",
+  "/api/superbot/events",
+  "/api/superbot/link-status",
+  "/api/content-items",
+  "/api/telegram/webhook",
 ];
 
 // Helper function to check if a path is public

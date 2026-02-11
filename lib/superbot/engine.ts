@@ -40,6 +40,11 @@ type ChatSessionRow = {
   fields: unknown;
 };
 
+type SuperbotLeadRow = {
+  id: string;
+  fields: unknown;
+};
+
 export type ChatSession = {
   id: string;
   channel: Channel;
@@ -78,6 +83,34 @@ function parseStartPayload(text: string) {
   const parts = text.trim().split(" ");
   if (parts[0] !== "/start") return null;
   return parts[1] ?? "";
+}
+
+function sanitizeReturnUrl(value?: string | null) {
+  if (!value) return null;
+  try {
+    const parsed = new URL(value);
+    if (!["http:", "https:"].includes(parsed.protocol)) return null;
+    const host = parsed.hostname.toLowerCase();
+    const isGoodHive =
+      host === "goodhive.io" ||
+      host === "www.goodhive.io" ||
+      host === "goodhive-production.vercel.app";
+    const isLocal = host === "localhost" || host === "127.0.0.1";
+    if (!isGoodHive && !isLocal) return null;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
+function resolveReturnUrlFromSession(session: ChatSession) {
+  const sessionFields = session.fields ?? {};
+  const webContext =
+    typeof sessionFields.webContext === "object" && sessionFields.webContext
+      ? (sessionFields.webContext as Record<string, unknown>)
+      : null;
+  const raw = typeof webContext?.lastPageUrl === "string" ? webContext.lastPageUrl : null;
+  return sanitizeReturnUrl(raw);
 }
 
 function buildProfileActions(): Action[] {
@@ -192,6 +225,127 @@ async function ensureConsent(
   return false;
 }
 
+async function updateWebSessionContext(session: ChatSession, meta?: UserMeta) {
+  if (session.channel !== "web") return;
+  const returnUrl = sanitizeReturnUrl(meta?.referrer ?? null);
+  if (!returnUrl) return;
+
+  const sessionFields = session.fields ?? {};
+  const existingContext =
+    typeof sessionFields.webContext === "object" && sessionFields.webContext
+      ? (sessionFields.webContext as Record<string, unknown>)
+      : {};
+  const mergedFields = {
+    ...sessionFields,
+    webContext: {
+      ...existingContext,
+      lastPageUrl: returnUrl,
+      updatedAt: new Date().toISOString(),
+    },
+  };
+
+  await sql`
+    UPDATE goodhive.chat_sessions
+    SET fields = ${JSON.stringify(mergedFields)},
+        updated_at = NOW()
+    WHERE id = ${session.id};
+  `;
+  session.fields = mergedFields;
+}
+
+function normalizeTelegramHandle(value?: string) {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return trimmed.replace(/^@+/, "");
+}
+
+async function upsertTelegramLead(
+  session: ChatSession,
+  meta?: UserMeta,
+  source: "telegram_start" | "web_to_telegram_handoff" = "telegram_start",
+) {
+  if (session.channel !== "telegram") return;
+
+  const username = normalizeTelegramHandle(meta?.username);
+  const firstName = meta?.firstName?.trim() || null;
+  const lastName = meta?.lastName?.trim() || null;
+  const timestamp = new Date().toISOString();
+
+  const existingLeadRows = await sql<SuperbotLeadRow[]>`
+    SELECT id, fields
+    FROM goodhive.superbot_leads
+    WHERE session_id = ${session.id}
+      AND type = 'telegram'
+    LIMIT 1;
+  `;
+
+  const existingLead = existingLeadRows[0];
+  const existingLeadFields = parseFields(existingLead?.fields) ?? {};
+  const existingTelegramData =
+    typeof existingLeadFields.telegram === "object" && existingLeadFields.telegram
+      ? (existingLeadFields.telegram as Record<string, unknown>)
+      : {};
+
+  const mergedLeadFields = {
+    ...existingLeadFields,
+    source,
+    telegram: {
+      ...existingTelegramData,
+      chatId: session.telegramChatId,
+      username: username ?? existingTelegramData.username ?? null,
+      firstName: firstName ?? existingTelegramData.firstName ?? null,
+      lastName: lastName ?? existingTelegramData.lastName ?? null,
+      consentedAt: timestamp,
+    },
+  };
+
+  if (existingLead) {
+    await sql`
+      UPDATE goodhive.superbot_leads
+      SET fields = ${JSON.stringify(mergedLeadFields)},
+          updated_at = NOW()
+      WHERE id = ${existingLead.id};
+    `;
+  } else {
+    await sql`
+      INSERT INTO goodhive.superbot_leads (session_id, type, status, score, fields)
+      VALUES (
+        ${session.id},
+        'telegram',
+        'new',
+        0,
+        ${JSON.stringify(mergedLeadFields)}
+      );
+    `;
+  }
+
+  const sessionFields = session.fields ?? {};
+  const existingSessionTelegram =
+    typeof sessionFields.telegramLead === "object" && sessionFields.telegramLead
+      ? (sessionFields.telegramLead as Record<string, unknown>)
+      : {};
+  const mergedSessionFields = {
+    ...sessionFields,
+    telegramLead: {
+      ...existingSessionTelegram,
+      source,
+      chatId: session.telegramChatId,
+      username: username ?? existingSessionTelegram.username ?? null,
+      firstName: firstName ?? existingSessionTelegram.firstName ?? null,
+      lastName: lastName ?? existingSessionTelegram.lastName ?? null,
+      consentedAt: timestamp,
+    },
+  };
+
+  await sql`
+    UPDATE goodhive.chat_sessions
+    SET fields = ${JSON.stringify(mergedSessionFields)},
+        updated_at = NOW()
+    WHERE id = ${session.id};
+  `;
+}
+
 async function handleStart(params: {
   session: ChatSession;
   payload: string | null;
@@ -234,7 +388,9 @@ async function handleStart(params: {
         // Rebind the in-memory session so downstream message logging writes into the merged session.
         session.id = webSessionRow.id;
         session.channel = "telegram";
+        session.telegramChatId = session.telegramChatId ?? null;
         session.step = "chat";
+        session.fields = parseFields(webSessionRow.fields);
 
         // Record consent for the Telegram handoff explicitly.
         await sql`
@@ -251,9 +407,12 @@ async function handleStart(params: {
           );
         `;
 
+        await upsertTelegramLead(session, meta, "web_to_telegram_handoff");
+
+        const backToWebUrl = resolveReturnUrlFromSession(session) ?? BASE_URL;
         await send({
           text: "✨ **Connected!** Your web chat history is now available here on Telegram.",
-          actions: buildProfileActions(),
+          actions: [{ label: "Back to GoodHive Chat", url: backToWebUrl }, ...buildProfileActions()],
         });
         return;
       }
@@ -285,6 +444,10 @@ async function handleStart(params: {
       })}
     );
   `;
+
+  if (session.channel === "telegram") {
+    await upsertTelegramLead(session, meta, "telegram_start");
+  }
 
   await sql`
     UPDATE goodhive.chat_sessions
@@ -395,6 +558,10 @@ export async function handleIncomingMessage(params: {
 }) {
   const { channel, session, text, callbackData, payload, userMeta, send } = params;
   const trimmedText = text?.trim() ?? "";
+
+  if (channel === "web") {
+    await updateWebSessionContext(session, userMeta);
+  }
 
   if (callbackData) {
     if (callbackData === "create_talent" || callbackData === "create_company") {
