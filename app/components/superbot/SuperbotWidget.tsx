@@ -488,7 +488,7 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
           <div className={styles.headerIdentity}>
             <div className={styles.headerAvatar} aria-hidden="true">
               <img
-                src="/img/goodhive_logo_icon_64.png"
+                src="/icons/bee-agent.svg"
                 alt=""
                 className={styles.headerAvatarIcon}
               />
@@ -499,6 +499,30 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
             </div>
           </div>
           <div className={styles.headerActions}>
+            {sessionId ? (
+              <a
+                href={`https://t.me/goodhive_bot?start=web_${sessionId}`}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: "#fff",
+                  background: "rgba(255,255,255,0.2)",
+                  padding: "4px 8px",
+                  borderRadius: 6,
+                  textDecoration: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  marginRight: 8,
+                }}
+                title="Continue on Telegram"
+              >
+                <span>Telegram</span>
+                <span>✈️</span>
+              </a>
+            ) : null}
             <div className={styles.headerStatus}>
               <span className={styles.headerDot} />
               <span>Online</span>

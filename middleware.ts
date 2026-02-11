@@ -38,6 +38,7 @@ const PUBLIC_PATHS = [
   "/api/superbot/chat",
   "/api/superbot/events",
   "/api/content-items",
+  "/api/telegram/webhook",
 ];
 
 // Helper function to check if a path is public

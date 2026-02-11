@@ -199,8 +199,54 @@ async function handleStart(params: {
   send: (message: EngineMessage) => Promise<void>;
 }) {
   const { session, payload, meta, send } = params;
-  const payloadId = payload && UUID_PATTERN.test(payload) ? payload : null;
 
+  // Web-to-Telegram Handoff
+  if (session.channel === "telegram" && payload?.startsWith("web_")) {
+    const webSessionId = payload.replace("web_", "");
+    // Validate UUID format to prevent SQL injection or errors
+    if (UUID_PATTERN.test(webSessionId)) {
+      const webSessionResult = await sql<ChatSessionRow[]>`
+        SELECT id, channel, telegram_chat_id, status, flow, step, fields
+        FROM goodhive.chat_sessions
+        WHERE id = ${webSessionId}
+        LIMIT 1;
+      `;
+      const webSessionRow = webSessionResult[0];
+
+      if (webSessionRow && !webSessionRow.telegram_chat_id) {
+        // Release the unique telegram_chat_id from the temporary telegram session first.
+        // This avoids unique-constraint collisions when attaching the chat id to the web session.
+        if (session.id !== webSessionRow.id) {
+          await sql`
+            UPDATE goodhive.chat_sessions
+            SET telegram_chat_id = NULL, updated_at = NOW()
+            WHERE id = ${session.id};
+          `;
+        }
+
+        // Upgrade the web session to be the active Telegram session.
+        await sql`
+          UPDATE goodhive.chat_sessions
+          SET telegram_chat_id = ${session.telegramChatId}, channel = 'telegram', step = 'chat', updated_at = NOW()
+          WHERE id = ${webSessionId};
+        `;
+
+        // Rebind the in-memory session so downstream message logging writes into the merged session.
+        session.id = webSessionRow.id;
+        session.channel = "telegram";
+        session.step = "chat";
+
+        await send({
+          text: "✨ **Connected!** Your web chat history is now available here on Telegram.",
+          actions: buildProfileActions(),
+        });
+        return;
+      }
+    }
+  }
+
+  const payloadId = payload && UUID_PATTERN.test(payload) ? payload : null;
+  
   const contentItem = payloadId
     ? await sql`
         SELECT id, title, body, cta_label, cta_url
