@@ -266,6 +266,12 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
   );
   const [showSuggestionsHint, setShowSuggestionsHint] = useState(false);
   const startedRef = useRef(false);
+  const consentNoticeShownRef = useRef(false);
+  const telegramLinkedNoticeShownRef = useRef(false);
+  const linkPollingRef = useRef<number | null>(null);
+  const linkPollingBusyRef = useRef(false);
+  const notificationPermissionRequestedRef = useRef(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const suggestionsRef = useRef<HTMLDivElement | null>(null);
@@ -282,6 +288,187 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
     }
     return JSON.parse(body) as ChatResponse;
   }, []);
+
+  const buildTelegramUrl = useCallback((targetSessionId: string) => {
+    return `https://t.me/goodhive_bot?start=web_${targetSessionId}`;
+  }, []);
+
+  const getTelegramPromptStorageKey = useCallback((targetSessionId: string) => {
+    return `superbot_telegram_prompted_${targetSessionId}`;
+  }, []);
+
+  const hasPromptedTelegramForSession = useCallback((targetSessionId: string) => {
+    return window.localStorage.getItem(getTelegramPromptStorageKey(targetSessionId)) === "1";
+  }, [getTelegramPromptStorageKey]);
+
+  const markTelegramPromptedForSession = useCallback((targetSessionId: string) => {
+    window.localStorage.setItem(getTelegramPromptStorageKey(targetSessionId), "1");
+  }, [getTelegramPromptStorageKey]);
+
+  const stopLinkPolling = useCallback(() => {
+    if (linkPollingRef.current !== null) {
+      window.clearInterval(linkPollingRef.current);
+      linkPollingRef.current = null;
+    }
+  }, []);
+
+  const requestNotificationPermissionIfNeeded = useCallback(() => {
+    if (typeof window === "undefined") return;
+    if (!("Notification" in window)) return;
+    if (window.Notification.permission !== "default") return;
+    if (notificationPermissionRequestedRef.current) return;
+
+    notificationPermissionRequestedRef.current = true;
+    void window.Notification.requestPermission().catch((error) => {
+      console.warn("Notification permission request failed", error);
+    });
+  }, []);
+
+  const playTelegramLinkedSound = useCallback(() => {
+    if (typeof window === "undefined") return;
+    const AudioContextCtor =
+      window.AudioContext ||
+      (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextCtor) return;
+
+    try {
+      const context = audioContextRef.current ?? new AudioContextCtor();
+      audioContextRef.current = context;
+      if (context.state === "suspended") {
+        void context.resume();
+      }
+
+      const oscillator = context.createOscillator();
+      const gainNode = context.createGain();
+
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(880, context.currentTime);
+      gainNode.gain.setValueAtTime(0.0001, context.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.08, context.currentTime + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.22);
+
+      oscillator.connect(gainNode);
+      gainNode.connect(context.destination);
+      oscillator.start();
+      oscillator.stop(context.currentTime + 0.24);
+    } catch (error) {
+      console.warn("Failed to play Telegram linked sound", error);
+    }
+  }, []);
+
+  const showTelegramLinkedNotification = useCallback((handle: string) => {
+    if (typeof window === "undefined") return;
+    if (!("Notification" in window)) return;
+    if (window.Notification.permission !== "granted") return;
+
+    try {
+      const body = `Connected for ${handle}. You can continue in the GoodHive tab.`;
+      const notification = new window.Notification("GoodHive chat connected", { body });
+      window.setTimeout(() => notification.close(), 7000);
+    } catch (error) {
+      console.warn("Failed to show Telegram linked notification", error);
+    }
+  }, []);
+
+  const sendConsentNoticeOnce = useCallback((targetSessionId: string) => {
+    if (consentNoticeShownRef.current) return;
+    consentNoticeShownRef.current = true;
+
+    const telegramUrl = buildTelegramUrl(targetSessionId);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `${Date.now()}-telegram-consent`,
+        role: "assistant",
+        text:
+          `To continue with Telegram consent, open this link and tap Start once:\n${telegramUrl}\n\n` +
+          "Your current browser tab stays active, so you can come back here immediately.",
+      },
+    ]);
+  }, [buildTelegramUrl]);
+
+  const startLinkPolling = useCallback((targetSessionId: string) => {
+    stopLinkPolling();
+
+    const startedAt = Date.now();
+    linkPollingRef.current = window.setInterval(async () => {
+      if (linkPollingBusyRef.current) return;
+      if (Date.now() - startedAt > 2 * 60 * 1000) {
+        stopLinkPolling();
+        return;
+      }
+
+      linkPollingBusyRef.current = true;
+      try {
+        const response = await fetch(`/api/superbot/link-status?sessionId=${targetSessionId}`);
+        if (!response.ok) return;
+
+        const data = (await response.json()) as {
+          linked?: boolean;
+          telegram?: { username?: string | null };
+        };
+
+        if (!data.linked) return;
+
+        stopLinkPolling();
+        if (telegramLinkedNoticeShownRef.current) return;
+        telegramLinkedNoticeShownRef.current = true;
+
+        const username = data.telegram?.username?.trim();
+        const handle = username ? `@${username.replace(/^@+/, "")}` : "your Telegram account";
+        playTelegramLinkedSound();
+        showTelegramLinkedNotification(handle);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `${Date.now()}-telegram-linked`,
+            role: "assistant",
+            text: `Telegram connected for ${handle}. Consent has been saved and your lead is recorded.`,
+          },
+        ]);
+      } catch (error) {
+        console.warn("Failed to poll Telegram link status", error);
+      } finally {
+        linkPollingBusyRef.current = false;
+      }
+    }, 3500);
+  }, [playTelegramLinkedSound, showTelegramLinkedNotification, stopLinkPolling]);
+
+  const openTelegramConsentFlow = useCallback((targetSessionId: string) => {
+    if (!targetSessionId || hasPromptedTelegramForSession(targetSessionId)) return;
+
+    const telegramUrl = buildTelegramUrl(targetSessionId);
+    const popup = window.open(telegramUrl, "_blank", "noopener,noreferrer");
+    markTelegramPromptedForSession(targetSessionId);
+    startLinkPolling(targetSessionId);
+
+    if (sessionId) {
+      void fetch("/api/superbot/events", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          type: "cta_click",
+          metadata: {
+            label: "telegram_consent_handoff",
+            url: telegramUrl,
+            source: "auto_first_message",
+          },
+        }),
+      });
+    }
+
+    if (!popup) {
+      sendConsentNoticeOnce(targetSessionId);
+    }
+  }, [
+    buildTelegramUrl,
+    hasPromptedTelegramForSession,
+    markTelegramPromptedForSession,
+    sendConsentNoticeOnce,
+    sessionId,
+    startLinkPolling,
+  ]);
 
   const startConversation = useCallback(async (existingSession?: string, payload?: string) => {
     setLoading(true);
@@ -365,6 +552,22 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
   }, [messages, loading]);
 
   useEffect(() => {
+    if (!sessionId) return;
+    if (!hasPromptedTelegramForSession(sessionId)) return;
+    if (telegramLinkedNoticeShownRef.current) return;
+    startLinkPolling(sessionId);
+  }, [hasPromptedTelegramForSession, sessionId, startLinkPolling]);
+
+  useEffect(() => {
+    return () => {
+      stopLinkPolling();
+      if (audioContextRef.current) {
+        void audioContextRef.current.close().catch(() => {});
+      }
+    };
+  }, [stopLinkPolling]);
+
+  useEffect(() => {
     if (!hasStartedChatting) {
       setShowSuggestionsHint(false);
       return;
@@ -412,6 +615,14 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
   const sendMessage = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed) return;
+    requestNotificationPermissionIfNeeded();
+    const isFirstUserMessage = !messages.some((message) => message.role === "user");
+    const sessionAtSend = sessionId;
+
+    if (isFirstUserMessage && sessionAtSend && !hasPromptedTelegramForSession(sessionAtSend)) {
+      openTelegramConsentFlow(sessionAtSend);
+      sendConsentNoticeOnce(sessionAtSend);
+    }
 
     const userMessage: ChatMessage = {
       id: `${Date.now()}-user`,
@@ -440,6 +651,11 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
       }
       setSessionId(data.sessionId);
       window.localStorage.setItem("superbot_session_id", data.sessionId);
+
+      if (isFirstUserMessage && !hasPromptedTelegramForSession(data.sessionId)) {
+        openTelegramConsentFlow(data.sessionId);
+        sendConsentNoticeOnce(data.sessionId);
+      }
 
       if (data.messages?.length) {
         const botMessages: ChatMessage[] = data.messages.map((message, index) => ({

@@ -37,6 +37,7 @@ const PUBLIC_PATHS = [
   "/api/talents/my-profile",  // For viewing talent details
   "/api/superbot/chat",
   "/api/superbot/events",
+  "/api/superbot/link-status",
   "/api/content-items",
   "/api/telegram/webhook",
 ];
