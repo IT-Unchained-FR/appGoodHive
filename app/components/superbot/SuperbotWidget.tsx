@@ -44,6 +44,9 @@ const FALLBACK_SUGGESTED_QUESTIONS = [
 
 const linkPattern = /https?:\/\/[^\s<]+/g;
 
+const isTelegramConnectedNotice = (message: ChatMessage) =>
+  message.role === "assistant" && /^Telegram connected for /i.test(message.text.trim());
+
 const renderTextWithLinks = (text: string, keyPrefix: string) => {
   const matches = text.match(linkPattern) ?? [];
   const parts = text.split(linkPattern);
@@ -423,7 +426,7 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
           {
             id: `${Date.now()}-telegram-linked`,
             role: "assistant",
-            text: `Telegram connected for ${handle}. Consent has been saved and your lead is recorded.`,
+            text: `Telegram connected for ${handle}`,
           },
         ]);
       } catch (error) {
@@ -715,30 +718,6 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
             </div>
           </div>
           <div className={styles.headerActions}>
-            {sessionId ? (
-              <a
-                href={`https://t.me/goodhive_bot?start=web_${sessionId}`}
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: "#fff",
-                  background: "rgba(255,255,255,0.2)",
-                  padding: "4px 8px",
-                  borderRadius: 6,
-                  textDecoration: "none",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                  marginRight: 8,
-                }}
-                title="Continue on Telegram"
-              >
-                <span>Telegram</span>
-                <span>✈️</span>
-              </a>
-            ) : null}
             <div className={styles.headerStatus}>
               <span className={styles.headerDot} />
               <span>Online</span>
@@ -755,45 +734,57 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
         </div>
 
         <div className={styles.messages}>
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`${styles.message} ${message.role === "user" ? styles.messageUser : styles.messageBot}`}
-            >
-              <div
-                className={`${styles.bubble} ${message.role === "user" ? styles.bubbleUser : styles.bubbleBot}`}
-              >
-                {renderMessageText(message.text)}
-              </div>
-              {message.actions && message.actions.length > 0 && message.role === "assistant" ? (
-                <div className={styles.actionRow}>
-                  {message.actions.map((action, index) =>
-                    action.url ? (
-                      <a
-                        key={`${message.id}-action-${index}`}
-                        href={action.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className={styles.actionButton}
-                      >
-                        {action.label}
-                      </a>
-                    ) : (
-                      <button
-                        key={`${message.id}-action-${index}`}
-                        className={styles.actionButtonSecondary}
-                        type="button"
-                        onClick={() => handleAction(action)}
-                        disabled={loading}
-                      >
-                        {action.label}
-                      </button>
-                    ),
-                  )}
+          {messages.map((message) => {
+            if (isTelegramConnectedNotice(message)) {
+              return (
+                <div key={message.id} className={styles.connectionNotice}>
+                  <span className={styles.connectionNoticeLine} aria-hidden="true" />
+                  <span className={styles.connectionNoticeText}>{message.text}</span>
+                  <span className={styles.connectionNoticeLine} aria-hidden="true" />
                 </div>
-              ) : null}
-            </div>
-          ))}
+              );
+            }
+
+            return (
+              <div
+                key={message.id}
+                className={`${styles.message} ${message.role === "user" ? styles.messageUser : styles.messageBot}`}
+              >
+                <div
+                  className={`${styles.bubble} ${message.role === "user" ? styles.bubbleUser : styles.bubbleBot}`}
+                >
+                  {renderMessageText(message.text)}
+                </div>
+                {message.actions && message.actions.length > 0 && message.role === "assistant" ? (
+                  <div className={styles.actionRow}>
+                    {message.actions.map((action, index) =>
+                      action.url ? (
+                        <a
+                          key={`${message.id}-action-${index}`}
+                          href={action.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={styles.actionButton}
+                        >
+                          {action.label}
+                        </a>
+                      ) : (
+                        <button
+                          key={`${message.id}-action-${index}`}
+                          className={styles.actionButtonSecondary}
+                          type="button"
+                          onClick={() => handleAction(action)}
+                          disabled={loading}
+                        >
+                          {action.label}
+                        </button>
+                      ),
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
           {loading ? <div className={styles.typing}>Superbot is thinking...</div> : null}
           <div ref={endRef} />
         </div>

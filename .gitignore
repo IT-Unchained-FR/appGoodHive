@@ -50,6 +50,7 @@ yarn.lock
 
 # Google Cloud config
 .gcloud/
+.secrets/
 *-key.json
 github-actions-key.json
 

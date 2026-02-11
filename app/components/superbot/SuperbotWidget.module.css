@@ -154,6 +154,28 @@
   align-self: flex-start;
 }
 
+.connectionNotice {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 2px 0;
+}
+
+.connectionNoticeLine {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.2), rgba(148, 163, 184, 0.55), rgba(148, 163, 184, 0.2));
+}
+
+.connectionNoticeText {
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+  text-align: center;
+}
+
 .bubble {
   padding: 12px 14px;
   border-radius: 10px;
