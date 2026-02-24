@@ -224,7 +224,7 @@ export async function updateLeadScore(input: {
     UPDATE goodhive.superbot_leads
     SET score = ${score},
         status = ${nextStatus},
-        fields = ${JSON.stringify(mergedFields)},
+        fields = ${mergedFields},
         updated_at = NOW()
     WHERE id = ${lead.id};
   `;

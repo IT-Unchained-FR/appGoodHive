@@ -64,7 +64,7 @@ export async function getCtaExperimentVariant(session: ChatSession) {
 
   await sql`
     UPDATE goodhive.chat_sessions
-    SET fields = ${JSON.stringify(nextFields)}, updated_at = NOW()
+    SET fields = ${nextFields}, updated_at = NOW()
     WHERE id = ${session.id};
   `;
 

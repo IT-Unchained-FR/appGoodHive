@@ -15,10 +15,9 @@ export async function logSuperbotEvent(input: {
   metadata?: Record<string, unknown>;
 }) {
   try {
-    const metadataValue = input.metadata ? JSON.stringify(input.metadata) : null;
     const rows = await sql`
       INSERT INTO goodhive.superbot_events (session_id, type, metadata)
-      VALUES (${input.sessionId}, ${input.type}, ${metadataValue})
+      VALUES (${input.sessionId}, ${input.type}, ${input.metadata ?? null})
       RETURNING id;
     `;
     return rows[0] ?? null;

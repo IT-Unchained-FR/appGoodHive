@@ -3,7 +3,7 @@
 import type { ChangeEvent, ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ChevronRight, MessageCircle, X } from "lucide-react";
+import { ChevronRight, MessageCircle, Send, X } from "lucide-react";
 import { SUPERBOT_NAME } from "@/lib/superbot/constants";
 import styles from "./SuperbotWidget.module.css";
 
@@ -43,6 +43,12 @@ const FALLBACK_SUGGESTED_QUESTIONS = [
 ];
 
 const linkPattern = /https?:\/\/[^\s<]+/g;
+
+const TELEGRAM_BOT_USERNAME =
+  process.env.NEXT_PUBLIC_SUPERBOT_TELEGRAM_BOT_USERNAME ?? "goodhive_bot";
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const isTelegramConnectedNotice = (message: ChatMessage) =>
   message.role === "assistant" && /^Telegram connected for /i.test(message.text.trim());
@@ -293,7 +299,7 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
   }, []);
 
   const buildTelegramUrl = useCallback((targetSessionId: string) => {
-    return `https://t.me/goodhive_bot?start=web_${targetSessionId}`;
+    return `https://t.me/${TELEGRAM_BOT_USERNAME}?start=web_${targetSessionId}`;
   }, []);
 
   const getTelegramPromptStorageKey = useCallback((targetSessionId: string) => {
@@ -437,8 +443,12 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
     }, 3500);
   }, [playTelegramLinkedSound, showTelegramLinkedNotification, stopLinkPolling]);
 
-  const openTelegramConsentFlow = useCallback((targetSessionId: string) => {
-    if (!targetSessionId || hasPromptedTelegramForSession(targetSessionId)) return;
+  const openTelegramConsentFlow = useCallback((
+    targetSessionId: string,
+    options?: { force?: boolean },
+  ) => {
+    if (!targetSessionId) return;
+    if (!options?.force && hasPromptedTelegramForSession(targetSessionId)) return;
 
     const telegramUrl = buildTelegramUrl(targetSessionId);
     const popup = window.open(telegramUrl, "_blank", "noopener,noreferrer");
@@ -504,6 +514,18 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
       }
     } catch (error) {
       console.error("Failed to start chat", error);
+      setMessages((prev) =>
+        prev.length > 0
+          ? prev
+          : [
+              {
+                id: `${Date.now()}-superbot-start-error`,
+                role: "assistant",
+                text:
+                  "I couldn't start the chat right now. If you're running locally, check your database/proxy setup and refresh the page.",
+              },
+            ],
+      );
     } finally {
       setLoading(false);
     }
@@ -514,8 +536,14 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
     startedRef.current = true;
 
     const storedSession = window.localStorage.getItem("superbot_session_id");
+    const sessionFromQuery = (params.get("sessionId") ?? "").trim();
+    const querySession = UUID_PATTERN.test(sessionFromQuery) ? sessionFromQuery : "";
     const payload = params.get("payload") ?? params.get("start");
-    startConversation(storedSession ?? undefined, payload ?? undefined);
+
+    // Prefer explicit `sessionId` from query (used by Telegram "Continue in browser" link),
+    // otherwise fall back to localStorage.
+    const existing = querySession || storedSession || undefined;
+    startConversation(existing, payload ?? undefined);
   }, [params, startConversation]);
 
   useEffect(() => {
@@ -622,8 +650,12 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
     const isFirstUserMessage = !messages.some((message) => message.role === "user");
     const sessionAtSend = sessionId;
 
-    if (isFirstUserMessage && sessionAtSend && !hasPromptedTelegramForSession(sessionAtSend)) {
-      openTelegramConsentFlow(sessionAtSend);
+    if (isFirstUserMessage && sessionAtSend) {
+      // Try to open a new tab once, but always show a clickable link in-chat.
+      // This makes the flow resilient to popup blockers and stale localStorage flags.
+      if (!hasPromptedTelegramForSession(sessionAtSend)) {
+        openTelegramConsentFlow(sessionAtSend);
+      }
       sendConsentNoticeOnce(sessionAtSend);
     }
 
@@ -655,8 +687,10 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
       setSessionId(data.sessionId);
       window.localStorage.setItem("superbot_session_id", data.sessionId);
 
-      if (isFirstUserMessage && !hasPromptedTelegramForSession(data.sessionId)) {
-        openTelegramConsentFlow(data.sessionId);
+      if (isFirstUserMessage) {
+        if (!hasPromptedTelegramForSession(data.sessionId)) {
+          openTelegramConsentFlow(data.sessionId);
+        }
         sendConsentNoticeOnce(data.sessionId);
       }
 
@@ -671,6 +705,15 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
       }
     } catch (error) {
       console.error("Failed to send message", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `${Date.now()}-superbot-send-error`,
+          role: "assistant",
+          text:
+            "I couldn't reach the chat service. Please refresh and try again.",
+        },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -722,6 +765,20 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
               <span className={styles.headerDot} />
               <span>Online</span>
             </div>
+            <button
+              type="button"
+              className={styles.headerButton}
+              aria-label="Open Telegram handoff"
+              title={sessionId ? "Continue this chat in Telegram" : "Telegram handoff not ready yet"}
+              onClick={() => {
+                if (!sessionId) return;
+                openTelegramConsentFlow(sessionId, { force: true });
+                sendConsentNoticeOnce(sessionId);
+              }}
+              disabled={!sessionId || loading}
+            >
+              <Send size={16} />
+            </button>
             <button
               type="button"
               className={styles.headerButton}

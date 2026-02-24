@@ -16,6 +16,7 @@ type SearchParams = {
   from?: string;
   to?: string;
   sessionId?: string;
+  tgUser?: string;
 };
 
 export default async function SuperbotConsolePage({
@@ -24,6 +25,7 @@ export default async function SuperbotConsolePage({
   searchParams?: SearchParams;
 }) {
   const query = searchParams?.q?.trim();
+  const telegramUsernameFilter = searchParams?.tgUser?.trim();
   const typeFilter = searchParams?.type?.trim();
   const statusFilter = searchParams?.status?.trim();
   const range = getDateRange({ from: searchParams?.from, to: searchParams?.to });
@@ -88,12 +90,90 @@ export default async function SuperbotConsolePage({
     LIMIT ${PAGE_LIMIT};
   `;
 
-  const [metrics, sessions, leads, handoffs, contentItems] = await Promise.all([
+  const telegramUsernamesPromise = sql`
+    WITH extracted AS (
+      SELECT
+        NULLIF(
+          TRIM(
+            REGEXP_REPLACE(
+              (
+                CASE
+                  WHEN jsonb_typeof(fields) = 'string' THEN ((fields #>> '{}')::jsonb -> 'telegram' ->> 'username')
+                  ELSE (fields -> 'telegram' ->> 'username')
+                END
+              ),
+              '^@+',
+              ''
+            )
+          ),
+          ''
+        ) AS username,
+        updated_at AS seen_at
+      FROM goodhive.superbot_leads
+      WHERE type = 'telegram'
+
+      UNION ALL
+
+      SELECT
+        NULLIF(
+          TRIM(
+            REGEXP_REPLACE(
+              (
+                CASE
+                  WHEN jsonb_typeof(fields) = 'string' THEN ((fields #>> '{}')::jsonb -> 'telegramLead' ->> 'username')
+                  ELSE (fields -> 'telegramLead' ->> 'username')
+                END
+              ),
+              '^@+',
+              ''
+            )
+          ),
+          ''
+        ) AS username,
+        updated_at AS seen_at
+      FROM goodhive.chat_sessions
+      WHERE channel = 'telegram'
+        AND fields IS NOT NULL
+
+      UNION ALL
+
+      SELECT
+        NULLIF(
+          TRIM(
+            REGEXP_REPLACE(
+              (
+                CASE
+                  WHEN jsonb_typeof(metadata) = 'string' THEN ((metadata #>> '{}')::jsonb ->> 'username')
+                  ELSE (metadata ->> 'username')
+                END
+              ),
+              '^@+',
+              ''
+            )
+          ),
+          ''
+        ) AS username,
+        created_at AS seen_at
+      FROM goodhive.consents
+      WHERE channel = 'telegram'
+        AND type = 'telegram_start'
+    )
+    SELECT username, MAX(seen_at) AS last_seen, COUNT(*)::int AS mentions
+    FROM extracted
+    WHERE username IS NOT NULL
+      AND ${telegramUsernameFilter ? sql`username ILIKE ${`%${telegramUsernameFilter}%`}` : sql`true`}
+    GROUP BY username
+    ORDER BY last_seen DESC
+    LIMIT 500;
+  `;
+
+  const [metrics, sessions, leads, handoffs, contentItems, telegramUsernames] = await Promise.all([
     getSuperbotMetrics(range),
     sessionsPromise,
     leadsPromise,
     handoffsPromise,
     contentItemsPromise,
+    telegramUsernamesPromise,
   ]);
 
   const selectedSessionId = searchParams?.sessionId;
@@ -146,6 +226,13 @@ export default async function SuperbotConsolePage({
               name="q"
               defaultValue={query ?? ""}
               placeholder="Search session or chat ID"
+            />
+            <input
+              className="saas-input"
+              style={styles.filterInput}
+              name="tgUser"
+              defaultValue={telegramUsernameFilter ?? ""}
+              placeholder="Filter Telegram username"
             />
             <input
               className="saas-input"
@@ -287,6 +374,29 @@ export default async function SuperbotConsolePage({
                 updatedAt: new Date(item.updated_at).toISOString(),
               }))}
             />
+          </div>
+        </section>
+
+        <section className="saas-card" style={styles.tableCard}>
+          <div style={styles.tableHeader}>
+            <h2 style={styles.cardTitle}>Telegram Usernames</h2>
+            <span className="saas-badge saas-badge-neutral">{telegramUsernames.length}</span>
+          </div>
+          <div style={styles.usernameList}>
+            {telegramUsernames.length > 0 ? (
+              telegramUsernames.map((row) => (
+                <div key={row.username} style={styles.usernameRow}>
+                  <a href={`https://t.me/${row.username}`} target="_blank" rel="noreferrer" style={styles.link}>
+                    @{row.username}
+                  </a>
+                  <span style={styles.usernameMeta}>
+                    Last seen {new Date(row.last_seen).toLocaleString()} ({row.mentions} mentions)
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p style={styles.emptyText}>No Telegram usernames found yet.</p>
+            )}
           </div>
         </section>
 
@@ -536,5 +646,26 @@ const styles: Record<string, CSSProperties> = {
     margin: 0,
     color: "#8a6c2f",
     fontSize: 13,
+  },
+  usernameList: {
+    padding: 20,
+    display: "flex",
+    flexDirection: "column",
+    gap: 10,
+    maxHeight: 320,
+    overflowY: "auto",
+  },
+  usernameRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 12,
+    alignItems: "center",
+    borderTop: "1px solid rgba(245, 158, 11, 0.2)",
+    paddingTop: 10,
+  },
+  usernameMeta: {
+    color: "#8a6c2f",
+    fontSize: 12,
+    textAlign: "right",
   },
 };

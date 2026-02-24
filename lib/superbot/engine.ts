@@ -138,10 +138,9 @@ export async function logChatMessage(
   text: string,
   meta?: Record<string, unknown>,
 ) {
-  const metaValue = meta ? JSON.stringify(meta) : null;
   await sql`
     INSERT INTO goodhive.chat_messages (session_id, role, text, meta)
-    VALUES (${sessionId}, ${role}, ${text}, ${metaValue});
+    VALUES (${sessionId}, ${role}, ${text}, ${meta ?? null});
   `;
   await sql`
     UPDATE goodhive.chat_sessions SET updated_at = NOW() WHERE id = ${sessionId};
@@ -217,7 +216,7 @@ async function ensureConsent(
   if (channel === "web") {
     await sql`
       INSERT INTO goodhive.consents (session_id, channel, type, metadata)
-      VALUES (${session.id}, 'web', 'web_start', ${meta ? JSON.stringify(meta) : null});
+      VALUES (${session.id}, 'web', 'web_start', ${meta ?? null});
     `;
     return true;
   }
@@ -246,7 +245,7 @@ async function updateWebSessionContext(session: ChatSession, meta?: UserMeta) {
 
   await sql`
     UPDATE goodhive.chat_sessions
-    SET fields = ${JSON.stringify(mergedFields)},
+    SET fields = ${mergedFields},
         updated_at = NOW()
     WHERE id = ${session.id};
   `;
@@ -303,7 +302,7 @@ async function upsertTelegramLead(
   if (existingLead) {
     await sql`
       UPDATE goodhive.superbot_leads
-      SET fields = ${JSON.stringify(mergedLeadFields)},
+      SET fields = ${mergedLeadFields},
           updated_at = NOW()
       WHERE id = ${existingLead.id};
     `;
@@ -315,7 +314,7 @@ async function upsertTelegramLead(
         'telegram',
         'new',
         0,
-        ${JSON.stringify(mergedLeadFields)}
+        ${mergedLeadFields}
       );
     `;
   }
@@ -340,19 +339,20 @@ async function upsertTelegramLead(
 
   await sql`
     UPDATE goodhive.chat_sessions
-    SET fields = ${JSON.stringify(mergedSessionFields)},
+    SET fields = ${mergedSessionFields},
         updated_at = NOW()
     WHERE id = ${session.id};
   `;
 }
 
 async function handleStart(params: {
+  channel: Channel;
   session: ChatSession;
   payload: string | null;
   meta?: UserMeta;
   send: (message: EngineMessage) => Promise<void>;
 }) {
-  const { session, payload, meta, send } = params;
+  const { channel, session, payload, meta, send } = params;
 
   // Web-to-Telegram Handoff
   if (session.channel === "telegram" && payload?.startsWith("web_")) {
@@ -399,20 +399,28 @@ async function handleStart(params: {
             ${session.id},
             'telegram',
             'telegram_start',
-            ${JSON.stringify({
+            ${{
               payload,
               handoff: "web_to_telegram",
               ...(meta ?? {}),
-            })}
+            }}
           );
         `;
 
         await upsertTelegramLead(session, meta, "web_to_telegram_handoff");
 
-        const backToWebUrl = resolveReturnUrlFromSession(session) ?? BASE_URL;
+        // Provide a deterministic link that can restore this exact session in the browser.
+        // `resolveReturnUrlFromSession` is best-effort (depends on referrer); fall back to /superbot.
+        const backToWebUrl =
+          resolveReturnUrlFromSession(session) ??
+          `${BASE_URL.replace(/\/+$/, "")}/superbot?sessionId=${session.id}`;
         await send({
-          text: "✨ **Connected!** Your web chat history is now available here on Telegram.",
-          actions: [{ label: "Back to GoodHive Chat", url: backToWebUrl }, ...buildProfileActions()],
+          text:
+            "✨ **Connected!**\n\nContinue this conversation in your browser using the button below.",
+          actions: [
+            { label: "Continue In Browser", url: backToWebUrl },
+            ...buildProfileActions(),
+          ],
         });
         return;
       }
@@ -435,17 +443,17 @@ async function handleStart(params: {
     INSERT INTO goodhive.consents (session_id, channel, type, metadata)
     VALUES (
       ${session.id},
-      ${session.channel},
-      ${session.channel === "web" ? "web_start" : "telegram_start"},
-      ${JSON.stringify({
+      ${channel},
+      ${channel === "web" ? "web_start" : "telegram_start"},
+      ${{
         payload: payload || null,
         contentItemId: resolvedContent?.id ?? null,
         ...(meta ?? {}),
-      })}
+      }}
     );
   `;
 
-  if (session.channel === "telegram") {
+  if (channel === "telegram") {
     await upsertTelegramLead(session, meta, "telegram_start");
   }
 
@@ -582,6 +590,7 @@ export async function handleIncomingMessage(params: {
       await logChatMessage(session.id, "user", trimmedText, userMeta ?? undefined);
     }
     await handleStart({
+      channel,
       session,
       payload: startPayload || null,
       meta: userMeta,
