@@ -1,6 +1,5 @@
 "use client";
 
-import Cookies from "js-cookie";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -22,6 +21,7 @@ import {
   ethereumTokens,
   gnosisChainTokens,
 } from "@/app/constants/common";
+import { useCurrentUserId } from "@/app/hooks/useCurrentUserId";
 
 export default function CreateJob() {
   const [title, setTitle] = useState("");
@@ -58,7 +58,7 @@ export default function CreateJob() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const addFunds = searchParams.get("addFunds");
-  const userId = Cookies.get("user_id");
+  const userId = useCurrentUserId();
 
   useEffect(() => {
     const fetchCompanyData = async () => {

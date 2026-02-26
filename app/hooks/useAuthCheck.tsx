@@ -11,21 +11,23 @@ import {
 } from "@/lib/auth/thirdwebAuth";
 import { connectModalOptions, supportedWallets } from "@/lib/auth/walletConfig";
 import { ReturnUrlManager } from "@/app/utils/returnUrlManager";
-import Cookies from "js-cookie";
 import { useCallback, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import { usePathname } from "next/navigation";
 import { useActiveAccount, useConnectModal } from "thirdweb/react";
+import { useCurrentUserId } from "./useCurrentUserId";
+import { dispatchAuthChanged } from "@/app/utils/authEvents";
 
 export function useAuthCheck() {
-  const { isAuthenticated, user, login } = useAuth();
+  const { isAuthenticated, user, login, refreshUser } = useAuth();
   const account = useActiveAccount();
   const pathname = usePathname();
-  const user_id = Cookies.get("user_id");
+  const user_id = useCurrentUserId();
   const { connect, isConnecting } = useConnectModal();
   const connectInFlightRef = useRef(false);
   const modalTriggerPathnameRef = useRef<string | null>(null);
   const authInFlightRef = useRef(false);
+  const sessionAuthenticated = isAuthenticated || !!user_id;
 
   const authenticateWalletAccount = useCallback(
     async (accountToAuth?: any) => {
@@ -35,7 +37,7 @@ export function useAuthCheck() {
         return false;
       }
 
-      if (authInFlightRef.current || isAuthenticated || user_id) {
+      if (authInFlightRef.current || sessionAuthenticated) {
         return true;
       }
 
@@ -82,6 +84,8 @@ export function useAuthCheck() {
 
         if (authResult.success && authResult.user) {
           login(authResult.user);
+          await refreshUser();
+          dispatchAuthChanged();
           return true;
         }
 
@@ -93,7 +97,7 @@ export function useAuthCheck() {
         authInFlightRef.current = false;
       }
     },
-    [account, isAuthenticated, login, user_id],
+    [account, login, refreshUser, sessionAuthenticated],
   );
 
   const openConnectModal = useCallback(async () => {
@@ -105,7 +109,7 @@ export function useAuthCheck() {
     modalTriggerPathnameRef.current = pathname;
 
     try {
-      if (account?.address && !isAuthenticated && !user_id) {
+      if (account?.address && !sessionAuthenticated) {
         await authenticateWalletAccount(account);
         return;
       }
@@ -129,10 +133,9 @@ export function useAuthCheck() {
     account,
     authenticateWalletAccount,
     connect,
-    isAuthenticated,
+    sessionAuthenticated,
     isConnecting,
     pathname,
-    user_id,
   ]);
 
   const checkAuthAndShowConnectPrompt = useCallback(
@@ -141,8 +144,14 @@ export function useAuthCheck() {
       intendedAction: 'contact' | 'access-protected' | 'service-action' = 'access-protected',
       actionData?: any
     ) => {
-      // Check if user is authenticated (either through traditional auth or Thirdweb)
-      if (!isAuthenticated && !user_id && !account?.address) {
+      // If wallet is connected but session state is not ready, trigger sync first.
+      if (!sessionAuthenticated && account?.address) {
+        void authenticateWalletAccount(account);
+        return false;
+      }
+
+      // Check if user is authenticated by confirmed session state.
+      if (!sessionAuthenticated) {
         // Store the current context for prompted authentication
         const currentUrl = pathname;
 
@@ -179,12 +188,21 @@ export function useAuthCheck() {
 
       return true; // Authenticated
     },
-    [account?.address, isAuthenticated, openConnectModal, user_id, pathname],
+    [
+      account,
+      authenticateWalletAccount,
+      openConnectModal,
+      pathname,
+      sessionAuthenticated,
+    ],
   );
 
-  const setManualConnection = useCallback(() => {
-    ReturnUrlManager.setManualConnection();
-  }, []);
+  const setManualConnection = useCallback(
+    (currentUrl?: string) => {
+      ReturnUrlManager.setManualConnection(currentUrl ?? pathname);
+    },
+    [pathname],
+  );
 
   // Effect to handle modal cleanup when navigating away
   useEffect(() => {
@@ -253,7 +271,7 @@ export function useAuthCheck() {
   }, [pathname]); // Run whenever pathname changes
 
   return {
-    isAuthenticated: isAuthenticated || !!user_id || !!account?.address,
+    isAuthenticated: sessionAuthenticated,
     user,
     user_id,
     checkAuthAndShowConnectPrompt,

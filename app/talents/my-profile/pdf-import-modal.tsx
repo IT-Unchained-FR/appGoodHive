@@ -96,7 +96,12 @@ export const PDFImportModal: React.FC<PDFImportModalProps> = ({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to generate profile data");
+        throw new Error(
+          errorData.error ||
+            errorData.message ||
+            errorData.details ||
+            "Failed to generate profile data",
+        );
       }
 
       const data = await response.json();

@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useActiveAccount } from "thirdweb/react";
 import Cookies from "js-cookie";
+import { dispatchAuthChanged } from "@/app/utils/authEvents";
 
 export interface User {
   user_id: string;
@@ -119,6 +120,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       walletConnected: !!account?.address,
       authMethod: user.auth_method,
     });
+    dispatchAuthChanged();
   };
 
   const logout = () => {
@@ -135,6 +137,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       walletConnected: !!account?.address,
       authMethod: null,
     });
+    dispatchAuthChanged();
   };
 
   const updateUser = (updates: Partial<User>) => {
@@ -155,6 +158,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         user: updatedUser,
       };
     });
+    dispatchAuthChanged();
   };
 
   const refreshUser = async () => {

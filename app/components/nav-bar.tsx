@@ -1,6 +1,5 @@
 "use client";
 
-import Cookies from "js-cookie";
 import {
   ConnectButton,
   useActiveAccount,
@@ -9,8 +8,9 @@ import {
 
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useAuthCheck } from "@/app/hooks/useAuthCheck";
-import { useProtectedNavigation } from "@/app/hooks/useProtectedNavigation";
+import { useCurrentUserId } from "@/app/hooks/useCurrentUserId";
 import { ReturnUrlManager } from "@/app/utils/returnUrlManager";
+import { dispatchAuthChanged } from "@/app/utils/authEvents";
 import { thirdwebClient } from "@/clients";
 import { activeChain } from "@/config/chains";
 import {
@@ -27,7 +27,7 @@ import { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import EmailVerificationModal from "./EmailVerificationModal";
 import { ProtectedLink } from "./ProtectedLink";
@@ -70,20 +70,43 @@ export const NavBar = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { navigate: protectedNavigate } = useProtectedNavigation();
   const account = useActiveAccount();
   const { connect, isConnecting } = useConnectModal();
-  const { user, isAuthenticated, login, logout } = useAuth();
+  const { user, isAuthenticated, login, logout, refreshUser } = useAuth();
   const { setManualConnection } = useAuthCheck();
   const connectModalShownRef = useRef(false);
-
-  const loggedIn_user_id = Cookies.get("user_id");
+  const loggedIn_user_id = useCurrentUserId();
 
   const links = pathname.startsWith("/talents")
     ? talentsLinks
     : pathname.startsWith("/companies")
       ? companiesLinks
       : commonLinks;
+
+  const syncAfterAuth = useCallback(async () => {
+    await refreshUser();
+    dispatchAuthChanged();
+    router.refresh();
+  }, [refreshUser, router]);
+
+  const handlePostAuthRouting = useCallback(
+    (redirectUrl: string | null, postAuthAction: any) => {
+      const currentRoute = `${pathname}${searchParams?.toString() ? `?${searchParams.toString()}` : ""}`;
+      if (redirectUrl && redirectUrl !== currentRoute) {
+        router.push(redirectUrl);
+      }
+
+      if (postAuthAction?.type === "show-contact-modal") {
+        setTimeout(() => {
+          const event = new CustomEvent("show-contact-modal", {
+            detail: postAuthAction.data,
+          });
+          window.dispatchEvent(event);
+        }, 500);
+      }
+    },
+    [pathname, router, searchParams],
+  );
 
   // Handle wallet connection/disconnection
   useEffect(() => {
@@ -167,6 +190,7 @@ export const NavBar = () => {
 
             // Update auth context
             login(authResult.user);
+            await syncAfterAuth();
 
             // Show onboarding popup for new users
             if (authResult.isNewUser) {
@@ -196,25 +220,9 @@ export const NavBar = () => {
             );
 
             if (redirectUrl) {
-              console.log("Redirecting to:", redirectUrl);
-              router.push(redirectUrl);
-
-              // Handle post-auth actions
-              if (postAuthAction?.type === "show-contact-modal") {
-                // This will be handled by the company contact button component
-                // after the page loads and user is authenticated
-                setTimeout(() => {
-                  const event = new CustomEvent("show-contact-modal", {
-                    detail: postAuthAction.data,
-                  });
-                  window.dispatchEvent(event);
-                }, 500);
-              }
-            } else {
-              console.log("No redirect URL found, using fallback");
-              // Fallback to homepage if no redirect URL is set
-              router.push("/");
+              console.log("Post-auth redirect candidate:", redirectUrl);
             }
+            handlePostAuthRouting(redirectUrl, postAuthAction);
 
             // Clear auth context after handling
             ReturnUrlManager.clearAuthContext();
@@ -239,47 +247,42 @@ export const NavBar = () => {
     };
 
     handleWalletAuth();
-  }, [account, loggedIn_user_id, isAuthenticating, login, router]);
+  }, [
+    account,
+    handlePostAuthRouting,
+    isAuthenticating,
+    loggedIn_user_id,
+    login,
+    syncAfterAuth,
+  ]);
 
   const handleEmailVerificationSuccess = (
     user: any,
     isNewUser: boolean = true,
   ) => {
-    // Update auth context with verified user
-    login(user);
-    setShowEmailVerification(false);
-    setWalletAddressToVerify("");
+    void (async () => {
+      // Update auth context with verified user
+      login(user);
+      await syncAfterAuth();
+      setShowEmailVerification(false);
+      setWalletAddressToVerify("");
 
-    toast.success("Email verified successfully! Welcome to GoodHive!");
+      toast.success("Email verified successfully! Welcome to GoodHive!");
 
-    // Show onboarding popup for new users after email verification
-    if (isNewUser) {
-      setShowOnboardingPopup(true);
-    }
-
-    // Handle post-authentication redirect (same logic as above)
-    const redirectUrl = ReturnUrlManager.getRedirectUrl();
-    const postAuthAction = ReturnUrlManager.getPostAuthAction();
-
-    if (redirectUrl) {
-      router.push(redirectUrl);
-
-      // Handle post-auth actions
-      if (postAuthAction?.type === "show-contact-modal") {
-        setTimeout(() => {
-          const event = new CustomEvent("show-contact-modal", {
-            detail: postAuthAction.data,
-          });
-          window.dispatchEvent(event);
-        }, 500);
+      // Show onboarding popup for new users after email verification
+      if (isNewUser) {
+        setShowOnboardingPopup(true);
       }
-    } else {
-      // Fallback to homepage if no redirect URL is set
-      router.push("/");
-    }
 
-    // Clear auth context after handling
-    ReturnUrlManager.clearAuthContext();
+      // Handle post-authentication redirect (same logic as above)
+      const redirectUrl = ReturnUrlManager.getRedirectUrl();
+      const postAuthAction = ReturnUrlManager.getPostAuthAction();
+
+      handlePostAuthRouting(redirectUrl, postAuthAction);
+
+      // Clear auth context after handling
+      ReturnUrlManager.clearAuthContext();
+    })();
   };
 
   const handleOnboardingClose = () => {
@@ -313,7 +316,8 @@ export const NavBar = () => {
 
   const handleConnectButtonClick = () => {
     // Set manual connection context before opening modal
-    setManualConnection();
+    const currentUrl = `${pathname}${searchParams?.toString() ? `?${searchParams.toString()}` : ""}`;
+    setManualConnection(currentUrl);
   };
 
   const handleOnConnect = async (wallet: any) => {

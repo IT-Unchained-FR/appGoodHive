@@ -55,10 +55,11 @@ export class ReturnUrlManager {
   }
 
   /**
-   * Set context for manual wallet connection (should go to profile)
+   * Set context for manual wallet connection (stay on current page).
    */
-  static setManualConnection(): void {
+  static setManualConnection(currentUrl?: string): void {
     this.setAuthContext({
+      returnUrl: currentUrl,
       isManualConnection: true,
     });
   }
@@ -125,12 +126,7 @@ export class ReturnUrlManager {
 
     if (!context) return null;
 
-    // Manual connection should go to profile
-    if (context.isManualConnection) {
-      return '/talents/my-profile';
-    }
-
-    // Prompted auth should return to intended URL
+    // Prompted and manual auth should return to intended/current URL when present
     console.log('ReturnUrlManager: Returning URL:', context.returnUrl);
     return context.returnUrl || null;
   }

@@ -35,6 +35,7 @@ import Link from "next/link";
 import "react-quill/dist/quill.snow.css";
 import { SelectInput } from "../../components/select-input";
 import { countries } from "../../constants/countries";
+import { useCurrentUserId } from "@/app/hooks/useCurrentUserId";
 // Dynamically import React Quill to prevent server-side rendering issues
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
@@ -50,7 +51,7 @@ const quillModules = {
 };
 
 export default function MyProfile() {
-  const [userId, setUserId] = useState<string | undefined>(Cookies.get("user_id"));
+  const userId = useCurrentUserId();
   const activeAccount = useActiveAccount();
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const imageInputValue = useRef(null);
@@ -149,24 +150,6 @@ export default function MyProfile() {
       setNoProfileFound(true);
     }
     setIsLoading(false);
-  }, [userId]);
-
-  // Monitor for wallet connection changes and update userId
-  useEffect(() => {
-    const checkUserIdFromCookies = () => {
-      const currentUserId = Cookies.get("user_id");
-      if (currentUserId && currentUserId !== userId) {
-        setUserId(currentUserId);
-      }
-    };
-
-    // Check immediately
-    checkUserIdFromCookies();
-
-    // Set up an interval to periodically check for userId changes
-    const interval = setInterval(checkUserIdFromCookies, 1000);
-
-    return () => clearInterval(interval);
   }, [userId]);
 
   useEffect(() => {

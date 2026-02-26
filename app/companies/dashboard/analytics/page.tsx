@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Cookies from "js-cookie";
 import {
   BarChart3,
   TrendingUp,
@@ -20,6 +19,7 @@ import {
 } from "lucide-react";
 import { Loader } from "@components/loader";
 import { useBlockchainAnalyticsWithRefresh } from "@/hooks/useBlockchainAnalytics";
+import { useCurrentUserId } from "@/app/hooks/useCurrentUserId";
 
 interface AnalyticsData {
   overview: {
@@ -51,7 +51,7 @@ export default function AnalyticsPage() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [databaseJobs, setDatabaseJobs] = useState<Array<{ id: string; budget: number; block_id?: string }>>([]);
-  const userId = Cookies.get("user_id");
+  const userId = useCurrentUserId();
 
   // Fetch database analytics
   useEffect(() => {

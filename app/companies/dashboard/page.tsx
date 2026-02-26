@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Cookies from "js-cookie";
 import Link from "next/link";
 import {
   Briefcase,
@@ -14,6 +13,7 @@ import {
   ArrowRight
 } from "lucide-react";
 import { Loader } from "@components/loader";
+import { useCurrentUserId } from "@/app/hooks/useCurrentUserId";
 
 interface DashboardStats {
   totalJobs: number;
@@ -26,7 +26,7 @@ interface DashboardStats {
 export default function CompanyDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const userId = Cookies.get("user_id");
+  const userId = useCurrentUserId();
 
   useEffect(() => {
     const fetchDashboardStats = async () => {

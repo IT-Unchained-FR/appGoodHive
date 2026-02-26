@@ -1,6 +1,6 @@
 "use client";
 
-import Cookies from "js-cookie";
+import { useCurrentUserId } from "@/app/hooks/useCurrentUserId";
 import {
   Briefcase,
   CheckCircle,
@@ -79,9 +79,13 @@ export default function UserProfilePage() {
     }
   `;
 
-  const user_id = Cookies.get("user_id");
+  const user_id = useCurrentUserId();
 
   const fetchUserProfile = useCallback(async () => {
+    if (!user_id) {
+      return;
+    }
+
     setIsConnecting(true);
     try {
       const response = await fetch(`/api/profile?user_id=${user_id}`, {
@@ -107,8 +111,9 @@ export default function UserProfilePage() {
   }, [user_id]);
 
   useEffect(() => {
+    if (!user_id) return;
     fetchUserProfile();
-  }, [fetchUserProfile]);
+  }, [fetchUserProfile, user_id]);
 
   if (!userProfile) {
     return (

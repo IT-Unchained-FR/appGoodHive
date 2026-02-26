@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createPDFToProfilePrompt } from "../prompts/pdf-to-profile-prompt";
 
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_MODEL = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
+const PDF_TEXT_EXTRACTOR_URL =
+  process.env.PDF_TEXT_EXTRACTOR_URL ??
+  "https://pdf-text-extractor-ki7lh2h1i-jubayer-juhans-projects-85b1bbdc.vercel.app/upload-pdf";
+
 // Create Profile With Chat GPT
 const createProfileWithChatGPT = async (pdfText: string) => {
   console.log(pdfText, "This is pdf text");
@@ -15,19 +21,23 @@ const createProfileWithChatGPT = async (pdfText: string) => {
     console.warn("Prompt is very long, might hit token limits");
   }
 
+  if (!OPENAI_API_KEY) {
+    throw new Error("Server misconfiguration: OPENAI_API_KEY is missing");
+  }
+
   try {
     // Make API call to ChatGPT
-    console.log("Making API call to OpenAI with model: gpt-4-1106-preview");
+    console.log(`Making API call to OpenAI with model: ${OPENAI_MODEL}`);
     console.log("PDF text length:", pdfText.length);
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "gpt-4",
+        model: OPENAI_MODEL,
         messages: [
           {
             role: "system",
@@ -48,9 +58,9 @@ const createProfileWithChatGPT = async (pdfText: string) => {
     console.log("API Response OK:", response.ok);
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("OpenAI API Error Response:", errorText);
-      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+      const errorBody = await response.text();
+      console.error("OpenAI API Error Response:", errorBody);
+      throw new Error(`OpenAI API error (${response.status}): ${errorBody}`);
     }
 
     const data = await response.json();
@@ -68,66 +78,25 @@ const createProfileWithChatGPT = async (pdfText: string) => {
     try {
       profileData = JSON.parse(generatedText);
       console.log("Successfully parsed JSON profile data");
-    } catch (parseError) {
+    } catch (parseError: unknown) {
       console.error("JSON Parse Error:", parseError);
       console.error("Generated text that failed to parse:", generatedText);
-      throw new Error(`Failed to parse JSON response: ${parseError.message}`);
+      const parseMessage =
+        parseError instanceof Error ? parseError.message : "Unknown parse error";
+      throw new Error(`Failed to parse JSON response: ${parseMessage}`);
     }
 
     return profileData;
-  } catch (error) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    const errorName = error instanceof Error ? error.name : "UnknownError";
     console.error("Detailed Error calling ChatGPT:", {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
+      message: errorMessage,
+      stack: errorStack,
+      name: errorName,
     });
-
-    // Fallback to basic parsing if ChatGPT fails
-    return {
-      first_name: "John",
-      last_name: "Doe",
-      email: "john.doe@example.com",
-      phone_number: "1234567890",
-      phone_country_code: "+1",
-      country: "United States",
-      city: "San Francisco",
-      title: "Software Engineer",
-      description:
-        "Experienced software engineer with expertise in full-stack development and modern web technologies.",
-      about_work:
-        "Passionate about creating innovative solutions and delivering high-quality software products. Seeking opportunities to work on challenging projects and contribute to meaningful technological advancements.",
-      linkedin: "",
-      github: "",
-      portfolio: "",
-      skills: "JavaScript, React, Node.js, Python, AWS, Docker",
-      min_rate: 75,
-      max_rate: 75,
-      rate: 75,
-      experience: [
-        {
-          title: "Software Engineer",
-          company: "Previous Company",
-          location: "San Francisco, CA",
-          startDate: "2022-01",
-          endDate: "Present",
-          description:
-            "Led development of various software projects and collaborated with cross-functional teams.",
-        },
-      ],
-      education: [
-        {
-          degree: "Bachelor's Degree",
-          institution: "University",
-          location: "City, State",
-          startDate: "2016-09",
-          endDate: "2020-05",
-          gpa: "3.8/4.0",
-        },
-      ],
-      certifications: [],
-      projects: [],
-      languages: []
-    };
+    throw new Error(errorMessage);
   }
 };
 
@@ -171,13 +140,10 @@ export async function POST(request: NextRequest) {
     externalFormData.append("pdf", blob, pdfFile.name);
 
     // Send request to external PDF text extractor
-    const externalResponse = await fetch(
-      "https://pdf-text-extractor-ki7lh2h1i-jubayer-juhans-projects-85b1bbdc.vercel.app/upload-pdf",
-      {
-        method: "POST",
-        body: externalFormData,
-      },
-    );
+    const externalResponse = await fetch(PDF_TEXT_EXTRACTOR_URL, {
+      method: "POST",
+      body: externalFormData,
+    });
 
     if (!externalResponse.ok) {
       console.error(
@@ -186,12 +152,21 @@ export async function POST(request: NextRequest) {
         externalResponse.statusText,
       );
       return NextResponse.json(
-        { error: "Failed to extract text from PDF" },
+        {
+          error: "Failed to extract text from PDF",
+          details: `Extractor responded with status ${externalResponse.status}`,
+        },
         { status: 500 },
       );
     }
 
     const pdfParsingResponse = await externalResponse.json();
+    if (!pdfParsingResponse?.text) {
+      return NextResponse.json(
+        { error: "PDF extractor returned no text" },
+        { status: 500 },
+      );
+    }
 
     // Process the extracted text to generate profile data
     const profileData = await createProfileWithChatGPT(pdfParsingResponse.text);

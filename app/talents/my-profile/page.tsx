@@ -11,7 +11,6 @@ import { createJobServices } from "@/app/constants/common";
 import { countries } from "@/app/constants/countries";
 import { skills } from "@/app/constants/skills";
 import { uploadFileToBucket } from "@/app/utils/upload-file-bucket";
-import Cookies from "js-cookie";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -25,6 +24,7 @@ import "@/app/styles/rich-text.css";
 import { PDFImportModal } from "./pdf-import-modal";
 import { SocialLink } from "./social-link";
 import { useAuthCheck } from "@/app/hooks/useAuthCheck";
+import { useCurrentUserId } from "@/app/hooks/useCurrentUserId";
 
 // Dynamically import React Quill to prevent server-side rendering issues
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -141,7 +141,7 @@ export default function ProfilePage() {
   const router = useRouter();
 
   // User identifiers
-  const user_id = useMemo(() => Cookies.get("user_id"), []);
+  const user_id = useCurrentUserId();
   const { checkAuthAndShowConnectPrompt } = useAuthCheck();
 
   // UI state

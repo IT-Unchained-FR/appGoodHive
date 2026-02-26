@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Cookies from "js-cookie";
 import Link from "next/link";
 import {
   Search,
@@ -24,6 +23,7 @@ import { Loader } from "@components/loader";
 import JobBalance from "@/app/components/JobBalance";
 import FundManager from "@/app/components/FundManager";
 import { JobApplicationsDrawer } from "@/app/components/applications";
+import { useCurrentUserId } from "@/app/hooks/useCurrentUserId";
 
 interface Job {
   id: string;
@@ -63,7 +63,7 @@ export default function JobsManagement() {
   const [selectedJobForFunding, setSelectedJobForFunding] = useState<Job | null>(null);
   const [showApplicationsDrawer, setShowApplicationsDrawer] = useState(false);
   const [selectedJobForApplications, setSelectedJobForApplications] = useState<Job | null>(null);
-  const userId = Cookies.get("user_id");
+  const userId = useCurrentUserId();
 
   useEffect(() => {
     const fetchJobs = async () => {
