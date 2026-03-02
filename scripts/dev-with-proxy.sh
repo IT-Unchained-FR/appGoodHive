@@ -6,6 +6,7 @@ PROXY_PORT_RAG=5434
 INSTANCE_MAIN="${CLOUD_SQL_CONNECTION_NAME:-goodhive-1706112296263:europe-west9:goodhive-prod-db}"
 INSTANCE_RAG="${CLOUD_SQL_CONNECTION_NAME_RAG_CHATBOT:-$INSTANCE_MAIN}"
 PROXY_BIN="./cloud_sql_proxy"
+SHARE_PROXY_PORT=0
 
 has_cmd() {
   command -v "$1" >/dev/null 2>&1
@@ -68,56 +69,68 @@ print(rebuilt)
 PY
 }
 
-STARTED_MAIN=0
-STARTED_RAG=0
+STARTED_PROXY=0
 
-if is_listening "${PROXY_PORT_MAIN}"; then
-  echo "✅ Cloud SQL proxy already listening on 127.0.0.1:${PROXY_PORT_MAIN}"
-else
-  echo "🚀 Starting Cloud SQL proxy (main DB)..."
-  "${PROXY_BIN}" -instances="${INSTANCE_MAIN}=tcp:${PROXY_PORT_MAIN}" &
-  PROXY_PID_MAIN=$!
-  STARTED_MAIN=1
-  echo "🔧 Main proxy PID: ${PROXY_PID_MAIN}"
+if [ "${INSTANCE_MAIN}" = "${INSTANCE_RAG}" ]; then
+  SHARE_PROXY_PORT=1
+  echo "ℹ️ Main DB and RAG DB use the same Cloud SQL instance; reusing one proxy on 127.0.0.1:${PROXY_PORT_MAIN}"
 fi
 
-if is_listening "${PROXY_PORT_RAG}"; then
-  echo "✅ Cloud SQL proxy already listening on 127.0.0.1:${PROXY_PORT_RAG}"
+PORTS_TO_CHECK=("${PROXY_PORT_MAIN}")
+INSTANCES_ARG="${INSTANCE_MAIN}=tcp:${PROXY_PORT_MAIN}"
+
+if [ "${SHARE_PROXY_PORT}" -eq 0 ]; then
+  PORTS_TO_CHECK+=("${PROXY_PORT_RAG}")
+  INSTANCES_ARG="${INSTANCES_ARG},${INSTANCE_RAG}=tcp:${PROXY_PORT_RAG}"
+fi
+
+all_ports_listening() {
+  for port in "${PORTS_TO_CHECK[@]}"; do
+    if ! is_listening "${port}"; then
+      return 1
+    fi
+  done
+  return 0
+}
+
+if all_ports_listening; then
+  if [ "${SHARE_PROXY_PORT}" -eq 1 ]; then
+    echo "✅ Cloud SQL proxy already listening on 127.0.0.1:${PROXY_PORT_MAIN}"
+  else
+    echo "✅ Cloud SQL proxy already listening on 127.0.0.1:${PROXY_PORT_MAIN} and 127.0.0.1:${PROXY_PORT_RAG}"
+  fi
 else
-  echo "🚀 Starting Cloud SQL proxy (RAG DB)..."
-  "${PROXY_BIN}" -instances="${INSTANCE_RAG}=tcp:${PROXY_PORT_RAG}" &
-  PROXY_PID_RAG=$!
-  STARTED_RAG=1
-  echo "🔧 RAG proxy PID: ${PROXY_PID_RAG}"
+  echo "🚀 Starting Cloud SQL proxy..."
+  "${PROXY_BIN}" -instances="${INSTANCES_ARG}" &
+  PROXY_PID=$!
+  STARTED_PROXY=1
+  echo "🔧 Proxy PID: ${PROXY_PID}"
 fi
 
 for _ in {1..30}; do
-  if is_listening "${PROXY_PORT_MAIN}" && is_listening "${PROXY_PORT_RAG}"; then
-    echo "✅ Proxies ready on 127.0.0.1:${PROXY_PORT_MAIN} and 127.0.0.1:${PROXY_PORT_RAG}"
+  if all_ports_listening; then
+    if [ "${SHARE_PROXY_PORT}" -eq 1 ]; then
+      echo "✅ Proxy ready on 127.0.0.1:${PROXY_PORT_MAIN} for both main and RAG databases"
+    else
+      echo "✅ Proxies ready on 127.0.0.1:${PROXY_PORT_MAIN} and 127.0.0.1:${PROXY_PORT_RAG}"
+    fi
     break
   fi
   sleep 0.3
-  done
+done
 
-if ! is_listening "${PROXY_PORT_MAIN}" || ! is_listening "${PROXY_PORT_RAG}"; then
+if ! all_ports_listening; then
   echo "❌ Proxy failed to start."
-  if [ "${STARTED_MAIN}" -eq 1 ] && [ -n "${PROXY_PID_MAIN:-}" ]; then
-    kill "${PROXY_PID_MAIN}" >/dev/null 2>&1 || true
-  fi
-  if [ "${STARTED_RAG}" -eq 1 ] && [ -n "${PROXY_PID_RAG:-}" ]; then
-    kill "${PROXY_PID_RAG}" >/dev/null 2>&1 || true
+  if [ "${STARTED_PROXY}" -eq 1 ] && [ -n "${PROXY_PID:-}" ]; then
+    kill "${PROXY_PID}" >/dev/null 2>&1 || true
   fi
   exit 1
 fi
 
 cleanup() {
-  if [ "${STARTED_MAIN}" -eq 1 ] && [ -n "${PROXY_PID_MAIN:-}" ]; then
-    echo "🛑 Stopping main proxy..."
-    kill "${PROXY_PID_MAIN}" >/dev/null 2>&1 || true
-  fi
-  if [ "${STARTED_RAG}" -eq 1 ] && [ -n "${PROXY_PID_RAG:-}" ]; then
-    echo "🛑 Stopping RAG proxy..."
-    kill "${PROXY_PID_RAG}" >/dev/null 2>&1 || true
+  if [ "${STARTED_PROXY}" -eq 1 ] && [ -n "${PROXY_PID:-}" ]; then
+    echo "🛑 Stopping Cloud SQL proxy..."
+    kill "${PROXY_PID}" >/dev/null 2>&1 || true
   fi
 }
 
@@ -128,7 +141,11 @@ export ENV_PORT="${PROXY_PORT_MAIN}"
 DATABASE_URL=$(build_local_url "${ENV_KEY}" "${ENV_PORT}") || DATABASE_URL=""
 
 export ENV_KEY="DATABASE_URL_RAG_CHATBOT"
-export ENV_PORT="${PROXY_PORT_RAG}"
+if [ "${SHARE_PROXY_PORT}" -eq 1 ]; then
+  export ENV_PORT="${PROXY_PORT_MAIN}"
+else
+  export ENV_PORT="${PROXY_PORT_RAG}"
+fi
 DATABASE_URL_RAG_CHATBOT=$(build_local_url "${ENV_KEY}" "${ENV_PORT}") || DATABASE_URL_RAG_CHATBOT=""
 
 if [ -z "${DATABASE_URL}" ]; then
