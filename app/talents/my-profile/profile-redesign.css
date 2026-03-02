@@ -1,0 +1,302 @@
+.gh-profile-shell {
+  --gh-profile-border: rgba(148, 163, 184, 0.26);
+  --gh-profile-border-strong: rgba(245, 158, 11, 0.34);
+  --gh-profile-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  --gh-profile-focus: 0 0 0 4px rgba(251, 191, 36, 0.18);
+}
+
+.gh-profile-shell .gh-soft-panel {
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.92));
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.gh-profile-shell .gh-muted-panel {
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(248, 250, 252, 0.86);
+}
+
+.gh-profile-shell .gh-tint-panel {
+  border: 1px solid rgba(251, 191, 36, 0.18);
+  background: linear-gradient(180deg, rgba(255, 251, 235, 0.92), rgba(255, 255, 255, 0.96));
+}
+
+.gh-profile-shell .gh-metric-tile {
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+}
+
+.gh-profile-shell .gh-pill {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+}
+
+.gh-profile-shell .gh-section-anchor {
+  scroll-margin-top: 104px;
+}
+
+.gh-profile-shell .gh-section-body {
+  max-height: none;
+  overflow: visible;
+}
+
+.gh-profile-shell .gh-editor-shell {
+  width: 100%;
+  border: 1px solid rgba(249, 115, 22, 0.28);
+  border-radius: 1.35rem;
+  background: #fff;
+  overflow: hidden;
+  isolation: isolate;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.gh-profile-shell .gh-editor-shell .quill,
+.gh-profile-shell .gh-editor-shell .quill-editor {
+  display: flex;
+  flex-direction: column;
+  height: 20rem;
+  margin-bottom: 0 !important;
+}
+
+.gh-profile-shell .gh-editor-shell:focus-within {
+  border-color: rgba(249, 115, 22, 0.34);
+  box-shadow:
+    0 0 0 4px rgba(251, 191, 36, 0.14),
+    0 14px 32px rgba(15, 23, 42, 0.08);
+}
+
+.gh-profile-shell .form-control {
+  min-height: 3.2rem;
+  width: 100%;
+  border: 1px solid var(--gh-profile-border);
+  border-radius: 1rem;
+  background: #fff;
+  color: #0f172a;
+  box-shadow: var(--gh-profile-shadow);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.gh-profile-shell .form-control:hover {
+  border-color: rgba(245, 158, 11, 0.28);
+}
+
+.gh-profile-shell .form-control:focus,
+.gh-profile-shell .form-control:focus-visible {
+  border-color: var(--gh-profile-border-strong);
+  box-shadow: var(--gh-profile-focus);
+  outline: none;
+}
+
+.gh-profile-shell input.form-control,
+.gh-profile-shell textarea.form-control,
+.gh-profile-shell .form-control[type="number"],
+.gh-profile-shell .form-control[type="email"],
+.gh-profile-shell .form-control[type="text"] {
+  padding: 0.85rem 1rem;
+}
+
+.gh-profile-shell input[type="file"].form-control {
+  padding: 0.85rem 1rem;
+}
+
+.gh-profile-shell .gh-editor-shell .ql-toolbar.ql-snow {
+  border: 0 !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16) !important;
+  border-radius: 1.35rem 1.35rem 0 0 !important;
+  background: linear-gradient(180deg, #fffef9, #fffaf0);
+  padding: 0.8rem 0.95rem;
+  box-shadow: none !important;
+}
+
+.gh-profile-shell .gh-editor-shell .ql-container.ql-snow {
+  border: 0 !important;
+  border-radius: 0 0 1.35rem 1.35rem !important;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  height: auto !important;
+  min-height: 0 !important;
+  background: transparent;
+  box-shadow: none !important;
+}
+
+.gh-profile-shell .gh-editor-shell .ql-editor {
+  display: block;
+  flex: 1 1 auto;
+  height: 100% !important;
+  min-height: 100% !important;
+  max-height: none !important;
+  box-sizing: border-box;
+  overflow-y: auto;
+  padding: 1rem 1.05rem 1.2rem;
+  color: #0f172a;
+  font-size: 0.975rem;
+  line-height: 1.75;
+}
+
+.gh-profile-shell .gh-editor-shell .ql-editor.ql-blank::before {
+  color: #94a3b8;
+  font-style: normal;
+}
+
+.gh-profile-shell .quill-editor .ql-stroke {
+  stroke: #475569;
+}
+
+.gh-profile-shell .quill-editor .ql-fill {
+  fill: #475569;
+}
+
+.gh-profile-shell .quill-editor .ql-picker {
+  color: #334155;
+}
+
+.gh-profile-shell .gh-sticky-actions {
+  backdrop-filter: blur(22px);
+}
+
+.gh-profile-shell .gh-section-dots {
+  width: fit-content;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.88));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.gh-profile-shell .gh-section-dot {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.95), rgba(226, 232, 240, 0.92));
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.85),
+    0 4px 10px rgba(15, 23, 42, 0.08);
+  transition:
+    width 0.22s ease,
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.gh-profile-shell .gh-section-dot::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.22));
+  opacity: 0.7;
+}
+
+.gh-profile-shell .gh-section-dot:hover {
+  transform: translateY(-1px) scale(1.04);
+  border-color: rgba(245, 158, 11, 0.22);
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 251, 235, 1), rgba(253, 230, 138, 0.55));
+}
+
+.gh-profile-shell .gh-section-dot:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 4px rgba(251, 191, 36, 0.18),
+    0 6px 14px rgba(15, 23, 42, 0.1);
+}
+
+.gh-profile-shell .gh-section-dot.is-active {
+  width: 1.9rem;
+  border-color: rgba(249, 115, 22, 0.28);
+  background:
+    linear-gradient(135deg, #fbbf24, #f97316);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    0 0 0 4px rgba(251, 191, 36, 0.14),
+    0 10px 18px rgba(249, 115, 22, 0.22);
+}
+
+.gh-profile-shell .gh-section-dot.is-active::before {
+  inset: 2px auto 2px 2px;
+  width: 38%;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.08));
+  opacity: 1;
+}
+
+.gh-profile-shell .gh-skills-input:focus,
+.gh-profile-shell .gh-skills-input:focus-visible {
+  border-color: rgba(249, 115, 22, 0.4) !important;
+  box-shadow: var(--gh-profile-focus) !important;
+  outline: none !important;
+}
+
+.gh-profile-shell .gh-profile-card .relative > ul {
+  border-radius: 1rem;
+  border-color: rgba(148, 163, 184, 0.25);
+  box-shadow: 0 18px 30px rgba(15, 23, 42, 0.08);
+}
+
+.gh-profile-shell .gh-social-link {
+  margin-top: 0;
+  align-items: center;
+  gap: 12px;
+}
+
+.gh-profile-shell .gh-social-link > .w-full input {
+  margin-left: 0;
+  min-height: 3rem;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(248, 250, 252, 0.8);
+  box-shadow: none;
+}
+
+.gh-profile-shell .gh-social-link > .w-full input:focus {
+  border-color: rgba(249, 115, 22, 0.32);
+  box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.15);
+}
+
+.gh-profile-shell .gh-social-link-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.95rem;
+  background: #fff;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+}
+
+.gh-profile-shell .gh-profile-card .text-red-500 {
+  color: #ef4444;
+}
+
+@media (max-width: 768px) {
+  .gh-profile-shell .gh-section-body {
+    overflow: visible;
+  }
+
+  .gh-profile-shell .gh-editor-shell .ql-container.ql-snow {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .gh-profile-shell .gh-editor-shell .quill,
+  .gh-profile-shell .gh-editor-shell .quill-editor {
+    height: 15.5rem;
+  }
+
+  .gh-profile-shell .gh-editor-shell .ql-editor {
+    height: 100% !important;
+    min-height: 100% !important;
+    max-height: none !important;
+  }
+}

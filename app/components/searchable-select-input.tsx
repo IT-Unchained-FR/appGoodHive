@@ -11,6 +11,9 @@ interface Props {
   options: LabelOption[];
   defaultValue?: LabelOption;
   placeholder?: string;
+  labelClassName?: string;
+  triggerClassName?: string;
+  dropdownClassName?: string;
 }
 
 export const SearchableSelectInput: FC<Props> = ({
@@ -22,6 +25,9 @@ export const SearchableSelectInput: FC<Props> = ({
   defaultValue,
   setInputValue,
   placeholder = "Search...",
+  labelClassName,
+  triggerClassName,
+  dropdownClassName,
 }) => {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -98,14 +104,16 @@ export const SearchableSelectInput: FC<Props> = ({
   return (
     <div className="relative w-full" ref={dropdownRef}>
       {labelText && (
-        <label className="inline-block ml-3 text-base text-black form-label">
+        <label
+          className={`inline-block ml-3 text-base text-black form-label ${labelClassName || ""}`.trim()}
+        >
           {labelText}
           {required && <span>*</span>}
         </label>
       )}
       <div className="flex items-center">
         <p
-          className={selectStyle}
+          className={`${selectStyle} ${triggerClassName || ""}`.trim()}
           onClick={toggleDropdown}
           style={{
             color:
@@ -132,7 +140,9 @@ export const SearchableSelectInput: FC<Props> = ({
         </div>
       </div>
       {isOptionsOpen && (
-        <div className="absolute z-10 w-full mt-2 overflow-y-auto bg-white rounded-md shadow-md max-h-48">
+        <div
+          className={`absolute z-10 w-full mt-2 overflow-y-auto bg-white rounded-md shadow-md max-h-48 ${dropdownClassName || ""}`.trim()}
+        >
           {/* Search input */}
           <div className="sticky top-0 z-20 p-2 bg-white border-b">
             <input

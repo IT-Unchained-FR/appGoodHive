@@ -39,7 +39,10 @@
 }
 
 .modalDialog {
-  position: relative;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  margin: 0;
   background: white;
   border-radius: 0.75rem;
   box-shadow:
@@ -53,12 +56,12 @@
   animation: modalAppear 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &.visible {
-    transform: scale(1);
+    transform: translate(-50%, -50%) scale(1);
     opacity: 1;
   }
 
   &.hidden {
-    transform: scale(0.95);
+    transform: translate(-50%, -50%) scale(0.95);
     opacity: 0;
   }
 
@@ -72,11 +75,11 @@
 @keyframes modalAppear {
   from {
     opacity: 0;
-    transform: scale(0.95) translateY(1rem);
+    transform: translate(-50%, calc(-50% + 1rem)) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: translate(-50%, -50%) scale(1);
   }
 }
 
