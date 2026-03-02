@@ -54,10 +54,8 @@ export const JobCard: FC<Props> = ({
   typeEngagement,
   jobType,
   skills,
-  companyEmail,
   projectType,
   budget,
-  walletAddress,
   escrowAmount,
   user_id,
   mentor,
@@ -293,10 +291,7 @@ export const JobCard: FC<Props> = ({
           onClose={onJobApplicationPopupCloseHandler}
           jobTitle={title}
           companyName={postedBy}
-          companyEmail={companyEmail || ""}
           jobId={id}
-          companyUserId={user_id}
-          walletAddress={walletAddress}
         />
       )}
     </div>

@@ -13,7 +13,6 @@ interface JobSummaryProps {
     id: number;
     title: string;
     companyName: string;
-    companyUserId?: string;
     description?: string;
     city: string;
     country: string;
@@ -37,16 +36,12 @@ interface JobSummaryProps {
   };
   balance?: number;
   isLoadingBalance?: boolean;
-  companyEmail?: string;
-  walletAddress?: string;
 }
 
 export const JobSummarySection = ({
   job,
   balance,
   isLoadingBalance = false,
-  companyEmail = "",
-  walletAddress = ""
 }: JobSummaryProps) => {
   const { user, isAuthenticated } = useAuth();
   const [isApplicationPopupOpen, setIsApplicationPopupOpen] = useState(false);
@@ -257,16 +252,13 @@ export const JobSummarySection = ({
       )}
 
       {/* Job Application Popup */}
-      {isApplicationPopupOpen && companyEmail && walletAddress && job.companyUserId && (
+      {isApplicationPopupOpen && (
         <JobApplicationPopup
           isOpen={isApplicationPopupOpen}
           onClose={() => setIsApplicationPopupOpen(false)}
           jobTitle={job.title}
           companyName={job.companyName}
-          companyEmail={companyEmail}
           jobId={String(job.id)}
-          companyUserId={job.companyUserId}
-          walletAddress={walletAddress}
         />
       )}
 

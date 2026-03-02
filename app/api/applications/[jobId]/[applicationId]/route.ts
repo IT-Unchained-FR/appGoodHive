@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import sql from "@/lib/db";
 import { ApplicationStatus } from "@/interfaces/job-application";
+import { requireSession } from "@/lib/auth/sessionUtils";
 
 const VALID_STATUSES: ApplicationStatus[] = ['new', 'reviewed', 'shortlisted', 'interview', 'rejected', 'hired'];
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ jobId: string; applicationId: string }> }
 ) {
   try {
+    const sessionUser = await requireSession();
     const { jobId, applicationId } = await params;
-    const searchParams = request.nextUrl.searchParams;
-    const companyUserId = searchParams.get("companyUserId");
 
     if (!jobId || !applicationId) {
       return NextResponse.json(
@@ -27,6 +27,7 @@ export async function GET(
         ja.job_id,
         ja.applicant_user_id,
         ja.company_user_id,
+        ja.conversation_thread_id,
         ja.applicant_name,
         ja.applicant_email,
         ja.cover_letter,
@@ -42,7 +43,9 @@ export async function GET(
       FROM goodhive.job_applications ja
       LEFT JOIN goodhive.talents t ON ja.applicant_user_id = t.user_id
       LEFT JOIN goodhive.job_offers jo ON ja.job_id = jo.id
-      WHERE ja.job_id = ${jobId}::uuid AND ja.id = ${applicationId}::int
+      WHERE ja.job_id = ${jobId}::uuid
+        AND ja.id = ${applicationId}::int
+        AND ja.company_user_id = ${sessionUser.user_id}::uuid
     `;
 
     if (applications.length === 0) {
@@ -53,17 +56,15 @@ export async function GET(
     }
 
     const application = applications[0];
-
-    // Check authorization
-    if (companyUserId && application.company_user_id !== companyUserId) {
+    return NextResponse.json(application, { status: 200 });
+  } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required") {
       return NextResponse.json(
-        { message: "Unauthorized" },
-        { status: 403 }
+        { message: "Authentication required" },
+        { status: 401 }
       );
     }
 
-    return NextResponse.json(application, { status: 200 });
-  } catch (error) {
     console.error("Error fetching application:", error);
     return NextResponse.json(
       { message: "Failed to fetch application" },
@@ -77,9 +78,10 @@ export async function PATCH(
   { params }: { params: Promise<{ jobId: string; applicationId: string }> }
 ) {
   try {
+    const sessionUser = await requireSession();
     const { jobId, applicationId } = await params;
     const body = await request.json();
-    const { status, internalNotes, rating, companyUserId } = body;
+    const { status, internalNotes, rating } = body;
 
     if (!jobId || !applicationId) {
       return NextResponse.json(
@@ -101,7 +103,7 @@ export async function PATCH(
       );
     }
 
-    if (companyUserId && existingApp[0].company_user_id !== companyUserId) {
+    if (existingApp[0].company_user_id !== sessionUser.user_id) {
       return NextResponse.json(
         { message: "Unauthorized" },
         { status: 403 }
@@ -167,6 +169,13 @@ export async function PATCH(
 
     return NextResponse.json(result[0], { status: 200 });
   } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required") {
+      return NextResponse.json(
+        { message: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
     console.error("Error updating application:", error);
     return NextResponse.json(
       { message: "Failed to update application" },

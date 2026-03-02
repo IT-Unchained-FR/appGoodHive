@@ -26,7 +26,6 @@ import { ApplicationStatusBadge } from "./ApplicationStatusBadge";
 interface ApplicationDetailPanelProps {
   application: IJobApplicationWithDetails;
   jobId: string;
-  companyUserId: string;
   onUpdate: (updatedApplication: IJobApplicationWithDetails) => void;
   onClose: () => void;
 }
@@ -43,7 +42,6 @@ const ALL_STATUSES: ApplicationStatus[] = [
 export function ApplicationDetailPanel({
   application,
   jobId,
-  companyUserId,
   onUpdate,
   onClose,
 }: ApplicationDetailPanelProps) {
@@ -84,7 +82,6 @@ export function ApplicationDetailPanel({
             status,
             internalNotes,
             rating,
-            companyUserId,
           }),
         }
       );

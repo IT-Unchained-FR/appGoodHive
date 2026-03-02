@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -12,7 +12,8 @@ import {
   Wallet,
   Menu,
   X,
-  BarChart3
+  BarChart3,
+  MessageSquare,
 } from "lucide-react";
 import { AuthLayout } from "@/app/components/AuthLayout/AuthLayout";
 
@@ -31,6 +32,12 @@ const sidebarItems = [
     href: "/companies/dashboard/jobs",
     label: "My Jobs",
     icon: Briefcase,
+    exact: false
+  },
+  {
+    href: "/companies/dashboard/inbox",
+    label: "Inbox",
+    icon: MessageSquare,
     exact: false
   },
   {
@@ -61,6 +68,7 @@ const sidebarItems = [
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [companyUnread, setCompanyUnread] = useState(0);
   const pathname = usePathname();
 
   const isActiveRoute = (href: string, exact: boolean) => {
@@ -73,6 +81,34 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadUnreadCounts = async () => {
+      try {
+        const response = await fetch("/api/conversations/unread-counts");
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+        if (isMounted) {
+          setCompanyUnread(data.companyUnread || 0);
+        }
+      } catch (error) {
+        console.error("Error fetching company unread counts:", error);
+      }
+    };
+
+    loadUnreadCounts();
+    const intervalId = window.setInterval(loadUnreadCounts, 30000);
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(intervalId);
+    };
+  }, []);
 
   return (
     <AuthLayout>
@@ -127,7 +163,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     `}
                   >
                     <Icon className={`mr-3 h-5 w-5 ${isActive ? 'text-yellow-500' : 'text-gray-400'}`} />
-                    {item.label}
+                    <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                      <span>{item.label}</span>
+                      {item.href === "/companies/dashboard/inbox" && companyUnread > 0 ? (
+                        <span className="inline-flex min-w-6 items-center justify-center rounded-full bg-yellow-500 px-2 py-0.5 text-xs font-semibold text-white">
+                          {companyUnread > 99 ? "99+" : companyUnread}
+                        </span>
+                      ) : null}
+                    </span>
                   </Link>
                 );
               })}
@@ -164,6 +207,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   <h1 className="text-xl font-semibold text-gray-800">
                     {pathname === '/companies/dashboard' && 'Dashboard Overview'}
                     {pathname === '/companies/dashboard/jobs' && 'Job Management'}
+                    {pathname === '/companies/dashboard/inbox' && 'Applicant Inbox'}
                     {pathname === '/companies/dashboard/analytics' && 'Analytics & Insights'}
                     {pathname === '/companies/dashboard/settings' && 'Settings'}
                     {pathname === '/companies/create-job' && 'Create New Job'}

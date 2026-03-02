@@ -188,8 +188,6 @@ export default function CompanyProfilePage(context: CompanyProfilePageProps) {
                 job={singleJob}
                 balance={jobBalances[singleJob.id]}
                 isLoadingBalance={isLoadingBalances}
-                companyEmail={email}
-                walletAddress={userId}
               />
             ) : (
               /* About Company Section when no specific job */
@@ -224,7 +222,6 @@ export default function CompanyProfilePage(context: CompanyProfilePageProps) {
               <AnimatedJobSection
                 jobs={jobs}
                 featuredJob={singleJob}
-                companyEmail={email}
                 userId={userId}
                 jobBalances={jobBalances}
                 isLoadingBalances={isLoadingBalances}

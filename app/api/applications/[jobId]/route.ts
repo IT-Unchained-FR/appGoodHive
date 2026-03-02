@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import sql from "@/lib/db";
+import { requireSession } from "@/lib/auth/sessionUtils";
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
   try {
+    const sessionUser = await requireSession();
     const { jobId } = await params;
-    const searchParams = request.nextUrl.searchParams;
-    const companyUserId = searchParams.get("companyUserId");
 
     if (!jobId) {
       return NextResponse.json(
@@ -17,25 +17,22 @@ export async function GET(
       );
     }
 
-    // Verify the requesting user owns this job (authorization)
-    if (companyUserId) {
-      const jobOwner = await sql`
-        SELECT user_id FROM goodhive.job_offers WHERE id = ${jobId}::uuid
-      `;
+    const jobOwner = await sql`
+      SELECT user_id FROM goodhive.job_offers WHERE id = ${jobId}::uuid
+    `;
 
-      if (jobOwner.length === 0) {
-        return NextResponse.json(
-          { message: "Job not found" },
-          { status: 404 }
-        );
-      }
+    if (jobOwner.length === 0) {
+      return NextResponse.json(
+        { message: "Job not found" },
+        { status: 404 }
+      );
+    }
 
-      if (jobOwner[0].user_id !== companyUserId) {
-        return NextResponse.json(
-          { message: "Unauthorized" },
-          { status: 403 }
-        );
-      }
+    if (jobOwner[0].user_id !== sessionUser.user_id) {
+      return NextResponse.json(
+        { message: "Unauthorized" },
+        { status: 403 }
+      );
     }
 
     // Fetch applications with applicant details
@@ -45,6 +42,7 @@ export async function GET(
         ja.job_id,
         ja.applicant_user_id,
         ja.company_user_id,
+        ja.conversation_thread_id,
         ja.applicant_name,
         ja.applicant_email,
         ja.cover_letter,
@@ -59,11 +57,19 @@ export async function GET(
       FROM goodhive.job_applications ja
       LEFT JOIN goodhive.talents t ON ja.applicant_user_id = t.user_id
       WHERE ja.job_id = ${jobId}::uuid
+        AND ja.company_user_id = ${sessionUser.user_id}::uuid
       ORDER BY ja.created_at DESC
     `;
 
     return NextResponse.json(applications, { status: 200 });
   } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required") {
+      return NextResponse.json(
+        { message: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
     console.error("Error fetching applications:", error);
     return NextResponse.json(
       { message: "Failed to fetch applications" },

@@ -621,8 +621,6 @@ export default function JobsManagement() {
           onClose={closeApplicationsDrawer}
           jobId={selectedJobForApplications.id}
           jobTitle={selectedJobForApplications.title}
-          companyUserId={userId}
-          applicationCount={selectedJobForApplications.applicationCount}
         />
       )}
     </div>

@@ -38,10 +38,7 @@ export default function TestPopupPage() {
         onClose={() => setShowPopup(false)}
         jobTitle="Senior Frontend Developer"
         companyName="TechHive Solutions"
-        companyEmail="jobs@techhive.com"
         jobId="123"
-        companyUserId="test-company-user-id"
-        walletAddress="0x1234567890abcdef"
       />
     </div>
   );

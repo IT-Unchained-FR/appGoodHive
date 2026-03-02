@@ -5,6 +5,7 @@ export interface IJobApplication {
   job_id: string;
   applicant_user_id: string;
   company_user_id: string;
+  conversation_thread_id?: string;
   applicant_name: string;
   applicant_email: string;
   cover_letter: string;

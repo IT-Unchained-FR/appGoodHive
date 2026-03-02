@@ -361,16 +361,13 @@ export const JobPageHeader = ({ job }: JobPageHeaderProps) => {
         />
       )}
 
-      {isApplicationPopupOpen && job.company.userId && (
+      {isApplicationPopupOpen && (
         <JobApplicationPopup
           isOpen={isApplicationPopupOpen}
           onClose={() => setIsApplicationPopupOpen(false)}
           jobTitle={job.title}
           companyName={job.company.name}
-          companyEmail={job.company.email || ""}
           jobId={job.id}
-          companyUserId={job.company.userId}
-          walletAddress={job.company.walletAddress || job.company.id}
         />
       )}
 

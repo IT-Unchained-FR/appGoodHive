@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { X, Users, Briefcase } from "lucide-react";
 import { IJobApplicationWithDetails } from "@/interfaces/job-application";
@@ -12,9 +12,6 @@ interface JobApplicationsDrawerProps {
   onClose: () => void;
   jobId: string;
   jobTitle: string;
-  companyUserId: string;
-  applicationCount: number;
-  onApplicationCountChange?: (newCount: number) => void;
 }
 
 export function JobApplicationsDrawer({
@@ -22,9 +19,6 @@ export function JobApplicationsDrawer({
   onClose,
   jobId,
   jobTitle,
-  companyUserId,
-  applicationCount,
-  onApplicationCountChange,
 }: JobApplicationsDrawerProps) {
   const [applications, setApplications] = useState<IJobApplicationWithDetails[]>([]);
   const [selectedApplication, setSelectedApplication] = useState<IJobApplicationWithDetails | null>(null);
@@ -36,11 +30,26 @@ export function JobApplicationsDrawer({
     return () => setMounted(false);
   }, []);
 
+  const fetchApplications = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/applications/${jobId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setApplications(data);
+      }
+    } catch (error) {
+      console.error("Error fetching applications:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [jobId]);
+
   useEffect(() => {
     if (isOpen && jobId) {
       fetchApplications();
     }
-  }, [isOpen, jobId]);
+  }, [fetchApplications, isOpen, jobId]);
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -53,23 +62,6 @@ export function JobApplicationsDrawer({
       document.body.style.overflow = "";
     };
   }, [isOpen]);
-
-  const fetchApplications = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(
-        `/api/applications/${jobId}?companyUserId=${companyUserId}`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setApplications(data);
-      }
-    } catch (error) {
-      console.error("Error fetching applications:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleSelectApplication = (application: IJobApplicationWithDetails) => {
     setSelectedApplication(application);
@@ -146,7 +138,6 @@ export function JobApplicationsDrawer({
               <ApplicationDetailPanel
                 application={selectedApplication}
                 jobId={jobId}
-                companyUserId={companyUserId}
                 onUpdate={handleUpdateApplication}
                 onClose={handleCloseDetail}
               />

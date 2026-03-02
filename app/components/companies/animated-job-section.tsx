@@ -34,7 +34,6 @@ interface Job {
 interface AnimatedJobSectionProps {
   jobs: Job[];
   featuredJob?: Job | null;
-  companyEmail?: string;
   userId: string;
   jobBalances?: { [key: string]: number };
   isLoadingBalances?: boolean;
@@ -45,7 +44,6 @@ interface AnimatedJobSectionProps {
 export const AnimatedJobSection = ({
   jobs,
   featuredJob,
-  companyEmail,
   userId,
   jobBalances = {},
   isLoadingBalances = false,

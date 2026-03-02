@@ -2,6 +2,7 @@
 
 import { yupResolver } from "@hookform/resolvers/yup";
 import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useForm } from "react-hook-form";
@@ -14,10 +15,7 @@ interface JobApplicationPopupProps {
   onClose: () => void;
   jobTitle: string;
   companyName: string;
-  companyEmail: string;
   jobId: string; // UUID string
-  companyUserId: string; // Company's user ID for the job owner
-  walletAddress: string;
 }
 
 interface FormData {
@@ -48,11 +46,9 @@ export const JobApplicationPopup: React.FC<JobApplicationPopupProps> = ({
   onClose,
   jobTitle,
   companyName,
-  companyEmail,
   jobId,
-  companyUserId,
-  walletAddress,
 }) => {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mounted, setMounted] = useState(false);
   const logged_in_user_id = Cookies.get("user_id");
@@ -116,22 +112,8 @@ export const JobApplicationPopup: React.FC<JobApplicationPopupProps> = ({
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     try {
-      // Get user profile data
-      const userDataResponse = await fetch(
-        `/api/talents/my-profile?user_id=${logged_in_user_id}`,
-      );
-
-      if (!userDataResponse.ok) {
-        throw new Error("Failed to fetch user profile");
-      }
-
-      const userProfile = await userDataResponse.json();
-
-      // First, save application to database
       const applicationData = {
         jobId,
-        applicantUserId: logged_in_user_id,
-        companyUserId,
         applicantName: data.name,
         applicantEmail: data.email,
         coverLetter: data.coverLetter,
@@ -146,53 +128,29 @@ export const JobApplicationPopup: React.FC<JobApplicationPopupProps> = ({
         body: JSON.stringify(applicationData),
       });
 
+      const submitData = await submitResponse.json();
+
       if (!submitResponse.ok) {
-        const errorData = await submitResponse.json();
-        if (errorData.code === "DUPLICATE_APPLICATION") {
-          toast.error("You have already applied to this job.");
-          return;
-        }
-        throw new Error(errorData.message || "Failed to save application");
+        throw new Error(submitData.message || "Failed to save application");
       }
 
-      // Then, send email notification
-      const emailData = {
-        name: data.name,
-        toUserName: companyName,
-        email: companyEmail,
-        type: "job-applied",
-        subject: `🍯 GoodHive - ${data.name} applied for "${jobTitle}"`,
-        userEmail: data.email,
-        message: `${data.coverLetter}${data.portfolioLink ? `\n\nPortfolio/LinkedIn: ${data.portfolioLink}` : ""}`,
-        userProfile: `${window.location.origin}/talents/${logged_in_user_id}`,
-        jobLink: `${window.location.origin}/companies/${walletAddress}?id=${jobId}`,
-      };
-
-      const response = await fetch("/api/send-email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(emailData),
-      });
-
-      if (response.ok) {
-        toast.success(
-          "🍯 Application sent successfully! The company will buzz back to you soon!",
-        );
-        reset();
-        onClose();
+      toast.success(
+        "🍯 Application sent successfully! Your conversation with the company has started.",
+      );
+      reset();
+      onClose();
+      if (submitData.threadId) {
+        router.push(`/talents/applications?thread=${submitData.threadId}`);
       } else {
-        // Application saved but email failed - still consider it a success
-        toast.success(
-          "🍯 Application submitted! (Email notification may be delayed)",
-        );
-        reset();
-        onClose();
+        router.push("/talents/applications");
       }
     } catch (error) {
       console.error("Error sending application:", error);
-      toast.error("Failed to send application. Please try again.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to send application. Please try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }

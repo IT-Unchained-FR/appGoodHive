@@ -16,11 +16,19 @@ export async function POST(req: Request) {
     const currentTime = new Date().toISOString(); // Get current time in ISO format (UTC)
     console.log(currentTime, "currentTime...");
 
-    await sql`
-      UPDATE goodhive.talents
-      SET last_active = ${currentTime}
-      WHERE user_id = ${user_id}
-    `;
+    await sql.begin(async (tx) => {
+      await tx`
+        UPDATE goodhive.users
+        SET last_active = ${currentTime}
+        WHERE userid = ${user_id}
+      `;
+
+      await tx`
+        UPDATE goodhive.talents
+        SET last_active = ${currentTime}
+        WHERE user_id = ${user_id}
+      `;
+    });
 
     return new Response(
       JSON.stringify({

@@ -44,6 +44,7 @@ const commonLinks = [
 
 const talentsLinks = [
   { href: "/talents/job-search", label: "Job Search", protected: false },
+  { href: "/talents/applications", label: "My Applications", protected: true },
   { href: "/talents/my-profile", label: "My Talent Profile", protected: true },
 ];
 
@@ -67,6 +68,11 @@ export const NavBar = () => {
   const [showEmailVerification, setShowEmailVerification] = useState(false);
   const [walletAddressToVerify, setWalletAddressToVerify] = useState("");
   const [showOnboardingPopup, setShowOnboardingPopup] = useState(false);
+  const [unreadCounts, setUnreadCounts] = useState({
+    totalUnread: 0,
+    companyUnread: 0,
+    talentUnread: 0,
+  });
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -302,6 +308,11 @@ export const NavBar = () => {
 
       // Clear client-side auth context and any stored redirects
       logout();
+      setUnreadCounts({
+        totalUnread: 0,
+        companyUnread: 0,
+        talentUnread: 0,
+      });
       ReturnUrlManager.clearAuthContext();
 
       toast.success("Successfully disconnected");
@@ -402,6 +413,59 @@ export const NavBar = () => {
     searchParams,
   ]);
 
+  useEffect(() => {
+    if (!(isAuthenticated || loggedIn_user_id)) {
+      setUnreadCounts({
+        totalUnread: 0,
+        companyUnread: 0,
+        talentUnread: 0,
+      });
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadUnreadCounts = async () => {
+      try {
+        const response = await fetch("/api/conversations/unread-counts");
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+        if (isMounted) {
+          setUnreadCounts({
+            totalUnread: data.totalUnread || 0,
+            companyUnread: data.companyUnread || 0,
+            talentUnread: data.talentUnread || 0,
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching unread counts:", error);
+      }
+    };
+
+    loadUnreadCounts();
+    const intervalId = window.setInterval(loadUnreadCounts, 30000);
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(intervalId);
+    };
+  }, [isAuthenticated, loggedIn_user_id]);
+
+  const getUnreadBadgeForHref = (href: string) => {
+    if (href === "/talents/applications" && unreadCounts.talentUnread > 0) {
+      return unreadCounts.talentUnread;
+    }
+
+    if (href === "/companies/dashboard" && unreadCounts.companyUnread > 0) {
+      return unreadCounts.companyUnread;
+    }
+
+    return 0;
+  };
+
   return (
     <>
       <EmailVerificationModal
@@ -468,7 +532,14 @@ export const NavBar = () => {
                         className="text-gray-700 font-medium transition hover:text-amber-700 hover:scale-105 active:scale-95"
                         authDescription={`access ${label.toLowerCase()}`}
                       >
-                        {label}
+                        <span className="inline-flex items-center gap-2">
+                          <span>{label}</span>
+                          {getUnreadBadgeForHref(href) > 0 ? (
+                            <span className="inline-flex min-w-6 items-center justify-center rounded-full bg-yellow-500 px-2 py-0.5 text-[11px] font-semibold text-white">
+                              {getUnreadBadgeForHref(href) > 99 ? "99+" : getUnreadBadgeForHref(href)}
+                            </span>
+                          ) : null}
+                        </span>
                       </ProtectedLink>
                     ) : (
                       <Link
@@ -562,7 +633,14 @@ export const NavBar = () => {
                         className="text-gray-700 font-medium transition hover:text-amber-700 hover:scale-105 active:scale-95"
                         authDescription={`access ${label.toLowerCase()}`}
                       >
-                        {label}
+                        <span className="inline-flex items-center gap-2">
+                          <span>{label}</span>
+                          {getUnreadBadgeForHref(href) > 0 ? (
+                            <span className="inline-flex min-w-6 items-center justify-center rounded-full bg-yellow-500 px-2 py-0.5 text-[11px] font-semibold text-white">
+                              {getUnreadBadgeForHref(href) > 99 ? "99+" : getUnreadBadgeForHref(href)}
+                            </span>
+                          ) : null}
+                        </span>
                       </ProtectedLink>
                     ) : (
                       <Link
