@@ -1,6 +1,7 @@
 "use client";
 
 import { DollarSign, CheckCircle, XCircle, Linkedin, Github, Twitter, Globe, ExternalLink, Link2, Lock } from "lucide-react";
+import type { ResumeLanguage } from "@/lib/talent-profile/resume-data";
 import { TalentStatsCard } from "./TalentStatsCard";
 import { WorkPreferencesCard } from "./WorkPreferencesCard";
 import { useAuth } from "@/app/contexts/AuthContext";
@@ -21,7 +22,7 @@ interface TalentPageSidebarProps {
   remote_only?: boolean;
   freelance_only?: boolean;
   timezone?: string;
-  languages?: string[] | string;
+  languages?: ResumeLanguage[] | string[] | string;
   // Availability & Rate
   min_rate?: number;
   max_rate?: number;

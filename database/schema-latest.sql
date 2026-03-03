@@ -697,7 +697,12 @@ CREATE TABLE goodhive.companies (
     wallet_address character varying(255),
     approved boolean DEFAULT false,
     inreview boolean DEFAULT false,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    resume_experience text,
+    resume_education text,
+    resume_certifications text,
+    resume_projects text,
+    resume_languages text
 );
 
 

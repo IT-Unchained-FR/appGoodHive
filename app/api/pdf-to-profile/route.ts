@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createPDFToProfilePrompt } from "../prompts/pdf-to-profile-prompt";
+import pdfParse from "pdf-parse";
+import {
+  chunkTextForAI,
+  extractJsonObject,
+  mergeExtractedResumeFacts,
+  type ExtractedResumeFacts,
+  normalizeExtractedResumeFacts,
+} from "./pdf-import-utils";
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const OPENAI_MODEL = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
@@ -7,100 +14,229 @@ const PDF_TEXT_EXTRACTOR_URL =
   process.env.PDF_TEXT_EXTRACTOR_URL ??
   "https://pdf-text-extractor-ki7lh2h1i-jubayer-juhans-projects-85b1bbdc.vercel.app/upload-pdf";
 
-// Create Profile With Chat GPT
-const createProfileWithChatGPT = async (pdfText: string) => {
-  console.log(pdfText, "This is pdf text");
+const MAX_SIZE = 10 * 1024 * 1024;
+const MIN_LOCAL_TEXT_LENGTH = 200;
 
-  const prompt = createPDFToProfilePrompt(pdfText);
+const EXTRACTION_SYSTEM_PROMPT = `
+You extract facts from one chunk of resume text.
+Return valid JSON only.
+Do not invent details that are not supported by the text.
+Normalize dates to YYYY-MM when possible.
+Keep lists comprehensive and avoid duplicates inside the same response.
+`;
 
-  // Check prompt length to avoid token limits
-  const promptLength = prompt.length;
-  console.log("Prompt length:", promptLength);
+const createChunkExtractionPrompt = (
+  chunkText: string,
+  chunkIndex: number,
+  totalChunks: number,
+) => `
+Resume chunk ${chunkIndex} of ${totalChunks}
 
-  if (promptLength > 20000) {
-    console.warn("Prompt is very long, might hit token limits");
-  }
+Extract all supported facts from this resume chunk and return a JSON object with this exact shape:
+{
+  "first_name": "string",
+  "last_name": "string",
+  "email": "string",
+  "phone_number": "string",
+  "phone_country_code": "string",
+  "country": "string",
+  "city": "string",
+  "title": "string",
+  "linkedin": "string",
+  "github": "string",
+  "portfolio": "string",
+  "skills": ["string"],
+  "min_rate": 0,
+  "max_rate": 0,
+  "experience": [
+    {
+      "title": "string",
+      "company": "string",
+      "location": "string",
+      "startDate": "YYYY-MM",
+      "endDate": "YYYY-MM or Present",
+      "description": "string"
+    }
+  ],
+  "education": [
+    {
+      "degree": "string",
+      "institution": "string",
+      "location": "string",
+      "startDate": "YYYY-MM",
+      "endDate": "YYYY-MM or Present",
+      "gpa": "string",
+      "description": "string"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "string",
+      "issuer": "string",
+      "date": "YYYY-MM",
+      "description": "string"
+    }
+  ],
+  "projects": [
+    {
+      "name": "string",
+      "description": "string",
+      "technologies": "string",
+      "url": "string"
+    }
+  ],
+  "languages": [
+    {
+      "language": "string",
+      "proficiency": "string"
+    }
+  ]
+}
 
+Rules:
+- If a field is not present, use an empty string, empty array, or omit numeric values.
+- Preserve all meaningful details from the chunk.
+- Skills must be an array of strings.
+- Do not write markdown or commentary.
+
+Resume text:
+${chunkText}
+`;
+
+const NARRATIVE_SYSTEM_PROMPT = `
+You turn structured resume facts into polished profile content.
+Return valid JSON only.
+Do not remove facts from the provided data.
+Keep the HTML compatible with React Quill.
+`;
+
+const createNarrativePrompt = (facts: ExtractedResumeFacts) => `
+Use this structured resume data to produce polished profile copy.
+Return JSON with this exact shape:
+{
+  "title": "string",
+  "description": "string",
+  "about_work": "string",
+  "min_rate": 0,
+  "max_rate": 0
+}
+
+Rules:
+- Keep title concise and specific.
+- "description" must be a strong public bio in HTML with semantic headings and paragraphs.
+- "about_work" must be a detailed work-focused HTML section covering experience, strengths, projects, and working style.
+- Preserve the candidate's factual background from the data below.
+- If min_rate and max_rate are already present in the data, keep them aligned with that level.
+- If rates are missing, infer a reasonable range from the experience level.
+- Do not include markdown fences.
+
+Structured resume data:
+${JSON.stringify(facts, null, 2)}
+`;
+
+const callOpenAIForJson = async <T,>(
+  systemPrompt: string,
+  userPrompt: string,
+  maxTokens: number,
+) => {
   if (!OPENAI_API_KEY) {
     throw new Error("Server misconfiguration: OPENAI_API_KEY is missing");
   }
 
-  try {
-    // Make API call to ChatGPT
-    console.log(`Making API call to OpenAI with model: ${OPENAI_MODEL}`);
-    console.log("PDF text length:", pdfText.length);
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: OPENAI_MODEL,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: 0.2,
+      max_tokens: maxTokens,
+    }),
+  });
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: OPENAI_MODEL,
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are an expert resume parser and professional profile generator. Extract ALL information from the resume and create a comprehensive JSON profile. Respond with valid JSON only.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.3,
-        max_tokens: 3000,
-      }),
-    });
-
-    console.log("API Response Status:", response.status);
-    console.log("API Response OK:", response.ok);
-
-    if (!response.ok) {
-      const errorBody = await response.text();
-      console.error("OpenAI API Error Response:", errorBody);
-      throw new Error(`OpenAI API error (${response.status}): ${errorBody}`);
-    }
-
-    const data = await response.json();
-    console.log("API Response Data:", data);
-
-    const generatedText = data.choices[0]?.message?.content;
-    console.log("Generated Text:", generatedText);
-
-    if (!generatedText) {
-      throw new Error("No response from ChatGPT");
-    }
-
-    // Parse the JSON response
-    let profileData;
-    try {
-      profileData = JSON.parse(generatedText);
-      console.log("Successfully parsed JSON profile data");
-    } catch (parseError: unknown) {
-      console.error("JSON Parse Error:", parseError);
-      console.error("Generated text that failed to parse:", generatedText);
-      const parseMessage =
-        parseError instanceof Error ? parseError.message : "Unknown parse error";
-      throw new Error(`Failed to parse JSON response: ${parseMessage}`);
-    }
-
-    return profileData;
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorStack = error instanceof Error ? error.stack : undefined;
-    const errorName = error instanceof Error ? error.name : "UnknownError";
-    console.error("Detailed Error calling ChatGPT:", {
-      message: errorMessage,
-      stack: errorStack,
-      name: errorName,
-    });
-    throw new Error(errorMessage);
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`OpenAI API error (${response.status}): ${errorBody}`);
   }
+
+  const data = await response.json();
+  const generatedText = data.choices?.[0]?.message?.content;
+
+  if (!generatedText) {
+    throw new Error("No response from OpenAI");
+  }
+
+  return extractJsonObject<T>(generatedText);
 };
 
-//
+const extractTextLocally = async (buffer: Buffer) => {
+  try {
+    const parsedPdf = await pdfParse(buffer);
+    const extractedText = parsedPdf.text?.trim() || "";
+
+    if (extractedText.length >= MIN_LOCAL_TEXT_LENGTH) {
+      return extractedText;
+    }
+  } catch (error) {
+    console.error("Local PDF parsing failed:", error);
+  }
+
+  return "";
+};
+
+const extractTextWithFallbackService = async (buffer: Buffer, fileName: string) => {
+  const externalFormData = new FormData();
+  const blob = new Blob([buffer], { type: "application/pdf" });
+  externalFormData.append("pdf", blob, fileName);
+
+  const externalResponse = await fetch(PDF_TEXT_EXTRACTOR_URL, {
+    method: "POST",
+    body: externalFormData,
+  });
+
+  if (!externalResponse.ok) {
+    throw new Error(
+      `Failed to extract text from PDF (status ${externalResponse.status})`,
+    );
+  }
+
+  const pdfParsingResponse = await externalResponse.json();
+  return pdfParsingResponse?.text?.trim() || "";
+};
+
+const extractPdfText = async (buffer: Buffer, fileName: string) => {
+  const localText = await extractTextLocally(buffer);
+  if (localText) {
+    return localText;
+  }
+
+  const fallbackText = await extractTextWithFallbackService(buffer, fileName);
+  if (fallbackText) {
+    return fallbackText;
+  }
+
+  throw new Error("Unable to extract readable text from the PDF");
+};
+
+const hasMeaningfulFacts = (facts: ExtractedResumeFacts) =>
+  Boolean(
+    facts.first_name ||
+      facts.last_name ||
+      facts.email ||
+      facts.title ||
+      facts.skills?.length ||
+      facts.experience?.length ||
+      facts.education?.length ||
+      facts.certifications?.length ||
+      facts.projects?.length,
+  );
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -113,16 +249,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate file type
     if (pdfFile.type !== "application/pdf") {
-      return NextResponse.json(
-        { error: "File must be a PDF" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "File must be a PDF" }, { status: 400 });
     }
 
-    // Validate file size (10MB limit)
-    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
     if (pdfFile.size > MAX_SIZE) {
       return NextResponse.json(
         { error: "File size must be less than 10MB" },
@@ -130,50 +260,78 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Convert File to Buffer for external API
     const arrayBuffer = await pdfFile.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
+    const pdfText = await extractPdfText(buffer, pdfFile.name);
 
-    // Create form data for external API using FormData
-    const externalFormData = new FormData();
-    const blob = new Blob([buffer], { type: "application/pdf" });
-    externalFormData.append("pdf", blob, pdfFile.name);
-
-    // Send request to external PDF text extractor
-    const externalResponse = await fetch(PDF_TEXT_EXTRACTOR_URL, {
-      method: "POST",
-      body: externalFormData,
-    });
-
-    if (!externalResponse.ok) {
-      console.error(
-        "External API error:",
-        externalResponse.status,
-        externalResponse.statusText,
-      );
+    const chunks = chunkTextForAI(pdfText);
+    if (!chunks.length) {
       return NextResponse.json(
-        {
-          error: "Failed to extract text from PDF",
-          details: `Extractor responded with status ${externalResponse.status}`,
-        },
-        { status: 500 },
+        { error: "No readable text could be extracted from this PDF" },
+        { status: 422 },
       );
     }
 
-    const pdfParsingResponse = await externalResponse.json();
-    if (!pdfParsingResponse?.text) {
+    const extractedChunks: ExtractedResumeFacts[] = [];
+
+    for (let index = 0; index < chunks.length; index += 1) {
+      const chunk = chunks[index];
+      const extractedChunk = await callOpenAIForJson<Record<string, unknown>>(
+        EXTRACTION_SYSTEM_PROMPT,
+        createChunkExtractionPrompt(chunk, index + 1, chunks.length),
+        2200,
+      );
+      extractedChunks.push(normalizeExtractedResumeFacts(extractedChunk));
+    }
+
+    const mergedFacts = mergeExtractedResumeFacts(extractedChunks);
+
+    if (!hasMeaningfulFacts(mergedFacts)) {
       return NextResponse.json(
-        { error: "PDF extractor returned no text" },
-        { status: 500 },
+        { error: "We could not extract enough structured data from this PDF" },
+        { status: 422 },
       );
     }
 
-    // Process the extracted text to generate profile data
-    const profileData = await createProfileWithChatGPT(pdfParsingResponse.text);
+    const generatedNarrative = await callOpenAIForJson<{
+      title?: string;
+      description?: string;
+      about_work?: string;
+      min_rate?: number;
+      max_rate?: number;
+    }>(NARRATIVE_SYSTEM_PROMPT, createNarrativePrompt(mergedFacts), 2600);
+
+    const finalProfileData = {
+      first_name: mergedFacts.first_name || "",
+      last_name: mergedFacts.last_name || "",
+      email: mergedFacts.email || "",
+      phone_number: mergedFacts.phone_number || "",
+      phone_country_code: mergedFacts.phone_country_code || "",
+      country: mergedFacts.country || "",
+      city: mergedFacts.city || "",
+      title:
+        generatedNarrative.title ||
+        mergedFacts.title ||
+        mergedFacts.experience?.[0]?.title ||
+        "",
+      description: generatedNarrative.description || "",
+      about_work: generatedNarrative.about_work || "",
+      linkedin: mergedFacts.linkedin || "",
+      github: mergedFacts.github || "",
+      portfolio: mergedFacts.portfolio || "",
+      skills: (mergedFacts.skills || []).join(", "),
+      min_rate: generatedNarrative.min_rate ?? mergedFacts.min_rate,
+      max_rate: generatedNarrative.max_rate ?? mergedFacts.max_rate,
+      experience: mergedFacts.experience || [],
+      education: mergedFacts.education || [],
+      certifications: mergedFacts.certifications || [],
+      projects: mergedFacts.projects || [],
+      languages: mergedFacts.languages || [],
+    };
 
     return NextResponse.json({
       status: "completed",
-      data: profileData,
+      data: finalProfileData,
       message: "Profile data generated successfully from PDF",
     });
   } catch (error) {

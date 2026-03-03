@@ -1,13 +1,14 @@
 "use client";
 
 import { Home, Briefcase, Globe, Languages, Check, Settings } from "lucide-react";
+import type { ResumeLanguage } from "@/lib/talent-profile/resume-data";
 import styles from "./WorkPreferencesCard.module.scss";
 
 interface WorkPreferencesCardProps {
   remote_only?: boolean;
   freelance_only?: boolean;
   timezone?: string;
-  languages?: string[] | string;
+  languages?: ResumeLanguage[] | string[] | string;
 }
 
 export const WorkPreferencesCard = ({
@@ -16,9 +17,14 @@ export const WorkPreferencesCard = ({
   timezone,
   languages,
 }: WorkPreferencesCardProps) => {
-  // Parse languages if it's a comma-separated string
   const languageArray = Array.isArray(languages)
     ? languages
+        .map((language) =>
+          typeof language === "string"
+            ? language.trim()
+            : [language.language, language.proficiency].filter(Boolean).join(" - "),
+        )
+        .filter(Boolean)
     : languages
     ? languages.split(",").map((lang) => lang.trim())
     : [];

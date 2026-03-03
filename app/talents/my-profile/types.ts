@@ -1,3 +1,11 @@
+import type {
+  ResumeCertification,
+  ResumeEducation,
+  ResumeExperience,
+  ResumeLanguage,
+  ResumeProject,
+} from "@/lib/talent-profile/resume-data";
+
 export type ProfileData = {
   first_name: string;
   last_name: string;
@@ -38,9 +46,13 @@ export type ProfileData = {
   inreview?: boolean;
   referred_by?: string;
   approved_roles?: object[];
-  experience?: any[];
-  education?: any[];
+  experience?: ResumeExperience[];
+  education?: ResumeEducation[];
+  certifications?: ResumeCertification[];
+  projects?: ResumeProject[];
+  languages?: ResumeLanguage[];
   current_company?: string;
+  years_experience?: number;
 };
 
 export interface CountryOption {

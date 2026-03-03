@@ -291,11 +291,11 @@ export const PDFImportModal: React.FC<PDFImportModalProps> = ({
             />
           </div>
 
-          <div className="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <p className="text-xs leading-5 text-slate-500">
+          <div className="mt-6 space-y-3">
+            <p className="text-xs leading-5 text-slate-500 lg:text-right">
               We&apos;ll use AI to generate professional profile data from a sample resume.
             </p>
-            <div className="flex items-center justify-end gap-3 self-end">
+            <div className="flex items-center justify-end gap-3">
               <button
                 onClick={handleClose}
                 disabled={isBusy}

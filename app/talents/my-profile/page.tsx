@@ -6,6 +6,7 @@ import ProfileImageUpload from "@/app/components/profile-image-upload";
 import { ReferralSection } from "@/app/components/referral/referral-section";
 import { SearchableSelectInput } from "@/app/components/searchable-select-input";
 import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/honey-bee-spinner";
+import { ResumeStructuredSections } from "@/app/components/talents/ResumeStructuredSections";
 import { ToggleButton } from "@/app/components/toggle-button";
 import { createJobServices } from "@/app/constants/common";
 import { countries } from "@/app/constants/countries";
@@ -33,6 +34,13 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import "react-quill/dist/quill.snow.css";
+import type {
+  ResumeCertification,
+  ResumeEducation,
+  ResumeExperience,
+  ResumeLanguage,
+  ResumeProject,
+} from "@/lib/talent-profile/resume-data";
 import { resumeUploadSizeLimit } from "./constants";
 import { socialLinks } from "./constant";
 import { PDFImportModal } from "./pdf-import-modal";
@@ -91,11 +99,15 @@ export type ProfileData = {
   inreview?: boolean;
   referred_by?: string;
   approved_roles?: object[];
-  experience?: any[];
-  education?: any[];
+  experience?: ResumeExperience[];
+  education?: ResumeEducation[];
+  certifications?: ResumeCertification[];
+  projects?: ResumeProject[];
+  languages?: ResumeLanguage[];
   current_company?: string;
   user_created_at?: string;
   created_at?: string;
+  years_experience?: number;
 };
 
 const PROFILE_SECTIONS = [
@@ -181,6 +193,14 @@ const PROFILE_CHAPTERS = [
 }>;
 
 type ProfileChapter = (typeof PROFILE_CHAPTERS)[number];
+
+const chapterHasSection = (
+  chapter: ProfileChapter,
+  sectionId: ProfileSectionId,
+) => (chapter.sections as readonly ProfileSectionId[]).includes(sectionId);
+
+const getChapterStartSection = (chapter: ProfileChapter) =>
+  chapter.sections[0] as ProfileSectionId;
 
 const REQUIRED_COMPLETION_KEYS = [
   "title",
@@ -421,14 +441,21 @@ export default function ProfilePage() {
         `/api/talents/my-profile?user_id=${user_id}`,
       );
 
-      if (response.ok) {
-        const data = await response.json();
-        setProfileData(data);
+        if (response.ok) {
+          const data = await response.json();
+          setProfileData(data);
 
-        if (isInitialMount.current) {
-          if (data.country) {
-            setSelectedCountry({ value: data.country, label: data.country });
-          }
+          if (isInitialMount.current) {
+            if (data.country) {
+              const matchedCountry =
+                countries.find((country) => country.value === data.country) ||
+                countries.find((country) =>
+                  country.value.toLowerCase().includes(data.country.toLowerCase()),
+                );
+              setSelectedCountry(
+                matchedCountry || { value: data.country, label: data.country },
+              );
+            }
           if (data.skills) {
             setSelectedSkills(data.skills.split(","));
           }
@@ -586,6 +613,11 @@ export default function ProfilePage() {
           cv_url: cvUrl,
           wallet_address: walletAddress,
           user_id,
+          experience: profileData.experience || [],
+          education: profileData.education || [],
+          certifications: profileData.certifications || [],
+          projects: profileData.projects || [],
+          languages: profileData.languages || [],
         };
 
         if (user?.referred_by) {
@@ -755,6 +787,10 @@ export default function ProfilePage() {
         portfolio: generatedData.portfolio || prev.portfolio,
         experience: generatedData.experience || prev.experience,
         education: generatedData.education || prev.education,
+        certifications:
+          generatedData.certifications || prev.certifications,
+        projects: generatedData.projects || prev.projects,
+        languages: generatedData.languages || prev.languages,
       }));
 
       if (generatedData.description) {
@@ -816,7 +852,7 @@ export default function ProfilePage() {
 
   const profileDisplayName = `${profileData.first_name || ""} ${profileData.last_name || ""}`.trim();
   const currentChapterIndex = PROFILE_CHAPTERS.findIndex((chapter) =>
-    chapter.sections.includes(activeSection),
+    chapterHasSection(chapter, activeSection),
   );
   const currentChapterMeta =
     PROFILE_CHAPTERS[currentChapterIndex] || PROFILE_CHAPTERS[0];
@@ -1102,7 +1138,7 @@ export default function ProfilePage() {
                         <button
                           key={chapter.id}
                           type="button"
-                          onClick={() => goToSection(chapter.sections[0])}
+                          onClick={() => goToSection(getChapterStartSection(chapter))}
                           className={`gh-chapter-button group w-full rounded-[22px] px-4 py-4 text-left transition ${
                             isActive
                               ? "is-active text-slate-950"
@@ -1140,7 +1176,7 @@ export default function ProfilePage() {
                 <form className="space-y-6">
                   <SectionCard
                     id="overview"
-                    isActive={currentChapterMeta.sections.includes("overview")}
+                    isActive={chapterHasSection(currentChapterMeta, "overview")}
                     eyebrow="Profile Overview"
                     title="Identity and profile status"
                     description="Core details clients notice first."
@@ -1262,7 +1298,7 @@ export default function ProfilePage() {
 
                   <SectionCard
                     id="public-intro"
-                    isActive={currentChapterMeta.sections.includes("public-intro")}
+                    isActive={chapterHasSection(currentChapterMeta, "public-intro")}
                     eyebrow="Public Intro"
                     title="How your profile introduces you"
                     description="A short summary for clients."
@@ -1306,7 +1342,7 @@ export default function ProfilePage() {
 
                   <SectionCard
                     id="personal-details"
-                    isActive={currentChapterMeta.sections.includes("personal-details")}
+                    isActive={chapterHasSection(currentChapterMeta, "personal-details")}
                     eyebrow="Personal Details"
                     title="Contact and location"
                     description="The essentials teams need."
@@ -1446,7 +1482,7 @@ export default function ProfilePage() {
 
                   <SectionCard
                     id="work-preferences"
-                    isActive={currentChapterMeta.sections.includes("work-preferences")}
+                    isActive={chapterHasSection(currentChapterMeta, "work-preferences")}
                     eyebrow="Work Preferences"
                     title="Rates, roles, and setup"
                     description="How you want to work."
@@ -1580,7 +1616,7 @@ export default function ProfilePage() {
 
                   <SectionCard
                     id="about-work"
-                    isActive={currentChapterMeta.sections.includes("about-work")}
+                    isActive={chapterHasSection(currentChapterMeta, "about-work")}
                     eyebrow="About Your Work"
                     title="What you want next"
                     description="Your ideal role and conditions."
@@ -1624,7 +1660,7 @@ export default function ProfilePage() {
 
                   <SectionCard
                     id="resume-imports"
-                    isActive={currentChapterMeta.sections.includes("resume-imports")}
+                    isActive={chapterHasSection(currentChapterMeta, "resume-imports")}
                     eyebrow="Resume & Imports"
                     title="Resume and AI setup"
                     description="Upload your CV or generate details."
@@ -1721,11 +1757,22 @@ export default function ProfilePage() {
                         </div>
                       </div>
                     </div>
+
+                    <div className="mt-5">
+                      <ResumeStructuredSections
+                        experience={profileData.experience}
+                        education={profileData.education}
+                        certifications={profileData.certifications}
+                        projects={profileData.projects}
+                        languages={profileData.languages}
+                        emptyMessage="Imported resume details will appear here after AI parsing."
+                      />
+                    </div>
                   </SectionCard>
 
                   <SectionCard
                     id="skills"
-                    isActive={currentChapterMeta.sections.includes("skills")}
+                    isActive={chapterHasSection(currentChapterMeta, "skills")}
                     eyebrow="Skills"
                     title="Show where your expertise is strongest"
                     description="Add the skills you want known first."
@@ -1784,7 +1831,7 @@ export default function ProfilePage() {
 
                   <SectionCard
                     id="social-presence"
-                    isActive={currentChapterMeta.sections.includes("social-presence")}
+                    isActive={chapterHasSection(currentChapterMeta, "social-presence")}
                     eyebrow="Social Presence"
                     title="Add links that reinforce credibility"
                     description="Links clients can verify."
@@ -1857,7 +1904,7 @@ export default function ProfilePage() {
 
                   <SectionCard
                     id="referral"
-                    isActive={currentChapterMeta.sections.includes("referral")}
+                    isActive={chapterHasSection(currentChapterMeta, "referral")}
                     eyebrow="Referral"
                     title="Referral"
                     description="Invite link and stats."
@@ -1873,13 +1920,15 @@ export default function ProfilePage() {
                             <button
                               key={chapter.id}
                               type="button"
-                              onClick={() => goToSection(chapter.sections[0])}
+                              onClick={() => goToSection(getChapterStartSection(chapter))}
                               aria-label={`Go to ${chapter.label}`}
                               aria-current={
-                                chapter.sections.includes(activeSection) ? "step" : undefined
+                                chapterHasSection(chapter, activeSection)
+                                  ? "step"
+                                  : undefined
                               }
                               className={`gh-section-dot relative flex h-3.5 items-center justify-center rounded-full px-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition ${
-                                chapter.sections.includes(activeSection)
+                                chapterHasSection(chapter, activeSection)
                                   ? "is-active"
                                   : ""
                               }`}

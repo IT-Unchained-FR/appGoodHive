@@ -10,16 +10,18 @@ async function runMigration() {
   });
 
   try {
-    // Read the migration file
-    const migrationPath = path.join(
-      __dirname,
-      "migrations",
-      "add_user_columns.sql",
-    );
-    const migration = fs.readFileSync(migrationPath, "utf8");
+    const migrationsDirectory = path.join(__dirname, "migrations");
+    const migrationFiles = fs
+      .readdirSync(migrationsDirectory)
+      .filter((file) => file.endsWith(".sql"))
+      .sort();
 
-    // Run the migration
-    await sql.unsafe(migration);
+    for (const fileName of migrationFiles) {
+      const migrationPath = path.join(migrationsDirectory, fileName);
+      const migration = fs.readFileSync(migrationPath, "utf8");
+      await sql.unsafe(migration);
+      console.log(`Applied migration: ${fileName}`);
+    }
 
     console.log("Migration completed successfully");
   } catch (error) {

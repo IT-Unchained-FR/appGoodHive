@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { TalentProfileData } from "./types";
 import ProfileAboutWork from "@/app/components/talents/ProfileAboutWork";
+import { ResumeStructuredSections } from "@/app/components/talents/ResumeStructuredSections";
 import TalentsCVSection from "@/app/components/talents/TalentsCVSection";
 import BeeHiveSpinner from "@/app/components/spinners/bee-hive-spinner";
 import { TalentPageHeader } from "@/app/components/talent-page/TalentPageHeader";
@@ -99,6 +100,10 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
     rating,
     timezone,
     languages,
+    experience,
+    education,
+    certifications,
+    projects,
   } = profileData;
 
   const isOwner = user?.user_id === profileData.user_id;
@@ -134,7 +139,7 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
         country={country}
         image_url={image_url}
         last_active={last_active}
-        email={email}
+        email={email ?? undefined}
         talent={talent}
         mentor={mentor}
         recruiter={recruiter}
@@ -160,6 +165,23 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
             <section className={styles.section}>
               <h2 className={styles.sectionTitle}>About My Work</h2>
               <ProfileAboutWork about_work={about_work} />
+            </section>
+          )}
+
+          {(experience?.length ||
+            education?.length ||
+            certifications?.length ||
+            projects?.length ||
+            (Array.isArray(languages) && languages.length)) && (
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Career Details</h2>
+              <ResumeStructuredSections
+                experience={experience}
+                education={education}
+                certifications={certifications}
+                projects={projects}
+                languages={Array.isArray(languages) ? languages : []}
+              />
             </section>
           )}
 
@@ -200,11 +222,11 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
             min_rate={min_rate ?? rate}
             max_rate={max_rate ?? rate}
             availability={true} // Can be made dynamic based on availability field
-            linkedin={linkedin}
-            github={github}
-            twitter={twitter}
-            portfolio={portfolio}
-            stackoverflow={stackoverflow}
+            linkedin={linkedin ?? undefined}
+            github={github ?? undefined}
+            twitter={twitter ?? undefined}
+            portfolio={portfolio ?? undefined}
+            stackoverflow={stackoverflow ?? undefined}
             canViewSensitive={canViewSensitive}
           />
         </aside>

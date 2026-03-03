@@ -1,5 +1,15 @@
 import sql from "@/lib/db";
 import { getViewerAccess, maskName, maskNameInText } from "@/lib/access-control";
+import {
+  calculateYearsExperience,
+  parseStoredResumeArray,
+  type ResumeCertification,
+  type ResumeEducation,
+  type ResumeExperience,
+  type ResumeLanguage,
+  type ResumeProject,
+  serializeResumeArray,
+} from "@/lib/talent-profile/resume-data";
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -46,6 +56,11 @@ export async function POST(request: Request) {
     validate,
     referred_by,
     clear_cv,
+    experience,
+    education,
+    certifications,
+    projects,
+    languages,
   } = await request.json();
 
   try {
@@ -84,6 +99,11 @@ export async function POST(request: Request) {
       wallet_address,
       user_id,
       inReview: validate === true ? true : false,
+      resume_experience: serializeResumeArray(experience),
+      resume_education: serializeResumeArray(education),
+      resume_certifications: serializeResumeArray(certifications),
+      resume_projects: serializeResumeArray(projects),
+      resume_languages: serializeResumeArray(languages),
     };
 
     const filteredFields = Object.entries(fields).filter(([key, value]) => {
@@ -215,7 +235,12 @@ export async function GET(request: NextRequest) {
         approved,
         inReview,
         user_id,
-        last_active
+        last_active,
+        resume_experience,
+        resume_education,
+        resume_certifications,
+        resume_projects,
+        resume_languages
       FROM goodhive.talents 
       WHERE user_id = ${user_id}
     `;
@@ -244,6 +269,21 @@ export async function GET(request: NextRequest) {
     const decodedAboutWork = talent.about_work
       ? safeBase64Decode(talent.about_work)
       : null;
+    const parsedExperience = parseStoredResumeArray<ResumeExperience>(
+      talent.resume_experience,
+    );
+    const parsedEducation = parseStoredResumeArray<ResumeEducation>(
+      talent.resume_education,
+    );
+    const parsedCertifications = parseStoredResumeArray<ResumeCertification>(
+      talent.resume_certifications,
+    );
+    const parsedProjects = parseStoredResumeArray<ResumeProject>(
+      talent.resume_projects,
+    );
+    const parsedLanguages = parseStoredResumeArray<ResumeLanguage>(
+      talent.resume_languages,
+    );
     const profileData = {
       ...talent,
       first_name: canViewBasic ? talent.first_name : maskedName.firstName,
@@ -277,6 +317,12 @@ export async function GET(request: NextRequest) {
             ? Number(talent.rate)
             : undefined,
       approved_roles: users.length > 0 ? users[0].approved_roles : [],
+      experience: parsedExperience,
+      education: parsedEducation,
+      certifications: parsedCertifications,
+      projects: parsedProjects,
+      languages: parsedLanguages,
+      years_experience: calculateYearsExperience(parsedExperience),
     };
 
     return NextResponse.json(profileData);

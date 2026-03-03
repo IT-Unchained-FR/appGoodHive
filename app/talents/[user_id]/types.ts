@@ -1,3 +1,11 @@
+import type {
+  ResumeCertification,
+  ResumeEducation,
+  ResumeExperience,
+  ResumeLanguage,
+  ResumeProject,
+} from "@/lib/talent-profile/resume-data";
+
 export interface TalentProfileData {
   skills: string;
   title: string;
@@ -33,6 +41,7 @@ export interface TalentProfileData {
   approved: boolean;
   approved_roles: object[] | null;
   last_active?: string | Date;
+  user_id?: string;
   // New stats fields
   years_experience?: number;
   jobs_completed?: number;
@@ -40,5 +49,9 @@ export interface TalentProfileData {
   rating?: number;
   // New preference fields
   timezone?: string;
-  languages?: string[] | string;
+  languages?: ResumeLanguage[] | string;
+  experience?: ResumeExperience[];
+  education?: ResumeEducation[];
+  certifications?: ResumeCertification[];
+  projects?: ResumeProject[];
 }
