@@ -2,8 +2,7 @@
 
 import { MessageBoxModal } from "@components/message-box-modal";
 import { Mail, MessageCircle, Sparkles } from "lucide-react";
-import Cookies from "js-cookie";
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAuthCheck } from "@/app/hooks/useAuthCheck";
 import styles from "./company-contact-btn.module.scss";
@@ -16,29 +15,10 @@ interface Props {
 export const CompanyContactBtn = ({ toEmail, toUserName }: Props) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isPopupModal, setIsPopupModal] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
   const [currentUserEmail, setCurrentUserEmail] = useState("");
   const { user_id, checkAuthAndShowConnectPrompt } = useAuthCheck();
 
-  useEffect(() => {
-    setIsVisible(true);
-
-    // Listen for post-auth contact modal trigger
-    const handleShowContactModal = (event: CustomEvent) => {
-      if (user_id) {
-        // User is now authenticated, show the contact modal
-        onContactMeBtnClickHandler();
-      }
-    };
-
-    window.addEventListener('show-contact-modal', handleShowContactModal as EventListener);
-
-    return () => {
-      window.removeEventListener('show-contact-modal', handleShowContactModal as EventListener);
-    };
-  }, [user_id]);
-
-  const onContactMeBtnClickHandler = async () => {
+  const onContactMeBtnClickHandler = useCallback(async () => {
     // Check if user is authenticated first
     if (!checkAuthAndShowConnectPrompt("contact this company", "contact", { toEmail, toUserName })) {
       return;
@@ -67,7 +47,21 @@ export const CompanyContactBtn = ({ toEmail, toUserName }: Props) => {
       }
       setIsPopupModal(true);
     }
-  };
+  }, [checkAuthAndShowConnectPrompt, toEmail, toUserName, user_id]);
+
+  useEffect(() => {
+    const handleShowContactModal = () => {
+      if (user_id) {
+        void onContactMeBtnClickHandler();
+      }
+    };
+
+    window.addEventListener("show-contact-modal", handleShowContactModal as EventListener);
+
+    return () => {
+      window.removeEventListener("show-contact-modal", handleShowContactModal as EventListener);
+    };
+  }, [onContactMeBtnClickHandler, user_id]);
 
   const onPopupModalCloseHandler = () => {
     setIsPopupModal(false);

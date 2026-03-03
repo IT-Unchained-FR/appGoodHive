@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
 import { useActiveAccount } from "thirdweb/react";
 import Cookies from "js-cookie";
 import { dispatchAuthChanged } from "@/app/utils/authEvents";
@@ -58,6 +58,84 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const account = useActiveAccount();
 
+  const login = useCallback((user: User) => {
+    setAuthState({
+      user,
+      isLoading: false,
+      isAuthenticated: true,
+      walletConnected: !!account?.address,
+      authMethod: user.auth_method,
+    });
+    dispatchAuthChanged();
+  }, [account?.address]);
+
+  const logout = useCallback(() => {
+    // Clear cookies
+    Cookies.remove("session_token");
+    Cookies.remove("user_id");
+    Cookies.remove("user_email");
+    Cookies.remove("loggedIn_user");
+
+    setAuthState({
+      user: null,
+      isLoading: false,
+      isAuthenticated: false,
+      walletConnected: !!account?.address,
+      authMethod: null,
+    });
+    dispatchAuthChanged();
+  }, [account?.address]);
+
+  const updateUser = useCallback((updates: Partial<User>) => {
+    setAuthState(prev => {
+      if (!prev.user) return prev;
+
+      const updatedUser = { ...prev.user, ...updates };
+      
+      // Update cookie
+      Cookies.set("loggedIn_user", JSON.stringify(updatedUser), {
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        expires: 7,
+      });
+
+      return {
+        ...prev,
+        user: updatedUser,
+      };
+    });
+    dispatchAuthChanged();
+  }, []);
+
+  const refreshUser = useCallback(async () => {
+    try {
+      setAuthState(prev => ({ ...prev, isLoading: true }));
+
+      const response = await fetch("/api/auth/me");
+      if (response.ok) {
+        const userData = await response.json();
+        const user: User = {
+          user_id: userData.user_id,
+          email: userData.email,
+          wallet_address: userData.wallet_address,
+          auth_method: userData.auth_method || "email",
+          talent_status: userData.talent_status,
+          mentor_status: userData.mentor_status,
+          recruiter_status: userData.recruiter_status,
+        };
+
+        login(user);
+      } else {
+        logout();
+      }
+    } catch (error) {
+      console.error("Error refreshing user:", error);
+      logout();
+    } finally {
+      setAuthState(prev => ({ ...prev, isLoading: false }));
+    }
+  }, [login, logout]);
+
   // Initialize auth state from cookies
   useEffect(() => {
     const initializeAuth = async () => {
@@ -93,7 +171,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     };
 
-    initializeAuth();
+    void initializeAuth();
   }, [account?.address]);
 
   // Update wallet connection status and handle disconnection
@@ -110,85 +188,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       ...prev,
       walletConnected: !!account?.address,
     }));
-  }, [account?.address, authState.user?.auth_method, authState.isAuthenticated]);
-
-  const login = (user: User) => {
-    setAuthState({
-      user,
-      isLoading: false,
-      isAuthenticated: true,
-      walletConnected: !!account?.address,
-      authMethod: user.auth_method,
-    });
-    dispatchAuthChanged();
-  };
-
-  const logout = () => {
-    // Clear cookies
-    Cookies.remove("session_token");
-    Cookies.remove("user_id");
-    Cookies.remove("user_email");
-    Cookies.remove("loggedIn_user");
-
-    setAuthState({
-      user: null,
-      isLoading: false,
-      isAuthenticated: false,
-      walletConnected: !!account?.address,
-      authMethod: null,
-    });
-    dispatchAuthChanged();
-  };
-
-  const updateUser = (updates: Partial<User>) => {
-    setAuthState(prev => {
-      if (!prev.user) return prev;
-
-      const updatedUser = { ...prev.user, ...updates };
-      
-      // Update cookie
-      Cookies.set("loggedIn_user", JSON.stringify(updatedUser), {
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        expires: 7,
-      });
-
-      return {
-        ...prev,
-        user: updatedUser,
-      };
-    });
-    dispatchAuthChanged();
-  };
-
-  const refreshUser = async () => {
-    try {
-      setAuthState(prev => ({ ...prev, isLoading: true }));
-
-      const response = await fetch("/api/auth/me");
-      if (response.ok) {
-        const userData = await response.json();
-        const user: User = {
-          user_id: userData.user_id,
-          email: userData.email,
-          wallet_address: userData.wallet_address,
-          auth_method: userData.auth_method || "email",
-          talent_status: userData.talent_status,
-          mentor_status: userData.mentor_status,
-          recruiter_status: userData.recruiter_status,
-        };
-
-        login(user);
-      } else {
-        logout();
-      }
-    } catch (error) {
-      console.error("Error refreshing user:", error);
-      logout();
-    } finally {
-      setAuthState(prev => ({ ...prev, isLoading: false }));
-    }
-  };
+  }, [account?.address, authState.isAuthenticated, authState.user?.auth_method, logout]);
 
   const contextValue: AuthContextType = {
     ...authState,

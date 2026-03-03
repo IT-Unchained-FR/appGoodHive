@@ -48,7 +48,7 @@ export function AdminFilters({ config, basePath }: AdminFiltersProps) {
   const customFiltersSignature = JSON.stringify(config.customFilters || []);
 
   // Get default status value from config
-  const getDefaultStatus = () => {
+  const getDefaultStatus = useCallback(() => {
     if (Array.isArray(config.statusFilter) && config.statusFilter.length > 0) {
       // Prefer 'all' when available so no filter is applied by default
       const hasAllOption = config.statusFilter.some(opt => opt.value === 'all');
@@ -56,7 +56,7 @@ export function AdminFilters({ config, basePath }: AdminFiltersProps) {
       return config.statusFilter[0].value;
     }
     return 'all';
-  };
+  }, [config.statusFilter]);
 
   // State for all filter values
   const [dateRange, setDateRange] = useState(searchParams.get('dateRange') || 'any');
@@ -82,7 +82,7 @@ export function AdminFilters({ config, basePath }: AdminFiltersProps) {
         return hasChanges ? values : prev;
       });
     }
-  }, [customFiltersSignature, searchParamsString]);
+  }, [config.customFilters, customFiltersSignature, searchParams]);
 
   // Sync with URL params on mount and when they change
   useEffect(() => {
@@ -92,7 +92,7 @@ export function AdminFilters({ config, basePath }: AdminFiltersProps) {
     setLocation(searchParams.get('location') || '');
     setType(searchParams.get('type') || 'all');
     setSortOrder(searchParams.get('sort') || 'latest');
-  }, [searchParamsString]);
+  }, [getDefaultStatus, searchParams]);
 
   // Apply filters to URL
   const applyFilters = useCallback(() => {
@@ -138,7 +138,7 @@ export function AdminFilters({ config, basePath }: AdminFiltersProps) {
 
     const query = params.toString();
     router.replace(query ? `${basePath}?${query}` : basePath, { scroll: false });
-  }, [dateRange, status, role, location, type, sortOrder, customFilterValues, basePath, router]);
+  }, [basePath, customFilterValues, dateRange, getDefaultStatus, location, role, router, sortOrder, status, type]);
 
   // Auto-apply when filters change (with debounce for text inputs)
   useEffect(() => {

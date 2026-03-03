@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { useEffect } from "react";
 import Cookies from "js-cookie";
 const LastActiveHandler = () => {
@@ -52,7 +51,7 @@ const LastActiveHandler = () => {
         sendLastActiveTime();
       }
     }
-  }, [user_email]);
+  }, []);
   return <></>;
 };
 

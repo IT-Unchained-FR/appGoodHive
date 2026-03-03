@@ -102,51 +102,85 @@ const PROFILE_SECTIONS = [
   {
     id: "overview",
     label: "Overview",
-    description: "Identity, profile headline, and visibility",
+    description: "Identity and status",
   },
   {
     id: "public-intro",
-    label: "Public Intro",
-    description: "How your public profile introduces you",
+    label: "Intro",
+    description: "Public summary",
   },
   {
     id: "personal-details",
-    label: "Personal Details",
-    description: "Core contact and location information",
+    label: "Details",
+    description: "Contact and location",
   },
   {
     id: "work-preferences",
-    label: "Work Preferences",
-    description: "Rates, roles, and opportunity settings",
+    label: "Preferences",
+    description: "Rates and setup",
   },
   {
     id: "about-work",
-    label: "About Your Work",
-    description: "What you want from your next opportunities",
+    label: "Goals",
+    description: "Your next move",
   },
   {
     id: "resume-imports",
-    label: "Resume & Imports",
-    description: "CV management and AI-assisted generation",
+    label: "Resume",
+    description: "CV and AI import",
   },
   {
     id: "skills",
     label: "Skills",
-    description: "Specializations and expertise tags",
+    description: "Expertise tags",
   },
   {
     id: "social-presence",
-    label: "Social Presence",
-    description: "Links recruiters and clients can verify",
+    label: "Links",
+    description: "Verified profiles",
   },
   {
     id: "referral",
     label: "Referral",
-    description: "Referral and invite context",
+    description: "Invite details",
   },
 ] as const;
 
 type ProfileSectionId = (typeof PROFILE_SECTIONS)[number]["id"];
+
+const PROFILE_CHAPTERS = [
+  {
+    id: "foundation",
+    label: "Foundation",
+    description: "Identity, intro, and contact details",
+    sections: ["overview", "public-intro", "personal-details"],
+  },
+  {
+    id: "opportunities",
+    label: "Opportunities",
+    description: "Work setup, goals, and availability",
+    sections: ["work-preferences", "about-work"],
+  },
+  {
+    id: "proof",
+    label: "Proof",
+    description: "Resume, skills, and credibility links",
+    sections: ["resume-imports", "skills", "social-presence"],
+  },
+  {
+    id: "Extras",
+    label: "Extras",
+    description: "Referral details and finishing touches",
+    sections: ["referral"],
+  },
+] as const satisfies ReadonlyArray<{
+  id: string;
+  label: string;
+  description: string;
+  sections: readonly ProfileSectionId[];
+}>;
+
+type ProfileChapter = (typeof PROFILE_CHAPTERS)[number];
 
 const REQUIRED_COMPLETION_KEYS = [
   "title",
@@ -781,12 +815,12 @@ export default function ProfilePage() {
   }, [aboutWorkContent, cvFile, descriptionContent, profileData, selectedSkills]);
 
   const profileDisplayName = `${profileData.first_name || ""} ${profileData.last_name || ""}`.trim();
-  const currentSectionIndex = PROFILE_SECTIONS.findIndex(
-    (section) => section.id === activeSection,
+  const currentChapterIndex = PROFILE_CHAPTERS.findIndex((chapter) =>
+    chapter.sections.includes(activeSection),
   );
-  const currentSectionMeta =
-    PROFILE_SECTIONS[currentSectionIndex] || PROFILE_SECTIONS[0];
-  const isLastSection = currentSectionIndex === PROFILE_SECTIONS.length - 1;
+  const currentChapterMeta =
+    PROFILE_CHAPTERS[currentChapterIndex] || PROFILE_CHAPTERS[0];
+  const isLastChapter = currentChapterIndex === PROFILE_CHAPTERS.length - 1;
   const canShowReviewAction = !profileData.approved && !unapprovedProfile;
   const canEditApprovedProfile = Boolean(profileData.approved);
   const isReviewReady = useMemo(() => {
@@ -856,13 +890,13 @@ export default function ProfilePage() {
     scrollToActiveSectionTop();
   }, [scrollToActiveSectionTop]);
   const handleNextSection = useCallback(() => {
-    if (isLastSection) return;
-    const nextSection = PROFILE_SECTIONS[currentSectionIndex + 1];
-    if (nextSection) {
-      setActiveSection(nextSection.id);
+    if (isLastChapter) return;
+    const nextChapter = PROFILE_CHAPTERS[currentChapterIndex + 1];
+    if (nextChapter) {
+      setActiveSection(nextChapter.sections[0]);
       scrollToActiveSectionTop();
     }
-  }, [currentSectionIndex, isLastSection, scrollToActiveSectionTop]);
+  }, [currentChapterIndex, isLastChapter, scrollToActiveSectionTop]);
 
   if (isTokenVerifying) {
     return <HoneybeeSpinner message={"Verifying authentication..."} />;
@@ -911,7 +945,7 @@ export default function ProfilePage() {
                   <span>My Talent Profile</span>
                 </h1>
                 <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-                  This is the profile clients and teams see on GoodHive.
+                  Shape the version of you clients remember first.
                 </p>
                 <div className="mt-6 grid gap-3 sm:grid-cols-3">
                   <div className="gh-metric-tile rounded-[22px] px-4 py-4">
@@ -923,7 +957,7 @@ export default function ProfilePage() {
                         {profileCompletion}%
                       </span>
                       <span className="pb-1 text-xs font-medium text-slate-500">
-                        profile ready
+                        ready
                       </span>
                     </div>
                     <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
@@ -941,7 +975,7 @@ export default function ProfilePage() {
                       {selectedSkills.length}
                     </p>
                     <p className="mt-1 text-sm text-slate-500">
-                      Skills on your profile.
+                      Added
                     </p>
                   </div>
                   <div className="gh-metric-tile rounded-[22px] px-4 py-4">
@@ -952,7 +986,7 @@ export default function ProfilePage() {
                       {profileData.cv_url || cvFile ? "Ready" : "Missing"}
                     </p>
                     <p className="mt-1 text-sm text-slate-500">
-                      Upload a CV for review.
+                      Review file
                     </p>
                   </div>
                 </div>
@@ -987,20 +1021,23 @@ export default function ProfilePage() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                      Current section
+                      Current chapter
                     </p>
                     <p className="mt-1 text-base font-semibold text-slate-950">
-                      {currentSectionMeta.label}
+                      {currentChapterMeta.label}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {currentChapterMeta.description}
                     </p>
                   </div>
                   <div className="gh-pill rounded-full px-3 py-1.5 text-xs font-semibold text-slate-600">
-                    {currentSectionIndex + 1} / {PROFILE_SECTIONS.length}
+                    {currentChapterIndex + 1} / {PROFILE_CHAPTERS.length}
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-6 grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
+            <div className="mt-6 grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
               <aside className="hidden xl:block">
                 <div className="sticky top-24 rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.05)]">
                   <div className="flex items-start gap-4">
@@ -1049,41 +1086,53 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  <nav className="mt-6 space-y-1.5">
-                    {PROFILE_SECTIONS.map((section, index) => {
-                      const isActive = activeSection === section.id;
+                  <div className="mt-6">
+                    <div className="mb-3 flex items-center justify-between">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        Profile chapters
+                      </p>
+                      <span className="text-xs font-medium text-slate-400">
+                        {PROFILE_CHAPTERS.length} total
+                      </span>
+                    </div>
+                    <nav className="space-y-2">
+                    {PROFILE_CHAPTERS.map((chapter, index) => {
+                      const isActive = chapter.id === currentChapterMeta.id;
                       return (
                         <button
-                          key={section.id}
+                          key={chapter.id}
                           type="button"
-                          onClick={() => goToSection(section.id)}
-                          className={`group flex w-full items-start gap-3 rounded-2xl px-3 py-3 text-left transition ${
+                          onClick={() => goToSection(chapter.sections[0])}
+                          className={`gh-chapter-button group w-full rounded-[22px] px-4 py-4 text-left transition ${
                             isActive
-                              ? "bg-amber-50 text-slate-950"
-                              : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                              ? "is-active text-slate-950"
+                              : "text-slate-500 hover:text-slate-900"
                           }`}
                         >
-                          <div
-                            className={`flex h-8 w-8 items-center justify-center rounded-xl text-xs font-semibold ${
-                              isActive
-                                ? "bg-white text-amber-700 shadow-sm"
-                                : "bg-slate-100 text-slate-500"
-                            }`}
-                          >
-                            {index + 1}
-                          </div>
-                          <div className="min-w-0 flex-1 overflow-hidden pr-1">
-                            <p className="text-sm font-semibold leading-5">
-                              {section.label}
-                            </p>
-                            <p className="mt-0.5 line-clamp-2 break-words text-xs leading-4 text-slate-400">
-                              {section.description}
-                            </p>
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={`flex h-9 w-9 items-center justify-center rounded-2xl text-xs font-semibold ${
+                                isActive
+                                  ? "bg-white text-amber-700 shadow-sm"
+                                  : "bg-slate-100 text-slate-500"
+                              }`}
+                            >
+                              {index + 1}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold leading-5">
+                                {chapter.label}
+                              </p>
+                              <p className="mt-1 text-xs leading-5 text-slate-400">
+                                {chapter.description}
+                              </p>
+                            </div>
                           </div>
                         </button>
                       );
                     })}
-                  </nav>
+                    </nav>
+                  </div>
                 </div>
               </aside>
 
@@ -1091,12 +1140,12 @@ export default function ProfilePage() {
                 <form className="space-y-6">
                   <SectionCard
                     id="overview"
-                    isActive={activeSection === "overview"}
+                    isActive={currentChapterMeta.sections.includes("overview")}
                     eyebrow="Profile Overview"
-                    title="Identity, headline, and profile status"
-                    description="Your core profile details."
+                    title="Identity and profile status"
+                    description="Core details clients notice first."
                   >
-                    <div className="grid gap-6 lg:grid-cols-[200px_minmax(0,1fr)]">
+                    <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]">
                       <div className="gh-soft-panel rounded-[24px] p-5">
                         <div className="flex justify-center">
                           <ProfileImageUpload
@@ -1112,24 +1161,18 @@ export default function ProfilePage() {
                             size={168}
                           />
                         </div>
-                        <div className="mt-5 space-y-3">
-                          <div className="gh-pill rounded-2xl px-4 py-3">
-                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                              Profile status
-                            </p>
-                            <p className="mt-2 text-sm font-semibold text-slate-900">
-                              {statusLabel}
-                            </p>
+                        <div className="mt-5 flex flex-wrap justify-center gap-2.5">
+                          <div className="gh-overview-badge rounded-full px-3.5 py-2">
+                            <CircleCheckBig className="h-4 w-4" />
+                            <span>{statusLabel}</span>
                           </div>
-                          <div className="gh-pill rounded-2xl px-4 py-3">
-                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                              Public visibility
-                            </p>
-                            <p className="mt-2 text-sm font-semibold text-slate-900">
+                          <div className="gh-overview-badge rounded-full px-3.5 py-2">
+                            <Globe className="h-4 w-4" />
+                            <span>
                               {profileData.hide_contact_details
-                                ? "Contact details hidden"
-                                : "Contact details visible"}
-                            </p>
+                                ? "Private"
+                                : "Public"}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -1138,11 +1181,11 @@ export default function ProfilePage() {
                         <div className="gh-tint-panel rounded-[22px] p-5">
                           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                             <div>
-                              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                                Live status
-                              </p>
-                              <h3 className="mt-2 text-lg font-semibold text-slate-950">
-                                Stay ready for new opportunities
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                              Live status
+                            </p>
+                            <h3 className="mt-2 text-lg font-semibold text-slate-950">
+                                Open for the right opportunities
                               </h3>
                             </div>
                             <div className="gh-pill rounded-2xl px-4 py-3">
@@ -1176,8 +1219,7 @@ export default function ProfilePage() {
                           />
                           <FieldError message={errors.title} />
                           <FieldHint>
-                            Use a concise headline that combines your role,
-                            specialty, and value.
+                            Keep it short and specific.
                           </FieldHint>
                         </div>
 
@@ -1220,10 +1262,10 @@ export default function ProfilePage() {
 
                   <SectionCard
                     id="public-intro"
-                    isActive={activeSection === "public-intro"}
+                    isActive={currentChapterMeta.sections.includes("public-intro")}
                     eyebrow="Public Intro"
                     title="How your profile introduces you"
-                    description="Your short public summary."
+                    description="A short summary for clients."
                   >
                     <div className="space-y-4">
                       <div className="flex flex-col gap-4 rounded-[22px] border border-slate-200 bg-slate-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -1233,11 +1275,10 @@ export default function ProfilePage() {
                           </div>
                           <div>
                             <p className="text-sm font-semibold text-slate-900">
-                              Make it public-profile ready
+                              Make it client-ready
                             </p>
                             <p className="mt-1 text-sm leading-6 text-slate-500">
-                              Focus on impact, specialties, and the type of work
-                              you want to be contacted for.
+                              Focus on impact, specialty, and fit.
                             </p>
                           </div>
                         </div>
@@ -1256,7 +1297,7 @@ export default function ProfilePage() {
                             setDescriptionContent(content);
                             handleInputChange("description", content);
                           }}
-                          placeholder="Describe your expertise, notable work, and what makes your profile stand out."
+                          placeholder="Summarize your expertise, standout work, and the value you bring."
                         />
                       </div>
                       <FieldError message={errors.description} />
@@ -1265,10 +1306,10 @@ export default function ProfilePage() {
 
                   <SectionCard
                     id="personal-details"
-                    isActive={activeSection === "personal-details"}
+                    isActive={currentChapterMeta.sections.includes("personal-details")}
                     eyebrow="Personal Details"
-                    title="Identity, location, and contact information"
-                    description="Basic identity and contact info."
+                    title="Contact and location"
+                    description="The essentials teams need."
                   >
                     <div className="grid gap-5 md:grid-cols-2">
                       <div>
@@ -1405,10 +1446,10 @@ export default function ProfilePage() {
 
                   <SectionCard
                     id="work-preferences"
-                    isActive={activeSection === "work-preferences"}
+                    isActive={currentChapterMeta.sections.includes("work-preferences")}
                     eyebrow="Work Preferences"
-                    title="Rates, roles, and visibility preferences"
-                    description="Rates, roles, and work setup."
+                    title="Rates, roles, and setup"
+                    description="How you want to work."
                   >
                     <div className="space-y-6">
                       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -1456,13 +1497,12 @@ export default function ProfilePage() {
                         </div>
 
                         <div className="gh-muted-panel rounded-[22px] px-5 py-4">
-                          <p className="text-sm font-semibold text-slate-900">
-                            Contact privacy
-                          </p>
-                          <p className="mt-1 text-sm leading-6 text-slate-500">
-                            Decide whether contact details should be visible on
-                            your public profile.
-                          </p>
+                            <p className="text-sm font-semibold text-slate-900">
+                              Contact privacy
+                            </p>
+                            <p className="mt-1 text-sm leading-6 text-slate-500">
+                            Control what stays public.
+                            </p>
                           <div className="mt-4">
                             <ToggleButton
                               label="Hide my contact details"
@@ -1479,12 +1519,12 @@ export default function ProfilePage() {
 
                       <div className="gh-soft-panel grid gap-4 rounded-[22px] p-5 lg:grid-cols-2">
                         <div>
-                          <p className="text-sm font-semibold text-slate-900">
-                            Work arrangement
-                          </p>
-                          <p className="mt-1 text-sm leading-6 text-slate-500">
-                            Choose how you want to work.
-                          </p>
+                            <p className="text-sm font-semibold text-slate-900">
+                              Work arrangement
+                            </p>
+                            <p className="mt-1 text-sm leading-6 text-slate-500">
+                            Choose your setup.
+                            </p>
                         </div>
                         <div className="flex flex-wrap gap-5">
                           <ToggleButton
@@ -1512,7 +1552,7 @@ export default function ProfilePage() {
                               I want to be listed as
                             </p>
                             <p className="mt-1 text-sm leading-6 text-slate-500">
-                              Pick the roles you want to be listed for.
+                              Pick the roles you want shown.
                             </p>
                           </div>
                         </div>
@@ -1540,10 +1580,10 @@ export default function ProfilePage() {
 
                   <SectionCard
                     id="about-work"
-                    isActive={activeSection === "about-work"}
+                    isActive={currentChapterMeta.sections.includes("about-work")}
                     eyebrow="About Your Work"
-                    title="Describe what you want next"
-                    description="What you want from your next role."
+                    title="What you want next"
+                    description="Your ideal role and conditions."
                   >
                     <div className="space-y-4">
                       <div className="flex flex-col gap-4 rounded-[22px] border border-slate-200 bg-slate-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -1553,10 +1593,10 @@ export default function ProfilePage() {
                           </div>
                           <div>
                             <p className="text-sm font-semibold text-slate-900">
-                              Add direction and intent
+                              Add clear direction
                             </p>
                             <p className="mt-1 text-sm leading-6 text-slate-500">
-                              Share your direction and fit.
+                              Share fit, goals, and momentum.
                             </p>
                           </div>
                         </div>
@@ -1575,7 +1615,7 @@ export default function ProfilePage() {
                             setAboutWorkContent(content);
                             handleInputChange("about_work", content);
                           }}
-                          placeholder="What kind of work are you looking for, and what conditions make you do your best work?"
+                          placeholder="What kind of work are you looking for, and where do you do your best work?"
                         />
                       </div>
                       <FieldError message={errors.about_work} />
@@ -1584,10 +1624,10 @@ export default function ProfilePage() {
 
                   <SectionCard
                     id="resume-imports"
-                    isActive={activeSection === "resume-imports"}
+                    isActive={currentChapterMeta.sections.includes("resume-imports")}
                     eyebrow="Resume & Imports"
-                    title="Manage your CV and accelerate setup"
-                    description="Upload your CV or generate details with AI."
+                    title="Resume and AI setup"
+                    description="Upload your CV or generate details."
                   >
                     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
                       <div className="gh-muted-panel rounded-[22px] p-5">
@@ -1600,8 +1640,7 @@ export default function ProfilePage() {
                               CV upload
                             </p>
                             <p className="mt-1 text-sm leading-6 text-slate-500">
-                              Keep your resume current so the review team can
-                              verify your experience quickly.
+                              Keep your resume current for faster review.
                             </p>
                           </div>
                         </div>
@@ -1660,7 +1699,7 @@ export default function ProfilePage() {
                           AI-assisted profile setup
                         </p>
                         <p className="mt-2 text-sm leading-6 text-slate-500">
-                          Import details, then refine them manually.
+                          Import first, refine after.
                         </p>
                         <button
                           type="button"
@@ -1686,10 +1725,10 @@ export default function ProfilePage() {
 
                   <SectionCard
                     id="skills"
-                    isActive={activeSection === "skills"}
+                    isActive={currentChapterMeta.sections.includes("skills")}
                     eyebrow="Skills"
                     title="Show where your expertise is strongest"
-                    description="Add the skills you want to be known for."
+                    description="Add the skills you want known first."
                   >
                     <div className="space-y-4">
                       <div>
@@ -1712,8 +1751,7 @@ export default function ProfilePage() {
                         </div>
                         <FieldError message={errors.skills} />
                         <FieldHint>
-                          Add the most relevant specializations first. Skills you
-                          include here shape search and matching.
+                          Lead with your strongest skills.
                         </FieldHint>
                       </div>
 
@@ -1746,10 +1784,10 @@ export default function ProfilePage() {
 
                   <SectionCard
                     id="social-presence"
-                    isActive={activeSection === "social-presence"}
+                    isActive={currentChapterMeta.sections.includes("social-presence")}
                     eyebrow="Social Presence"
                     title="Add links that reinforce credibility"
-                    description="Add links that support your profile."
+                    description="Links clients can verify."
                   >
                     <div className="grid gap-4 md:grid-cols-2">
                       {socialLinks.map((socialLink) => (
@@ -1819,10 +1857,10 @@ export default function ProfilePage() {
 
                   <SectionCard
                     id="referral"
-                    isActive={activeSection === "referral"}
+                    isActive={currentChapterMeta.sections.includes("referral")}
                     eyebrow="Referral"
-                    title="Referral details"
-                    description="Your referral link and stats."
+                    title="Referral"
+                    description="Invite link and stats."
                   >
                     <ReferralSection />
                   </SectionCard>
@@ -1831,25 +1869,27 @@ export default function ProfilePage() {
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                       <div className="min-w-0">
                         <div className="gh-section-dots flex items-center gap-2 rounded-full p-1.5">
-                          {PROFILE_SECTIONS.map((section) => (
+                          {PROFILE_CHAPTERS.map((chapter, index) => (
                             <button
-                              key={section.id}
+                              key={chapter.id}
                               type="button"
-                              onClick={() => goToSection(section.id)}
-                              aria-label={`Go to ${section.label}`}
+                              onClick={() => goToSection(chapter.sections[0])}
+                              aria-label={`Go to ${chapter.label}`}
                               aria-current={
-                                activeSection === section.id ? "step" : undefined
+                                chapter.sections.includes(activeSection) ? "step" : undefined
                               }
-                              className={`gh-section-dot relative flex h-3.5 w-3.5 items-center justify-center rounded-full transition ${
-                                activeSection === section.id
+                              className={`gh-section-dot relative flex h-3.5 items-center justify-center rounded-full px-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition ${
+                                chapter.sections.includes(activeSection)
                                   ? "is-active"
                                   : ""
                               }`}
-                            />
+                            >
+                              {index + 1}
+                            </button>
                           ))}
                         </div>
                         <p className="mt-3 text-sm font-semibold text-slate-950">
-                          {currentSectionMeta.label}
+                          {currentChapterMeta.label}
                         </p>
                         <p className="mt-1 text-sm text-slate-500">
                           {canEditApprovedProfile
@@ -1872,13 +1912,13 @@ export default function ProfilePage() {
                           <Save className="h-4 w-4" />
                           {saveProfileLoading ? "Saving Profile..." : "Save Profile"}
                         </button>
-                        {!isLastSection && (
+                        {!isLastChapter && (
                           <button
                             type="button"
                             onClick={handleNextSection}
                             className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-5 text-sm font-semibold text-amber-800 transition hover:-translate-y-0.5 hover:bg-amber-100"
                           >
-                            Next Section
+                            Next Chapter
                             <span aria-hidden="true">→</span>
                           </button>
                         )}

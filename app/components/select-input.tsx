@@ -23,9 +23,6 @@ export const SelectInput: FC<Props> = ({
   setInputValue,
 }) => {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
-  const [selectedValue, setSelectedValue] = useState<LabelOption | null>(
-    defaultValue || null
-  );
   const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -61,7 +58,7 @@ export const SelectInput: FC<Props> = ({
     if (defaultValue && !inputValue) {
       setInputValue(defaultValue);
     }
-  }, [defaultValue, inputValue]);
+  }, [defaultValue, inputValue, setInputValue]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
