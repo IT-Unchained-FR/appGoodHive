@@ -21,7 +21,14 @@ import {
   logoutWalletUser,
 } from "@/lib/auth/thirdwebAuth";
 import { connectModalOptions, supportedWallets } from "@/lib/auth/walletConfig";
-import { CircleUserRound } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  CircleUserRound,
+  LayoutDashboard,
+  Search,
+  type LucideIcon,
+  UserRound,
+} from "lucide-react";
 import { ProfileDropdown } from "./ProfileDropdown";
 import { Route } from "next";
 import Image from "next/image";
@@ -34,17 +41,33 @@ import { ProtectedLink } from "./ProtectedLink";
 import { OnboardingPopup } from "./onboarding-popup";
 
 const commonLinks = [
-  { href: "/talents/job-search", label: "Find a Job", protected: false },
+  {
+    href: "/talents/job-search",
+    label: "Find a Job",
+    protected: false,
+    icon: Search,
+  },
   {
     href: "/companies/search-talents",
     label: "Find a Talent",
     protected: false,
+    icon: UserRound,
   },
 ];
 
 const talentsLinks = [
-  { href: "/talents/job-search", label: "Job Search", protected: false },
-  { href: "/talents/my-profile", label: "My Talent Profile", protected: true },
+  {
+    href: "/talents/job-search",
+    label: "Job Search",
+    protected: false,
+    icon: Search,
+  },
+  {
+    href: "/talents/my-profile",
+    label: "My Talent Profile",
+    protected: true,
+    icon: UserRound,
+  },
 ];
 
 const companiesLinks = [
@@ -52,14 +75,28 @@ const companiesLinks = [
     href: "/companies/search-talents",
     label: "Search Talents",
     protected: false,
+    icon: Search,
   },
-  { href: "/companies/dashboard", label: "Dashboard", protected: true },
+  {
+    href: "/companies/dashboard",
+    label: "Dashboard",
+    protected: true,
+    icon: LayoutDashboard,
+  },
   {
     href: "/companies/my-profile",
     label: "My Company Profile",
     protected: true,
+    icon: BriefcaseBusiness,
   },
 ];
+
+type NavLinkItem = {
+  href: string;
+  label: string;
+  protected: boolean;
+  icon: LucideIcon;
+};
 
 export const NavBar = () => {
   const [isOpenMobileMenu, setIsOpenMobileMenu] = useState(false);
@@ -460,21 +497,24 @@ export const NavBar = () => {
           <div className="flex items-center sm:justify-end flex-1 justify-between gap-8">
             <nav aria-label="Site Nav" className="hidden sm:block">
               <ul className="flex items-center gap-8 text-sm">
-                {links.map(({ href, label, protected: isProtected }) => (
+                {(links as NavLinkItem[]).map(
+                  ({ href, label, protected: isProtected, icon: Icon }) => (
                   <li key={`${href}${label}`}>
                     {isProtected ? (
                       <ProtectedLink
                         href={href as Route}
-                        className="text-gray-700 font-medium transition hover:text-amber-700 hover:scale-105 active:scale-95"
+                        className="inline-flex items-center gap-2 text-gray-700 font-medium transition hover:text-amber-700 hover:scale-105 active:scale-95"
                         authDescription={`access ${label.toLowerCase()}`}
                       >
+                        <Icon className="h-4 w-4" />
                         {label}
                       </ProtectedLink>
                     ) : (
                       <Link
                         href={href as Route}
-                        className="text-gray-700 font-medium transition hover:text-amber-700 hover:scale-105 active:scale-95"
+                        className="inline-flex items-center gap-2 text-gray-700 font-medium transition hover:text-amber-700 hover:scale-105 active:scale-95"
                       >
+                        <Icon className="h-4 w-4" />
                         {label}
                       </Link>
                     )}
@@ -554,21 +594,24 @@ export const NavBar = () => {
           <div className="bg-gradient-to-b from-amber-50 to-amber-100 border-t border-amber-200 shadow-inner">
             <nav aria-label="Site Nav" className="block sm:hidden">
               <ul className="flex flex-col items-center justify-center gap-4 py-4 text-sm">
-                {links.map(({ href, label, protected: isProtected }) => (
+                {(links as NavLinkItem[]).map(
+                  ({ href, label, protected: isProtected, icon: Icon }) => (
                   <li key={`${href}${label}`}>
                     {isProtected ? (
                       <ProtectedLink
                         href={href as Route}
-                        className="text-gray-700 font-medium transition hover:text-amber-700 hover:scale-105 active:scale-95"
+                        className="inline-flex items-center gap-2 text-gray-700 font-medium transition hover:text-amber-700 hover:scale-105 active:scale-95"
                         authDescription={`access ${label.toLowerCase()}`}
                       >
+                        <Icon className="h-4 w-4" />
                         {label}
                       </ProtectedLink>
                     ) : (
                       <Link
                         href={href as Route}
-                        className="text-gray-700 font-medium transition hover:text-amber-700 hover:scale-105 active:scale-95"
+                        className="inline-flex items-center gap-2 text-gray-700 font-medium transition hover:text-amber-700 hover:scale-105 active:scale-95"
                       >
+                        <Icon className="h-4 w-4" />
                         {label}
                       </Link>
                     )}
