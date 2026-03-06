@@ -20,6 +20,41 @@ export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 export const revalidate = 0;
 
+const RESUME_IMPORT_COLUMNS = [
+  "resume_experience",
+  "resume_education",
+  "resume_certifications",
+  "resume_projects",
+  "resume_languages",
+] as const;
+
+type ResumeImportColumn = (typeof RESUME_IMPORT_COLUMNS)[number];
+
+async function getAvailableResumeImportColumns(): Promise<Set<ResumeImportColumn>> {
+  const columns = await sql<{ column_name: string }[]>`
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_schema = 'goodhive'
+      AND table_name = 'talents'
+      AND column_name IN (
+        'resume_experience',
+        'resume_education',
+        'resume_certifications',
+        'resume_projects',
+        'resume_languages'
+      )
+  `;
+
+  return new Set(
+    columns
+      .map((row) => row.column_name)
+      .filter(
+        (column): column is ResumeImportColumn =>
+          RESUME_IMPORT_COLUMNS.includes(column as ResumeImportColumn),
+      ),
+  );
+}
+
 export async function POST(request: Request) {
   const {
     title,
@@ -64,9 +99,10 @@ export async function POST(request: Request) {
   } = await request.json();
 
   try {
+    const availableResumeColumns = await getAvailableResumeImportColumns();
     const shouldClearCv = clear_cv === true;
     // Filter out undefined, null, and empty string fields
-    const fields = {
+    const fields: Record<string, unknown> = {
       title,
       description,
       first_name,
@@ -99,12 +135,22 @@ export async function POST(request: Request) {
       wallet_address,
       user_id,
       inReview: validate === true ? true : false,
-      resume_experience: serializeResumeArray(experience),
-      resume_education: serializeResumeArray(education),
-      resume_certifications: serializeResumeArray(certifications),
-      resume_projects: serializeResumeArray(projects),
-      resume_languages: serializeResumeArray(languages),
     };
+    if (availableResumeColumns.has("resume_experience")) {
+      fields.resume_experience = serializeResumeArray(experience);
+    }
+    if (availableResumeColumns.has("resume_education")) {
+      fields.resume_education = serializeResumeArray(education);
+    }
+    if (availableResumeColumns.has("resume_certifications")) {
+      fields.resume_certifications = serializeResumeArray(certifications);
+    }
+    if (availableResumeColumns.has("resume_projects")) {
+      fields.resume_projects = serializeResumeArray(projects);
+    }
+    if (availableResumeColumns.has("resume_languages")) {
+      fields.resume_languages = serializeResumeArray(languages);
+    }
 
     const filteredFields = Object.entries(fields).filter(([key, value]) => {
       if (value === undefined || value === "") {
@@ -200,9 +246,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const availableResumeColumns = await getAvailableResumeImportColumns();
+    const resumeColumnSelect = RESUME_IMPORT_COLUMNS.map((column) =>
+      availableResumeColumns.has(column)
+        ? column
+        : `NULL::TEXT AS ${column}`,
+    ).join(",\n        ");
+
     // Fetch talent profile data from database
-    const talents = await sql`
-      SELECT 
+    const talents = await sql.unsafe(
+      `
+      SELECT
         title,
         description,
         first_name,
@@ -236,14 +290,12 @@ export async function GET(request: NextRequest) {
         inReview,
         user_id,
         last_active,
-        resume_experience,
-        resume_education,
-        resume_certifications,
-        resume_projects,
-        resume_languages
-      FROM goodhive.talents 
-      WHERE user_id = ${user_id}
-    `;
+        ${resumeColumnSelect}
+      FROM goodhive.talents
+      WHERE user_id = $1
+    `,
+      [user_id],
+    );
 
     if (talents.length === 0) {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });

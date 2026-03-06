@@ -35,6 +35,9 @@ interface JobPageHeaderProps {
     projectType: string;
     typeEngagement?: string;
     duration?: string;
+    talent?: boolean;
+    mentor?: boolean;
+    recruiter?: boolean;
     postedAt: string;
     applicationCount?: number;
     blockchainJobId?: string;
@@ -48,7 +51,6 @@ export const JobPageHeader = ({ job }: JobPageHeaderProps) => {
   const [isApplicationPopupOpen, setIsApplicationPopupOpen] = useState(false);
   const [isVerificationPopupOpen, setIsVerificationPopupOpen] = useState(false);
   const [isOnboardingPopupOpen, setIsOnboardingPopupOpen] = useState(false);
-  const [isCheckingVerification, setIsCheckingVerification] = useState(false);
 
   const getRelativeTime = (dateString: string) => {
     const now = new Date();
@@ -113,41 +115,7 @@ export const JobPageHeader = ({ job }: JobPageHeaderProps) => {
       setIsVerificationPopupOpen(true);
       return;
     }
-
-    // Check real-time verification status from database
-    setIsCheckingVerification(true);
-    try {
-      const response = await fetch("/api/talents/verification-status", {
-        headers: user?.user_id ? { "x-user-id": user.user_id } : undefined,
-      });
-
-      if (response.ok) {
-        const { isApproved } = await response.json();
-
-        if (isApproved) {
-          setIsApplicationPopupOpen(true);
-        } else {
-          setIsVerificationPopupOpen(true);
-        }
-      } else {
-        // Fallback to cookie-based check if API fails
-        if (user.talent_status === "approved") {
-          setIsApplicationPopupOpen(true);
-        } else {
-          setIsVerificationPopupOpen(true);
-        }
-      }
-    } catch (error) {
-      console.error("Error checking verification status:", error);
-      // Fallback to cookie-based check on error
-      if (user.talent_status === "approved") {
-        setIsApplicationPopupOpen(true);
-      } else {
-        setIsVerificationPopupOpen(true);
-      }
-    } finally {
-      setIsCheckingVerification(false);
-    }
+    setIsApplicationPopupOpen(true);
   }, [isAuthenticated, user]);
 
   const handleContinueToOnboarding = () => {
@@ -371,6 +339,9 @@ export const JobPageHeader = ({ job }: JobPageHeaderProps) => {
           jobId={job.id}
           companyUserId={job.company.userId}
           walletAddress={job.company.walletAddress || job.company.id}
+          openToTalent={job.talent}
+          openToMentor={job.mentor}
+          openToRecruiter={job.recruiter}
         />
       )}
 

@@ -18,6 +18,9 @@ interface Job {
   jobType: string;
   typeEngagement?: string;
   duration?: string;
+  talent?: boolean;
+  mentor?: boolean;
+  recruiter?: boolean;
   skills: string[];
   city: string;
   country: string;
@@ -118,6 +121,9 @@ async function getJob(jobId: string): Promise<Job | null> {
       jobType: jobData.job_type,
       typeEngagement: jobData.type_engagement,
       duration: jobData.duration,
+      talent: jobData.talent === true || jobData.talent === "true",
+      mentor: jobData.mentor === true || jobData.mentor === "true",
+      recruiter: jobData.recruiter === true || jobData.recruiter === "true",
       skills: jobData.skills
         ? jobData.skills.split(",").map((s: string) => s.trim())
         : [],

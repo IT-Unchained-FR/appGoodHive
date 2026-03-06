@@ -765,9 +765,26 @@ export default function ProfilePage() {
     }));
   }, []);
 
-  const handlePDFImportSuccess = async (generatedData: any) => {
+  const handlePDFImportSuccess = async (
+    generatedData: any,
+    resumeFile: File,
+  ) => {
     try {
       setIsPDFImporting(true);
+      let uploadedCvUrl: string | null = null;
+
+      try {
+        uploadedCvUrl = (await uploadFileToBucket(resumeFile)) as string;
+      } catch (uploadError) {
+        console.error(
+          "Error auto-uploading resume during AI import:",
+          uploadError,
+        );
+        setCvFile(resumeFile);
+        toast.error(
+          "Profile data generated, but resume auto-upload failed. Saving profile will retry upload.",
+        );
+      }
 
       setProfileData((prev) => ({
         ...prev,
@@ -791,7 +808,12 @@ export default function ProfilePage() {
           generatedData.certifications || prev.certifications,
         projects: generatedData.projects || prev.projects,
         languages: generatedData.languages || prev.languages,
+        cv_url: uploadedCvUrl || prev.cv_url,
       }));
+
+      if (uploadedCvUrl) {
+        setCvFile(null);
+      }
 
       if (generatedData.description) {
         setDescriptionContent(generatedData.description);
@@ -826,6 +848,9 @@ export default function ProfilePage() {
         }));
       }
 
+      if (uploadedCvUrl) {
+        toast.success("Resume uploaded successfully!");
+      }
       toast.success("Profile data generated successfully!");
     } catch (error) {
       console.error("Error processing generated data:", error);

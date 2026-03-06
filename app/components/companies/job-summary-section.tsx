@@ -24,6 +24,9 @@ interface JobSummaryProps {
     duration?: string;
     typeEngagement?: string;
     jobType?: string;
+    talent?: boolean;
+    mentor?: boolean;
+    recruiter?: boolean;
     createdAt: string;
     sections?: Array<{
       id: string;
@@ -52,7 +55,6 @@ export const JobSummarySection = ({
   const [isApplicationPopupOpen, setIsApplicationPopupOpen] = useState(false);
   const [isVerificationPopupOpen, setIsVerificationPopupOpen] = useState(false);
   const [isOnboardingPopupOpen, setIsOnboardingPopupOpen] = useState(false);
-  const [isCheckingVerification, setIsCheckingVerification] = useState(false);
 
   // Debug logging to check what data we're receiving
   console.log('JobSummarySection job data:', job);
@@ -84,41 +86,7 @@ export const JobSummarySection = ({
       setIsVerificationPopupOpen(true);
       return;
     }
-
-    // Check real-time verification status from database
-    setIsCheckingVerification(true);
-    try {
-      const response = await fetch("/api/talents/verification-status", {
-        headers: user?.user_id ? { "x-user-id": user.user_id } : undefined,
-      });
-
-      if (response.ok) {
-        const { isApproved } = await response.json();
-
-        if (isApproved) {
-          setIsApplicationPopupOpen(true);
-        } else {
-          setIsVerificationPopupOpen(true);
-        }
-      } else {
-        // Fallback to cookie-based check if API fails
-        if (user.talent_status === "approved") {
-          setIsApplicationPopupOpen(true);
-        } else {
-          setIsVerificationPopupOpen(true);
-        }
-      }
-    } catch (error) {
-      console.error("Error checking verification status:", error);
-      // Fallback to cookie-based check on error
-      if (user.talent_status === "approved") {
-        setIsApplicationPopupOpen(true);
-      } else {
-        setIsVerificationPopupOpen(true);
-      }
-    } finally {
-      setIsCheckingVerification(false);
-    }
+    setIsApplicationPopupOpen(true);
   }, [isAuthenticated, user]);
 
   const handleContinueToOnboarding = () => {
@@ -267,6 +235,9 @@ export const JobSummarySection = ({
           jobId={String(job.id)}
           companyUserId={job.companyUserId}
           walletAddress={walletAddress}
+          openToTalent={job.talent}
+          openToMentor={job.mentor}
+          openToRecruiter={job.recruiter}
         />
       )}
 

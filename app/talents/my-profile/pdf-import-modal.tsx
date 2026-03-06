@@ -9,7 +9,7 @@ const VALID_PDF_TYPES = ["application/pdf"];
 interface PDFImportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onImportSuccess: (profileData: any) => void;
+  onImportSuccess: (profileData: any, resumeFile: File) => void | Promise<void>;
   isLoading: boolean;
 }
 
@@ -112,8 +112,7 @@ export const PDFImportModal: React.FC<PDFImportModalProps> = ({
       if (data.status === "completed" && data.data) {
         // Log the generated data for debugging
         console.log("Generated profile data:", data.data);
-        onImportSuccess(data.data);
-        toast.success("Profile data generated successfully!");
+        await onImportSuccess(data.data, selectedFile);
         onClose();
       } else if (data.error) {
         throw new Error(data.error);

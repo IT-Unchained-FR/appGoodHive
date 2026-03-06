@@ -97,23 +97,12 @@ export const JobCard: FC<Props> = ({
 
 
   const onApplyClickHandler = async () => {
-    const userDataResponse = await fetch(
-      `/api/talents/my-profile?user_id=${logged_in_user_id}`,
-    );
-
-    if (!userDataResponse.ok) {
-      toast.error("You don't have a talent profile yet! Please create one.");
-    }
-
-    const userProfile = await userDataResponse.json();
-    if (!userProfile.approved) {
-      toast.error(
-        "Only verified talent can apply for job! Please wait for your talent to be verified.",
-      );
+    if (!logged_in_user_id) {
+      toast.error("Please sign in first to apply for this job.");
       return;
-    } else {
-      setIsJobApplicationPopup(true);
     }
+
+    setIsJobApplicationPopup(true);
   };
 
   const onJobApplicationPopupCloseHandler = () => {
@@ -297,6 +286,9 @@ export const JobCard: FC<Props> = ({
           jobId={id}
           companyUserId={user_id}
           walletAddress={walletAddress}
+          openToTalent={talent}
+          openToMentor={mentor}
+          openToRecruiter={recruiter}
         />
       )}
     </div>

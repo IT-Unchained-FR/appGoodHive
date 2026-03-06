@@ -75,6 +75,9 @@ export async function GET(
       jobType: jobData.job_type,
       typeEngagement: jobData.type_engagement,
       duration: jobData.duration,
+      talent: jobData.talent === true || jobData.talent === "true",
+      mentor: jobData.mentor === true || jobData.mentor === "true",
+      recruiter: jobData.recruiter === true || jobData.recruiter === "true",
       skills: jobData.skills
         ? jobData.skills.split(",").map((s: string) => s.trim())
         : [],
