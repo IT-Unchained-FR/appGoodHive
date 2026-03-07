@@ -644,6 +644,30 @@ export default function ProfilePage() {
     activeBody?.scrollTo({ top: 0, behavior: "smooth" });
   }, [activeSection]);
 
+  const scrollToActiveSectionTop = useCallback(() => {
+    requestAnimationFrame(() => {
+      const sectionElement = document.querySelector<HTMLElement>(
+        '[data-section-active="true"]',
+      );
+
+      if (!sectionElement) return;
+
+      const topOffset = 110;
+      const absoluteTop =
+        sectionElement.getBoundingClientRect().top + window.scrollY - topOffset;
+
+      window.scrollTo({
+        top: Math.max(absoluteTop, 0),
+        behavior: "smooth",
+      });
+    });
+  }, []);
+
+  const goToSection = useCallback((sectionId: ProfileSectionId) => {
+    setActiveSection(sectionId);
+    scrollToActiveSectionTop();
+  }, [scrollToActiveSectionTop]);
+
   const getFirstErrorSection = useCallback(
     (validationErrors: { [key: string]: string }) => {
       for (const key of Object.keys(validationErrors)) {
@@ -1032,7 +1056,7 @@ export default function ProfilePage() {
   const currentChapterMeta =
     PROFILE_CHAPTERS[currentChapterIndex] || PROFILE_CHAPTERS[0];
   const isLastChapter = currentChapterIndex === PROFILE_CHAPTERS.length - 1;
-  const canEditApprovedProfile = isApprovedProfile;
+  const canEditApprovedProfile = isApprovedProfile && !isProfileInReview;
   const roleSelectionLocked = isProfileInReview;
   const submitActionLabel = isApprovedProfile
     ? "Submit Role Request for Review"
@@ -1078,28 +1102,6 @@ export default function ProfilePage() {
     : profileData.approved
       ? "Approved"
       : "Not Submitted";
-  const scrollToActiveSectionTop = useCallback(() => {
-    requestAnimationFrame(() => {
-      const sectionElement = document.querySelector<HTMLElement>(
-        '[data-section-active="true"]',
-      );
-
-      if (!sectionElement) return;
-
-      const topOffset = 110;
-      const absoluteTop =
-        sectionElement.getBoundingClientRect().top + window.scrollY - topOffset;
-
-      window.scrollTo({
-        top: Math.max(absoluteTop, 0),
-        behavior: "smooth",
-      });
-    });
-  }, []);
-  const goToSection = useCallback((sectionId: ProfileSectionId) => {
-    setActiveSection(sectionId);
-    scrollToActiveSectionTop();
-  }, [scrollToActiveSectionTop]);
   const handleNextSection = useCallback(() => {
     if (isLastChapter) return;
     const nextChapter = PROFILE_CHAPTERS[currentChapterIndex + 1];
@@ -1226,6 +1228,7 @@ export default function ProfilePage() {
 
           <div className="px-5 py-5 sm:px-7 lg:px-8">
             <StatusBanner profileData={profileData} />
+            <RejectionBanner rejectedRoles={rejectedSelectedRoles} />
 
             <div className="mt-6 xl:hidden">
               <div className="gh-soft-panel rounded-[22px] px-4 py-4">
@@ -1784,11 +1787,17 @@ export default function ProfilePage() {
                                 label={label}
                                 name={value}
                                 checked={isChecked ?? false}
+                                disabled={roleSelectionLocked}
                                 setValue={handleToggleChange}
                               />
                             );
                           })}
                         </div>
+                        {roleSelectionLocked && (
+                          <FieldHint>
+                            Role selection is locked while your profile is under review.
+                          </FieldHint>
+                        )}
                         <FieldError message={errors.role} />
                       </div>
                     </div>

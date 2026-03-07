@@ -103,10 +103,28 @@ export async function GET(req: NextRequest) {
         users.mentor_status_reason,
         users.recruiter_status_reason,
         users.referred_by,
+        ref.user_id AS referrer_user_id,
+        ref_users.email AS referrer_email,
+        COALESCE(
+          NULLIF(
+            TRIM(
+              CONCAT(
+                COALESCE(ref_talents.first_name, ''),
+                ' ',
+                COALESCE(ref_talents.last_name, '')
+              )
+            ),
+            ''
+          ),
+          ref.user_id
+        ) AS referrer_name,
         users.approved_roles,
         users.created_at AS user_created_at
       FROM goodhive.talents AS talents
       JOIN goodhive.users AS users ON talents.user_id = users.userid
+      LEFT JOIN goodhive.referrals AS ref ON ref.referral_code = users.referred_by
+      LEFT JOIN goodhive.talents AS ref_talents ON ref_talents.user_id = ref.user_id
+      LEFT JOIN goodhive.users AS ref_users ON ref_users.userid = ref.user_id
       ${whereClause}
       ORDER BY ${orderBy}
     `;

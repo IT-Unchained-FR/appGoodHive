@@ -99,6 +99,29 @@ export async function POST(request: Request) {
   } = await request.json();
 
   try {
+    if (!user_id) {
+      return new Response(
+        JSON.stringify({ message: "User ID is required" }),
+        { status: 400 },
+      );
+    }
+
+    const existingTalent = await sql<{ inreview: boolean | null }[]>`
+      SELECT inreview
+      FROM goodhive.talents
+      WHERE user_id = ${user_id}
+      LIMIT 1
+    `;
+
+    if (existingTalent[0]?.inreview === true) {
+      return new Response(
+        JSON.stringify({
+          message: "Your profile is currently under review and cannot be edited.",
+        }),
+        { status: 409 },
+      );
+    }
+
     if (validate === true) {
       const hasMinRate = min_rate !== undefined && min_rate !== null;
       const hasMaxRate = max_rate !== undefined && max_rate !== null;

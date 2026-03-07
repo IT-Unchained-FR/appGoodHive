@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { EnhancedTable, Column } from "@/app/components/admin/EnhancedTable";
@@ -25,7 +25,12 @@ import { BulkApproval } from "@/app/components/admin/BulkApproval";
 import toast from "react-hot-toast";
 import moment from "moment";
 
-type ProfileDataWithName = ProfileData & { name?: string };
+type ProfileDataWithName = ProfileData & {
+  name?: string;
+  referrer_name?: string | null;
+  referrer_user_id?: string | null;
+  referrer_email?: string | null;
+};
 
 export default function AdminTalentApproval() {
   const searchParams = useSearchParams();
@@ -293,8 +298,39 @@ export default function AdminTalentApproval() {
     {
       key: "email",
       header: "Email",
-      width: "25%",
+      width: "20%",
       sortable: true,
+    },
+    {
+      key: "referrer_name",
+      header: "Referred By",
+      width: "20%",
+      exportValue: (row: ProfileDataWithName) => {
+        if (!row.referred_by) return "Direct signup";
+        return row.referrer_name
+          ? `${row.referrer_name} (${row.referred_by})`
+          : row.referred_by;
+      },
+      render: (_value: unknown, row: ProfileDataWithName) => {
+        if (!row.referred_by) {
+          return (
+            <span className="text-xs font-medium text-slate-400">
+              Direct signup
+            </span>
+          );
+        }
+
+        return (
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-slate-900">
+              {row.referrer_name || "Referral source"}
+            </p>
+            <p className="truncate text-xs text-slate-500">
+              Code: {row.referred_by}
+            </p>
+          </div>
+        );
+      },
     },
     {
       key: "created_at",
@@ -375,7 +411,7 @@ export default function AdminTalentApproval() {
     },
   ];
 
-  const fetchPendingUsers = async () => {
+  const fetchPendingUsers = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams(searchParams.toString());
@@ -409,11 +445,11 @@ export default function AdminTalentApproval() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchParams]);
 
   useEffect(() => {
     fetchPendingUsers();
-  }, [searchParams]);
+  }, [fetchPendingUsers]);
 
   // Smart selection preservation: keep only items still in filtered results
   useEffect(() => {
@@ -616,6 +652,11 @@ function TalentApprovalCard({
           {user.first_name} {user.last_name}
         </div>
         <div className="text-sm text-gray-600">{user.email}</div>
+        {user.referred_by && (
+          <div className="text-xs text-gray-500">
+            Referred by code: {user.referred_by}
+          </div>
+        )}
         <div className="flex items-center gap-2 text-xs text-gray-500">
           {getStatusBadge()}
           <span>{moment(user.created_at || user.user_created_at).fromNow()}</span>

@@ -1,11 +1,11 @@
 import Cookies from "js-cookie";
 import {
   ArrowRight,
-  BadgeDollarSign,
   Building2,
   CheckCircle2,
   Copy,
   Gift,
+  HandCoins,
   Share2,
   Sparkles,
   Users,
@@ -32,11 +32,6 @@ const referralSteps = [
     title: "Share the link",
     description: "Send your link to trusted talent, clients, and communities that would be a strong fit.",
     icon: Share2,
-  },
-  {
-    title: "Track results",
-    description: "Watch referred signups and approvals grow as people join and get verified.",
-    icon: BadgeDollarSign,
   },
 ] as const;
 
@@ -188,7 +183,7 @@ export const ReferralSection = () => {
       </div>
 
       <div className="px-5 py-5 sm:px-6 sm:py-6">
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-4 lg:grid-cols-2">
           {referralSteps.map((step, index) => {
             const Icon = step.icon;
             const isReady = referral ? index > 0 || Boolean(referral) : index === 0;
@@ -227,6 +222,32 @@ export const ReferralSection = () => {
               </div>
             );
           })}
+        </div>
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <div className="rounded-[22px] border border-emerald-200 bg-[linear-gradient(180deg,_#f0fdf4_0%,_#ffffff_100%)] px-4 py-5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-emerald-700 shadow-sm">
+              <HandCoins className="h-5 w-5" />
+            </div>
+            <p className="mt-4 text-sm font-semibold text-slate-950">
+              Referred Talents
+            </p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Receive 5% of the commissions earned on every mission completed by
+              a talent you refer, throughout their first year.
+            </p>
+          </div>
+          <div className="rounded-[22px] border border-amber-200 bg-[linear-gradient(180deg,_#fffbeb_0%,_#ffffff_100%)] px-4 py-5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-amber-700 shadow-sm">
+              <Building2 className="h-5 w-5" />
+            </div>
+            <p className="mt-4 text-sm font-semibold text-slate-950">
+              Referred Companies
+            </p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Receive 20% of the commissions earned from all missions carried out
+              by a company you refer, during its first year of activity.
+            </p>
+          </div>
         </div>
 
         {!referral ? (
