@@ -150,7 +150,8 @@ export default function AdminTalentApproval() {
         },
         body: JSON.stringify({
           userIds: itemIds,
-          reason: reason || "Rejected by admin",
+          rejectionReason:
+            reason || "Rejected by admin review due to profile requirements.",
         }),
       });
 

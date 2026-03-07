@@ -110,6 +110,43 @@ export type ProfileData = {
   years_experience?: number;
 };
 
+type RoleKey = "talent" | "mentor" | "recruiter";
+
+type UserRoleStatus = {
+  talent_status?: string | null;
+  mentor_status?: string | null;
+  recruiter_status?: string | null;
+  talent_status_reason?: string | null;
+  mentor_status_reason?: string | null;
+  recruiter_status_reason?: string | null;
+};
+
+const ROLE_CONFIG: Array<{
+  key: RoleKey;
+  label: string;
+  statusKey: keyof UserRoleStatus;
+  reasonKey: keyof UserRoleStatus;
+}> = [
+  {
+    key: "talent",
+    label: "Talent",
+    statusKey: "talent_status",
+    reasonKey: "talent_status_reason",
+  },
+  {
+    key: "mentor",
+    label: "Mentor",
+    statusKey: "mentor_status",
+    reasonKey: "mentor_status_reason",
+  },
+  {
+    key: "recruiter",
+    label: "Recruiter",
+    statusKey: "recruiter_status",
+    reasonKey: "recruiter_status_reason",
+  },
+];
+
 const PROFILE_SECTIONS = [
   {
     id: "overview",
@@ -213,6 +250,25 @@ const REQUIRED_COMPLETION_KEYS = [
   "telegram",
 ] as const;
 
+const ERROR_SECTION_MAP: Record<string, ProfileSectionId> = {
+  title: "overview",
+  description: "public-intro",
+  first_name: "personal-details",
+  last_name: "personal-details",
+  country: "personal-details",
+  city: "personal-details",
+  phone_country_code: "personal-details",
+  phone_number: "personal-details",
+  email: "personal-details",
+  min_rate: "work-preferences",
+  max_rate: "work-preferences",
+  role: "work-preferences",
+  about_work: "about-work",
+  cv_url: "resume-imports",
+  skills: "skills",
+  telegram: "social-presence",
+};
+
 function decodeBase64HtmlWrappedInPTags(str: string) {
   if (!str || typeof str !== "string") return "";
   if (str.trim() === "") return "";
@@ -310,17 +366,15 @@ function FieldError({ message }: { message?: string }) {
 }
 
 function StatusBanner({ profileData }: { profileData: ProfileData }) {
-  const unapprovedProfile =
-    profileData?.approved === false && profileData.inreview === true;
-  const savedProfile =
-    profileData?.approved === false && profileData.inreview === false;
+  const isApprovedProfile = Boolean(profileData?.approved);
+  const isUnderReview = profileData.inreview === true;
 
-  if (!unapprovedProfile && !savedProfile) return null;
+  if (!isApprovedProfile && !isUnderReview) return null;
 
   return (
     <div
       className={`rounded-3xl border px-5 py-4 shadow-sm ${
-        unapprovedProfile
+        isUnderReview
           ? "border-amber-200 bg-amber-50 text-amber-900"
           : "border-emerald-200 bg-emerald-50 text-emerald-900"
       }`}
@@ -328,10 +382,10 @@ function StatusBanner({ profileData }: { profileData: ProfileData }) {
       <div className="flex items-start gap-3">
         <div
           className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${
-            unapprovedProfile ? "bg-amber-100" : "bg-emerald-100"
+            isUnderReview ? "bg-amber-100" : "bg-emerald-100"
           }`}
         >
-          {unapprovedProfile ? (
+          {isUnderReview ? (
             <Sparkles className="h-4 w-4" />
           ) : (
             <CircleCheckBig className="h-4 w-4" />
@@ -339,13 +393,60 @@ function StatusBanner({ profileData }: { profileData: ProfileData }) {
         </div>
         <div>
           <p className="text-sm font-semibold">
-            {unapprovedProfile ? "Profile under review" : "Profile saved"}
+            {isUnderReview ? "Profile submitted" : "Profile approved"}
           </p>
           <p className="mt-1 text-sm leading-6">
-            {unapprovedProfile
-              ? "Your profile has been submitted for review. We’ll email you once it’s approved."
-              : "Your changes are saved. Complete the required fields and send the profile for review when you’re ready."}
+            {isUnderReview
+              ? "Your profile has been submitted and is currently under review. Role toggles are locked until the review is complete."
+              : "Your profile is approved. You can edit details and save updates anytime."}
           </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RejectionBanner({
+  rejectedRoles,
+}: {
+  rejectedRoles: Array<{ label: string; reason?: string | null }>;
+}) {
+  if (!rejectedRoles.length) return null;
+
+  const uniqueReasons = Array.from(
+    new Set(
+      rejectedRoles
+        .map((role) => role.reason?.trim())
+        .filter((reason): reason is string => Boolean(reason)),
+    ),
+  );
+
+  return (
+    <div className="mt-4 rounded-3xl border border-rose-200 bg-[linear-gradient(180deg,_#fff5f5_0%,_#fff1f2_100%)] px-5 py-4 shadow-[0_14px_30px_rgba(244,63,94,0.08)]">
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-rose-100 text-rose-700">
+          <BadgeCheck className="h-4 w-4" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-rose-900">
+            Profile review update
+          </p>
+          <p className="mt-1 text-sm leading-6 text-rose-800">
+            {`${
+              rejectedRoles.map((role) => role.label).join(", ")
+            } ${rejectedRoles.length > 1 ? "were" : "was"} not approved.`}
+            {" "}You can update and resubmit when ready.
+          </p>
+          {uniqueReasons.length > 0 && (
+            <div className="mt-3 rounded-2xl border border-rose-200 bg-white/80 px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-600">
+                Admin Feedback
+              </p>
+              <p className="mt-2 text-sm leading-6 text-rose-900">
+                {uniqueReasons.join(" ")}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -408,7 +509,7 @@ export default function ProfilePage() {
   const [profileData, setProfileData] = useState<ProfileData>(
     {} as ProfileData,
   );
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<UserRoleStatus | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
@@ -422,14 +523,44 @@ export default function ProfilePage() {
   const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
   const [isPDFImporting, setIsPDFImporting] = useState(false);
 
-  const unapprovedProfile = useMemo(
-    () => profileData?.approved === false && profileData.inreview === true,
-    [profileData?.approved, profileData.inreview],
+  const isProfileInReview = useMemo(
+    () => profileData.inreview === true,
+    [profileData.inreview],
   );
 
-  const savedProfile = useMemo(
-    () => profileData?.approved === false && profileData.inreview === false,
-    [profileData?.approved, profileData.inreview],
+  const isApprovedProfile = useMemo(
+    () => Boolean(profileData?.approved),
+    [profileData?.approved],
+  );
+  const selectedRoleMeta = useMemo(
+    () =>
+      ROLE_CONFIG.filter((roleConfig) =>
+        Boolean(profileData[roleConfig.key as keyof ProfileData]),
+      ).map((roleConfig) => ({
+        key: roleConfig.key,
+        label: roleConfig.label,
+        status: (user?.[roleConfig.statusKey] as string | null | undefined) || null,
+        reason: (user?.[roleConfig.reasonKey] as string | null | undefined) || null,
+      })),
+    [profileData, user],
+  );
+  const unapprovedSelectedRoles = useMemo(
+    () =>
+      selectedRoleMeta.filter(
+        (role) => role.status !== "approved",
+      ),
+    [selectedRoleMeta],
+  );
+  const rejectedSelectedRoles = useMemo(
+    () =>
+      selectedRoleMeta.filter(
+        (role) => role.status === "rejected" || role.status === "deferred",
+      ),
+    [selectedRoleMeta],
+  );
+  const canShowSubmitAction = useMemo(
+    () => !isProfileInReview && (!isApprovedProfile || unapprovedSelectedRoles.length > 0),
+    [isApprovedProfile, isProfileInReview, unapprovedSelectedRoles.length],
   );
 
   const fetchProfile = useCallback(async () => {
@@ -513,9 +644,27 @@ export default function ProfilePage() {
     activeBody?.scrollTo({ top: 0, behavior: "smooth" });
   }, [activeSection]);
 
+  const getFirstErrorSection = useCallback(
+    (validationErrors: { [key: string]: string }) => {
+      for (const key of Object.keys(validationErrors)) {
+        const section = ERROR_SECTION_MAP[key];
+        if (section) {
+          return section;
+        }
+      }
+      return null;
+    },
+    [],
+  );
+
   const validateForm = useCallback(
-    (data: ProfileData, requireAll: boolean): boolean => {
-      if (!requireAll) return true;
+    (
+      data: ProfileData,
+      requireAll: boolean,
+    ): { isValid: boolean; firstErrorSection: ProfileSectionId | null } => {
+      if (!requireAll) {
+        return { isValid: true, firstErrorSection: null };
+      }
 
       const requiredFields = {
         title: "Profile header",
@@ -548,18 +697,15 @@ export default function ProfilePage() {
       const hasMinRate = minRate !== undefined && minRate !== null;
       const hasMaxRate = maxRate !== undefined && maxRate !== null;
 
-      if (hasMinRate !== hasMaxRate) {
-        newErrors.min_rate = "Provide both minimum and maximum rates";
-        newErrors.max_rate = "Provide both minimum and maximum rates";
+      if (!hasMinRate || !hasMaxRate) {
+        newErrors.min_rate = "Hourly rate range is required";
+        newErrors.max_rate = "Hourly rate range is required";
       } else if (hasMinRate && hasMaxRate && Number(minRate) > Number(maxRate)) {
         newErrors.max_rate = "Maximum rate must be at least minimum rate";
       }
 
       if (!data.talent && !data.mentor && !data.recruiter) {
         newErrors.role = "Select at least one role";
-        setErrors(newErrors);
-        toast.error("Select at least one role");
-        return false;
       }
 
       if (requireAll && !data.cv_url && !cvFile) {
@@ -568,14 +714,16 @@ export default function ProfilePage() {
 
       if (Object.keys(newErrors).length > 0) {
         setErrors(newErrors);
-        toast.error("Please fill in all required fields");
-        return false;
+        return {
+          isValid: false,
+          firstErrorSection: getFirstErrorSection(newErrors),
+        };
       }
 
       setErrors({});
-      return true;
+      return { isValid: true, firstErrorSection: null };
     },
-    [selectedSkills, cvFile],
+    [selectedSkills, cvFile, getFirstErrorSection],
   );
 
   const handleFormSubmit = useCallback(
@@ -587,7 +735,18 @@ export default function ProfilePage() {
           setSaveProfileLoading(true);
         }
 
-        if (!validateForm(profileData, validate)) {
+        const validationResult = validateForm(profileData, validate);
+        if (!validationResult.isValid) {
+          if (validationResult.firstErrorSection) {
+            goToSection(validationResult.firstErrorSection);
+            const sectionLabel =
+              PROFILE_SECTIONS.find(
+                (section) => section.id === validationResult.firstErrorSection,
+              )?.label || "the form";
+            toast.error(`Please complete required fields in ${sectionLabel}.`);
+          } else {
+            toast.error("Please fill in all required fields");
+          }
           setSaveProfileLoading(false);
           setReviewProfileLoading(false);
           return;
@@ -681,6 +840,7 @@ export default function ProfilePage() {
       user_id,
       validateForm,
       walletAddress,
+      goToSection,
     ],
   );
 
@@ -838,16 +998,6 @@ export default function ProfilePage() {
         }
       }
 
-      const generatedMinRate = generatedData.min_rate ?? generatedData.rate;
-      const generatedMaxRate = generatedData.max_rate ?? generatedData.rate;
-      if (generatedMinRate !== undefined || generatedMaxRate !== undefined) {
-        setProfileData((prev) => ({
-          ...prev,
-          min_rate: generatedMinRate ?? prev.min_rate,
-          max_rate: generatedMaxRate ?? prev.max_rate,
-        }));
-      }
-
       if (uploadedCvUrl) {
         toast.success("Resume uploaded successfully!");
       }
@@ -882,8 +1032,11 @@ export default function ProfilePage() {
   const currentChapterMeta =
     PROFILE_CHAPTERS[currentChapterIndex] || PROFILE_CHAPTERS[0];
   const isLastChapter = currentChapterIndex === PROFILE_CHAPTERS.length - 1;
-  const canShowReviewAction = !profileData.approved && !unapprovedProfile;
-  const canEditApprovedProfile = Boolean(profileData.approved);
+  const canEditApprovedProfile = isApprovedProfile;
+  const roleSelectionLocked = isProfileInReview;
+  const submitActionLabel = isApprovedProfile
+    ? "Submit Role Request for Review"
+    : "Submit Profile for Review";
   const isReviewReady = useMemo(() => {
     const requiredFields = [
       profileData.title,
@@ -906,12 +1059,11 @@ export default function ProfilePage() {
     const hasCv = Boolean(profileData.cv_url || cvFile);
     const hasSkills = selectedSkills.length > 0;
     const hasRatePair =
-      (profileData.min_rate === undefined && profileData.max_rate === undefined) ||
-      (profileData.min_rate !== undefined &&
-        profileData.min_rate !== null &&
-        profileData.max_rate !== undefined &&
-        profileData.max_rate !== null &&
-        Number(profileData.min_rate) <= Number(profileData.max_rate));
+      profileData.min_rate !== undefined &&
+      profileData.min_rate !== null &&
+      profileData.max_rate !== undefined &&
+      profileData.max_rate !== null &&
+      Number(profileData.min_rate) <= Number(profileData.max_rate);
 
     return (
       requiredFields.every(Boolean) && hasRole && hasCv && hasSkills && hasRatePair
@@ -921,13 +1073,11 @@ export default function ProfilePage() {
     profileData.availability === true || profileData.availability === "Available"
       ? "Available"
       : "Unavailable";
-  const statusLabel = unapprovedProfile
-    ? "In Review"
-    : savedProfile
-      ? "Draft Saved"
-      : profileData.approved
-        ? "Verified"
-        : "In Progress";
+  const statusLabel = isProfileInReview
+    ? "Under Review"
+    : profileData.approved
+      ? "Approved"
+      : "Not Submitted";
   const scrollToActiveSectionTop = useCallback(() => {
     requestAnimationFrame(() => {
       const sectionElement = document.querySelector<HTMLElement>(
@@ -1515,7 +1665,9 @@ export default function ProfilePage() {
                     <div className="space-y-6">
                       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
                         <div>
-                          <FieldLabel>Hourly rate range (USD/hour)</FieldLabel>
+                          <FieldLabel required>
+                            Hourly rate range (USD/hour)
+                          </FieldLabel>
                           <div className="grid gap-3 sm:grid-cols-2">
                             <div>
                               <input
@@ -1555,6 +1707,9 @@ export default function ProfilePage() {
                           <FieldError
                             message={errors.min_rate || errors.max_rate}
                           />
+                          <FieldHint>
+                            Required before profile submission.
+                          </FieldHint>
                         </div>
 
                         <div className="gh-muted-panel rounded-[22px] px-5 py-4">
@@ -1776,7 +1931,7 @@ export default function ProfilePage() {
                           </p>
                           <ul className="mt-3 space-y-2 text-sm text-slate-600">
                             <li>Headline, bio, and about-work copy</li>
-                            <li>Contact fields and rate hints when available</li>
+                            <li>Contact and profile fields detected from your CV</li>
                             <li>Skills and profile links detected from your CV</li>
                           </ul>
                         </div>
@@ -1967,25 +2122,27 @@ export default function ProfilePage() {
                         </p>
                         <p className="mt-1 text-sm text-slate-500">
                           {canEditApprovedProfile
-                            ? "Your profile is approved. You can keep saving changes, but it does not need review again."
-                            : unapprovedProfile
-                              ? "Your profile is already under review. You can keep editing and saving, but review submission is not available right now."
+                            ? "Your profile is approved. You can edit anything and save changes anytime."
+                            : isProfileInReview
+                              ? "You already submitted your profile. It is currently under review."
                               : isReviewReady
-                                ? "All mandatory details are in place. Save anytime or submit the profile for review."
-                                : "Complete the required details to unlock review."}
+                                ? "All mandatory details are complete. You can now submit your profile."
+                                : "Complete required details, including hourly rate, to submit your profile."}
                         </p>
                       </div>
                       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
-                        <button
-                          className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md"
-                          type="button"
-                          name="save-talent-only"
-                          onClick={handleSaveProfile}
-                          disabled={saveProfileLoading}
-                        >
-                          <Save className="h-4 w-4" />
-                          {saveProfileLoading ? "Saving Profile..." : "Save Profile"}
-                        </button>
+                        {canEditApprovedProfile && (
+                          <button
+                            className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md"
+                            type="button"
+                            name="save-talent-only"
+                            onClick={handleSaveProfile}
+                            disabled={saveProfileLoading}
+                          >
+                            <Save className="h-4 w-4" />
+                            {saveProfileLoading ? "Saving Profile..." : "Save Profile"}
+                          </button>
+                        )}
                         {!isLastChapter && (
                           <button
                             type="button"
@@ -1996,7 +2153,7 @@ export default function ProfilePage() {
                             <span aria-hidden="true">→</span>
                           </button>
                         )}
-                        {canShowReviewAction && isReviewReady && (
+                        {canShowSubmitAction && (
                           <button
                             className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(135deg,_#f59e0b,_#f97316)] px-5 text-sm font-semibold text-white shadow-[0_16px_30px_rgba(249,115,22,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_34px_rgba(249,115,22,0.34)] disabled:cursor-not-allowed disabled:opacity-70"
                             type="submit"
@@ -2006,9 +2163,15 @@ export default function ProfilePage() {
                           >
                             <Send className="h-4 w-4" />
                             {reviewProfileLoading
-                              ? "Sending Profile To Review..."
-                              : "Submit for Review"}
+                              ? "Submitting Profile..."
+                              : submitActionLabel}
                           </button>
+                        )}
+                        {isProfileInReview && (
+                          <div className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-5 text-sm font-semibold text-amber-800">
+                            <CircleCheckBig className="h-4 w-4" />
+                            Profile Submitted - Under Review
+                          </div>
                         )}
                       </div>
                     </div>

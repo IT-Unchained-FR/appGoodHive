@@ -3,6 +3,8 @@
 import { yupResolver } from "@hookform/resolvers/yup";
 import Cookies from "js-cookie";
 import { AlertTriangle, ArrowRight, CheckCircle2, ShieldAlert } from "lucide-react";
+import type { Route } from "next";
+import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useForm } from "react-hook-form";
@@ -324,6 +326,7 @@ export const JobApplicationPopup: React.FC<JobApplicationPopupProps> = ({
   const [mounted, setMounted] = useState(false);
   const [isEligibilityChecking, setIsEligibilityChecking] = useState(false);
   const [eligibility, setEligibility] = useState<EligibilityState | null>(null);
+  const router = useRouter();
   const loggedInUserId = Cookies.get("user_id");
 
   const getOverlayClasses = () => {
@@ -477,6 +480,60 @@ export const JobApplicationPopup: React.FC<JobApplicationPopupProps> = ({
         throw new Error(errorData.message || "Failed to save application");
       }
 
+      const submitPayload = await submitResponse.json();
+      const applicationId = Number(submitPayload?.applicationId);
+      let createdThreadId: string | null = null;
+
+      if (Number.isFinite(applicationId) && applicationId > 0) {
+        try {
+          const threadResponse = await fetch("/api/messenger/threads", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-user-id": loggedInUserId,
+            },
+            body: JSON.stringify({
+              companyUserId,
+              talentUserId: loggedInUserId,
+              threadType: "application",
+              jobId,
+              jobApplicationId: applicationId,
+              actorUserId: loggedInUserId,
+            }),
+          });
+
+          if (threadResponse.ok) {
+            const threadPayload = await threadResponse.json();
+            createdThreadId = threadPayload?.thread?.id || null;
+
+            if (createdThreadId) {
+              const initialMessage = [
+                `Application submitted for "${jobTitle}".`,
+                "",
+                data.coverLetter,
+                data.portfolioLink ? `Portfolio/LinkedIn: ${data.portfolioLink}` : "",
+              ]
+                .filter(Boolean)
+                .join("\n");
+
+              await fetch(`/api/messenger/threads/${createdThreadId}/messages`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "x-user-id": loggedInUserId,
+                },
+                body: JSON.stringify({
+                  senderUserId: loggedInUserId,
+                  messageText: initialMessage,
+                }),
+              });
+            }
+          }
+        } catch (messengerError) {
+          console.error("Failed to initialize application thread:", messengerError);
+        }
+      }
+
       const emailData = {
         name: data.name,
         toUserName: companyName,
@@ -509,6 +566,10 @@ export const JobApplicationPopup: React.FC<JobApplicationPopupProps> = ({
 
       reset();
       onClose();
+
+      if (createdThreadId) {
+        router.push(`/messages?thread=${createdThreadId}` as Route);
+      }
     } catch (error) {
       console.error("Error sending application:", error);
       toast.error("Failed to send application. Please try again.");

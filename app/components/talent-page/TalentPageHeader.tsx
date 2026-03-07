@@ -10,6 +10,8 @@ import { CompanyInfoGuard } from "@/app/components/CompanyInfoGuard";
 import { MessageBoxModal } from "@/app/components/message-box-modal";
 import { useAuthCheck } from "@/app/hooks/useAuthCheck";
 import { ReturnUrlManager } from "@/app/utils/returnUrlManager";
+import type { Route } from "next";
+import { useRouter } from "next/navigation";
 import ApprovalPromptModal from "./ApprovalPromptModal";
 import toast from "react-hot-toast";
 import styles from "./TalentPageHeader.module.scss";
@@ -29,6 +31,7 @@ interface TalentPageHeaderProps {
   approved_roles?: object[] | null;
   canViewSensitive?: boolean;
   canViewBasic?: boolean;
+  talent_user_id?: string;
 }
 
 export const TalentPageHeader = ({
@@ -44,9 +47,11 @@ export const TalentPageHeader = ({
   mentor,
   recruiter,
   approved_roles,
+  talent_user_id,
   canViewSensitive: canViewSensitiveProp,
   canViewBasic: canViewBasicProp,
 }: TalentPageHeaderProps) => {
+  const router = useRouter();
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isPopupModal, setIsPopupModal] = useState(false);
@@ -57,6 +62,11 @@ export const TalentPageHeader = ({
     useAuthCheck();
 
   const handleContactClick = async () => {
+    if (currentUserId && talent_user_id && currentUserId === talent_user_id) {
+      toast.error("You are viewing your own profile.");
+      return;
+    }
+
     // Check if user is authenticated first
     if (!checkAuthAndShowConnectPrompt("contact this talent")) {
       return;
@@ -127,27 +137,79 @@ export const TalentPageHeader = ({
         return;
       }
 
-      const fullName = `${first_name} ${last_name}`;
-      const response = await fetch("/api/send-email", {
-        method: "POST",
-        body: JSON.stringify({
-          name: userProfile?.designation,
-          toUserName: fullName,
-          email: email, // This is the talent's email from props
-          type: "contact-talent",
-          subject: `Goodhive - ${userProfile?.designation} interested in your profile`,
-          userEmail: emailFromModal, // Use email from modal
-          message,
-          userProfile: `${window.location.origin}/companies/${currentUserId}`,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (!response.ok) {
-        throw new Error("Something went wrong!");
-      } else {
-        toast.success("Message sent successfully!");
+      let threadId: string | null = null;
+
+      if (talent_user_id) {
+        const threadResponse = await fetch("/api/messenger/threads", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-user-id": currentUserId,
+          },
+          body: JSON.stringify({
+            companyUserId: currentUserId,
+            talentUserId: talent_user_id,
+            threadType: "direct",
+            actorUserId: currentUserId,
+          }),
+        });
+
+        if (!threadResponse.ok) {
+          throw new Error("Failed to initialize direct conversation");
+        }
+
+        const threadData = await threadResponse.json();
+        threadId = threadData?.thread?.id || null;
+
+        if (!threadId) {
+          throw new Error("Conversation thread not found");
+        }
+
+        const messageResponse = await fetch(
+          `/api/messenger/threads/${threadId}/messages`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-user-id": currentUserId,
+            },
+            body: JSON.stringify({
+              senderUserId: currentUserId,
+              messageText: message,
+            }),
+          },
+        );
+
+        if (!messageResponse.ok) {
+          throw new Error("Failed to send direct message");
+        }
+      }
+
+      if (email) {
+        await fetch("/api/send-email", {
+          method: "POST",
+          body: JSON.stringify({
+            name: userProfile?.designation,
+            toUserName: fullName,
+            email: email,
+            type: "contact-talent",
+            subject: `Goodhive - ${userProfile?.designation} interested in your profile`,
+            userEmail: emailFromModal,
+            message,
+            userProfile: `${window.location.origin}/companies/${currentUserId}`,
+          }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }).catch((notificationError) => {
+          console.error("Notification email failed:", notificationError);
+        });
+      }
+
+      toast.success("Message sent successfully!");
+
+      if (threadId) {
+        router.push(`/messages?thread=${threadId}` as Route);
       }
     } catch (error) {
       toast.error("Something went wrong!");
@@ -182,6 +244,10 @@ export const TalentPageHeader = ({
     typeof canViewBasicProp === "boolean"
       ? canViewBasicProp
       : !!user;
+  const isOwnProfile =
+    !!currentUserId && !!talent_user_id && currentUserId === talent_user_id;
+  const canContactTalent =
+    canViewSensitive && !isOwnProfile && Boolean(talent_user_id || email);
   const fullName = `${first_name} ${last_name}`;
   const location = city && country ? `${city}, ${country}` : city || country || "";
 
@@ -287,7 +353,7 @@ export const TalentPageHeader = ({
 
         {/* CTA Section */}
         <div className={styles.ctaSection}>
-          {canViewSensitive && email ? (
+          {canContactTalent ? (
             <button
               type="button"
               onClick={handleContactClick}
@@ -306,6 +372,16 @@ export const TalentPageHeader = ({
                   Contact Me
                 </>
               )}
+            </button>
+          ) : isOwnProfile ? (
+            <button
+              type="button"
+              className={`${styles.ctaButton} ${styles.connectButton}`}
+              disabled
+              aria-label="Your profile"
+            >
+              <Lock size={18} />
+              Your profile
             </button>
           ) : (
             <button

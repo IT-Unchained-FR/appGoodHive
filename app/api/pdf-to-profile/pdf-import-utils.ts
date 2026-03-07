@@ -19,8 +19,6 @@ export type ExtractedResumeFacts = {
   github?: string;
   portfolio?: string;
   skills?: string[];
-  min_rate?: number;
-  max_rate?: number;
   experience?: ResumeExperience[];
   education?: ResumeEducation[];
   certifications?: ResumeCertification[];
@@ -206,19 +204,6 @@ const mergeSkills = (values: Array<string[] | undefined>) => {
   return Array.from(uniqueSkills.values());
 };
 
-const normalizeRate = (value: number | string | undefined) => {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return value;
-  }
-
-  if (typeof value === "string") {
-    const numericValue = Number(value.replace(/[^\d.]/g, ""));
-    return Number.isFinite(numericValue) ? numericValue : undefined;
-  }
-
-  return undefined;
-};
-
 export const mergeExtractedResumeFacts = (
   chunks: ExtractedResumeFacts[],
 ): ExtractedResumeFacts => {
@@ -259,13 +244,6 @@ export const mergeExtractedResumeFacts = (
     (item) => [item.language, item.proficiency].filter(Boolean).join("|"),
   );
 
-  const minRates = chunks
-    .map((chunk) => normalizeRate(chunk.min_rate))
-    .filter((value): value is number => value !== undefined);
-  const maxRates = chunks
-    .map((chunk) => normalizeRate(chunk.max_rate))
-    .filter((value): value is number => value !== undefined);
-
   return {
     first_name: pickBestString(chunks.map((chunk) => chunk.first_name)),
     last_name: pickBestString(chunks.map((chunk) => chunk.last_name)),
@@ -281,8 +259,6 @@ export const mergeExtractedResumeFacts = (
     github: pickBestString(chunks.map((chunk) => chunk.github)),
     portfolio: pickBestString(chunks.map((chunk) => chunk.portfolio)),
     skills: mergeSkills(chunks.map((chunk) => chunk.skills)),
-    min_rate: minRates.length ? Math.min(...minRates) : undefined,
-    max_rate: maxRates.length ? Math.max(...maxRates) : undefined,
     experience,
     education,
     certifications,
@@ -347,8 +323,6 @@ export const normalizeExtractedResumeFacts = (
   portfolio:
     typeof value.portfolio === "string" ? normalizeWhitespace(value.portfolio) : "",
   skills: toStringArray(value.skills),
-  min_rate: normalizeRate(value.min_rate as number | string | undefined),
-  max_rate: normalizeRate(value.max_rate as number | string | undefined),
   experience: toObjectArray<ResumeExperience>(value.experience).map((item) =>
     normalizeObjectValues(item),
   ),

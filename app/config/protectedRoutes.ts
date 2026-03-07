@@ -6,7 +6,8 @@ export const protectedRoutes = [
   '/talents/my-profile',
   '/companies/my-profile',
   '/user-profile',
-  '/companies/create-job'
+  '/companies/create-job',
+  '/messages',
 ];
 
 /**

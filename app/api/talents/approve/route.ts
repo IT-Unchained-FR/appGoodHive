@@ -1,16 +1,31 @@
 import sql from "@/lib/db";
+import {
+  sendTalentApprovalEmail,
+  type TalentRole,
+} from "@/lib/email/talent-review-notifications";
 
 export async function POST(request: Request) {
   const { userId, approvalTypes, referral_code } = await request.json();
 
-    try {
+  try {
+    const selectedRoles = (["talent", "mentor", "recruiter"] as const).filter(
+      (role) => Boolean(approvalTypes?.[role]),
+    ) as TalentRole[];
+
+    if (!userId || !selectedRoles.length) {
+      return new Response(
+        JSON.stringify({ message: "User ID and at least one role are required" }),
+        { status: 400 },
+      );
+    }
+
     await sql`
       UPDATE goodhive.talents
       SET
         approved = true,
-        talent = ${approvalTypes.talent},
-        mentor = ${approvalTypes.mentor},
-        recruiter = ${approvalTypes.recruiter},
+        talent = CASE WHEN ${Boolean(approvalTypes?.talent)} THEN true ELSE talent END,
+        mentor = CASE WHEN ${Boolean(approvalTypes?.mentor)} THEN true ELSE mentor END,
+        recruiter = CASE WHEN ${Boolean(approvalTypes?.recruiter)} THEN true ELSE recruiter END,
         inReview = false
       WHERE user_id = ${userId}
     `;
@@ -19,29 +34,36 @@ export async function POST(request: Request) {
       UPDATE goodhive.users
       SET 
       talent_status = CASE 
-      WHEN ${approvalTypes.talent} IS TRUE THEN 'approved'
-      WHEN ${approvalTypes.talent} IS FALSE THEN 'pending'
-      ELSE talent_status  -- Preserve existing status if not explicitly set
+      WHEN ${Boolean(approvalTypes?.talent)} IS TRUE THEN 'approved'
+      ELSE talent_status
       END,
       mentor_status = CASE 
-      WHEN ${approvalTypes.mentor} IS TRUE THEN 'approved'
-      WHEN ${approvalTypes.mentor} IS FALSE THEN 'pending'
+      WHEN ${Boolean(approvalTypes?.mentor)} IS TRUE THEN 'approved'
       ELSE mentor_status
       END,
       recruiter_status = CASE 
-      WHEN ${approvalTypes.recruiter} IS TRUE THEN 'approved'
-      WHEN ${approvalTypes.recruiter} IS FALSE THEN 'pending'
+      WHEN ${Boolean(approvalTypes?.recruiter)} IS TRUE THEN 'approved'
       ELSE recruiter_status
+      END,
+      talent_status_reason = CASE
+      WHEN ${Boolean(approvalTypes?.talent)} IS TRUE THEN NULL
+      ELSE talent_status_reason
+      END,
+      mentor_status_reason = CASE
+      WHEN ${Boolean(approvalTypes?.mentor)} IS TRUE THEN NULL
+      ELSE mentor_status_reason
+      END,
+      recruiter_status_reason = CASE
+      WHEN ${Boolean(approvalTypes?.recruiter)} IS TRUE THEN NULL
+      ELSE recruiter_status_reason
       END
       WHERE userid = ${userId}
       RETURNING *;
     `;
 
     // Handle adding roles to approved_roles array dynamically
-    const roles = ["talent", "mentor", "recruiter"];
-    for (const role of roles) {
+    for (const role of selectedRoles) {
       if (
-        approvalTypes[role] &&
         !updatedUser[0]?.approved_roles?.some((r: any) => r.role === role)
       ) {
         await sql`
@@ -60,8 +82,28 @@ export async function POST(request: Request) {
       WHERE referral_code = ${referral_code};
     `;
 
+    const userContact = await sql<{
+      email: string | null;
+      first_name: string | null;
+    }[]>`
+      SELECT users.email, talents.first_name
+      FROM goodhive.users
+      LEFT JOIN goodhive.talents ON talents.user_id = users.userid
+      WHERE users.userid = ${userId}
+      LIMIT 1
+    `;
+    const contact = userContact[0];
+
+    if (contact?.email) {
+      await sendTalentApprovalEmail({
+        email: contact.email,
+        firstName: contact.first_name,
+        approvedRoles: selectedRoles,
+      });
+    }
+
     return new Response(
-      JSON.stringify({ message: "Approved talent successfully" }),
+      JSON.stringify({ message: "Approved talent successfully", roles: selectedRoles }),
     );
   } catch (error) {
     console.log(error);

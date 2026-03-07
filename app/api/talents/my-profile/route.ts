@@ -99,6 +99,29 @@ export async function POST(request: Request) {
   } = await request.json();
 
   try {
+    if (validate === true) {
+      const hasMinRate = min_rate !== undefined && min_rate !== null;
+      const hasMaxRate = max_rate !== undefined && max_rate !== null;
+
+      if (!hasMinRate || !hasMaxRate) {
+        return new Response(
+          JSON.stringify({
+            message: "Hourly rate range is required before profile submission",
+          }),
+          { status: 400 },
+        );
+      }
+
+      if (Number(min_rate) > Number(max_rate)) {
+        return new Response(
+          JSON.stringify({
+            message: "Maximum rate must be at least minimum rate",
+          }),
+          { status: 400 },
+        );
+      }
+    }
+
     const availableResumeColumns = await getAvailableResumeImportColumns();
     const shouldClearCv = clear_cv === true;
     // Filter out undefined, null, and empty string fields
@@ -134,8 +157,10 @@ export async function POST(request: Request) {
       availability: availability === true || availability === "true" || availability === "Available" ? true : false, // Normalize to boolean
       wallet_address,
       user_id,
-      inReview: validate === true ? true : false,
     };
+    if (validate === true) {
+      fields.inReview = true;
+    }
     if (availableResumeColumns.has("resume_experience")) {
       fields.resume_experience = serializeResumeArray(experience);
     }
@@ -182,6 +207,50 @@ export async function POST(request: Request) {
     `;
 
     await sql.unsafe(query, values);
+
+    if (validate === true) {
+      await sql`
+        UPDATE goodhive.users
+        SET
+          talent_status = CASE
+            WHEN ${Boolean(talent)} = true THEN
+              CASE
+                WHEN talent_status = 'approved' THEN talent_status
+                ELSE 'pending'
+              END
+            ELSE talent_status
+          END,
+          mentor_status = CASE
+            WHEN ${Boolean(mentor)} = true THEN
+              CASE
+                WHEN mentor_status = 'approved' THEN mentor_status
+                ELSE 'pending'
+              END
+            ELSE mentor_status
+          END,
+          recruiter_status = CASE
+            WHEN ${Boolean(recruiter)} = true THEN
+              CASE
+                WHEN recruiter_status = 'approved' THEN recruiter_status
+                ELSE 'pending'
+              END
+            ELSE recruiter_status
+          END,
+          talent_status_reason = CASE
+            WHEN ${Boolean(talent)} = true AND talent_status <> 'approved' THEN NULL
+            ELSE talent_status_reason
+          END,
+          mentor_status_reason = CASE
+            WHEN ${Boolean(mentor)} = true AND mentor_status <> 'approved' THEN NULL
+            ELSE mentor_status_reason
+          END,
+          recruiter_status_reason = CASE
+            WHEN ${Boolean(recruiter)} = true AND recruiter_status <> 'approved' THEN NULL
+            ELSE recruiter_status_reason
+          END
+        WHERE userid = ${user_id}
+      `;
+    }
 
     if (referred_by) {
       console.log("Referred By Performed");

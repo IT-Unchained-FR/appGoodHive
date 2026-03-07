@@ -46,8 +46,6 @@ Extract all supported facts from this resume chunk and return a JSON object with
   "github": "string",
   "portfolio": "string",
   "skills": ["string"],
-  "min_rate": 0,
-  "max_rate": 0,
   "experience": [
     {
       "title": "string",
@@ -116,9 +114,7 @@ Return JSON with this exact shape:
 {
   "title": "string",
   "description": "string",
-  "about_work": "string",
-  "min_rate": 0,
-  "max_rate": 0
+  "about_work": "string"
 }
 
 Rules:
@@ -126,8 +122,6 @@ Rules:
 - "description" must be a strong public bio in HTML with semantic headings and paragraphs.
 - "about_work" must be a detailed work-focused HTML section covering experience, strengths, projects, and working style.
 - Preserve the candidate's factual background from the data below.
-- If min_rate and max_rate are already present in the data, keep them aligned with that level.
-- If rates are missing, infer a reasonable range from the experience level.
 - Do not include markdown fences.
 
 Structured resume data:
@@ -297,8 +291,6 @@ export async function POST(request: NextRequest) {
       title?: string;
       description?: string;
       about_work?: string;
-      min_rate?: number;
-      max_rate?: number;
     }>(NARRATIVE_SYSTEM_PROMPT, createNarrativePrompt(mergedFacts), 2600);
 
     const finalProfileData = {
@@ -320,8 +312,6 @@ export async function POST(request: NextRequest) {
       github: mergedFacts.github || "",
       portfolio: mergedFacts.portfolio || "",
       skills: (mergedFacts.skills || []).join(", "),
-      min_rate: generatedNarrative.min_rate ?? mergedFacts.min_rate,
-      max_rate: generatedNarrative.max_rate ?? mergedFacts.max_rate,
       experience: mergedFacts.experience || [],
       education: mergedFacts.education || [],
       certifications: mergedFacts.certifications || [],

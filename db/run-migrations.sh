@@ -45,9 +45,14 @@ psql "$DATABASE_URL" -f database/migrations/add_talent_resume_import_fields.sql
 echo "✓ Migration 5 complete"
 
 echo ""
-echo "[6/6] Adding job applications table..."
+echo "[6/7] Adding job applications table..."
 psql "$DATABASE_URL" -f db/migrations/add-job-applications.sql
 echo "✓ Migration 6 complete"
+
+echo ""
+echo "[7/7] Adding job requests + messenger foundation..."
+psql "$DATABASE_URL" -f db/migrations/add-job-requests-and-messenger.sql
+echo "✓ Migration 7 complete"
 
 echo ""
 echo "================================"

@@ -25,6 +25,7 @@ import {
   BriefcaseBusiness,
   CircleUserRound,
   LayoutDashboard,
+  MessageSquare,
   Search,
   type LucideIcon,
   UserRound,
@@ -53,6 +54,12 @@ const commonLinks = [
     protected: false,
     icon: UserRound,
   },
+  {
+    href: "/messages",
+    label: "Messages",
+    protected: true,
+    icon: MessageSquare,
+  },
 ];
 
 const talentsLinks = [
@@ -67,6 +74,12 @@ const talentsLinks = [
     label: "My Talent Profile",
     protected: true,
     icon: UserRound,
+  },
+  {
+    href: "/messages",
+    label: "Messages",
+    protected: true,
+    icon: MessageSquare,
   },
 ];
 
@@ -89,6 +102,12 @@ const companiesLinks = [
     protected: true,
     icon: BriefcaseBusiness,
   },
+  {
+    href: "/messages",
+    label: "Messages",
+    protected: true,
+    icon: MessageSquare,
+  },
 ];
 
 type NavLinkItem = {
@@ -104,6 +123,7 @@ export const NavBar = () => {
   const [showEmailVerification, setShowEmailVerification] = useState(false);
   const [walletAddressToVerify, setWalletAddressToVerify] = useState("");
   const [showOnboardingPopup, setShowOnboardingPopup] = useState(false);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -126,11 +146,41 @@ export const NavBar = () => {
     router.refresh();
   }, [refreshUser, router]);
 
+  const refreshUnreadMessages = useCallback(async () => {
+    if (!loggedIn_user_id) {
+      setUnreadMessageCount(0);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/messenger/threads?userId=${loggedIn_user_id}`, {
+        cache: "no-store",
+        headers: {
+          "x-user-id": loggedIn_user_id,
+        },
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const data = await response.json();
+      const threads = Array.isArray(data.threads) ? data.threads : [];
+      const nextCount = threads.reduce(
+        (sum: number, thread: any) => sum + Number(thread?.unread_count || 0),
+        0,
+      );
+      setUnreadMessageCount(nextCount);
+    } catch (error) {
+      console.error("Failed to refresh unread message count:", error);
+    }
+  }, [loggedIn_user_id]);
+
   const handlePostAuthRouting = useCallback(
     (redirectUrl: string | null, postAuthAction: any) => {
       const currentRoute = `${pathname}${searchParams?.toString() ? `?${searchParams.toString()}` : ""}`;
       if (redirectUrl && redirectUrl !== currentRoute) {
-        router.push(redirectUrl);
+        router.push(redirectUrl as Route);
       }
 
       if (postAuthAction?.type === "show-contact-modal") {
@@ -428,7 +478,7 @@ export const NavBar = () => {
     });
 
     // Clean up the query param to avoid repeated prompts on navigation
-    router.replace(cleanedUrl, { scroll: false });
+    router.replace(cleanedUrl as Route, { scroll: false });
   }, [
     account?.address,
     connect,
@@ -438,6 +488,23 @@ export const NavBar = () => {
     router,
     searchParams,
   ]);
+
+  useEffect(() => {
+    if (!loggedIn_user_id) {
+      setUnreadMessageCount(0);
+      return;
+    }
+
+    void refreshUnreadMessages();
+
+    const intervalId = window.setInterval(() => {
+      void refreshUnreadMessages();
+    }, 10000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [loggedIn_user_id, pathname, refreshUnreadMessages]);
 
   return (
     <>
@@ -507,7 +574,12 @@ export const NavBar = () => {
                         authDescription={`access ${label.toLowerCase()}`}
                       >
                         <Icon className="h-4 w-4" />
-                        {label}
+                        <span>{label}</span>
+                        {href === "/messages" && unreadMessageCount > 0 && (
+                          <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-amber-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+                            {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
+                          </span>
+                        )}
                       </ProtectedLink>
                     ) : (
                       <Link
@@ -515,7 +587,12 @@ export const NavBar = () => {
                         className="inline-flex items-center gap-2 text-gray-700 font-medium transition hover:text-amber-700 hover:scale-105 active:scale-95"
                       >
                         <Icon className="h-4 w-4" />
-                        {label}
+                        <span>{label}</span>
+                        {href === "/messages" && unreadMessageCount > 0 && (
+                          <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-amber-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+                            {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
+                          </span>
+                        )}
                       </Link>
                     )}
                   </li>
@@ -604,7 +681,12 @@ export const NavBar = () => {
                         authDescription={`access ${label.toLowerCase()}`}
                       >
                         <Icon className="h-4 w-4" />
-                        {label}
+                        <span>{label}</span>
+                        {href === "/messages" && unreadMessageCount > 0 && (
+                          <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-amber-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+                            {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
+                          </span>
+                        )}
                       </ProtectedLink>
                     ) : (
                       <Link
@@ -612,7 +694,12 @@ export const NavBar = () => {
                         className="inline-flex items-center gap-2 text-gray-700 font-medium transition hover:text-amber-700 hover:scale-105 active:scale-95"
                       >
                         <Icon className="h-4 w-4" />
-                        {label}
+                        <span>{label}</span>
+                        {href === "/messages" && unreadMessageCount > 0 && (
+                          <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-amber-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+                            {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
+                          </span>
+                        )}
                       </Link>
                     )}
                   </li>

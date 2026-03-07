@@ -8,6 +8,7 @@ import TalentsCVSection from "@/app/components/talents/TalentsCVSection";
 import BeeHiveSpinner from "@/app/components/spinners/bee-hive-spinner";
 import { TalentPageHeader } from "@/app/components/talent-page/TalentPageHeader";
 import { TalentPageSidebar } from "@/app/components/talent-page/TalentPageSidebar";
+import { QuickRequestComposer } from "@/app/components/messenger/QuickRequestComposer";
 import { useAuth } from "@/app/contexts/AuthContext";
 import styles from "./page.module.scss";
 import "react-quill/dist/quill.snow.css";
@@ -114,6 +115,12 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
         user.recruiter_status === "approved"));
   const canViewBasic = isAuthenticated || isOwner;
   const canViewResume = isOwner || user?.recruiter_status === "approved";
+  const hasCareerDetails =
+    Boolean(experience?.length) ||
+    Boolean(education?.length) ||
+    Boolean(certifications?.length) ||
+    Boolean(projects?.length) ||
+    (Array.isArray(languages) && languages.length > 0);
 
   // Pending approval state
   if (!approved) {
@@ -135,6 +142,7 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
         first_name={first_name}
         last_name={last_name}
         title={title}
+        talent_user_id={profileData.user_id}
         city={city}
         country={country}
         image_url={image_url}
@@ -168,11 +176,7 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
             </section>
           )}
 
-          {(experience?.length ||
-            education?.length ||
-            certifications?.length ||
-            projects?.length ||
-            (Array.isArray(languages) && languages.length)) && (
+          {hasCareerDetails && (
             <section className={styles.section}>
               <h2 className={styles.sectionTitle}>Career Details</h2>
               <ResumeStructuredSections
@@ -229,6 +233,14 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
             stackoverflow={stackoverflow ?? undefined}
             canViewSensitive={canViewSensitive}
           />
+          {profileData.user_id && (
+            <div className="mt-4">
+              <QuickRequestComposer
+                targetTalentUserId={profileData.user_id}
+                talentName={`${first_name || ""} ${last_name || ""}`.trim() || "this talent"}
+              />
+            </div>
+          )}
         </aside>
       </div>
     </div>

@@ -97,6 +97,11 @@ export async function GET(req: NextRequest) {
         talents.*,
         talents.inreview AS "inReview",
         users.talent_status AS talent_status,
+        users.mentor_status,
+        users.recruiter_status,
+        users.talent_status_reason,
+        users.mentor_status_reason,
+        users.recruiter_status_reason,
         users.referred_by,
         users.approved_roles,
         users.created_at AS user_created_at
