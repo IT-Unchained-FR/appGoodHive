@@ -177,6 +177,7 @@ export const useProfileForm = (user_id: string, countries: CountryOption[]) => {
                   "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
+                  name: `${formData.first_name} ${formData.last_name}`,
                   email: formData.email,
                   type: "new-talent",
                   subject: `Welcome to GoodHive, ${formData.first_name}! 🎉 Your profile has been sent for review`,

@@ -90,8 +90,14 @@ export type ProfileData = {
   talent_status?: string;
   mentor_status?: string;
   recruiter_status?: string;
+  talent_status_reason?: string;
+  mentor_status_reason?: string;
+  recruiter_status_reason?: string;
   hide_contact_details?: boolean;
   referrer?: string;
+  referrer_name?: string | null;
+  referrer_email?: string | null;
+  referrer_user_id?: string | null;
   availability?: boolean | string;
   wallet_address?: string;
   approved: boolean;
@@ -119,6 +125,7 @@ type UserRoleStatus = {
   talent_status_reason?: string | null;
   mentor_status_reason?: string | null;
   recruiter_status_reason?: string | null;
+  referred_by?: string | null;
 };
 
 const ROLE_CONFIG: Array<{
@@ -456,6 +463,7 @@ function RejectionBanner({
 export default function ProfilePage() {
   const isInitialMount = useRef(true);
   const isMounted = useRef(false);
+  const originalCriticalFields = useRef({ email: "", telegram: "" });
   const router = useRouter();
   const user_id = useCurrentUserId();
   const { checkAuthAndShowConnectPrompt } = useAuthCheck();
@@ -544,13 +552,6 @@ export default function ProfilePage() {
       })),
     [profileData, user],
   );
-  const unapprovedSelectedRoles = useMemo(
-    () =>
-      selectedRoleMeta.filter(
-        (role) => role.status !== "approved",
-      ),
-    [selectedRoleMeta],
-  );
   const rejectedSelectedRoles = useMemo(
     () =>
       selectedRoleMeta.filter(
@@ -558,9 +559,18 @@ export default function ProfilePage() {
       ),
     [selectedRoleMeta],
   );
+  const hasCriticalFieldChanged = useMemo(() => {
+    const currentEmail = (profileData.email || "").trim();
+    const currentTelegram = (profileData.telegram || "").trim();
+    const originalEmail = (originalCriticalFields.current.email || "").trim();
+    const originalTelegram = (originalCriticalFields.current.telegram || "").trim();
+
+    return currentEmail !== originalEmail || currentTelegram !== originalTelegram;
+  }, [profileData.email, profileData.telegram]);
+
   const canShowSubmitAction = useMemo(
-    () => !isProfileInReview && (!isApprovedProfile || unapprovedSelectedRoles.length > 0),
-    [isApprovedProfile, isProfileInReview, unapprovedSelectedRoles.length],
+    () => !isProfileInReview,
+    [isProfileInReview],
   );
 
   const fetchProfile = useCallback(async () => {
@@ -575,6 +585,10 @@ export default function ProfilePage() {
         if (response.ok) {
           const data = await response.json();
           setProfileData(data);
+          originalCriticalFields.current = {
+            email: data.email || "",
+            telegram: data.telegram || "",
+          };
 
           if (isInitialMount.current) {
             if (data.country) {
@@ -816,6 +830,11 @@ export default function ProfilePage() {
         });
 
         if (profileResponse.ok) {
+          originalCriticalFields.current = {
+            email: formData.email || "",
+            telegram: formData.telegram || "",
+          };
+
           if (validate) {
             try {
               await fetch("/api/send-email", {
@@ -824,6 +843,7 @@ export default function ProfilePage() {
                   "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
+                  name: `${formData.first_name} ${formData.last_name}`,
                   email: formData.email,
                   type: "new-talent",
                   subject: `Welcome to GoodHive, ${formData.first_name}! 🎉 Your profile has been sent for review`,
@@ -942,12 +962,63 @@ export default function ProfilePage() {
     }
   }, []);
 
+  const persistRoleToggleUpdate = useCallback(
+    async (nextProfileData: ProfileData) => {
+      if (!user_id) return;
+
+      try {
+        const roleUpdateResponse = await fetch("/api/talents/my-profile", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            user_id,
+            talent: Boolean(nextProfileData.talent),
+            mentor: Boolean(nextProfileData.mentor),
+            recruiter: Boolean(nextProfileData.recruiter),
+            validate: false,
+          }),
+        });
+
+        if (!roleUpdateResponse.ok) {
+          throw new Error("Failed to save role toggles");
+        }
+
+        void fetchUser();
+      } catch (error) {
+        console.error("Error saving role toggles:", error);
+        toast.error("Failed to save role selection");
+      }
+    },
+    [fetchUser, user_id],
+  );
+
   const handleToggleChange = useCallback((name: string, checked: boolean) => {
-    setProfileData((prev) => ({
-      ...prev,
-      [name]: checked,
-    }));
-  }, []);
+    let nextProfileData: ProfileData | null = null;
+
+    setProfileData((prev) => {
+      nextProfileData = {
+        ...prev,
+        [name]: checked,
+      };
+      return nextProfileData;
+    });
+
+    const isRoleToggle =
+      name === "talent" || name === "mentor" || name === "recruiter";
+
+    if (isRoleToggle && nextProfileData) {
+      setErrors((prev) => {
+        if (!prev.role) return prev;
+        const updatedErrors = { ...prev };
+        delete updatedErrors.role;
+        return updatedErrors;
+      });
+
+      void persistRoleToggleUpdate(nextProfileData);
+    }
+  }, [persistRoleToggleUpdate]);
 
   const handlePDFImportSuccess = async (
     generatedData: any,
@@ -1056,10 +1127,11 @@ export default function ProfilePage() {
   const currentChapterMeta =
     PROFILE_CHAPTERS[currentChapterIndex] || PROFILE_CHAPTERS[0];
   const isLastChapter = currentChapterIndex === PROFILE_CHAPTERS.length - 1;
-  const canEditApprovedProfile = isApprovedProfile && !isProfileInReview;
   const roleSelectionLocked = isProfileInReview;
   const submitActionLabel = isApprovedProfile
-    ? "Submit Role Request for Review"
+    ? hasCriticalFieldChanged
+      ? "Submit Profile for Review"
+      : "Submit Role Request for Review"
     : "Submit Profile for Review";
   const isReviewReady = useMemo(() => {
     const requiredFields = [
@@ -2130,8 +2202,8 @@ export default function ProfilePage() {
                           {currentChapterMeta.label}
                         </p>
                         <p className="mt-1 text-sm text-slate-500">
-                          {canEditApprovedProfile
-                            ? "Your profile is approved. You can edit anything and save changes anytime."
+                          {hasCriticalFieldChanged
+                            ? "Email or Telegram changed. Submit your profile for review to apply these updates."
                             : isProfileInReview
                               ? "You already submitted your profile. It is currently under review."
                               : isReviewReady
@@ -2140,7 +2212,7 @@ export default function ProfilePage() {
                         </p>
                       </div>
                       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
-                        {canEditApprovedProfile && (
+                        {!isProfileInReview && !hasCriticalFieldChanged && (
                           <button
                             className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md"
                             type="button"

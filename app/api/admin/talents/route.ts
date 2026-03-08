@@ -135,14 +135,33 @@ export async function GET(req: NextRequest) {
         u.mentor_status,
         u.talent_status,
         u.recruiter_status,
+        u.referred_by,
         u.mentor_deferred_until,
         u.talent_deferred_until,
         u.recruiter_deferred_until,
         u.mentor_status_reason,
         u.talent_status_reason,
-        u.recruiter_status_reason
+        u.recruiter_status_reason,
+        ref.user_id AS referrer_user_id,
+        ref_users.email AS referrer_email,
+        COALESCE(
+          NULLIF(
+            TRIM(
+              CONCAT(
+                COALESCE(ref_talents.first_name, ''),
+                ' ',
+                COALESCE(ref_talents.last_name, '')
+              )
+            ),
+            ''
+          ),
+          ref.user_id
+        ) AS referrer_name
       FROM goodhive.talents t
       LEFT JOIN goodhive.users u ON t.user_id = u.userid
+      LEFT JOIN goodhive.referrals ref ON ref.referral_code = u.referred_by
+      LEFT JOIN goodhive.talents ref_talents ON ref_talents.user_id = ref.user_id
+      LEFT JOIN goodhive.users ref_users ON ref_users.userid = ref.user_id
       ${whereClause ? sql`WHERE ${whereClause}` : sql``}
       ORDER BY ${orderBy}
       LIMIT ${limit}

@@ -29,6 +29,74 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import ApprovalPopup from "../talent-approval/components/ApprovalPopup";
 
+const getTalentApprovalStatus = (row: ProfileData) => {
+  if (row.talent_status === "approved" || row.approved) return "approved";
+  if (row.talent_status === "deferred") return "deferred";
+  if (row.talent_status === "rejected") return "rejected";
+  if (
+    row.talent_status === "pending" ||
+    row.talent_status === "in_review" ||
+    row.inreview
+  ) {
+    return "in_review";
+  }
+  return "in_review";
+};
+
+const renderTalentApprovalBadge = (row: ProfileData) => {
+  const status = getTalentApprovalStatus(row);
+  if (status === "approved") {
+    return (
+      <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">
+        Approved
+      </Badge>
+    );
+  }
+  if (status === "deferred") {
+    return (
+      <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
+        Deferred
+      </Badge>
+    );
+  }
+  if (status === "rejected") {
+    return (
+      <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700">
+        Rejected
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className="border-yellow-200 bg-yellow-50 text-yellow-700">
+      In Review
+    </Badge>
+  );
+};
+
+const getReferredByLabel = (row: ProfileData) => {
+  const referrerName = row.referrer_name?.trim();
+  const referrerEmail = row.referrer_email?.trim();
+  const referralCode = row.referred_by?.trim();
+
+  if (referrerName && referrerEmail) {
+    return `${referrerName} (${referrerEmail})`;
+  }
+
+  if (referrerName) {
+    return referrerName;
+  }
+
+  if (referrerEmail) {
+    return referrerEmail;
+  }
+
+  if (referralCode) {
+    return referralCode;
+  }
+
+  return "–";
+};
+
 export default function AdminManageTalents() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -47,46 +115,6 @@ export default function AdminManageTalents() {
 
   const getSafeValue = (value?: string | null) =>
     value && value !== "null" ? value : undefined;
-
-  const getTalentApprovalStatus = (row: ProfileData) => {
-    if (row.talent_status === "approved" || row.approved) return "approved";
-    if (row.talent_status === "deferred") return "deferred";
-    if (row.talent_status === "rejected") return "rejected";
-    if (row.talent_status === "pending" || row.talent_status === "in_review" || row.inreview) {
-      return "in_review";
-    }
-    return "in_review";
-  };
-
-  const renderTalentApprovalBadge = (row: ProfileData) => {
-    const status = getTalentApprovalStatus(row);
-    if (status === "approved") {
-      return (
-        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-          Approved
-        </Badge>
-      );
-    }
-    if (status === "deferred") {
-      return (
-        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-          Deferred
-        </Badge>
-      );
-    }
-    if (status === "rejected") {
-      return (
-        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-          Rejected
-        </Badge>
-      );
-    }
-    return (
-      <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-        In Review
-      </Badge>
-    );
-  };
 
   const getAuthHeaders = () => {
     const token = Cookies.get("admin_token");
@@ -260,6 +288,18 @@ export default function AdminManageTalents() {
       header: "Email",
       width: "15%",
       sortable: true,
+    },
+    {
+      key: "referred_by",
+      header: "Referred by",
+      width: "16%",
+      sortable: false,
+      render: (_value, row) => (
+        <span className="break-words text-sm text-slate-700">
+          {getReferredByLabel(row)}
+        </span>
+      ),
+      exportValue: (row) => getReferredByLabel(row),
     },
     {
       key: "wallet_address",
@@ -674,6 +714,9 @@ function TalentCard({
           </div>
           <div className="text-sm text-gray-600 break-words">
             {talent.email}
+          </div>
+          <div className="mt-1 text-xs text-gray-500">
+            Referred by: {getReferredByLabel(talent)}
           </div>
           <div className="flex flex-wrap gap-2 mt-2">
             <Badge className={talent.talent ? "bg-green-500 text-white" : "bg-orange-500 text-white"}>

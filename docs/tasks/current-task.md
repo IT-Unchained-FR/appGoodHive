@@ -14,6 +14,20 @@ GoodHive is an AI-powered talent marketplace. Benoit (boss/owner) runs QA and de
 ## Pre-Deploy Plan
 Full detailed plan with exact code diffs for Codex: **`docs/tasks/pre-deploy-plan.md`**
 
+### Pre-Deploy Execution Checklist (March 9, 2026)
+- [x] Task 1 — Fix `name: undefined` in admin email subject
+- [x] Task 2 — Role toggle does NOT reset approval
+- [x] Task 3 — Critical field changes force submit for review
+- [x] Task 4 — Remove hourly rate from AI suggestions
+- [x] Task 5 — Show referrer in admin panel
+
+Validation log after each completed task:
+- Task 1: `pnpm lint && pnpm tsc --noEmit` (lint warnings only; `tsc` fails with existing repo-wide errors outside this task scope)
+- Task 2: `pnpm lint && pnpm tsc --noEmit` (lint warnings only; same existing repo-wide `tsc` failures)
+- Task 3: `pnpm lint && pnpm tsc --noEmit` (lint warnings only; same existing repo-wide `tsc` failures)
+- Task 4: `pnpm lint && pnpm tsc --noEmit` (lint warnings only; same existing repo-wide `tsc` failures)
+- Task 5: `pnpm lint && pnpm tsc --noEmit` (lint warnings only; same existing repo-wide `tsc` failures)
+
 ---
 
 ## 🔴 CRITICAL — Fix First
