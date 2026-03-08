@@ -18,9 +18,7 @@ export const JobAppliedTemplate: React.FC<Readonly<EmailTemplateProps>> = (
       <a href={jobLink}>Your Job Url</a>
       <br />
       <br />
-      <p>GoodHive Team</p>
-      <a href="mailto:contact@goodhive.io">contact@goodhive.io</a>
-      <p>GoodHive, 39 rue de l&apos;Arrivée 95880 Enghien les Bains - France</p>
+      <p>The GoodHive Team 🐝</p>
     </div>
   );
 };

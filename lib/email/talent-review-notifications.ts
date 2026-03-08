@@ -39,7 +39,7 @@ export const sendTalentApprovalEmail = async ({
       <p style="margin: 0 0 12px;">Your GoodHive profile update has been approved.</p>
       <p style="margin: 0 0 12px;"><strong>Approved role(s):</strong> ${escapeHtml(roleList)}</p>
       <p style="margin: 0 0 12px;">You can now continue from your talent profile and start using the approved role capabilities.</p>
-      <p style="margin: 20px 0 0; color: #6b7280;">GoodHive Core Team</p>
+      <p style="margin: 20px 0 0; color: #6b7280;">The GoodHive Team 🐝</p>
     </div>
   `;
 
@@ -81,7 +81,7 @@ export const sendTalentRejectionEmail = async ({
       <p style="margin: 0 0 12px;"><strong>Role(s):</strong> ${escapeHtml(roleList)}</p>
       ${reasonBlock}
       <p style="margin: 0;">You can update your profile and submit again anytime.</p>
-      <p style="margin: 20px 0 0; color: #6b7280;">GoodHive Core Team</p>
+      <p style="margin: 20px 0 0; color: #6b7280;">The GoodHive Team 🐝</p>
     </div>
   `;
 

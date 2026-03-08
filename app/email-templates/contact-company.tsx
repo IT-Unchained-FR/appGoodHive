@@ -15,9 +15,7 @@ export const ContactCompanyTemplate: React.FC<Readonly<EmailTemplateProps>> = (
       </p>
       <br />
       <br />
-      <p>GoodHive Team</p>
-      <a href="mailto:contact@goodhive.io">contact@goodhive.io</a>
-      <p>GoodHive, 39 rue de l&apos;Arrivée 95880 Enghien les Bains - France</p>
+      <p>The GoodHive Team 🐝</p>
     </div>
   );
 };

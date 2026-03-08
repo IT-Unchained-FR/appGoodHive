@@ -128,7 +128,7 @@ export default function ContactFormPage() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-gray-900">Email Us</h3>
-                      <p className="text-gray-600">contact@goodhive.io</p>
+                      <p className="text-gray-600">benoit@goodhive.io</p>
                     </div>
                   </div>
                   

@@ -16,11 +16,8 @@ export const TalentRegistrationTemplate: React.FC<
       </p>
       <p>
         Here&apos;s what&apos;s next: To get your profile up and running,
-        let&apos;s have a chat! Schedule a 45-minute meeting with us at{" "}
-        <a href="https://calendly.com/benoit-kulesza/45-minutes-meeting">
-          https://calendly.com/benoit-kulesza/45-minutes-meeting
-        </a>{" "}
-        – can&apos;t wait to hear your ideas and plans.
+        our team will reach out to schedule a quick intro call — can&apos;t
+        wait to hear your ideas and plans.
       </p>
       <p>
         And hey, got friends who&apos;d love to be a part of this too? Share
@@ -51,9 +48,7 @@ export const TalentRegistrationTemplate: React.FC<
       <br />
       <br />
       <p>All the best,</p>
-      <p>The GoodHive Core Team 🐝</p>
-      <a href="mailto:contact@goodhive.io">contact@goodhive.io</a>
-      <p>GoodHive, 39 rue de l&apos;Arrivée 95880 Enghien les Bains - France</p>
+      <p>The GoodHive Team 🐝</p>
     </div>
   );
 };

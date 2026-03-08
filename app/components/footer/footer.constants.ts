@@ -57,5 +57,5 @@ export const socialLinks = [
 ];
 
 export const contactDetails = {
-  email: "contact@goodhive.io",
+  email: "benoit@goodhive.io",
 };

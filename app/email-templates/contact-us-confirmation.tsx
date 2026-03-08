@@ -56,12 +56,7 @@ export default function ContactUsConfirmationTemplate({
           <p style={footer}>
             <strong>What happens next?</strong>
             <br />
-            Our team will review your message and respond within 24 hours. If
-            you have any urgent questions, feel free to reach out to us directly
-            at{" "}
-            <a href="mailto:contact@goodhive.io" style={emailLink}>
-              contact@goodhive.io
-            </a>
+            Our team will review your message and respond within 24 hours.
           </p>
 
           {/* Signature */}
