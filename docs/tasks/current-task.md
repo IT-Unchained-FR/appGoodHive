@@ -1,10 +1,24 @@
 # Current Task
 
 ## Status
-`IN PROGRESS — Sprint: March 6–9, 2026`
+`IN PROGRESS — Messenger Polish Sprint (March 9, 2026)`
 
 ## Last Updated
 2026-03-09
+
+## Active Task
+Full plan: **`docs/tasks/messenger-polish.md`**
+
+- [ ] MSG-001 — Fix hardcoded messages URL in email
+- [ ] MSG-002 — Fix hardcoded dev email fallback
+- [ ] MSG-007 — Message length limit (API + UI)
+- [ ] MSG-005 — Empty state for no conversations
+- [ ] MSG-006 — Loading skeletons
+- [ ] MSG-003 — Exponential backoff on poll failures
+- [ ] MSG-004 — Optimistic message send
+- [ ] MSG-008 — Unread badge on navigation
+
+---
 
 ## Context for LLMs
 GoodHive is an AI-powered talent marketplace. Benoit (boss/owner) runs QA and decides priorities. Juhan (dev) builds. Claude Code = architect/planner/reviewer. Codex = implementer. Read `docs/architecture/overview.md` for full stack context before touching any code. Meeting notes with full business context: `docs/meetings/2026-03-06-juhan-benoit.md`.
@@ -38,13 +52,13 @@ Full Codex plan: **`docs/tasks/remaining-meeting-tasks.md`**
   - [x] TASK-006a — Company-only initiation from talent profile verified/fixed
   - [x] TASK-006b — Email notification on new message
   - [x] TASK-006c — Silent poll failures until 3 consecutive errors
-- [ ] TASK-007 — Replace blockchain section with video (BLOCKED — need video URL from Benoit)
+- [ ] TASK-007 — Replace blockchain section with video (BLOCKED — waiting on video URL from Benoit)
 - [x] TASK-008 — Company profile UI polish
 - [x] TASK-009 — QA process doc
 
 ---
 
-## 🔴 CRITICAL — Fix First
+## ✅ COMPLETED TASKS
 
 ### TASK-004: Email Notifications Broken
 **From meeting:** `docs/meetings/2026-03-06-juhan-benoit.md` — BUG-002
@@ -71,10 +85,8 @@ Full Codex plan: **`docs/tasks/remaining-meeting-tasks.md`**
 
 ---
 
-## 🔴 HIGH — This Week
-
 ### TASK-001: Remove Hourly Rate from AI Suggestions
-**Status:** In progress
+**Status:** ✅ Done
 **Background:** Benoit doesn't want AI to suggest hourly rates to new talents during profile setup. Talents should set their own rate.
 **Acceptance Criteria:**
 - [ ] Hourly rate field is NOT populated or suggested by AI in the profile enhancement flow
@@ -84,7 +96,7 @@ Full Codex plan: **`docs/tasks/remaining-meeting-tasks.md`**
 ---
 
 ### TASK-002: Show Referrer in Admin Panel
-**Status:** In progress
+**Status:** ✅ Done
 **Background:** Admin panel currently can't see who referred each talent/company. Benoit needs this for tracking referral commissions.
 **Acceptance Criteria:**
 - [ ] Admin talent list shows "Referred by: [name/email]" column or detail
@@ -95,7 +107,7 @@ Full Codex plan: **`docs/tasks/remaining-meeting-tasks.md`**
 ---
 
 ### TASK-003: Harden Role Toggle — Don't Reset Approval Status (BUG-001)
-**Status:** Planned
+**Status:** ✅ Done
 **Background:** When an approved talent changes their opportunity toggles (mentor / talent / recruiter), it currently sends them back to "pending" state. This broke Benoit's own profile during the meeting. It should NOT reset approval for existing approved users.
 **Required Logic:**
 - Changing opportunity type toggles (mentor, talent, recruiter) → does NOT trigger re-review
@@ -110,7 +122,7 @@ Full Codex plan: **`docs/tasks/remaining-meeting-tasks.md`**
 ---
 
 ### TASK-005: Referral Page — Add Commission Text
-**Status:** Planned
+**Status:** ✅ Done
 **Background:** Referral page cards need updated copy explaining the commission structure.
 **Text to add:** *"Receive 5% of the commission earned on every mission completed by a talent you refer throughout their first year."* (Same copy for talent referrals and company referrals)
 **UI decision:** Add as a 4th card, OR replace "Track Results" card — discuss with Benoit
@@ -121,10 +133,10 @@ Full Codex plan: **`docs/tasks/remaining-meeting-tasks.md`**
 
 ---
 
-## 🟡 MEDIUM — Monday Demo
+## 🟡 BLOCKED
 
 ### TASK-006: Messenger — Fix Polling Overload + Complete End-to-End
-**Status:** In progress
+**Status:** ✅ Done
 **Background:** Messenger currently polls every 1 second → "unable to load your request" / "too many requests" errors. End-to-end company ↔ talent conversation needs to be demo-ready by Monday.
 **Acceptance Criteria:**
 - [ ] Polling interval increased to minimum 3–5 seconds (or implement SSE for true real-time)
@@ -145,17 +157,13 @@ Validation log (remaining-meeting execution):
 
 ---
 
-## 🟢 BACKLOG — After Monday
-
 ### TASK-007: Replace Blockchain Section with Video
 **Background:** The current blockchain section on the company profile / job page needs the content replaced with a video presentation (Benoit has the video).
 **Files:** Find blockchain section in company/job pages — likely `app/companies/` or `app/jobs/`
 
-### TASK-008: Company Profile UI — Match Talent Profile Polish
-**Background:** Company profile should look as polished as the talent profile. Same design language, layout patterns.
+### TASK-008: Company Profile UI — Match Talent Profile Polish ✅ Done
 
-### TASK-009: QA Process Setup
-**Background:** Agreed in meeting — before every production rollout, Benoit + Juhan (+ Sharon) do live QA together on the preview/staging version. Need a lightweight process doc.
+### TASK-009: QA Process Setup ✅ Done
 
 ---
 
