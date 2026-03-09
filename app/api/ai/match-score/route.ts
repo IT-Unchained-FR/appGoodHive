@@ -6,7 +6,7 @@ import { safeBase64Decode } from "@/lib/talents";
 
 interface JobRow {
   id: string;
-  user_id: string;
+  company_user_id: string;
   title: string | null;
   description: string | null;
   skills: string | null;
@@ -96,36 +96,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let jobRows: JobRow[] = [];
-    if (isCompany && !canAccessAsTalent) {
-      jobRows = await sql<JobRow[]>`
-        SELECT id, user_id, title, description, skills
-        FROM goodhive.job_offers
-        WHERE id = ${jobId}::uuid
-          AND user_id = ${actorUserId}::uuid
-        LIMIT 1
-      `;
+    const jobRows = await sql<JobRow[]>`
+      SELECT id, user_id AS company_user_id, title, description, skills
+      FROM goodhive.job_offers
+      WHERE id = ${jobId}::uuid
+      LIMIT 1
+    `;
 
-      if (jobRows.length === 0) {
-        return NextResponse.json(
-          { success: false, error: "Job not accessible" },
-          { status: 403 },
-        );
-      }
-    } else {
-      jobRows = await sql<JobRow[]>`
-        SELECT id, user_id, title, description, skills
-        FROM goodhive.job_offers
-        WHERE id = ${jobId}::uuid
-        LIMIT 1
-      `;
+    if (jobRows.length === 0) {
+      return NextResponse.json(
+        { success: false, error: "Job not found" },
+        { status: 404 },
+      );
+    }
 
-      if (jobRows.length === 0) {
-        return NextResponse.json(
-          { success: false, error: "Job not found" },
-          { status: 404 },
-        );
-      }
+    const job = jobRows[0];
+
+    if (isCompany && !canAccessAsTalent && job.company_user_id !== actorUserId) {
+      return NextResponse.json(
+        { success: false, error: "Forbidden" },
+        { status: 403 },
+      );
     }
 
     const targetTalentRows = await sql<TalentRow[]>`
@@ -167,7 +158,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const job = jobRows[0];
     const talent = targetTalentRows[0];
     const matchScoreResult = await computeMatchScore({
       jobTitle: job.title ?? "",
