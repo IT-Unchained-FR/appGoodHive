@@ -14,6 +14,7 @@ import {
   Circle,
   Filter,
   ListFilter,
+  Loader2,
   MessageSquare,
   Search,
   SendHorizonal,
@@ -119,6 +120,51 @@ function requestCounterByStatus(requests: JobRequest[]) {
   );
 }
 
+type UiMessengerMessage = MessengerMessage & {
+  pending?: boolean;
+};
+
+function mergeServerAndPendingMessages(
+  serverMessages: MessengerMessage[],
+  previousMessages: UiMessengerMessage[],
+) {
+  const pendingMessages = previousMessages.filter((message) => message.pending);
+  if (pendingMessages.length === 0) {
+    return serverMessages;
+  }
+
+  const consumedServerMessageIds = new Set<string>();
+  const unresolvedPending: UiMessengerMessage[] = [];
+
+  for (const pendingMessage of pendingMessages) {
+    const pendingCreatedAt = new Date(pendingMessage.created_at).getTime();
+    const matchedServerMessage = serverMessages.find((serverMessage) => {
+      if (consumedServerMessageIds.has(serverMessage.id)) return false;
+      if (serverMessage.sender_user_id !== pendingMessage.sender_user_id) return false;
+      if (serverMessage.message_text !== pendingMessage.message_text) return false;
+
+      const serverCreatedAt = new Date(serverMessage.created_at).getTime();
+      if (Number.isNaN(serverCreatedAt) || Number.isNaN(pendingCreatedAt)) {
+        return true;
+      }
+
+      return serverCreatedAt >= pendingCreatedAt - 10_000;
+    });
+
+    if (matchedServerMessage) {
+      consumedServerMessageIds.add(matchedServerMessage.id);
+      continue;
+    }
+
+    unresolvedPending.push(pendingMessage);
+  }
+
+  return [...serverMessages, ...unresolvedPending].sort(
+    (left, right) =>
+      new Date(left.created_at).getTime() - new Date(right.created_at).getTime(),
+  );
+}
+
 export default function MessagesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -128,7 +174,7 @@ export default function MessagesPage() {
 
   const [threads, setThreads] = useState<MessengerThreadListItem[]>([]);
   const [requests, setRequests] = useState<JobRequest[]>([]);
-  const [messages, setMessages] = useState<MessengerMessage[]>([]);
+  const [messages, setMessages] = useState<UiMessengerMessage[]>([]);
 
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [composerText, setComposerText] = useState("");
@@ -406,7 +452,10 @@ export default function MessagesPage() {
         }
 
         const data = await response.json();
-        setMessages((data.messages || []) as MessengerMessage[]);
+        const incomingMessages = (data.messages || []) as MessengerMessage[];
+        setMessages((previous) =>
+          mergeServerAndPendingMessages(incomingMessages, previous),
+        );
         registerPollingSuccess("messages");
       } catch (error) {
         console.error(error);
@@ -448,6 +497,21 @@ export default function MessagesPage() {
       return;
     }
 
+    const optimisticId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const optimisticMessage: UiMessengerMessage = {
+      id: optimisticId,
+      thread_id: selectedThreadId,
+      sender_user_id: userId,
+      message_type: "text",
+      message_text: text,
+      attachment_url: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      pending: true,
+    };
+
+    setComposerText("");
+    setMessages((previous) => [...previous, optimisticMessage]);
     setIsSending(true);
 
     try {
@@ -469,13 +533,22 @@ export default function MessagesPage() {
 
       const data = await response.json();
       const nextMessage = data.message as MessengerMessage;
-      setMessages((prev) => [...prev, nextMessage]);
-      setComposerText("");
+      setMessages((previous) => {
+        const withoutOptimistic = previous.filter((message) => message.id !== optimisticId);
+        if (withoutOptimistic.some((message) => message.id === nextMessage.id)) {
+          return withoutOptimistic;
+        }
+        return [...withoutOptimistic, nextMessage];
+      });
 
       await fetchThreads({ silent: true });
       await markThreadRead(selectedThreadId);
     } catch (error) {
       console.error(error);
+      setMessages((previous) =>
+        previous.filter((message) => message.id !== optimisticId),
+      );
+      setComposerText(text);
       toast.error("Could not send message. Please try again.");
     } finally {
       setIsSending(false);
@@ -926,6 +999,7 @@ export default function MessagesPage() {
                   ) : (
                     messages.map((message) => {
                       const isMine = message.sender_user_id === userId;
+                      const isPending = Boolean(message.pending);
                       return (
                         <div
                           key={message.id}
@@ -934,15 +1008,23 @@ export default function MessagesPage() {
                           <div
                             className={cn(
                               "max-w-[92%] rounded-2xl border px-4 py-2.5 text-sm shadow-sm sm:max-w-[75%]",
-                              isMine
+                              isMine && isPending
+                                ? "border-slate-300 bg-slate-100 text-slate-700 opacity-80"
+                                : isMine
                                 ? "border-amber-200 bg-amber-50 text-slate-900"
                                 : "border-slate-200 bg-white text-slate-800",
                             )}
                           >
                             <p className="whitespace-pre-wrap leading-6">{message.message_text}</p>
-                            <p className="mt-1 text-right text-[11px] text-slate-500">
-                              {formatRelativeTime(message.created_at)}
-                            </p>
+                            <div className="mt-1 flex items-center justify-end gap-1.5 text-[11px] text-slate-500">
+                              {isPending && (
+                                <>
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                  <span>Sending...</span>
+                                </>
+                              )}
+                              <span>{formatRelativeTime(message.created_at)}</span>
+                            </div>
                           </div>
                         </div>
                       );

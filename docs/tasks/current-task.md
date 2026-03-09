@@ -15,7 +15,7 @@ Full plan: **`docs/tasks/messenger-polish.md`**
 - [x] MSG-005 — Empty state for no conversations
 - [x] MSG-006 — Loading skeletons
 - [x] MSG-003 — Exponential backoff on poll failures
-- [ ] MSG-004 — Optimistic message send
+- [x] MSG-004 — Optimistic message send
 - [ ] MSG-008 — Unread badge on navigation
 
 ---
