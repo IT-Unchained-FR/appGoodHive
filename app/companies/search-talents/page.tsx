@@ -65,6 +65,10 @@ export default async function SearchTalentsPage({
   const params = await searchParams;
   const viewerUserId = cookies().get("user_id")?.value;
   const selectedJobId = params.jobId?.trim() || null;
+  const availabilityFilters = (params.availability ?? "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
   console.log("Search params received:", params);
 
   const currentPage = Number(params.page) || 1;
@@ -220,8 +224,7 @@ export default async function SearchTalentsPage({
                   </span>
                 )}
                 {(params.availability === "true" ||
-                  params.availability === "immediately,weeks_2" ||
-                  params.availability === "weeks_2,immediately") && (
+                  availabilityFilters.includes("immediately")) && (
                   <span className="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 text-emerald-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
                     <Clock className="w-4 h-4 mr-1" /> Available now or soon
                   </span>
