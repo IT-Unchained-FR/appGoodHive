@@ -27,6 +27,7 @@ import toast from "react-hot-toast";
 const THREADS_POLL_INTERVAL_MS = 9000;
 const MESSAGES_POLL_INTERVAL_MS = 4000;
 const REQUESTS_POLL_INTERVAL_MS = 12000;
+const MAX_MESSAGE_LENGTH = 5000;
 
 const REQUEST_STATUS_LABELS: Record<JobRequestStatus, string> = {
   draft: "Draft",
@@ -137,6 +138,9 @@ export default function MessagesPage() {
     () => threads.find((thread) => thread.id === selectedThreadId) ?? null,
     [selectedThreadId, threads],
   );
+  const composerLength = composerText.length;
+  const isComposerNearLimit = composerLength >= 4500;
+  const isComposerOverLimit = composerLength > MAX_MESSAGE_LENGTH;
 
   const threadByRequestId = useMemo(() => {
     const mapping = new Map<string, MessengerThreadListItem>();
@@ -416,6 +420,10 @@ export default function MessagesPage() {
 
     const text = composerText.trim();
     if (!text) return;
+    if (text.length > MAX_MESSAGE_LENGTH) {
+      toast.error(`Message must be ${MAX_MESSAGE_LENGTH} characters or fewer.`);
+      return;
+    }
 
     setIsSending(true);
 
@@ -857,17 +865,28 @@ export default function MessagesPage() {
                       }}
                       rows={1}
                       placeholder="Write a message..."
-                      className="min-h-[44px] max-h-36 flex-1 resize-none rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-500"
+                      className={cn(
+                        "min-h-[44px] max-h-36 flex-1 resize-none rounded-2xl border bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-500",
+                        isComposerOverLimit ? "border-rose-400" : "border-slate-300",
+                      )}
                     />
                     <button
                       type="button"
                       onClick={() => void sendMessage()}
-                      disabled={!composerText.trim() || isSending}
+                      disabled={!composerText.trim() || isSending || isComposerOverLimit}
                       className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-slate-900 text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
                     >
                       <SendHorizonal className="h-4 w-4" />
                     </button>
                   </div>
+                  <p
+                    className={cn(
+                      "mt-1 text-right text-[11px]",
+                      isComposerNearLimit ? "text-rose-600" : "text-slate-500",
+                    )}
+                  >
+                    {composerLength} / {MAX_MESSAGE_LENGTH}
+                  </p>
                 </div>
               </div>
             )}

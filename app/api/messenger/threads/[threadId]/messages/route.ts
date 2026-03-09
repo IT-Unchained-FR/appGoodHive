@@ -12,6 +12,7 @@ const GOODHIVE_BASE_URL =
   process.env.GOODHIVE_BASE_URL?.replace(/\/+$/, "") ??
   "https://app.goodhive.io";
 const MESSAGES_APP_URL = `${GOODHIVE_BASE_URL}/messages`;
+const MAX_MESSAGE_LENGTH = 5000;
 
 function resolveActorUserId(request: NextRequest, fallback?: string | null) {
   return request.headers.get("x-user-id") ?? fallback ?? null;
@@ -212,6 +213,13 @@ export async function POST(
     if (!messageText) {
       return NextResponse.json(
         { message: "messageText is required" },
+        { status: 400 },
+      );
+    }
+
+    if (messageText.length > MAX_MESSAGE_LENGTH) {
+      return NextResponse.json(
+        { message: `messageText must be ${MAX_MESSAGE_LENGTH} characters or fewer` },
         { status: 400 },
       );
     }
