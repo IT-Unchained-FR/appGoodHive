@@ -15,28 +15,28 @@ type ExpiredAvailabilityRow = {
 };
 
 export async function expireStaleImmediateAvailability(userId?: string | null) {
-  const expiredRows = userId
-    ? await sql<ExpiredAvailabilityRow[]>`
-        UPDATE goodhive.talents
-        SET
-          availability_status = 'not_looking',
-          availability_updated_at = NOW(),
-          availability = false
-        WHERE user_id = ${userId}::uuid
-          AND availability_status = 'immediately'
-          AND COALESCE(availability_updated_at, NOW()) < NOW() - INTERVAL '4 weeks'
-        RETURNING user_id, email, first_name
-      `
-    : await sql<ExpiredAvailabilityRow[]>`
-        UPDATE goodhive.talents
-        SET
-          availability_status = 'not_looking',
-          availability_updated_at = NOW(),
-          availability = false
-        WHERE availability_status = 'immediately'
-          AND COALESCE(availability_updated_at, NOW()) < NOW() - INTERVAL '4 weeks'
-        RETURNING user_id, email, first_name
-      `;
+  const scopedUserId = userId ?? null;
+  const expiredRows = await sql<ExpiredAvailabilityRow[]>`
+    WITH locked_stale AS (
+      SELECT user_id, email, first_name
+      FROM goodhive.talents
+      WHERE availability_status = 'immediately'
+        AND COALESCE(availability_updated_at, NOW()) < NOW() - INTERVAL '4 weeks'
+        AND (${scopedUserId}::uuid IS NULL OR user_id = ${scopedUserId}::uuid)
+      FOR UPDATE SKIP LOCKED
+    ),
+    updated AS (
+      UPDATE goodhive.talents target
+      SET
+        availability_status = 'not_looking',
+        availability_updated_at = NOW(),
+        availability = false
+      FROM locked_stale
+      WHERE target.user_id = locked_stale.user_id
+      RETURNING locked_stale.user_id, locked_stale.email, locked_stale.first_name
+    )
+    SELECT * FROM updated
+  `;
 
   if (expiredRows.length === 0) {
     return;
