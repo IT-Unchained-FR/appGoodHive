@@ -1,10 +1,10 @@
 # Current Task
 
 ## Status
-`IN PROGRESS — Messenger Polish Sprint (March 9, 2026)`
+`IN PROGRESS — Talent Availability Calendar (March 10, 2026)`
 
 ## Last Updated
-2026-03-09
+2026-03-10
 
 ## Completed — Messenger Polish ✅
 Full plan: **`docs/tasks/messenger-polish.md`**
@@ -27,6 +27,16 @@ Full plan: **`docs/tasks/smart-match-score.md`**
 - [x] MATCH-004 — Badge component: `app/components/MatchScoreBadge.tsx`
 - [x] MATCH-005 — Talent listing: show score per talent (company view)
 - [x] MATCH-006 — Job detail page: show "Your Match Score" (talent view)
+
+## Active Task — Talent Availability Calendar (P1)
+Full plan: **`docs/features/talent-availability-calendar.md`**
+
+- [x] AVAIL-001 — DB migration: availability status columns + availability blocks table
+- [ ] AVAIL-002 — API: `PATCH /api/profile/availability` and profile response fields
+- [ ] AVAIL-003 — UI components: `AvailabilityBadge` + `AvailabilityPicker`
+- [ ] AVAIL-004 — Profile UI: availability picker on talent edit + badge on public talent profile
+- [ ] AVAIL-005 — Talent filtering: `GET /api/talents` + availability query support in listing
+- [ ] AVAIL-006 — Auto-expiry + reminder email on stale `immediately` status
 
 ---
 
