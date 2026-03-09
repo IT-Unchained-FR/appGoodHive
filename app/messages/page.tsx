@@ -685,8 +685,17 @@ export default function MessagesPage() {
             <div className="max-h-[64vh] overflow-y-auto lg:h-[calc(100vh-320px)] lg:max-h-none">
               {isThreadsLoading ? (
                 <div className="space-y-3 p-4">
-                  {[1, 2, 3, 4].map((item) => (
-                    <div key={item} className="h-16 animate-pulse rounded-2xl bg-slate-100" />
+                  {[1, 2, 3, 4, 5].map((item) => (
+                    <div
+                      key={item}
+                      className="flex animate-pulse items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-3 py-3"
+                    >
+                      <div className="h-10 w-10 rounded-full bg-gray-200" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-3 w-2/5 rounded bg-gray-200" />
+                        <div className="h-2.5 w-4/5 rounded bg-gray-200" />
+                      </div>
+                    </div>
                   ))}
                 </div>
               ) : threads.length === 0 ? (
@@ -814,8 +823,21 @@ export default function MessagesPage() {
                 >
                   {isMessagesLoading ? (
                     <div className="space-y-3">
-                      {[1, 2, 3].map((item) => (
-                        <div key={item} className="h-14 animate-pulse rounded-2xl bg-slate-200/70" />
+                      {[0, 1, 2].map((item) => (
+                        <div
+                          key={item}
+                          className={cn(
+                            "flex animate-pulse",
+                            item % 2 === 0 ? "justify-start" : "justify-end",
+                          )}
+                        >
+                          <div className="w-[72%] max-w-[320px] rounded-2xl bg-gray-200/90 px-4 py-3">
+                            <div className="space-y-2">
+                              <div className="h-2.5 w-full rounded bg-gray-300" />
+                              <div className="h-2.5 w-5/6 rounded bg-gray-300" />
+                            </div>
+                          </div>
+                        </div>
                       ))}
                     </div>
                   ) : messages.length === 0 ? (
