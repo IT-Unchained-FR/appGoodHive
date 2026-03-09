@@ -14,6 +14,12 @@ function resolveActorUserId(request: NextRequest, fallback?: string | null) {
 export async function GET(request: NextRequest) {
   try {
     const userId = request.nextUrl.searchParams.get("userId") ?? resolveActorUserId(request);
+    const limitParam = request.nextUrl.searchParams.get("limit");
+    const parsedLimit = limitParam ? Number(limitParam) : null;
+    const limit =
+      parsedLimit && Number.isFinite(parsedLimit)
+        ? Math.min(Math.max(Math.trunc(parsedLimit), 1), 100)
+        : null;
 
     if (!userId) {
       return NextResponse.json(
@@ -88,14 +94,32 @@ export async function GET(request: NextRequest) {
       WHERE t.company_user_id = ${userId}::uuid
          OR t.talent_user_id = ${userId}::uuid
       ORDER BY COALESCE(lm.created_at, t.updated_at) DESC
+      LIMIT ${limit}
+    `;
+
+    const unreadSummaryRows = await sql`
+      SELECT COALESCE(SUM(unread.unread_count), 0)::int AS total_unread_count
+      FROM goodhive.messenger_threads t
+      LEFT JOIN goodhive.messenger_thread_reads tr
+        ON tr.thread_id = t.id AND tr.user_id = ${userId}::uuid
+      LEFT JOIN LATERAL (
+        SELECT COUNT(*)::int AS unread_count
+        FROM goodhive.messenger_messages um
+        WHERE um.thread_id = t.id
+          AND um.sender_user_id <> ${userId}::uuid
+          AND um.created_at > COALESCE(tr.last_read_at, 'epoch'::timestamptz)
+      ) unread ON TRUE
+      WHERE t.company_user_id = ${userId}::uuid
+         OR t.talent_user_id = ${userId}::uuid
     `;
 
     const threads: MessengerThreadListItem[] = rows.map((row: any) => ({
       ...row,
       unread_count: Number(row.unread_count || 0),
     }));
+    const totalUnreadCount = Number(unreadSummaryRows[0]?.total_unread_count || 0);
 
-    return NextResponse.json({ threads }, { status: 200 });
+    return NextResponse.json({ threads, totalUnreadCount }, { status: 200 });
   } catch (error) {
     console.error("Failed to list messenger threads:", error);
     return NextResponse.json(

@@ -16,7 +16,7 @@ Full plan: **`docs/tasks/messenger-polish.md`**
 - [x] MSG-006 — Loading skeletons
 - [x] MSG-003 — Exponential backoff on poll failures
 - [x] MSG-004 — Optimistic message send
-- [ ] MSG-008 — Unread badge on navigation
+- [x] MSG-008 — Unread badge on navigation
 
 ---
 

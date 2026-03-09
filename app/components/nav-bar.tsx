@@ -153,7 +153,7 @@ export const NavBar = () => {
     }
 
     try {
-      const response = await fetch(`/api/messenger/threads?userId=${loggedIn_user_id}`, {
+      const response = await fetch(`/api/messenger/threads?userId=${loggedIn_user_id}&limit=1`, {
         cache: "no-store",
         headers: {
           "x-user-id": loggedIn_user_id,
@@ -165,11 +165,15 @@ export const NavBar = () => {
       }
 
       const data = await response.json();
-      const threads = Array.isArray(data.threads) ? data.threads : [];
-      const nextCount = threads.reduce(
-        (sum: number, thread: any) => sum + Number(thread?.unread_count || 0),
-        0,
-      );
+      const nextCount =
+        typeof data.totalUnreadCount === "number"
+          ? data.totalUnreadCount
+          : Array.isArray(data.threads)
+            ? data.threads.reduce(
+                (sum: number, thread: any) => sum + Number(thread?.unread_count || 0),
+                0,
+              )
+            : 0;
       setUnreadMessageCount(nextCount);
     } catch (error) {
       console.error("Failed to refresh unread message count:", error);
@@ -499,12 +503,12 @@ export const NavBar = () => {
 
     const intervalId = window.setInterval(() => {
       void refreshUnreadMessages();
-    }, 10000);
+    }, 30000);
 
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [loggedIn_user_id, pathname, refreshUnreadMessages]);
+  }, [loggedIn_user_id, refreshUnreadMessages]);
 
   return (
     <>
@@ -576,7 +580,7 @@ export const NavBar = () => {
                         <Icon className="h-4 w-4" />
                         <span>{label}</span>
                         {href === "/messages" && unreadMessageCount > 0 && (
-                          <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-amber-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+                          <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-rose-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
                             {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
                           </span>
                         )}
@@ -589,7 +593,7 @@ export const NavBar = () => {
                         <Icon className="h-4 w-4" />
                         <span>{label}</span>
                         {href === "/messages" && unreadMessageCount > 0 && (
-                          <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-amber-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+                          <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-rose-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
                             {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
                           </span>
                         )}
@@ -683,7 +687,7 @@ export const NavBar = () => {
                         <Icon className="h-4 w-4" />
                         <span>{label}</span>
                         {href === "/messages" && unreadMessageCount > 0 && (
-                          <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-amber-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+                          <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-rose-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
                             {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
                           </span>
                         )}
@@ -696,7 +700,7 @@ export const NavBar = () => {
                         <Icon className="h-4 w-4" />
                         <span>{label}</span>
                         {href === "/messages" && unreadMessageCount > 0 && (
-                          <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-amber-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+                          <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-rose-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
                             {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
                           </span>
                         )}
