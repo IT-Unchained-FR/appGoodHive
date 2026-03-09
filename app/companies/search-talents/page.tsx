@@ -1,6 +1,7 @@
 import TalentResult from "./talent-result";
 import { Pagination } from "@/app/components/pagination";
 import { fetchTalents } from "@/lib/talents";
+import sql from "@/lib/db";
 import { Metadata } from "next";
 import { cookies } from "next/headers";
 import {
@@ -58,10 +59,12 @@ export default async function SearchTalentsPage({
     sort?: string;
     minRate?: string;
     maxRate?: string;
+    jobId?: string;
   }>;
 }) {
   const params = await searchParams;
   const viewerUserId = cookies().get("user_id")?.value;
+  const selectedJobId = params.jobId?.trim() || null;
   console.log("Search params received:", params);
 
   const currentPage = Number(params.page) || 1;
@@ -94,6 +97,17 @@ export default async function SearchTalentsPage({
     talents: [],
     count: 0,
   };
+  const companyRows =
+    viewerUserId
+      ? await sql<{ user_id: string }[]>`
+          SELECT user_id
+          FROM goodhive.companies
+          WHERE user_id = ${viewerUserId}::uuid
+          LIMIT 1
+        `
+      : [];
+  const isCompanyViewer = companyRows.length > 0;
+  const matchJobId = isCompanyViewer && selectedJobId ? selectedJobId : null;
 
   console.log("Talents found:", talents.length);
   console.log("Total count:", count);
@@ -244,7 +258,7 @@ export default async function SearchTalentsPage({
         {/* Talents Section */}
         <div className="p-8">
           {talents.length > 0 ? (
-            <TalentResult talents={talents} />
+            <TalentResult talents={talents} matchJobId={matchJobId} />
           ) : (
             <div className="text-center py-20">
               <div className="max-w-md mx-auto">

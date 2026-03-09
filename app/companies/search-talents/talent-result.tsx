@@ -2,8 +2,9 @@
 import "@/app/styles/rich-text.css";
 import moment from "moment";
 import toast from "react-hot-toast";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "../../components/card";
+import { MatchScoreBadge } from "@/app/components/MatchScoreBadge";
 
 // TypeScript interface for the talent data
 export interface TalentData {
@@ -30,7 +31,24 @@ export interface TalentData {
   last_active: string;
 }
 
-export default function TalentResult({ talents }: { talents: TalentData[] }) {
+interface MatchScoreState {
+  loading: boolean;
+  score: number | null;
+  reasons: string[];
+  gaps: string[];
+}
+
+type MatchScoreMap = Record<string, MatchScoreState>;
+
+export default function TalentResult({
+  talents,
+  matchJobId,
+}: {
+  talents: TalentData[];
+  matchJobId?: string | null;
+}) {
+  const [matchScores, setMatchScores] = useState<MatchScoreMap>({});
+
   console.log("Talents received:", talents.length);
   console.log("Sample talent:", talents[0]);
 
@@ -51,6 +69,102 @@ export default function TalentResult({ talents }: { talents: TalentData[] }) {
       toast.error("Some talent profiles may have incomplete information.");
     }
   }, [talents]);
+
+  useEffect(() => {
+    if (!matchJobId || talents.length === 0) {
+      setMatchScores({});
+      return;
+    }
+
+    const initialState: MatchScoreMap = {};
+    for (const talent of talents) {
+      if (!talent.userId) continue;
+      initialState[talent.userId] = {
+        loading: true,
+        score: null,
+        reasons: [],
+        gaps: [],
+      };
+    }
+    setMatchScores(initialState);
+
+    let isActive = true;
+
+    const fetchMatchScores = async () => {
+      const results = await Promise.allSettled(
+        talents
+          .filter((talent) => Boolean(talent.userId))
+          .map(async (talent) => {
+            const talentId = talent.userId as string;
+            try {
+              const response = await fetch("/api/ai/match-score", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  jobId: matchJobId,
+                  talentId,
+                }),
+              });
+
+              if (!response.ok) {
+                return { talentId, error: true as const };
+              }
+
+              const payload = await response.json();
+              const data = payload?.data as
+                | {
+                    score?: number | null;
+                    reasons?: string[];
+                    gaps?: string[];
+                  }
+                | undefined;
+
+              return {
+                talentId,
+                score: typeof data?.score === "number" ? data.score : null,
+                reasons: Array.isArray(data?.reasons) ? data.reasons : [],
+                gaps: Array.isArray(data?.gaps) ? data.gaps : [],
+                error: false as const,
+              };
+            } catch {
+              return { talentId, error: true as const };
+            }
+          }),
+      );
+
+      if (!isActive) return;
+
+      setMatchScores((previous) => {
+        const next = { ...previous };
+
+        for (const result of results) {
+          if (result.status !== "fulfilled") continue;
+          const value = result.value;
+          if (value.error) {
+            delete next[value.talentId];
+            continue;
+          }
+
+          next[value.talentId] = {
+            loading: false,
+            score: value.score,
+            reasons: value.reasons.slice(0, 3),
+            gaps: value.gaps.slice(0, 3),
+          };
+        }
+
+        return next;
+      });
+    };
+
+    void fetchMatchScores();
+
+    return () => {
+      isActive = false;
+    };
+  }, [matchJobId, talents]);
 
   if (!Array.isArray(talents)) {
     return (
@@ -103,8 +217,24 @@ export default function TalentResult({ talents }: { talents: TalentData[] }) {
           });
 
           try {
+            const matchState = talent.userId ? matchScores[talent.userId] : undefined;
             return (
               <div key={talent.userId || `talent-${index}`} className="group relative">
+                {matchJobId && matchState?.loading && (
+                  <div className="mb-2">
+                    <MatchScoreBadge score={null} loading />
+                  </div>
+                )}
+                {matchJobId && matchState && !matchState.loading && (
+                  <div className="mb-2">
+                    <MatchScoreBadge
+                      score={matchState.score}
+                      reasons={matchState.reasons}
+                      gaps={matchState.gaps}
+                      showTooltip
+                    />
+                  </div>
+                )}
                 <Card
                   type="talent"
                   title={talent.title || "Professional"}

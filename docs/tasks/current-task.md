@@ -25,7 +25,7 @@ Full plan: **`docs/tasks/smart-match-score.md`**
 - [x] MATCH-002 — Gemini helper: `app/lib/ai/match-score.ts`
 - [x] MATCH-003 — API route: `app/api/ai/match-score/route.ts`
 - [x] MATCH-004 — Badge component: `app/components/MatchScoreBadge.tsx`
-- [ ] MATCH-005 — Talent listing: show score per talent (company view)
+- [x] MATCH-005 — Talent listing: show score per talent (company view)
 - [ ] MATCH-006 — Job detail page: show "Your Match Score" (talent view)
 
 ---
