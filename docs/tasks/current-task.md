@@ -36,7 +36,7 @@ Full plan: **`docs/features/talent-availability-calendar.md`**
 - [x] AVAIL-003 — UI components: `AvailabilityBadge` + `AvailabilityPicker`
 - [x] AVAIL-004 — Profile UI: availability picker on talent edit + badge on public talent profile
 - [x] AVAIL-005 — Talent filtering: `GET /api/talents` + availability query support in listing
-- [ ] AVAIL-006 — Auto-expiry + reminder email on stale `immediately` status
+- [x] AVAIL-006 — Auto-expiry + reminder email on stale `immediately` status
 
 ---
 

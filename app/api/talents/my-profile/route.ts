@@ -10,6 +10,7 @@ import {
   type ResumeProject,
   serializeResumeArray,
 } from "@/lib/talent-profile/resume-data";
+import { expireStaleImmediateAvailability } from "@/lib/talents";
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -344,6 +345,8 @@ export async function GET(request: NextRequest) {
         ? column
         : `NULL::TEXT AS ${column}`,
     ).join(",\n        ");
+
+    await expireStaleImmediateAvailability(user_id);
 
     // Fetch talent profile data from database
     const talents = await sql.unsafe(

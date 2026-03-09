@@ -2,9 +2,92 @@ import sql from "@/lib/db";
 import { getCountrySearchTerms } from "@/lib/country-mapping";
 import { getViewerAccess, formatNameForTier, maskNameInText } from "@/lib/access-control";
 import { isAvailabilityStatus, normalizeAvailabilityStatus } from "@/app/constants/availability";
+import { sendEmail } from "@/lib/email/emailService";
 
 function contains(str: string) {
   return "%" + str.toLowerCase() + "%";
+}
+
+type ExpiredAvailabilityRow = {
+  user_id: string;
+  email: string | null;
+  first_name: string | null;
+};
+
+export async function expireStaleImmediateAvailability(userId?: string | null) {
+  const expiredRows = userId
+    ? await sql<ExpiredAvailabilityRow[]>`
+        UPDATE goodhive.talents
+        SET
+          availability_status = 'not_looking',
+          availability_updated_at = NOW(),
+          availability = false
+        WHERE user_id = ${userId}::uuid
+          AND availability_status = 'immediately'
+          AND COALESCE(availability_updated_at, NOW()) < NOW() - INTERVAL '4 weeks'
+        RETURNING user_id, email, first_name
+      `
+    : await sql<ExpiredAvailabilityRow[]>`
+        UPDATE goodhive.talents
+        SET
+          availability_status = 'not_looking',
+          availability_updated_at = NOW(),
+          availability = false
+        WHERE availability_status = 'immediately'
+          AND COALESCE(availability_updated_at, NOW()) < NOW() - INTERVAL '4 weeks'
+        RETURNING user_id, email, first_name
+      `;
+
+  if (expiredRows.length === 0) {
+    return;
+  }
+
+  const goodhiveBaseUrl =
+    process.env.GOODHIVE_BASE_URL?.replace(/\/+$/, "") ?? "https://app.goodhive.io";
+  const isDev = process.env.NODE_ENV !== "production";
+  const devTestEmail = process.env.TEST_EMAIL?.trim();
+
+  await Promise.all(
+    expiredRows.map(async (talent) => {
+      const recipientEmail = talent.email?.trim();
+      if (!recipientEmail) return;
+      if (isDev && !devTestEmail) return;
+
+      const targetRecipient = isDev ? devTestEmail : recipientEmail;
+      if (!targetRecipient) return;
+
+      const firstName = talent.first_name?.trim() || "there";
+
+      await sendEmail({
+        to: targetRecipient,
+        subject: isDev
+          ? "[TEST] Update your GoodHive availability"
+          : "Update your GoodHive availability",
+        html: `
+          <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;padding:24px;">
+            <h2 style="margin:0 0 12px;color:#111827;">Hi ${firstName}, update your availability</h2>
+            <p style="margin:0 0 16px;color:#374151;">
+              Your profile availability was automatically set to "Not looking" because "Available now"
+              had not been refreshed in over 4 weeks.
+            </p>
+            <p style="margin:0 0 16px;color:#374151;">
+              Keep your profile visible to companies by updating your availability status.
+            </p>
+            <a
+              href="${goodhiveBaseUrl}/talents/my-profile"
+              style="display:inline-block;background:#f59e0b;color:#ffffff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600;"
+            >
+              Update availability
+            </a>
+            <p style="margin:20px 0 0;color:#6b7280;">The GoodHive Team</p>
+          </div>
+        `,
+        text:
+          `Hi ${firstName}, your availability was auto-updated to "Not looking". ` +
+          `Please refresh it here: ${goodhiveBaseUrl}/talents/my-profile`,
+      });
+    }),
+  );
 }
 
 // Helper function to safely decode base64 or return original string
@@ -59,6 +142,8 @@ export async function fetchTalents({
   viewerUserId?: string;
 }) {
   try {
+    await expireStaleImmediateAvailability();
+
     const viewerAccess = await getViewerAccess(viewerUserId);
     const canViewSensitive = viewerAccess.isApproved;
 
