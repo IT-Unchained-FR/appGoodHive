@@ -155,7 +155,7 @@ export async function GET(req: NextRequest) {
             ),
             ''
           ),
-          ref.user_id
+          ref.user_id::text
         ) AS referrer_name
       FROM goodhive.talents t
       LEFT JOIN goodhive.users u ON t.user_id = u.userid
