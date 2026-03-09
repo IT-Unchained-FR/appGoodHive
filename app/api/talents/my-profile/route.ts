@@ -378,6 +378,8 @@ export async function GET(request: NextRequest) {
         recruiter,
         hide_contact_details,
         availability,
+        availability_status,
+        availability_updated_at,
         approved,
         inReview,
         user_id,
@@ -430,6 +432,12 @@ export async function GET(request: NextRequest) {
     );
     const profileData = {
       ...talent,
+      availability_status:
+        typeof talent.availability_status === "string"
+          ? talent.availability_status
+          : talent.availability === true || talent.availability === "Available"
+            ? "immediately"
+            : "not_looking",
       first_name: canViewBasic ? talent.first_name : maskedName.firstName,
       last_name: canViewBasic ? talent.last_name : maskedName.lastName,
       email: canViewSensitive ? talent.email : null,

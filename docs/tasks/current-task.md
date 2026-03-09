@@ -32,7 +32,7 @@ Full plan: **`docs/tasks/smart-match-score.md`**
 Full plan: **`docs/features/talent-availability-calendar.md`**
 
 - [x] AVAIL-001 — DB migration: availability status columns + availability blocks table
-- [ ] AVAIL-002 — API: `PATCH /api/profile/availability` and profile response fields
+- [x] AVAIL-002 — API: `PATCH /api/profile/availability` and profile response fields
 - [ ] AVAIL-003 — UI components: `AvailabilityBadge` + `AvailabilityPicker`
 - [ ] AVAIL-004 — Profile UI: availability picker on talent edit + badge on public talent profile
 - [ ] AVAIL-005 — Talent filtering: `GET /api/talents` + availability query support in listing
