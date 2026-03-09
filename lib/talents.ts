@@ -272,15 +272,10 @@ export async function fetchTalents({
 
     const whereClause = whereConditions.join(" AND ");
 
-    console.log("WHERE clause:", whereClause);
-    console.log("Parameters:", params);
-
     // Count query
     const countQuery = `SELECT COUNT(*) FROM goodhive.talents WHERE ${whereClause}`;
     const countResult = await sql.unsafe(countQuery, params);
     const count = countResult[0].count as number;
-
-    console.log("Total count:", count);
 
     const limit = Number(items);
     const offset = limit * (Number(page) - 1);
@@ -303,8 +298,6 @@ export async function fetchTalents({
     const offsetIndex = ++paramIndex;
     const talentsQuery = `SELECT * FROM goodhive.talents WHERE ${whereClause} ${orderClause} LIMIT $${limitIndex} OFFSET $${offsetIndex}`;
     const talentsCursor = await sql.unsafe(talentsQuery, [...params, limit, offset]);
-
-    console.log("Talents found:", talentsCursor.length);
 
     const talents: any[] = talentsCursor.map((talent) => {
       const maskedName = formatNameForTier(
@@ -361,7 +354,6 @@ export async function fetchTalents({
 
     return { talents, count };
   } catch (error) {
-    console.log("💥", error);
     throw new Error("Failed to fetch data from the server");
   }
 }
