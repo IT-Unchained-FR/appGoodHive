@@ -28,6 +28,19 @@ const THREADS_POLL_INTERVAL_MS = 9000;
 const MESSAGES_POLL_INTERVAL_MS = 4000;
 const REQUESTS_POLL_INTERVAL_MS = 12000;
 const MAX_MESSAGE_LENGTH = 5000;
+const MAX_FAILURE_BACKOFF_MS = 30000;
+
+function getFailureBackoffDelayMs(consecutiveFailures: number) {
+  if (consecutiveFailures <= 0) {
+    return 0;
+  }
+
+  if (consecutiveFailures >= 3) {
+    return MAX_FAILURE_BACKOFF_MS;
+  }
+
+  return 5000 * 2 ** (consecutiveFailures - 1);
+}
 
 const REQUEST_STATUS_LABELS: Record<JobRequestStatus, string> = {
   draft: "Draft",
@@ -131,6 +144,7 @@ export default function MessagesPage() {
   const messagesScrollRef = useRef<HTMLDivElement | null>(null);
   const threadsFailureCountRef = useRef(0);
   const messagesFailureCountRef = useRef(0);
+  const requestsFailureCountRef = useRef(0);
   const threadsFailureToastShownRef = useRef(false);
   const messagesFailureToastShownRef = useRef(false);
 
@@ -192,20 +206,23 @@ export default function MessagesPage() {
   const clearPollingErrorIfRecovered = useCallback(() => {
     if (
       threadsFailureCountRef.current < 3 &&
-      messagesFailureCountRef.current < 3
+      messagesFailureCountRef.current < 3 &&
+      requestsFailureCountRef.current < 3
     ) {
       setErrorText(null);
     }
   }, []);
 
   const registerPollingSuccess = useCallback(
-    (target: "threads" | "messages") => {
+    (target: "threads" | "messages" | "requests") => {
       if (target === "threads") {
         threadsFailureCountRef.current = 0;
         threadsFailureToastShownRef.current = false;
-      } else {
+      } else if (target === "messages") {
         messagesFailureCountRef.current = 0;
         messagesFailureToastShownRef.current = false;
+      } else {
+        requestsFailureCountRef.current = 0;
       }
       clearPollingErrorIfRecovered();
     },
@@ -213,19 +230,24 @@ export default function MessagesPage() {
   );
 
   const registerPollingFailure = useCallback(
-    (target: "threads" | "messages", message: string) => {
-      const failureRef =
-        target === "threads" ? threadsFailureCountRef : messagesFailureCountRef;
+    (target: "threads" | "messages" | "requests", message: string) => {
+      const failureRef = (() => {
+        if (target === "threads") return threadsFailureCountRef;
+        if (target === "messages") return messagesFailureCountRef;
+        return requestsFailureCountRef;
+      })();
       const toastRef =
         target === "threads"
           ? threadsFailureToastShownRef
-          : messagesFailureToastShownRef;
+          : target === "messages"
+            ? messagesFailureToastShownRef
+            : null;
 
       failureRef.current += 1;
 
       if (failureRef.current >= 3) {
         setErrorText(message);
-        if (!toastRef.current) {
+        if (toastRef && !toastRef.current) {
           toast.error(message);
           toastRef.current = true;
         }
@@ -348,16 +370,17 @@ export default function MessagesPage() {
 
         const data = await response.json();
         setRequests((data.requests || []) as JobRequest[]);
+        registerPollingSuccess("requests");
       } catch (error) {
         console.error(error);
-        setErrorText("Unable to load your requests right now.");
+        registerPollingFailure("requests", "Unable to load your requests right now.");
       } finally {
         if (!silent) {
           setIsRequestsLoading(false);
         }
       }
     },
-    [userId],
+    [registerPollingFailure, registerPollingSuccess, userId],
   );
 
   const fetchMessages = useCallback(
@@ -530,29 +553,77 @@ export default function MessagesPage() {
   useEffect(() => {
     if (!userId) return;
 
-    const threadsPoll = window.setInterval(() => {
-      void fetchThreads({ silent: true });
+    let isCancelled = false;
+    let threadsTimeoutId: number | undefined;
+    let requestsTimeoutId: number | undefined;
+
+    const pollThreads = async () => {
+      await fetchThreads({ silent: true });
+      if (isCancelled) return;
+
+      const failureDelay = getFailureBackoffDelayMs(threadsFailureCountRef.current);
+      const delay = failureDelay || THREADS_POLL_INTERVAL_MS;
+      threadsTimeoutId = window.setTimeout(() => {
+        void pollThreads();
+      }, delay);
+    };
+
+    const pollRequests = async () => {
+      await fetchRequests(true);
+      if (isCancelled) return;
+
+      const failureDelay = getFailureBackoffDelayMs(requestsFailureCountRef.current);
+      const delay = failureDelay || REQUESTS_POLL_INTERVAL_MS;
+      requestsTimeoutId = window.setTimeout(() => {
+        void pollRequests();
+      }, delay);
+    };
+
+    threadsTimeoutId = window.setTimeout(() => {
+      void pollThreads();
     }, THREADS_POLL_INTERVAL_MS);
 
-    const requestsPoll = window.setInterval(() => {
-      void fetchRequests(true);
+    requestsTimeoutId = window.setTimeout(() => {
+      void pollRequests();
     }, REQUESTS_POLL_INTERVAL_MS);
 
     return () => {
-      window.clearInterval(threadsPoll);
-      window.clearInterval(requestsPoll);
+      isCancelled = true;
+      if (threadsTimeoutId) {
+        window.clearTimeout(threadsTimeoutId);
+      }
+      if (requestsTimeoutId) {
+        window.clearTimeout(requestsTimeoutId);
+      }
     };
   }, [fetchRequests, fetchThreads, userId]);
 
   useEffect(() => {
     if (!selectedThreadId || !userId) return;
 
-    const messagesPoll = window.setInterval(() => {
-      void fetchMessages(selectedThreadId, true);
+    let isCancelled = false;
+    let messagesTimeoutId: number | undefined;
+
+    const pollMessages = async () => {
+      await fetchMessages(selectedThreadId, true);
+      if (isCancelled) return;
+
+      const failureDelay = getFailureBackoffDelayMs(messagesFailureCountRef.current);
+      const delay = failureDelay || MESSAGES_POLL_INTERVAL_MS;
+      messagesTimeoutId = window.setTimeout(() => {
+        void pollMessages();
+      }, delay);
+    };
+
+    messagesTimeoutId = window.setTimeout(() => {
+      void pollMessages();
     }, MESSAGES_POLL_INTERVAL_MS);
 
     return () => {
-      window.clearInterval(messagesPoll);
+      isCancelled = true;
+      if (messagesTimeoutId) {
+        window.clearTimeout(messagesTimeoutId);
+      }
     };
   }, [fetchMessages, selectedThreadId, userId]);
 
