@@ -10,7 +10,7 @@
 Full plan: **`docs/tasks/messenger-polish.md`**
 
 - [x] MSG-001 — Fix hardcoded messages URL in email
-- [ ] MSG-002 — Fix hardcoded dev email fallback
+- [x] MSG-002 — Fix hardcoded dev email fallback
 - [ ] MSG-007 — Message length limit (API + UI)
 - [ ] MSG-005 — Empty state for no conversations
 - [ ] MSG-006 — Loading skeletons

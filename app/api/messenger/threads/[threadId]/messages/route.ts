@@ -70,7 +70,13 @@ async function notifyRecipientAboutNewMessage(
     const escapedSenderName = escapeHtml(senderName);
     const subject = `New message from ${senderName} on GoodHive`;
     const isDev = process.env.NODE_ENV !== "production";
-    const testEmail = process.env.TEST_EMAIL || "jubayerjuhan.dev@gmail.com";
+    const testEmail = process.env.TEST_EMAIL?.trim();
+
+    if (isDev && !testEmail) {
+      console.warn("TEST_EMAIL env var not set — skipping email in dev");
+      return;
+    }
+
     const targetRecipient = isDev ? testEmail : recipientEmail;
 
     const html = `
