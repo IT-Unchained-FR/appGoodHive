@@ -21,7 +21,7 @@ Full plan: **`docs/tasks/messenger-polish.md`**
 ## Active Task — Smart Match Score (P0 Innovation)
 Full plan: **`docs/tasks/smart-match-score.md`**
 
-- [ ] MATCH-001 — DB migration: create match_score_cache table
+- [x] MATCH-001 — DB migration: create match_score_cache table
 - [ ] MATCH-002 — Gemini helper: `app/lib/ai/match-score.ts`
 - [ ] MATCH-003 — API route: `app/api/ai/match-score/route.ts`
 - [ ] MATCH-004 — Badge component: `app/components/MatchScoreBadge.tsx`
