@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { getSessionUser } from "@/lib/auth/sessionUtils";
 import sql from "@/lib/db";
 
 const ALLOWED_STATUSES = [
@@ -16,13 +17,10 @@ function isAvailabilityStatus(value: unknown): value is AvailabilityStatus {
   return typeof value === "string" && ALLOWED_STATUSES.includes(value as AvailabilityStatus);
 }
 
-function resolveActorUserId(request: NextRequest) {
-  return request.headers.get("x-user-id") ?? request.cookies.get("user_id")?.value ?? null;
-}
-
 export async function PATCH(request: NextRequest) {
   try {
-    const actorUserId = resolveActorUserId(request);
+    const sessionUser = await getSessionUser();
+    const actorUserId = sessionUser?.user_id ?? null;
     if (!actorUserId) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
