@@ -7,6 +7,8 @@ import styles from "./page.module.scss";
 import { JobPageAnalytics } from "@/app/components/job-page/JobPageAnalytics";
 import sql from "@/lib/db";
 import { RelatedJobsSection } from "@/app/components/job-page/RelatedJobsSection";
+import { YourMatchScoreCard } from "@/app/components/job-page/YourMatchScoreCard";
+import { cookies } from "next/headers";
 
 interface Job {
   id: string;
@@ -248,6 +250,17 @@ export default async function JobPage({
 }) {
   const { jobId } = await params;
   const job = await getJob(jobId);
+  const viewerUserId = cookies().get("user_id")?.value ?? null;
+  const viewerTalentRows =
+    viewerUserId
+      ? await sql<{ user_id: string }[]>`
+          SELECT user_id
+          FROM goodhive.talents
+          WHERE user_id = ${viewerUserId}::uuid
+          LIMIT 1
+        `
+      : [];
+  const viewerTalentId = viewerTalentRows[0]?.user_id ?? null;
 
   // In development, allow viewing unpublished jobs for testing
   const isDevelopment = process.env.NODE_ENV === 'development';
@@ -296,6 +309,9 @@ export default async function JobPage({
               </section>
             )}
 
+            {viewerTalentId && (
+              <YourMatchScoreCard jobId={job.id} talentId={viewerTalentId} />
+            )}
 
             {/* Skills */}
             {job.skills && job.skills.length > 0 && (
