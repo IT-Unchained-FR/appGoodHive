@@ -689,12 +689,20 @@ export default function MessagesPage() {
                     <div key={item} className="h-16 animate-pulse rounded-2xl bg-slate-100" />
                   ))}
                 </div>
+              ) : threads.length === 0 ? (
+                <div className="p-6 text-center">
+                  <MessageSquare className="mx-auto h-8 w-8 text-slate-400" />
+                  <p className="mt-2 text-sm font-medium text-slate-700">No conversations yet</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Start by contacting a talent from their profile.
+                  </p>
+                </div>
               ) : filteredThreads.length === 0 ? (
                 <div className="p-6 text-center">
                   <MessageSquare className="mx-auto h-8 w-8 text-slate-400" />
-                  <p className="mt-2 text-sm font-medium text-slate-700">No threads found</p>
+                  <p className="mt-2 text-sm font-medium text-slate-700">No matching conversations</p>
                   <p className="mt-1 text-xs text-slate-500">
-                    Start with a request or application to open a conversation.
+                    Try a different search term.
                   </p>
                 </div>
               ) : (
@@ -774,12 +782,9 @@ export default function MessagesPage() {
             {!selectedThread ? (
               <div className="flex min-h-[68vh] items-center justify-center p-8 text-center">
                 <div>
-                  <MessageSquare className="mx-auto h-10 w-10 text-slate-400" />
+                  <ArrowLeft className="mx-auto h-10 w-10 text-slate-400" />
                   <p className="mt-3 text-sm font-semibold text-slate-800">
-                    Select a conversation
-                  </p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Choose a thread from the left panel to read and reply.
+                    Select a conversation to start messaging
                   </p>
                 </div>
               </div>
