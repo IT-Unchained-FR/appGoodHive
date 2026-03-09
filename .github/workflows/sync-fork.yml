@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - development
     paths-ignore:
       - '**.md'
       - '.ai-context/**'
@@ -15,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+
     steps:
       - name: Checkout source repository
         uses: actions/checkout@v4
@@ -43,18 +44,17 @@ jobs:
 
       - name: Fetch from fork to check access
         run: |
-          git fetch fork main || echo "Unable to fetch from fork, will attempt push anyway"
+          git fetch fork ${{ github.ref_name }} || echo "Unable to fetch from fork, will attempt push anyway"
 
       - name: Push to forked repository
         run: |
-          echo "Pushing to forked repository..."
-          # Use force-with-lease for safety, fallback to force if needed
-          git push fork HEAD:main --force-with-lease || {
+          echo "Pushing branch ${{ github.ref_name }} to forked repository..."
+          git push fork HEAD:${{ github.ref_name }} --force-with-lease || {
             echo "force-with-lease failed, trying force push..."
-            git push fork HEAD:main --force
+            git push fork HEAD:${{ github.ref_name }} --force
           }
-          echo "Successfully synced to forked repository!"
+          echo "Successfully synced ${{ github.ref_name }} to forked repository!"
 
       - name: Verify sync
         run: |
-          echo "Sync completed. Check https://github.com/IT-Unchained-FR/appGoodHive/tree/main"
+          echo "Sync completed. Check https://github.com/IT-Unchained-FR/appGoodHive/tree/${{ github.ref_name }}"
