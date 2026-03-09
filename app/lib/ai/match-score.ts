@@ -80,7 +80,9 @@ Return ONLY valid JSON (no markdown, no explanation):
 }`;
 
   try {
-    const model = getGeminiModel("gemini-1.5-flash");
+    const model = getGeminiModel(
+      process.env.GEMINI_FAST_MODEL ?? "models/gemini-2.0-flash",
+    );
     const result = await model.generateContent(prompt);
     const text = result.response.text();
     const parsed = tryParseModelJson(text);
