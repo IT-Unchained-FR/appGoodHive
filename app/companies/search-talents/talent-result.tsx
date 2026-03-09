@@ -39,6 +39,15 @@ interface MatchScoreState {
 }
 
 type MatchScoreMap = Record<string, MatchScoreState>;
+type MatchScoreFetchResult =
+  | { talentId: string; error: true }
+  | {
+      talentId: string;
+      score: number | null;
+      reasons: string[];
+      gaps: string[];
+      error: false;
+    };
 
 export default function TalentResult({
   talents,
@@ -91,10 +100,13 @@ export default function TalentResult({
     let isActive = true;
 
     const fetchMatchScores = async () => {
-      const results = await Promise.allSettled(
-        talents
-          .filter((talent) => Boolean(talent.userId))
-          .map(async (talent) => {
+      const talentsWithUserId = talents.filter((talent) => Boolean(talent.userId));
+      const results: PromiseSettledResult<MatchScoreFetchResult>[] = [];
+
+      for (let index = 0; index < talentsWithUserId.length; index += 5) {
+        const chunk = talentsWithUserId.slice(index, index + 5);
+        const chunkResults = await Promise.allSettled(
+          chunk.map(async (talent): Promise<MatchScoreFetchResult> => {
             const talentId = talent.userId as string;
             try {
               const response = await fetch("/api/ai/match-score", {
@@ -109,7 +121,7 @@ export default function TalentResult({
               });
 
               if (!response.ok) {
-                return { talentId, error: true as const };
+                return { talentId, error: true };
               }
 
               const payload = await response.json();
@@ -126,13 +138,16 @@ export default function TalentResult({
                 score: typeof data?.score === "number" ? data.score : null,
                 reasons: Array.isArray(data?.reasons) ? data.reasons : [],
                 gaps: Array.isArray(data?.gaps) ? data.gaps : [],
-                error: false as const,
+                error: false,
               };
             } catch {
-              return { talentId, error: true as const };
+              return { talentId, error: true };
             }
           }),
-      );
+        );
+
+        results.push(...chunkResults);
+      }
 
       if (!isActive) return;
 
