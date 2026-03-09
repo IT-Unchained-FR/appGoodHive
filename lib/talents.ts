@@ -7,7 +7,7 @@ function contains(str: string) {
 }
 
 // Helper function to safely decode base64 or return original string
-function safeBase64Decode(value: string | null | undefined): string {
+export function safeBase64Decode(value: string | null | undefined): string {
   if (!value) return "";
 
   try {
