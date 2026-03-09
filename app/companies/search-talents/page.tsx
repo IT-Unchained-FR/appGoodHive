@@ -219,9 +219,11 @@ export default async function SearchTalentsPage({
                     <UserCheck className="w-4 h-4 mr-1" /> Recruiter Only
                   </span>
                 )}
-                {params.availability === "true" && (
+                {(params.availability === "true" ||
+                  params.availability === "immediately,weeks_2" ||
+                  params.availability === "weeks_2,immediately") && (
                   <span className="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 text-emerald-800 px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center">
-                    <Clock className="w-4 h-4 mr-1" /> Available now
+                    <Clock className="w-4 h-4 mr-1" /> Available now or soon
                   </span>
                 )}
                 {params.remoteOnly === "true" && (

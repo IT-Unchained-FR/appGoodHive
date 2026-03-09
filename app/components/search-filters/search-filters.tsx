@@ -285,7 +285,12 @@ export const SearchFilters = ({
     setOnlyMentor(searchParams.get("onlyMentor") === "true");
     setOnlyRecruiter(searchParams.get("onlyRecruiter") === "true");
 
-    setAvailabilityOnly(searchParams.get("availability") === "true");
+    const availabilityParam = searchParams.get("availability");
+    setAvailabilityOnly(
+      availabilityParam === "true" ||
+        availabilityParam === "immediately,weeks_2" ||
+        availabilityParam === "weeks_2,immediately",
+    );
     setRemoteOnlyPreference(searchParams.get("remoteOnly") === "true");
     setFreelanceOnlyPreference(searchParams.get("freelanceOnly") === "true");
 
@@ -421,7 +426,7 @@ export const SearchFilters = ({
 
         const nextAvailability = updates.availability ?? availabilityOnly;
         if (nextAvailability) {
-          params.set("availability", "true");
+          params.set("availability", "immediately,weeks_2");
         } else {
           params.delete("availability");
         }
@@ -989,7 +994,7 @@ export const SearchFilters = ({
                     <div className={styles.panelList}>
                       <ChipToggle
                         checked={availabilityOnly}
-                        label="Available now"
+                        label="Available now or in 2 weeks"
                         onChange={(value) => handleAvailabilityChange(value)}
                       />
                       {availabilityOnly && (

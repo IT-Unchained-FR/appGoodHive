@@ -1,6 +1,7 @@
 import sql from "@/lib/db";
 import { getCountrySearchTerms } from "@/lib/country-mapping";
 import { getViewerAccess, formatNameForTier, maskNameInText } from "@/lib/access-control";
+import { isAvailabilityStatus, normalizeAvailabilityStatus } from "@/app/constants/availability";
 
 function contains(str: string) {
   return "%" + str.toLowerCase() + "%";
@@ -130,7 +131,25 @@ export async function fetchTalents({
       whereConditions.push("mentor = true");
     }
 
-    if (availability === "true") {
+    const requestedAvailabilityStatuses = availability
+      .split(",")
+      .map((status) => status.trim())
+      .filter((status): status is string => Boolean(status))
+      .filter(isAvailabilityStatus);
+
+    if (requestedAvailabilityStatuses.length > 0) {
+      const availabilityClauses: string[] = [];
+
+      for (const status of requestedAvailabilityStatuses) {
+        const clauseParamIndex = ++paramIndex;
+        availabilityClauses.push(
+          `COALESCE(availability_status, CASE WHEN availability = true OR LOWER(CAST(availability AS TEXT)) = 'available' THEN 'immediately' ELSE 'not_looking' END) = $${clauseParamIndex}`,
+        );
+        params.push(status);
+      }
+
+      whereConditions.push(`(${availabilityClauses.join(" OR ")})`);
+    } else if (availability === "true") {
       whereConditions.push(
         "(availability = true OR LOWER(CAST(availability AS TEXT)) = 'available')",
       );
@@ -246,6 +265,10 @@ export async function fetchTalents({
         freelancer: talent.freelance_only ? true : false,
         remote: talent.remote_only ? true : false,
         availability: talent.availability,
+        availability_status: normalizeAvailabilityStatus(
+          talent.availability_status,
+          talent.availability,
+        ),
         userId: talent.user_id,
         last_active: talent.last_active,
       };

@@ -27,6 +27,7 @@ export interface TalentData {
   freelancer: boolean;
   remote: boolean;
   availability: string | boolean;
+  availability_status?: string;
   userId: string;
   last_active: string;
 }
@@ -274,7 +275,11 @@ export default function TalentResult({
                   walletAddress={talent.walletAddress}
                   freelancer={talent.freelancer}
                   remote={talent.remote}
-                  availability={talent.availability === "Available" || talent.availability === true}
+                  availability={
+                    talent.availability_status === "immediately" ||
+                    talent.availability === "Available" ||
+                    talent.availability === true
+                  }
                   uniqueId={talent.userId}
                 />
 
@@ -327,7 +332,12 @@ export default function TalentResult({
           </div>
           <div className="bg-white/50 rounded-lg p-4 border border-amber-200/20">
             <div className="text-2xl font-bold text-green-600">
-              {talents.filter((talent) => talent.availability === "Available" || talent.availability === true).length}
+              {talents.filter(
+                (talent) =>
+                  talent.availability_status === "immediately" ||
+                  talent.availability === "Available" ||
+                  talent.availability === true,
+              ).length}
             </div>
             <div className="text-sm text-gray-600">Available Now</div>
           </div>
