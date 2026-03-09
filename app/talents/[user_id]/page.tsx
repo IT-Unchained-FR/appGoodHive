@@ -10,6 +10,7 @@ import { TalentPageHeader } from "@/app/components/talent-page/TalentPageHeader"
 import { TalentPageSidebar } from "@/app/components/talent-page/TalentPageSidebar";
 import { QuickRequestComposer } from "@/app/components/messenger/QuickRequestComposer";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { normalizeAvailabilityStatus } from "@/app/constants/availability";
 import styles from "./page.module.scss";
 import "react-quill/dist/quill.snow.css";
 import "@/app/styles/rich-text.css";
@@ -94,6 +95,8 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
     approved,
     approved_roles,
     last_active,
+    availability,
+    availability_status,
     // New fields (may not be in API yet)
     years_experience,
     jobs_completed,
@@ -113,6 +116,10 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
     (!!user &&
       (user.talent_status === "approved" ||
         user.recruiter_status === "approved"));
+  const normalizedAvailabilityStatus = normalizeAvailabilityStatus(
+    availability_status,
+    availability,
+  );
   const canViewBasic = isAuthenticated || isOwner;
   const canViewResume = isOwner || user?.recruiter_status === "approved";
   const hasCareerDetails =
@@ -154,6 +161,8 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
         approved_roles={approved_roles}
         canViewSensitive={canViewSensitive}
         canViewBasic={canViewBasic}
+        availability={availability}
+        availability_status={availability_status}
       />
 
       {/* Two-Column Content Grid */}
@@ -225,7 +234,7 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
             languages={languages}
             min_rate={min_rate ?? rate}
             max_rate={max_rate ?? rate}
-            availability={true} // Can be made dynamic based on availability field
+            availability={normalizedAvailabilityStatus === "immediately"}
             linkedin={linkedin ?? undefined}
             github={github ?? undefined}
             twitter={twitter ?? undefined}

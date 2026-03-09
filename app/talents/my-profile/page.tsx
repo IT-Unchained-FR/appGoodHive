@@ -1,13 +1,17 @@
 "use client";
 
 import { AutoSuggestInput } from "@/app/components/autosuggest-input";
-import { AvailabilityToggle } from "@/app/components/AvailabilityToggle";
+import { AvailabilityPicker } from "@/app/components/AvailabilityPicker";
 import ProfileImageUpload from "@/app/components/profile-image-upload";
 import { ReferralSection } from "@/app/components/referral/referral-section";
 import { SearchableSelectInput } from "@/app/components/searchable-select-input";
 import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/honey-bee-spinner";
 import { ResumeStructuredSections } from "@/app/components/talents/ResumeStructuredSections";
 import { ToggleButton } from "@/app/components/toggle-button";
+import {
+  getAvailabilityLabel,
+  normalizeAvailabilityStatus,
+} from "@/app/constants/availability";
 import { createJobServices } from "@/app/constants/common";
 import { countries } from "@/app/constants/countries";
 import { skills } from "@/app/constants/skills";
@@ -99,6 +103,8 @@ export type ProfileData = {
   referrer_email?: string | null;
   referrer_user_id?: string | null;
   availability?: boolean | string;
+  availability_status?: string;
+  availability_updated_at?: string | Date;
   wallet_address?: string;
   approved: boolean;
   user_id?: string;
@@ -1165,10 +1171,11 @@ export default function ProfilePage() {
       requiredFields.every(Boolean) && hasRole && hasCv && hasSkills && hasRatePair
     );
   }, [cvFile, profileData, selectedCountry, selectedSkills]);
-  const availabilityLabel =
-    profileData.availability === true || profileData.availability === "Available"
-      ? "Available"
-      : "Unavailable";
+  const normalizedAvailabilityStatus = normalizeAvailabilityStatus(
+    profileData.availability_status,
+    profileData.availability,
+  );
+  const availabilityLabel = getAvailabilityLabel(normalizedAvailabilityStatus);
   const statusLabel = isProfileInReview
     ? "Under Review"
     : profileData.approved
@@ -1475,14 +1482,19 @@ export default function ProfilePage() {
                               </h3>
                             </div>
                             <div className="gh-pill rounded-2xl px-4 py-3">
-                              <AvailabilityToggle
-                                name="availability"
-                                checked={
-                                  profileData.availability === true ||
-                                  profileData.availability === "Available"
+                              <AvailabilityPicker
+                                value={profileData.availability_status}
+                                legacyAvailability={profileData.availability}
+                                updatedAt={profileData.availability_updated_at}
+                                disabled={isProfileInReview}
+                                onSaved={(nextStatus, updatedAt) =>
+                                  setProfileData((prev) => ({
+                                    ...prev,
+                                    availability_status: nextStatus,
+                                    availability_updated_at: updatedAt,
+                                    availability: nextStatus === "immediately",
+                                  }))
                                 }
-                                onChange={handleToggleChange}
-                                errorMessage={errors.availability}
                               />
                             </div>
                           </div>

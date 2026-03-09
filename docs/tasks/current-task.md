@@ -34,7 +34,7 @@ Full plan: **`docs/features/talent-availability-calendar.md`**
 - [x] AVAIL-001 — DB migration: availability status columns + availability blocks table
 - [x] AVAIL-002 — API: `PATCH /api/profile/availability` and profile response fields
 - [x] AVAIL-003 — UI components: `AvailabilityBadge` + `AvailabilityPicker`
-- [ ] AVAIL-004 — Profile UI: availability picker on talent edit + badge on public talent profile
+- [x] AVAIL-004 — Profile UI: availability picker on talent edit + badge on public talent profile
 - [ ] AVAIL-005 — Talent filtering: `GET /api/talents` + availability query support in listing
 - [ ] AVAIL-006 — Auto-expiry + reminder email on stale `immediately` status
 

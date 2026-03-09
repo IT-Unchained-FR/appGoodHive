@@ -7,6 +7,7 @@ import LastActiveStatus from "@/app/components/LastActiveStatus";
 import { generateCountryFlag } from "@/app/utils/generate-country-flag";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { CompanyInfoGuard } from "@/app/components/CompanyInfoGuard";
+import { AvailabilityBadge } from "@/app/components/AvailabilityBadge";
 import { MessageBoxModal } from "@/app/components/message-box-modal";
 import { useAuthCheck } from "@/app/hooks/useAuthCheck";
 import { ReturnUrlManager } from "@/app/utils/returnUrlManager";
@@ -31,6 +32,8 @@ interface TalentPageHeaderProps {
   canViewSensitive?: boolean;
   canViewBasic?: boolean;
   talent_user_id?: string;
+  availability?: boolean | string;
+  availability_status?: string | null;
 }
 
 export const TalentPageHeader = ({
@@ -47,6 +50,8 @@ export const TalentPageHeader = ({
   recruiter,
   approved_roles,
   talent_user_id,
+  availability,
+  availability_status,
   canViewSensitive: canViewSensitiveProp,
   canViewBasic: canViewBasicProp,
 }: TalentPageHeaderProps) => {
@@ -368,6 +373,11 @@ export const TalentPageHeader = ({
               <LastActiveStatus lastActiveTime={last_active} />
             </div>
           )}
+
+          <AvailabilityBadge
+            status={availability_status}
+            legacyAvailability={availability}
+          />
 
           {/* Role Badges */}
           {(talent || mentor || recruiter) && (

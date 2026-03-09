@@ -30,6 +30,9 @@ export interface TalentProfileData {
   portfolio?: string | null;
   freelance_only: boolean;
   remote_only: boolean;
+  availability?: boolean | string;
+  availability_status?: string | null;
+  availability_updated_at?: string | Date | null;
   talent_status: string;
   talent_approved: boolean;
   talent: boolean;
