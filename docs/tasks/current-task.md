@@ -30,6 +30,17 @@ Validation log after each completed task:
 
 ---
 
+## Remaining Meeting Tasks
+Full Codex plan: **`docs/tasks/remaining-meeting-tasks.md`**
+
+- [x] TASK-005 — Referral commission text (already done — no action needed)
+- [ ] TASK-006 — Messenger end-to-end + email notification on new message
+- [ ] TASK-007 — Replace blockchain section with video (BLOCKED — need video URL from Benoit)
+- [ ] TASK-008 — Company profile UI polish
+- [ ] TASK-009 — QA process doc
+
+---
+
 ## 🔴 CRITICAL — Fix First
 
 ### TASK-004: Email Notifications Broken
