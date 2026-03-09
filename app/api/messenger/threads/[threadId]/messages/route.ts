@@ -8,7 +8,10 @@ import type {
 } from "@/interfaces/messenger";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const MESSAGES_APP_URL = "https://app.goodhive.io/messages";
+const GOODHIVE_BASE_URL =
+  process.env.GOODHIVE_BASE_URL?.replace(/\/+$/, "") ??
+  "https://app.goodhive.io";
+const MESSAGES_APP_URL = `${GOODHIVE_BASE_URL}/messages`;
 
 function resolveActorUserId(request: NextRequest, fallback?: string | null) {
   return request.headers.get("x-user-id") ?? fallback ?? null;
