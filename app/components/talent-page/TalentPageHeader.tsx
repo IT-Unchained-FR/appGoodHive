@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { MapPin, Mail, Briefcase, Award, Users, Lock } from "lucide-react";
 import LastActiveStatus from "@/app/components/LastActiveStatus";
@@ -12,7 +12,6 @@ import { useAuthCheck } from "@/app/hooks/useAuthCheck";
 import { ReturnUrlManager } from "@/app/utils/returnUrlManager";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import ApprovalPromptModal from "./ApprovalPromptModal";
 import toast from "react-hot-toast";
 import styles from "./TalentPageHeader.module.scss";
 
@@ -55,11 +54,62 @@ export const TalentPageHeader = ({
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isPopupModal, setIsPopupModal] = useState(false);
-  const [showApprovalPrompt, setShowApprovalPrompt] = useState(false);
   const [currentCompanyEmail, setCurrentCompanyEmail] = useState("");
+  const [viewerCompanyStatus, setViewerCompanyStatus] = useState<
+    "unknown" | "approved" | "unapproved" | "none"
+  >("unknown");
   const { user, isAuthenticated } = useAuth();
   const { user_id: currentUserId, checkAuthAndShowConnectPrompt, openConnectModal } =
     useAuthCheck();
+  const isOwnProfile =
+    !!currentUserId && !!talent_user_id && currentUserId === talent_user_id;
+
+  useEffect(() => {
+    if (!isAuthenticated || !currentUserId || isOwnProfile) {
+      setViewerCompanyStatus("none");
+      return;
+    }
+
+    let isActive = true;
+
+    const detectCompanyProfile = async () => {
+      try {
+        const companyResponse = await fetch(
+          `/api/companies/my-profile?userId=${currentUserId}`,
+          { cache: "no-store" },
+        );
+
+        if (!companyResponse.ok) {
+          if (isActive) {
+            setViewerCompanyStatus("none");
+          }
+          return;
+        }
+
+        const companyProfile = await companyResponse.json();
+        if (!isActive) return;
+
+        if (companyProfile?.email) {
+          setCurrentCompanyEmail(companyProfile.email);
+        }
+
+        setViewerCompanyStatus(
+          companyProfile?.approved ? "approved" : "unapproved",
+        );
+      } catch (error) {
+        console.error("Failed to detect company profile:", error);
+        if (isActive) {
+          setViewerCompanyStatus("none");
+        }
+      }
+    };
+
+    void detectCompanyProfile();
+
+    return () => {
+      isActive = false;
+    };
+  }, [currentUserId, isAuthenticated, isOwnProfile]);
 
   const handleContactClick = async () => {
     if (currentUserId && talent_user_id && currentUserId === talent_user_id) {
@@ -225,14 +275,6 @@ export const TalentPageHeader = ({
     void openConnectModal();
   };
 
-  const handleApprovalCtaClick = () => {
-    if (isAuthenticated && !canViewSensitive) {
-      setShowApprovalPrompt(true);
-      return;
-    }
-    handleConnectWallet();
-  };
-
   const canViewSensitive =
     typeof canViewSensitiveProp === "boolean"
       ? canViewSensitiveProp
@@ -244,10 +286,11 @@ export const TalentPageHeader = ({
     typeof canViewBasicProp === "boolean"
       ? canViewBasicProp
       : !!user;
-  const isOwnProfile =
-    !!currentUserId && !!talent_user_id && currentUserId === talent_user_id;
+  const isViewerApprovedCompany = viewerCompanyStatus === "approved";
+  const requiresCompanyApproval = viewerCompanyStatus === "unapproved";
+  const requiresCompanyProfile = viewerCompanyStatus === "none";
   const canContactTalent =
-    canViewSensitive && !isOwnProfile && Boolean(talent_user_id || email);
+    isViewerApprovedCompany && !isOwnProfile && Boolean(talent_user_id);
   const fullName = `${first_name} ${last_name}`;
   const location = city && country ? `${city}, ${country}` : city || country || "";
 
@@ -383,15 +426,55 @@ export const TalentPageHeader = ({
               <Lock size={18} />
               Your profile
             </button>
+          ) : !isAuthenticated ? (
+            <button
+              type="button"
+              onClick={handleConnectWallet}
+              className={`${styles.ctaButton} ${styles.connectButton}`}
+              aria-label="Connect wallet to contact"
+            >
+              <Lock size={18} />
+              Connect wallet to contact
+            </button>
+          ) : isApprovalLocked ? (
+            <button
+              type="button"
+              className={`${styles.ctaButton} ${styles.connectButton}`}
+              disabled
+              aria-label="Get approved to contact"
+            >
+              <Lock size={18} />
+              Get approved to contact
+            </button>
+          ) : requiresCompanyApproval ? (
+            <button
+              type="button"
+              className={`${styles.ctaButton} ${styles.connectButton}`}
+              disabled
+              aria-label="Company approval required"
+            >
+              <Lock size={18} />
+              Company approval required
+            </button>
+          ) : requiresCompanyProfile ? (
+            <button
+              type="button"
+              className={`${styles.ctaButton} ${styles.connectButton}`}
+              disabled
+              aria-label="Company profile required"
+            >
+              <Lock size={18} />
+              Company profile required
+            </button>
           ) : (
             <button
               type="button"
-              onClick={handleApprovalCtaClick}
               className={`${styles.ctaButton} ${styles.connectButton}`}
-              aria-label={isApprovalLocked ? "Get approved to contact" : "Connect wallet to contact"}
+              disabled
+              aria-label="Checking company access"
             >
               <Lock size={18} />
-              {isApprovalLocked ? "Get approved to contact" : "Connect wallet to contact"}
+              Checking company access...
             </button>
           )}
         </div>
@@ -406,11 +489,6 @@ export const TalentPageHeader = ({
             onClose={handlePopupModalClose}
           />
         )}
-
-        <ApprovalPromptModal
-          open={showApprovalPrompt}
-          onClose={() => setShowApprovalPrompt(false)}
-        />
       </div>
     </div>
   );

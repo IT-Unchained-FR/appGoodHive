@@ -128,6 +128,10 @@ export default function MessagesPage() {
   const [errorText, setErrorText] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<"list" | "chat" | "requests">("list");
   const messagesScrollRef = useRef<HTMLDivElement | null>(null);
+  const threadsFailureCountRef = useRef(0);
+  const messagesFailureCountRef = useRef(0);
+  const threadsFailureToastShownRef = useRef(false);
+  const messagesFailureToastShownRef = useRef(false);
 
   const selectedThread = useMemo(
     () => threads.find((thread) => thread.id === selectedThreadId) ?? null,
@@ -180,6 +184,51 @@ export default function MessagesPage() {
       );
     });
   }, [requestFilter, requests, searchText]);
+
+  const clearPollingErrorIfRecovered = useCallback(() => {
+    if (
+      threadsFailureCountRef.current < 3 &&
+      messagesFailureCountRef.current < 3
+    ) {
+      setErrorText(null);
+    }
+  }, []);
+
+  const registerPollingSuccess = useCallback(
+    (target: "threads" | "messages") => {
+      if (target === "threads") {
+        threadsFailureCountRef.current = 0;
+        threadsFailureToastShownRef.current = false;
+      } else {
+        messagesFailureCountRef.current = 0;
+        messagesFailureToastShownRef.current = false;
+      }
+      clearPollingErrorIfRecovered();
+    },
+    [clearPollingErrorIfRecovered],
+  );
+
+  const registerPollingFailure = useCallback(
+    (target: "threads" | "messages", message: string) => {
+      const failureRef =
+        target === "threads" ? threadsFailureCountRef : messagesFailureCountRef;
+      const toastRef =
+        target === "threads"
+          ? threadsFailureToastShownRef
+          : messagesFailureToastShownRef;
+
+      failureRef.current += 1;
+
+      if (failureRef.current >= 3) {
+        setErrorText(message);
+        if (!toastRef.current) {
+          toast.error(message);
+          toastRef.current = true;
+        }
+      }
+    },
+    [],
+  );
 
   const syncThreadIntoQuery = useCallback(
     (threadId: string | null) => {
@@ -243,6 +292,7 @@ export default function MessagesPage() {
         const data = await response.json();
         const incomingThreads = (data.threads || []) as MessengerThreadListItem[];
         setThreads(incomingThreads);
+        registerPollingSuccess("threads");
 
         const availableThreadIds = new Set(incomingThreads.map((thread) => thread.id));
         const urlSelection = threadFromUrl && availableThreadIds.has(threadFromUrl) ? threadFromUrl : null;
@@ -256,14 +306,21 @@ export default function MessagesPage() {
         syncThreadIntoQuery(fallbackSelection);
       } catch (error) {
         console.error(error);
-        setErrorText("Unable to load your conversations right now.");
+        registerPollingFailure("threads", "Unable to load your conversations right now.");
       } finally {
         if (!silent) {
           setIsThreadsLoading(false);
         }
       }
     },
-    [selectedThreadId, syncThreadIntoQuery, threadFromUrl, userId],
+    [
+      registerPollingFailure,
+      registerPollingSuccess,
+      selectedThreadId,
+      syncThreadIntoQuery,
+      threadFromUrl,
+      userId,
+    ],
   );
 
   const fetchRequests = useCallback(
@@ -323,16 +380,20 @@ export default function MessagesPage() {
 
         const data = await response.json();
         setMessages((data.messages || []) as MessengerMessage[]);
+        registerPollingSuccess("messages");
       } catch (error) {
         console.error(error);
-        setErrorText("Unable to load messages for this conversation.");
+        registerPollingFailure(
+          "messages",
+          "Unable to load messages for this conversation.",
+        );
       } finally {
         if (!silent) {
           setIsMessagesLoading(false);
         }
       }
     },
-    [userId],
+    [registerPollingFailure, registerPollingSuccess, userId],
   );
 
   const openThread = useCallback(

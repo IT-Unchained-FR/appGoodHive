@@ -34,10 +34,13 @@ Validation log after each completed task:
 Full Codex plan: **`docs/tasks/remaining-meeting-tasks.md`**
 
 - [x] TASK-005 — Referral commission text (already done — no action needed)
-- [ ] TASK-006 — Messenger end-to-end + email notification on new message
+- [x] TASK-006 — Messenger end-to-end + email notification on new message
+  - [x] TASK-006a — Company-only initiation from talent profile verified/fixed
+  - [x] TASK-006b — Email notification on new message
+  - [x] TASK-006c — Silent poll failures until 3 consecutive errors
 - [ ] TASK-007 — Replace blockchain section with video (BLOCKED — need video URL from Benoit)
-- [ ] TASK-008 — Company profile UI polish
-- [ ] TASK-009 — QA process doc
+- [x] TASK-008 — Company profile UI polish
+- [x] TASK-009 — QA process doc
 
 ---
 
@@ -132,6 +135,13 @@ Full Codex plan: **`docs/tasks/remaining-meeting-tasks.md`**
 - [ ] New message → email notification sent to recipient (via Resend)
 - [ ] Messages page does not crash under normal load
 **Files:** `app/messages/page.tsx`, `app/api/messenger/route.ts`, `app/lib/email/` (for message email notification)
+
+Validation log (remaining-meeting execution):
+- TASK-006a: `pnpm lint && pnpm tsc --noEmit` (lint warnings only; `tsc` fails with existing repo-wide errors outside this task scope)
+- TASK-006b: `pnpm lint && pnpm tsc --noEmit` (lint warnings only; same existing repo-wide `tsc` failures)
+- TASK-006c: `pnpm lint && pnpm tsc --noEmit` (lint warnings only; same existing repo-wide `tsc` failures)
+- TASK-008: `pnpm lint && pnpm tsc --noEmit` (lint warnings only; same existing repo-wide `tsc` failures)
+- TASK-009: `pnpm lint && pnpm tsc --noEmit` (lint warnings only; same existing repo-wide `tsc` failures)
 
 ---
 

@@ -148,6 +148,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const [companyRows, talentRows] = await Promise.all([
+      sql`
+        SELECT user_id
+        FROM goodhive.companies
+        WHERE user_id = ${companyUserId}::uuid
+        LIMIT 1
+      `,
+      sql`
+        SELECT user_id
+        FROM goodhive.talents
+        WHERE user_id = ${talentUserId}::uuid
+        LIMIT 1
+      `,
+    ]);
+
+    if (companyRows.length === 0) {
+      return NextResponse.json(
+        { message: "companyUserId must belong to a company profile" },
+        { status: 400 },
+      );
+    }
+
+    if (talentRows.length === 0) {
+      return NextResponse.json(
+        { message: "talentUserId must belong to a talent profile" },
+        { status: 400 },
+      );
+    }
+
     const effectiveThreadType =
       threadType ??
       (jobApplicationId ? "application" : jobRequestId ? "request" : jobId ? "job" : "direct");

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Resend } from "resend";
 
 import sql from "@/lib/db";
 import type {
@@ -6,8 +7,99 @@ import type {
   MessengerMessage,
 } from "@/interfaces/messenger";
 
+const resend = new Resend(process.env.RESEND_API_KEY);
+const MESSAGES_APP_URL = "https://app.goodhive.io/messages";
+
 function resolveActorUserId(request: NextRequest, fallback?: string | null) {
   return request.headers.get("x-user-id") ?? fallback ?? null;
+}
+
+function escapeHtml(input: string) {
+  return input
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+async function notifyRecipientAboutNewMessage(
+  recipientUserId: string,
+  senderUserId: string,
+) {
+  if (recipientUserId === senderUserId) {
+    return;
+  }
+
+  try {
+    const [recipientRows, senderRows] = await Promise.all([
+      sql`
+        SELECT email
+        FROM goodhive.users
+        WHERE userid = ${recipientUserId}::uuid
+        LIMIT 1
+      `,
+      sql`
+        SELECT
+          COALESCE(
+            NULLIF(TRIM(CONCAT_WS(' ', u.first_name, u.last_name)), ''),
+            NULLIF(company_profile.designation, ''),
+            NULLIF(talent_profile.title, ''),
+            u.email,
+            'GoodHive Member'
+          ) AS sender_name
+        FROM goodhive.users u
+        LEFT JOIN goodhive.talents talent_profile
+          ON talent_profile.user_id::text = u.userid::text
+        LEFT JOIN goodhive.companies company_profile
+          ON company_profile.user_id::text = u.userid::text
+        WHERE u.userid = ${senderUserId}::uuid
+        LIMIT 1
+      `,
+    ]);
+
+    const recipientEmail = recipientRows[0]?.email?.trim();
+    if (!recipientEmail) {
+      return;
+    }
+
+    const senderName = (senderRows[0]?.sender_name?.trim() || "GoodHive member").slice(0, 120);
+    const escapedSenderName = escapeHtml(senderName);
+    const subject = `New message from ${senderName} on GoodHive`;
+    const isDev = process.env.NODE_ENV !== "production";
+    const testEmail = process.env.TEST_EMAIL || "jubayerjuhan.dev@gmail.com";
+    const targetRecipient = isDev ? testEmail : recipientEmail;
+
+    const html = `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;padding:24px;">
+        <h2 style="margin:0 0 12px;color:#111827;">New message from ${escapedSenderName}</h2>
+        <p style="margin:0 0 16px;color:#374151;">
+          You have a new message from ${escapedSenderName}. Log in to GoodHive to read it and reply.
+        </p>
+        <a
+          href="${MESSAGES_APP_URL}"
+          style="display:inline-block;background:#f59e0b;color:#ffffff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600;"
+        >
+          Open Messages
+        </a>
+        <p style="margin:20px 0 0;color:#6b7280;">The GoodHive Team 🐝</p>
+      </div>
+    `;
+
+    const { error } = await resend.emails.send({
+      from: "GoodHive <no-reply@goodhive.io>",
+      to: [targetRecipient],
+      subject: isDev ? `[TEST] ${subject}` : subject,
+      html,
+      text: `You have a new message from ${senderName}. Log in to GoodHive to read it and reply: ${MESSAGES_APP_URL}`,
+    });
+
+    if (error) {
+      console.error("Failed to send message notification email:", error);
+    }
+  } catch (error) {
+    console.error("Failed to prepare message notification email:", error);
+  }
 }
 
 async function assertThreadAccess(threadId: string, userId: string) {
@@ -162,6 +254,13 @@ export async function POST(
         last_read_at = EXCLUDED.last_read_at,
         updated_at = EXCLUDED.updated_at
     `;
+
+    const recipientUserId =
+      access.thread.company_user_id === senderUserId
+        ? access.thread.talent_user_id
+        : access.thread.company_user_id;
+
+    await notifyRecipientAboutNewMessage(recipientUserId, senderUserId);
 
     return NextResponse.json({ message }, { status: 201 });
   } catch (error) {
