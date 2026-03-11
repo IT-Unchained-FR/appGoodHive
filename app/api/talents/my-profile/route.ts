@@ -11,6 +11,7 @@ import {
   serializeResumeArray,
 } from "@/lib/talent-profile/resume-data";
 import { expireStaleImmediateAvailability } from "@/lib/talents";
+import { GoodHiveContractEmail } from "@constants/common";
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -30,6 +31,96 @@ const RESUME_IMPORT_COLUMNS = [
 ] as const;
 
 type ResumeImportColumn = (typeof RESUME_IMPORT_COLUMNS)[number];
+type ProfileSubmissionEmailType =
+  | "profile-submission-admin"
+  | "profile-submission-talent";
+
+interface ProfileSubmissionRecipient {
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+}
+
+async function postProfileSubmissionEmail(
+  request: Request,
+  payload: {
+    email: string;
+    message: string;
+    name: string;
+    subject: string;
+    type: ProfileSubmissionEmailType;
+  },
+) {
+  const response = await fetch(new URL("/api/send-email", request.url), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Failed to send ${payload.type} email (${response.status}): ${errorText}`,
+    );
+  }
+}
+
+async function sendProfileSubmissionEmails(request: Request, userId: string) {
+  const talentRows = await sql<ProfileSubmissionRecipient[]>`
+    SELECT first_name, last_name, email
+    FROM goodhive.talents
+    WHERE user_id = ${userId}
+    LIMIT 1
+  `;
+
+  const talent = talentRows[0];
+  if (!talent) {
+    console.warn(
+      "Skipping profile submission emails because talent profile was not found:",
+      userId,
+    );
+    return;
+  }
+
+  const firstName = talent.first_name?.trim() || "";
+  const lastName = talent.last_name?.trim() || "";
+  const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
+  const displayName = fullName || firstName || "A GoodHive talent";
+  const talentEmail = talent.email?.trim();
+
+  const emailJobs: Promise<void>[] = [
+    postProfileSubmissionEmail(request, {
+      email: GoodHiveContractEmail,
+      message: `${displayName} has submitted their profile for review.`,
+      name: displayName,
+      subject: `New profile submitted for review: ${displayName}`,
+      type: "profile-submission-admin",
+    }),
+  ];
+
+  if (talentEmail) {
+    emailJobs.unshift(
+      postProfileSubmissionEmail(request, {
+        email: talentEmail,
+        message:
+          "Thank you for submitting your profile. Benoit will review it shortly. In the meantime, feel free to book an intro call: https://calendly.com/benoit-goodhive",
+        name: firstName || displayName,
+        subject: "Your GoodHive profile has been received",
+        type: "profile-submission-talent",
+      }),
+    );
+  }
+
+  const results = await Promise.allSettled(emailJobs);
+
+  for (const result of results) {
+    if (result.status === "rejected") {
+      console.error("Profile submission email failed:", result.reason);
+    }
+  }
+}
 
 async function getAvailableResumeImportColumns(): Promise<Set<ResumeImportColumn>> {
   const columns = await sql<{ column_name: string }[]>`
@@ -113,6 +204,8 @@ export async function POST(request: Request) {
       WHERE user_id = ${user_id}
       LIMIT 1
     `;
+    const isNewReviewSubmission =
+      validate === true && existingTalent[0]?.inreview !== true;
 
     if (existingTalent[0]?.inreview === true) {
       return new Response(
@@ -283,6 +376,14 @@ export async function POST(request: Request) {
       SET talents = ARRAY_APPEND(COALESCE(talents, ARRAY[]::text[]), ${user_id}::text)
       WHERE referral_code = ${referred_by}
       `;
+    }
+
+    if (isNewReviewSubmission) {
+      try {
+        await sendProfileSubmissionEmails(request, user_id);
+      } catch (error) {
+        console.error("Failed to send profile submission emails:", error);
+      }
     }
 
     return new Response(

@@ -8,6 +8,8 @@ import ContactUsConfirmationTemplate from "@/app/email-templates/contact-us-conf
 import JobAppliedTemplate from "@/app/email-templates/job-applied";
 import CompanyRegistrationTemplate from "@/app/email-templates/new-company-user";
 import TalentRegistrationTemplate from "@/app/email-templates/new-talent-user";
+import ProfileSubmissionAdminTemplate from "@/app/email-templates/profile-submission-admin";
+import ProfileSubmissionTalentTemplate from "@/app/email-templates/profile-submission-talent";
 import { GoodHiveContractEmail } from "@constants/common";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -20,6 +22,8 @@ const TEMPLATES = {
   "contact-us-confirmation": ContactUsConfirmationTemplate,
   "new-talent": TalentRegistrationTemplate,
   "new-company": CompanyRegistrationTemplate,
+  "profile-submission-admin": ProfileSubmissionAdminTemplate,
+  "profile-submission-talent": ProfileSubmissionTalentTemplate,
 };
 
 interface RequestContentType {
@@ -33,7 +37,9 @@ interface RequestContentType {
     | "contact-us"
     | "contact-us-confirmation"
     | "new-talent"
-    | "new-company";
+    | "new-company"
+    | "profile-submission-admin"
+    | "profile-submission-talent";
   subject: string;
   userEmail?: string;
   message: string;
@@ -71,13 +77,43 @@ export async function POST(request: Request) {
   try {
     const isDev = process.env.NODE_ENV !== "production";
     const testEmail = process.env.TEST_EMAIL || "jubayerjuhan.dev@gmail.com";
-    
+
     // In development, redirect all emails to the test address
     const recipientEmail = isDev ? testEmail : email;
     const teamRecipientEmail = isDev ? testEmail : GoodHiveContractEmail;
     const senderRecipientEmail = isDev && userEmail ? testEmail : userEmail;
+    const isSingleSendTemplate =
+      type === "profile-submission-admin" ||
+      type === "profile-submission-talent";
 
-    if (type === "contact-us") {
+    if (isSingleSendTemplate) {
+      const result = await resend.emails.send({
+        from: "GoodHive <no-reply@goodhive.io>",
+        to: [recipientEmail],
+        subject: isDev ? `[TEST] ${subject}` : subject,
+        react: TEMPLATES[type]({
+          name,
+          toUserName,
+          message,
+          userProfile,
+          jobLink,
+          referralLink,
+        }) as React.ReactElement,
+      });
+
+      if (result.error) {
+        console.error("Resend error (Single Send) >>", result.error);
+        return new Response(
+          JSON.stringify({
+            message: "Error sending email",
+            error: result.error,
+          }),
+          {
+            status: 500,
+          },
+        );
+      }
+    } else if (type === "contact-us") {
       // Send email to GoodHive team
       const teamEmailResult = await resend.emails.send({
         from: "GoodHive <no-reply@goodhive.io>",

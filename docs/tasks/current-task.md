@@ -4,12 +4,16 @@
 `IN PROGRESS — Talent Availability Calendar (March 10, 2026)`
 
 ## Last Updated
-2026-03-10
+2026-03-12
 
 ## Development Branch Test Fixes (March 12, 2026)
 
 - [x] TEST-FIX-001 — Messenger threads endpoint now uses session auth instead of caller-supplied user IDs
-- [ ] TEST-FIX-002 — Profile review submission sends talent/admin emails only on first submission
+- [x] TEST-FIX-002 — Profile review submission sends talent/admin emails only on first submission
+
+Validation log (development branch test fixes):
+- TEST-FIX-001: `pnpm lint && pnpm tsc --noEmit` (lint warnings only; `tsc` fails with existing repo-wide errors outside this task scope)
+- TEST-FIX-002: `pnpm lint && pnpm tsc --noEmit` (lint warnings only; `tsc` fails with existing repo-wide errors outside this task scope)
 
 ## Completed — Messenger Polish ✅
 Full plan: **`docs/tasks/messenger-polish.md`**
