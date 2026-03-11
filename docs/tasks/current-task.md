@@ -6,6 +6,11 @@
 ## Last Updated
 2026-03-10
 
+## Development Branch Test Fixes (March 12, 2026)
+
+- [x] TEST-FIX-001 — Messenger threads endpoint now uses session auth instead of caller-supplied user IDs
+- [ ] TEST-FIX-002 — Profile review submission sends talent/admin emails only on first submission
+
 ## Completed — Messenger Polish ✅
 Full plan: **`docs/tasks/messenger-polish.md`**
 

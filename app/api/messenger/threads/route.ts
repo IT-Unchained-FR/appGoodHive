@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { getSessionUser } from "@/lib/auth/sessionUtils";
 import sql from "@/lib/db";
 import type {
   CreateMessengerThreadRequest,
@@ -7,13 +8,10 @@ import type {
   MessengerThreadListItem,
 } from "@/interfaces/messenger";
 
-function resolveActorUserId(request: NextRequest, fallback?: string | null) {
-  return request.headers.get("x-user-id") ?? fallback ?? null;
-}
-
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.nextUrl.searchParams.get("userId") ?? resolveActorUserId(request);
+    const sessionUser = await getSessionUser();
+    const userId = sessionUser?.user_id ?? null;
     const limitParam = request.nextUrl.searchParams.get("limit");
     const parsedLimit = limitParam ? Number(limitParam) : null;
     const limit =
@@ -23,8 +21,8 @@ export async function GET(request: NextRequest) {
 
     if (!userId) {
       return NextResponse.json(
-        { message: "userId is required" },
-        { status: 400 },
+        { message: "Unauthorized" },
+        { status: 401 },
       );
     }
 
@@ -131,6 +129,16 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const sessionUser = await getSessionUser();
+    const actorId = sessionUser?.user_id ?? null;
+
+    if (!actorId) {
+      return NextResponse.json(
+        { message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
     const body = (await request.json()) as CreateMessengerThreadRequest;
     const {
       companyUserId,
@@ -139,10 +147,7 @@ export async function POST(request: NextRequest) {
       jobId,
       jobApplicationId,
       jobRequestId,
-      actorUserId,
     } = body;
-
-    const actorId = resolveActorUserId(request, actorUserId ?? null);
 
     if (!companyUserId || !talentUserId) {
       return NextResponse.json(
@@ -154,13 +159,6 @@ export async function POST(request: NextRequest) {
     if (companyUserId === talentUserId) {
       return NextResponse.json(
         { message: "companyUserId and talentUserId must be different" },
-        { status: 400 },
-      );
-    }
-
-    if (!actorId) {
-      return NextResponse.json(
-        { message: "actorUserId is required" },
         { status: 400 },
       );
     }
