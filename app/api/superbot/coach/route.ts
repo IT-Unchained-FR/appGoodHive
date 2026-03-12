@@ -79,8 +79,9 @@ export async function POST(request: NextRequest) {
       parts: [{ text: msg.content }],
     }));
 
-    // Call Gemini
-    const model = getGeminiModel("gemini-1.5-flash");
+    // Call Gemini — use env var model name if available
+    const modelName = process.env.GEMINI_CHAT_MODEL ?? process.env.GEMINI_FAST_MODEL ?? "gemini-2.0-flash";
+    const model = getGeminiModel(modelName);
     const chat = model.startChat({
       systemInstruction: systemPrompt,
       history: chatHistory,
@@ -102,8 +103,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: { reply } });
   } catch (error) {
-    console.error("Career coach error:", error);
-    return NextResponse.json({ success: false, error: "Failed to get response" }, { status: 500 });
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Career coach error:", message);
+    return NextResponse.json({ success: false, error: "Failed to get response", detail: message }, { status: 500 });
   }
 }
 
