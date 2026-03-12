@@ -16,6 +16,8 @@ const options = isLocalConnection
       ssl: {
         rejectUnauthorized: false,
       },
+      // Limit connections per serverless instance to avoid exhausting PostgreSQL max_connections
+      max: 3,
     };
 
 type SqlClient = ReturnType<typeof postgres>;
@@ -25,12 +27,10 @@ declare global {
   var __postgresClient: SqlClient | undefined;
 }
 
-// Reuse the same postgres client during development to avoid reconnecting on every API call.
+// Reuse the same postgres client across hot-reload (dev) and across warm invocations (Vercel).
 const client =
   globalThis.__postgresClient ?? postgres(connectionString, options);
 
-if (process.env.NODE_ENV !== "production") {
-  globalThis.__postgresClient = client;
-}
+globalThis.__postgresClient = client;
 
 export default client;
