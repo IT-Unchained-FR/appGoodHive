@@ -1,5 +1,6 @@
 import FundManager from "@/app/components/FundManager";
 import JobBalance from "@/app/components/JobBalance";
+import { JobDescriptionAIBuilder } from "@/app/components/JobDescriptionAIBuilder";
 import JobSectionsManager from "@/app/components/job-sections-manager/job-sections-manager";
 import ProfileImageUpload from "@/app/components/profile-image-upload";
 import { useProtectedNavigation } from "@/app/hooks/useProtectedNavigation";
@@ -201,6 +202,10 @@ export const JobForm = ({
 
     return rawId.toString();
   }, [jobData]);
+  const currentReviewStatus = jobData?.review_status || "draft";
+  const isReadOnlyReviewState =
+    currentReviewStatus === "pending_review" ||
+    currentReviewStatus === "approved";
 
   const onChainCurrency = useMemo(() => {
     const currency = selectedCurrency?.value || jobData?.currency;
@@ -232,7 +237,6 @@ export const JobForm = ({
   // Web3 integration
   const account = useActiveAccount();
   const {
-    createJob: createJobOnChain,
     isLoading: isBlockchainLoading,
     error: blockchainError,
   } = useJobManager();
@@ -329,14 +333,11 @@ export const JobForm = ({
       };
 
       const endpoint = jobData?.id
-        ? "/api/companies/update-job"
+        ? `/api/jobs/${jobData.id}`
         : "/api/companies/create-job";
-      if (jobData?.id) {
-        (jobPayload as any).id = jobData.id;
-      }
 
       const response = await fetch(endpoint, {
-        method: "POST",
+        method: jobData?.id ? "PATCH" : "POST",
         headers: {
           "Content-Type": "application/json",
         },
@@ -468,7 +469,9 @@ export const JobForm = ({
     }
   };
 
-  const handlePublishJob = async (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleSubmitForReview = async (
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) => {
     e.preventDefault();
 
     if (!companyData?.user_id) {
@@ -510,43 +513,50 @@ export const JobForm = ({
       return;
     }
 
-    // Web3 validation
-    if (!account) {
-      toast.error("Please connect your wallet to publish jobs");
-      return;
-    }
-
     setIsLoading(true);
 
     try {
       let databaseJobId = jobData?.id as string | undefined;
+      const jobPayload = {
+        userId: companyData.user_id,
+        title: title,
+        typeEngagement: typeEngagement?.value || "freelance",
+        description: description,
+        duration: duration?.value || "moreThanSevenDays",
+        budget: budget,
+        skills: selectedSkills.join(", "),
+        chain: selectedChain?.value || "polygon-amoy",
+        currency: selectedCurrency?.value || "USD",
+        walletAddress: companyData.wallet_address || "",
+        city: companyData.city || "",
+        country: companyData.country || "",
+        imageUrl: jobImage || "",
+        jobType: jobType?.value || "remote",
+        companyName: companyData.company_name || "",
+        projectType: projectType?.value || "fixed",
+        talent: jobServices.talent,
+        recruiter: jobServices.recruiter,
+        mentor: jobServices.mentor,
+        in_saving_stage: true,
+        sections: jobSections,
+      };
 
-      if (!databaseJobId) {
-        // Create job in database first
-        const jobPayload = {
-          userId: companyData.user_id,
-          title: title,
-          typeEngagement: typeEngagement?.value || "freelance",
-          description: description,
-          duration: duration?.value || "moreThanSevenDays",
-          budget: budget,
-          skills: selectedSkills.join(", "),
-          chain: selectedChain?.value || "polygon-amoy",
-          currency: selectedCurrency?.value || "USD",
-          walletAddress: account.address,
-          city: companyData.city || "",
-          country: companyData.country || "",
-          imageUrl: jobImage || "",
-          jobType: jobType?.value || "remote",
-          companyName: companyData.company_name || "",
-          projectType: projectType?.value || "fixed",
-          talent: jobServices.talent,
-          recruiter: jobServices.recruiter,
-          mentor: jobServices.mentor,
-          in_saving_stage: false,
-          sections: jobSections,
-        };
+      if (databaseJobId) {
+        const saveResponse = await fetch(`/api/jobs/${databaseJobId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(jobPayload),
+        });
 
+        const saveData = await saveResponse.json();
+        if (!saveResponse.ok) {
+          throw new Error(
+            saveData.error || "Failed to update job before review",
+          );
+        }
+      } else {
         const response = await fetch("/api/companies/create-job", {
           method: "POST",
           headers: {
@@ -568,83 +578,54 @@ export const JobForm = ({
         throw new Error("Failed to determine database job ID");
       }
 
-      // Now create the job on blockchain
-      toast.loading("Creating job on blockchain...");
+      const submitResponse = await fetch(
+        `/api/jobs/${databaseJobId}/submit-review`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
 
-      const supportedTokens = getSupportedTokensForChain(80002); // Always use Polygon Amoy
-
-      const tokenAddress =
-        selectedCurrency?.value === "USDC"
-          ? supportedTokens.USDC
-          : supportedTokens.DAI;
-
-      if (!tokenAddress) {
-        throw new Error("Selected token not supported on this chain");
+      const submitData = await submitResponse.json();
+      if (!submitResponse.ok) {
+        throw new Error(
+          submitData.error || "Failed to submit job for review",
+        );
       }
 
-      // Use the stored block_id from database, or generate one as fallback
-      let blockId = jobData?.block_id;
+      toast.success("Job submitted for review successfully");
+      window.location.href = `/companies/create-job?id=${databaseJobId}`;
+    } catch (error: any) {
+      console.error("Error submitting job for review:", error);
+      toast.error(error.message || "Failed to submit job for review");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      if (!blockId) {
-        // Fallback: Generate block_id if missing (for backward compatibility)
-        blockId = `${Date.now()}${Math.floor(100000 + Math.random() * 900000)}`;
-        console.warn("Job block_id not found, generated fallback:", blockId);
-
-        // Update the job with the generated block_id
-        try {
-          await fetch("/api/companies/update-job", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              id: jobData.id,
-              block_id: blockId,
-            }),
-          });
-        } catch (updateError) {
-          console.error("Failed to update job with block_id:", updateError);
-        }
-      }
-
-      const blockchainJobId = await createJobOnChain({
-        databaseId: blockId,
-        tokenAddress,
-        chain: selectedChain?.value || "polygon-amoy",
-        talentService: jobServices.talent,
-        recruiterService: jobServices.recruiter,
-        mentorService: jobServices.mentor,
-      });
-
-      console.log(blockchainJobId, "blockchain Job id");
-
-      toast.dismiss();
-
-      if (!blockchainJobId) {
-        throw new Error("Failed to create job on blockchain");
-      }
-
-      // Update database with blockchain job ID and publish
+  const handlePublishJob = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    try {
       const updateResponse = await fetch(`/api/companies/manage-job`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          jobId: databaseJobId,
+          jobId: jobData?.id,
           publish: true,
           in_saving_stage: false,
-          blockchainJobId: blockchainJobId,
-          paymentTokenAddress: tokenAddress,
         }),
       });
 
       if (updateResponse.ok) {
-        toast.success("Job created and published on blockchain!");
-        window.location.href = `/companies/create-job?id=${databaseJobId}`;
-      } else {
-        toast.success(
-          "Job created on blockchain but failed to update database",
-        );
+        toast.success("Job published successfully");
         window.location.reload();
+      } else {
+        const data = await updateResponse.json();
+        throw new Error(data.message || "Failed to publish job");
       }
     } catch (error: any) {
       console.error("Error publishing job:", error);
@@ -656,7 +637,22 @@ export const JobForm = ({
 
   return (
     <form>
-      <div className="flex flex-col w-full">
+      {isReadOnlyReviewState && (
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          {currentReviewStatus === "pending_review"
+            ? "This job is currently under review. Editing is locked until admin action is taken."
+            : "This job has already been approved. Editing is locked for companies. Contact admin for changes."}
+        </div>
+      )}
+      {currentReviewStatus === "rejected" && jobData?.admin_feedback && (
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+          <strong>Admin feedback:</strong> {jobData.admin_feedback}
+        </div>
+      )}
+      <fieldset
+        className={`flex flex-col w-full ${isReadOnlyReviewState ? "opacity-70" : ""}`}
+        disabled={isReadOnlyReviewState}
+      >
         <div className="flex flex-col gap-4">
           <div className="mt-4 flex justify-center">
             <div className="flex flex-col gap-2 items-center">
@@ -746,6 +742,18 @@ export const JobForm = ({
               }
             />
           </div>
+        </div>
+        <div className="flex flex-col w-full mt-4">
+          <JobDescriptionAIBuilder
+            jobTitle={title}
+            selectedSkills={selectedSkills}
+            companyName={companyData?.designation ?? ""}
+            companyBio={companyData?.headline ?? ""}
+            onGenerated={(generatedTitle, generatedSections) => {
+              if (generatedTitle) setTitle(generatedTitle);
+              setJobSections(generatedSections);
+            }}
+          />
         </div>
         <div className="flex flex-col w-full mt-4">
           <JobSectionsManager
@@ -1129,11 +1137,12 @@ export const JobForm = ({
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-800">
-                  Wallet Required
+                  Wallet Optional For Drafting
                 </h3>
                 <p className="text-sm text-gray-600">
-                  Connect your wallet to publish jobs on the blockchain and
-                  manage funds
+                  You can save drafts and submit jobs for review without a
+                  wallet. Wallet connection is only needed later for
+                  blockchain publishing and fund management.
                 </p>
               </div>
             </div>
@@ -1202,24 +1211,32 @@ export const JobForm = ({
                   isLoading || isBlockchainLoading || !companyData?.user_id
                 }
               >
-                Save Job
+                Save Draft
               </button>
 
-              {!jobData?.published && (
+              {!jobData?.published && currentReviewStatus !== "pending_review" && (
                 <button
                   className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full transition-all duration-300 hover:bg-transparent hover:border-2 hover:border-[#FFC905] cursor-pointer"
                   type="button"
-                  onClick={handlePublishJob}
+                  onClick={handleSubmitForReview}
                   disabled={
                     isLoading ||
                     isBlockchainLoading ||
-                    !companyData?.user_id ||
-                    !account
+                    !companyData?.user_id
                   }
                 >
-                  {account
-                    ? "Publish on Blockchain"
-                    : "Connect Wallet to Publish"}
+                  {currentReviewStatus === "rejected"
+                    ? "Resubmit for Review"
+                    : "Submit for Review"}
+                </button>
+              )}
+              {currentReviewStatus === "pending_review" && (
+                <button
+                  className="my-2 text-base font-semibold bg-gray-200 text-gray-600 h-14 w-56 rounded-full cursor-not-allowed"
+                  type="button"
+                  disabled
+                >
+                  Awaiting Review
                 </button>
               )}
               {jobData?.published && (
@@ -1237,7 +1254,7 @@ export const JobForm = ({
             </div>
           )}
         </div>
-      </div>
+      </fieldset>
 
       {/* Fund Manager Modal */}
       {showFundManager && currentBlockchainJobId && (
