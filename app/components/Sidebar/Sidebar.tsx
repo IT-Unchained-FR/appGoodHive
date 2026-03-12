@@ -8,6 +8,7 @@ import {
   Building2,
   UserCheck,
   Network,
+  Coins,
   LogOut,
   Settings,
   HelpCircle,
@@ -85,6 +86,12 @@ const personalNavItems: NavItem[] = [
     icon: <BarChart3 className={styles.navIcon} />,
     label: "Analytics",
     dataE2e: "analytics-menu",
+  },
+  {
+    href: "/admin/payouts",
+    icon: <Coins className={styles.navIcon} />,
+    label: "Payouts",
+    dataE2e: "payouts-menu",
   },
 ];
 
