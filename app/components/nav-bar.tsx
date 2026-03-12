@@ -24,13 +24,18 @@ import { connectModalOptions, supportedWallets } from "@/lib/auth/walletConfig";
 import {
   BriefcaseBusiness,
   CircleUserRound,
+  ClipboardList,
+  Coins,
+  Kanban,
   LayoutDashboard,
   MessageSquare,
   Search,
+  Sparkles,
   type LucideIcon,
   UserRound,
 } from "lucide-react";
 import { ProfileDropdown } from "./ProfileDropdown";
+import { NotificationBell } from "./NotificationBell";
 import { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -76,6 +81,24 @@ const talentsLinks = [
     icon: UserRound,
   },
   {
+    href: "/talents/career-coach",
+    label: "Career Coach",
+    protected: true,
+    icon: Sparkles,
+  },
+  {
+    href: "/talents/my-assignments",
+    label: "My Assignments",
+    protected: true,
+    icon: ClipboardList,
+  },
+  {
+    href: "/talents/my-payouts",
+    label: "My Payouts",
+    protected: true,
+    icon: Coins,
+  },
+  {
     href: "/messages",
     label: "Messages",
     protected: true,
@@ -101,6 +124,12 @@ const companiesLinks = [
     label: "My Company Profile",
     protected: true,
     icon: BriefcaseBusiness,
+  },
+  {
+    href: "/companies/pipeline",
+    label: "Talent Pipeline",
+    protected: true,
+    icon: Kanban,
   },
   {
     href: "/messages",
@@ -625,6 +654,9 @@ export const NavBar = () => {
                   }}
                 />
               </div>
+
+              {/* Notification bell — shown when authenticated */}
+              <NotificationBell userId={loggedIn_user_id ?? null} />
 
               {/* Show profile dropdown when user is authenticated */}
               {(isAuthenticated || loggedIn_user_id) && (

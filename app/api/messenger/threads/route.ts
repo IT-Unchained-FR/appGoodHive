@@ -171,14 +171,14 @@ export async function POST(request: NextRequest) {
     }
 
     const [companyRows, talentRows] = await Promise.all([
-      sql`
-        SELECT user_id
+      sql<{ user_id: string; published: boolean }[]>`
+        SELECT user_id, published
         FROM goodhive.companies
         WHERE user_id = ${companyUserId}::uuid
         LIMIT 1
       `,
-      sql`
-        SELECT user_id
+      sql<{ user_id: string; talent_status: string | null }[]>`
+        SELECT user_id, talent_status
         FROM goodhive.talents
         WHERE user_id = ${talentUserId}::uuid
         LIMIT 1
@@ -196,6 +196,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { message: "talentUserId must belong to a talent profile" },
         { status: 400 },
+      );
+    }
+
+    if (!companyRows[0].published) {
+      return NextResponse.json(
+        { message: "Company profile is not yet approved" },
+        { status: 403 },
+      );
+    }
+
+    if (talentRows[0].talent_status !== "approved") {
+      return NextResponse.json(
+        { message: "Talent profile is not yet approved" },
+        { status: 403 },
       );
     }
 
