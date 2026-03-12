@@ -9,6 +9,7 @@ import BeeHiveSpinner from "@/app/components/spinners/bee-hive-spinner";
 import { TalentPageHeader } from "@/app/components/talent-page/TalentPageHeader";
 import { TalentPageSidebar } from "@/app/components/talent-page/TalentPageSidebar";
 import { QuickRequestComposer } from "@/app/components/messenger/QuickRequestComposer";
+import { SaveToPipelineButton } from "@/app/components/SaveToPipelineButton";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { normalizeAvailabilityStatus } from "@/app/constants/availability";
 import styles from "./page.module.scss";
@@ -144,6 +145,13 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
 
   return (
     <div className={styles.pageContainer}>
+      {/* Company action: Save to Pipeline */}
+      {isAuthenticated && !isOwner && (
+        <div className="flex justify-end px-6 pt-4 pb-0">
+          <SaveToPipelineButton talentId={profileData.user_id} />
+        </div>
+      )}
+
       {/* Hero Header */}
       <TalentPageHeader
         first_name={first_name}

@@ -5,4 +5,7 @@ export interface EmailTemplateProps {
   message?: string;
   jobLink?: string;
   referralLink?: string;
+  companyName?: string;
+  feedback?: string;
+  jobTitle?: string;
 }
