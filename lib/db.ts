@@ -17,7 +17,7 @@ const options = isLocalConnection
         rejectUnauthorized: false,
       },
       // Limit connections per serverless instance to avoid exhausting PostgreSQL max_connections
-      max: 3,
+      max: 10,
     };
 
 type SqlClient = ReturnType<typeof postgres>;
