@@ -2,11 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import sql from "@/lib/db";
 import { requireAdminAuth } from "@/app/lib/admin-auth";
 
+const ADMIN_LOCKED_FIELDS = [
+  "payment_token_address",
+  "blockchain_job_id",
+  "block_id",
+] as const;
+
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { job_id: string } },
 ) {
   try {
+    const authError = requireAdminAuth(request);
+    if (authError) return authError;
+
     const { job_id } = params;
     const jobs = await sql`
       SELECT * FROM goodhive.job_offers WHERE id = ${job_id}
@@ -27,12 +36,29 @@ export async function GET(
 }
 
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { job_id: string } },
 ) {
   try {
+    const authError = requireAdminAuth(request);
+    if (authError) return authError;
+
     const { job_id } = params;
     const body = await request.json();
+
+    const attemptedLockedFields = ADMIN_LOCKED_FIELDS.filter(
+      (field) => body[field] !== undefined,
+    );
+
+    if (attemptedLockedFields.length > 0) {
+      return NextResponse.json(
+        {
+          message: `These fields cannot be edited by admin: ${attemptedLockedFields.join(", ")}`,
+        },
+        { status: 403 },
+      );
+    }
+
     const {
       title,
       description,

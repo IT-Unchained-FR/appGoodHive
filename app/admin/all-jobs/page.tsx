@@ -105,6 +105,26 @@ export default function AdminAllJobs() {
     }
   };
 
+  const getReviewStatusMeta = (job: IJobOffer) => {
+    const status =
+      job.review_status || (job.published ? "approved" : "draft");
+
+    switch (status) {
+      case "pending_review":
+        return { label: "Pending Review", variant: "secondary" as const, className: "bg-amber-100 text-amber-900" };
+      case "approved":
+        return { label: "Approved", variant: "default" as const, className: "bg-emerald-100 text-emerald-900" };
+      case "rejected":
+        return { label: "Rejected", variant: "destructive" as const, className: "bg-red-100 text-red-900" };
+      case "active":
+        return { label: "Active", variant: "secondary" as const, className: "bg-blue-100 text-blue-900" };
+      case "closed":
+        return { label: "Closed", variant: "secondary" as const, className: "bg-slate-200 text-slate-900" };
+      default:
+        return { label: "Draft", variant: "secondary" as const, className: "bg-slate-100 text-slate-900" };
+    }
+  };
+
   const jobCards = useMemo(() => {
     if (!Array.isArray(jobs)) return [];
     return jobs.map((job) => ({
@@ -112,7 +132,7 @@ export default function AdminAllJobs() {
       title: job.title,
       company: job.company_name,
       chain: job.chain,
-      status: job.published ? "Published" : "Not Published",
+      status: getReviewStatusMeta(job).label,
       created: job.created_at,
       location: [job.city, job.country].filter(Boolean).join(", "),
       image: job.image_url,
@@ -154,13 +174,13 @@ export default function AdminAllJobs() {
       sortable: true,
     },
     {
-      key: "published",
-      header: "Status",
+      key: "review_status",
+      header: "Review Status",
       width: "15%",
       sortable: true,
       render: (_value: unknown, row: IJobOffer) => (
-        <Badge variant={row.published ? "default" : "destructive"}>
-          {row.published ? "Published" : "Not Published"}
+        <Badge className={getReviewStatusMeta(row).className}>
+          {getReviewStatusMeta(row).label}
         </Badge>
       ),
     },
@@ -246,8 +266,10 @@ export default function AdminAllJobs() {
           dateFilter: true,
           statusFilter: [
             { value: 'all', label: 'All jobs' },
-            { value: 'published', label: 'Published' },
-            { value: 'unpublished', label: 'Unpublished' },
+            { value: 'pending_review', label: 'Pending review' },
+            { value: 'approved', label: 'Approved' },
+            { value: 'rejected', label: 'Rejected' },
+            { value: 'draft', label: 'Draft' },
           ],
           customFilters: [
             {

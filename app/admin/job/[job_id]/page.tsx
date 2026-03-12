@@ -25,6 +25,7 @@ import {
 } from "@/app/constants/common";
 import { chains } from "@/app/constants/chains";
 import { Textarea } from "@/components/ui/textarea";
+import Cookies from "js-cookie";
 
 // Currency options from tokens.json
 const currencyOptions = [
@@ -42,12 +43,27 @@ export default function AdminEditJobPage() {
   const [initialJob, setInitialJob] = useState<IJobOffer | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isReviewing, setIsReviewing] = useState(false);
+  const [reviewFeedback, setReviewFeedback] = useState("");
   const breadcrumbLabels =
     job || initialJob
       ? {
           [job_id]: job?.title || initialJob?.title || "Job Detail",
         }
       : undefined;
+
+  const getAuthHeaders = () => {
+    const token = Cookies.get("admin_token");
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    return headers;
+  };
 
   useEffect(() => {
     if (job_id) {
@@ -56,6 +72,7 @@ export default function AdminEditJobPage() {
         .then((data) => {
           setJob(data);
           setInitialJob(data);
+          setReviewFeedback(data.admin_feedback || "");
           setLoading(false);
         })
         .catch((err) => {
@@ -114,6 +131,57 @@ export default function AdminEditJobPage() {
       toast.error("An error occurred while saving.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleReview = async (action: "approve" | "reject") => {
+    setIsReviewing(true);
+    try {
+      const response = await fetch(`/api/admin/jobs/${job_id}/review`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          action,
+          feedback: reviewFeedback,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to review job");
+      }
+
+      const nextReviewStatus =
+        action === "approve" ? "approved" : "rejected";
+      setJob((current) =>
+        current
+          ? {
+              ...current,
+              published: action === "approve",
+              review_status: nextReviewStatus,
+              admin_feedback: data.data?.admin_feedback ?? reviewFeedback,
+            }
+          : current,
+      );
+      setInitialJob((current) =>
+        current
+          ? {
+              ...current,
+              published: action === "approve",
+              review_status: nextReviewStatus,
+              admin_feedback: data.data?.admin_feedback ?? reviewFeedback,
+            }
+          : current,
+      );
+      toast.success(
+        action === "approve" ? "Job approved successfully" : "Job rejected successfully",
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to review job",
+      );
+    } finally {
+      setIsReviewing(false);
     }
   };
 
@@ -332,6 +400,14 @@ export default function AdminEditJobPage() {
         <div className="p-6 bg-white rounded-lg shadow">
           <h3 className="text-xl font-semibold mb-6">Status</h3>
           <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="review_status">Review Status</Label>
+              <Input
+                id="review_status"
+                value={job.review_status || (job.published ? "approved" : "draft")}
+                disabled
+              />
+            </div>
             <div className="flex items-center space-x-4">
               <Label htmlFor="published" className="flex-grow">
                 Published
@@ -372,6 +448,41 @@ export default function AdminEditJobPage() {
                   will NOT show on the site
                 </li>
               </ul>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6 bg-white rounded-lg shadow">
+          <h3 className="text-xl font-semibold mb-6">Admin Review</h3>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="admin_feedback">Feedback</Label>
+              <Textarea
+                id="admin_feedback"
+                value={reviewFeedback}
+                onChange={(event) => setReviewFeedback(event.target.value)}
+                rows={5}
+                placeholder="Add optional feedback for the company..."
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                onClick={() => handleReview("approve")}
+                disabled={isReviewing}
+                size="lg"
+              >
+                Approve Job
+              </Button>
+              <Button
+                type="button"
+                onClick={() => handleReview("reject")}
+                disabled={isReviewing}
+                size="lg"
+                variant="destructive"
+              >
+                Reject Job
+              </Button>
             </div>
           </div>
         </div>

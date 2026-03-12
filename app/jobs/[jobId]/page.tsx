@@ -1,342 +1,746 @@
-import { notFound } from "next/navigation";
 import { Metadata } from "next";
-import { JobPageHeader } from "@/app/components/job-page/JobPageHeader";
-import { JobPageSidebar } from "@/app/components/job-page/JobPageSidebar";
-import { JobSectionsDisplay } from "@/app/components/job-sections-display/job-sections-display";
-import styles from "./page.module.scss";
+import Image from "next/image";
+import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
+import { Building2, CalendarDays, ExternalLink, Globe, Linkedin, MapPin, Tag, Twitter, Users2 } from "lucide-react";
+import jwt from "jsonwebtoken";
+
 import { JobPageAnalytics } from "@/app/components/job-page/JobPageAnalytics";
-import sql from "@/lib/db";
 import { RelatedJobsSection } from "@/app/components/job-page/RelatedJobsSection";
 import { YourMatchScoreCard } from "@/app/components/job-page/YourMatchScoreCard";
-import { cookies } from "next/headers";
+import JobActionPanel from "@/app/jobs/[jobId]/JobActionPanel";
+import {
+  jobTypes,
+  projectDuration,
+  projectTypes,
+  typeEngagements,
+} from "@/app/constants/common";
+import { getAdminJWTSecret } from "@/app/lib/admin-auth";
+import { getSessionUser } from "@/lib/auth/sessionUtils";
+import sql from "@/lib/db";
+import { JobReviewStatus, resolveJobReviewStatus } from "@/lib/jobs/review";
 
-interface Job {
-  id: string;
-  title: string;
-  description: string;
-  budget: number;
-  currency: string;
-  projectType: string;
-  jobType: string;
-  typeEngagement?: string;
-  duration?: string;
-  talent?: boolean;
-  mentor?: boolean;
-  recruiter?: boolean;
-  skills: string[];
-  city: string;
-  country: string;
-  postedAt: string;
-  createdAt: string;
-  published: boolean;
-  blockId?: number;
-  blockchainJobId?: number;
-  escrowAmount?: number;
-  paymentTokenAddress?: string;
-  company: {
-    id: string;
-    name: string;
-    logo?: string;
-    headline?: string;
-    city?: string;
-    country?: string;
-    email?: string;
-    linkedin?: string;
-    twitter?: string;
-    website?: string;
-    walletAddress?: string;
-  };
-  sections: Array<{
-    id: string;
-    jobId: string;
-    heading: string;
-    content: string;
-    sortOrder: number;
-    createdAt: string;
-    updatedAt: string;
-  }>;
-  relatedJobs: Array<{
-    id: string;
-    title: string;
-    budget: number;
-    currency: string;
-    projectType: string;
-    city: string;
-    country: string;
-    postedAt: string;
-  }>;
+interface JobPageData {
+  adminFeedback: string | null;
   applicationCount: number;
+  company: {
+    approved: boolean;
+    city: string | null;
+    country: string | null;
+    email: string | null;
+    headline: string | null;
+    id: string;
+    linkedin: string | null;
+    logo: string | null;
+    name: string;
+    twitter: string | null;
+    walletAddress: string | null;
+    website: string | null;
+  };
+  country: string | null;
+  currency: string | null;
+  description: string | null;
+  duration: string | null;
+  id: string;
+  jobType: string | null;
+  postedAt: string | null;
+  projectType: string | null;
+  published: boolean;
+  reviewStatus: JobReviewStatus;
+  sections: Array<{
+    content: string;
+    heading: string;
+    id: string;
+    sortOrder: number;
+  }>;
+  skills: string[];
+  title: string;
+  typeEngagement: string | null;
+  userId: string;
+  budget: number;
+  city: string | null;
+  mentor: boolean;
+  recruiter: boolean;
+  relatedJobs: Array<{
+    budget: number;
+    city: string | null;
+    country: string | null;
+    currency: string | null;
+    id: string;
+    postedAt: string | null;
+    projectType: string | null;
+    title: string;
+  }>;
+  talent: boolean;
 }
 
-async function getJob(jobId: string): Promise<Job | null> {
+interface ViewerState {
+  canEditJob: boolean;
+  canMessageCompany: boolean;
+  canPreviewUnpublished: boolean;
+  hasApplied: boolean;
+  isAdmin: boolean;
+  isApprovedTalent: boolean;
+  isAuthenticated: boolean;
+  isCompanyOwner: boolean;
+  userId: string | null;
+}
+
+function stripHtml(value?: string | null) {
+  return (value || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function formatRelativeDate(value: string | null) {
+  if (!value) {
+    return "Recently posted";
+  }
+
+  const now = new Date();
+  const posted = new Date(value);
+  const diffMs = now.getTime() - posted.getTime();
+  const diffDays = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+
+  if (diffDays === 0) return "Posted today";
+  if (diffDays === 1) return "Posted yesterday";
+  if (diffDays < 7) return `Posted ${diffDays} days ago`;
+  if (diffDays < 30) return `Posted ${Math.floor(diffDays / 7)} weeks ago`;
+  return `Posted ${Math.floor(diffDays / 30)} months ago`;
+}
+
+function getLabel(
+  options: Array<{ label: string; value: string }>,
+  value: string | null,
+  fallback: string,
+) {
+  if (!value) {
+    return fallback;
+  }
+
+  return options.find((option) => option.value === value)?.label || fallback;
+}
+
+function formatBudget(amount: number, currency: string | null) {
+  const numericAmount = Number.isFinite(amount) ? amount : 0;
+  const normalizedCurrency = currency?.trim().toUpperCase() || "USD";
+  const fiatCurrencies = new Set([
+    "AUD",
+    "CAD",
+    "CHF",
+    "CNY",
+    "EUR",
+    "GBP",
+    "JPY",
+    "USD",
+  ]);
+
+  if (fiatCurrencies.has(normalizedCurrency)) {
+    return new Intl.NumberFormat("en-US", {
+      currency: normalizedCurrency,
+      maximumFractionDigits: 0,
+      minimumFractionDigits: 0,
+      style: "currency",
+    }).format(numericAmount);
+  }
+
+  return `${new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: 0,
+  }).format(numericAmount)} ${normalizedCurrency}`;
+}
+
+async function getJob(jobId: string): Promise<JobPageData | null> {
   try {
-    // Fetch job data directly from database
-    const jobQuery = await sql`
-      SELECT jo.*, c.designation as company_name, c.image_url as company_logo,
-             c.headline, c.city as company_city, c.country as company_country,
-             c.email as company_email, c.linkedin, c.twitter, c.portfolio,
-             c.wallet_address as company_wallet_address
+    const jobRows = await sql<{
+      admin_feedback: string | null;
+      budget: number | string | null;
+      city: string | null;
+      company_approved: boolean | null;
+      company_city: string | null;
+      company_country: string | null;
+      company_email: string | null;
+      company_headline: string | null;
+      company_logo: string | null;
+      company_name: string | null;
+      company_website: string | null;
+      country: string | null;
+      currency: string | null;
+      description: string | null;
+      duration: string | null;
+      id: string;
+      job_type: string | null;
+      linkedin: string | null;
+      mentor: boolean | string | null;
+      posted_at: string | null;
+      project_type: string | null;
+      published: boolean | null;
+      recruiter: boolean | string | null;
+      review_status: string | null;
+      skills: string | null;
+      talent: boolean | string | null;
+      title: string | null;
+      twitter: string | null;
+      type_engagement: string | null;
+      user_id: string;
+      wallet_address: string | null;
+    }[]>`
+      SELECT
+        jo.id,
+        jo.user_id,
+        jo.title,
+        jo.description,
+        jo.budget,
+        jo.currency,
+        jo.project_type,
+        jo.job_type,
+        jo.type_engagement,
+        jo.duration,
+        jo.skills,
+        jo.city,
+        jo.country,
+        jo.posted_at,
+        jo.published,
+        jo.review_status,
+        jo.admin_feedback,
+        jo.talent,
+        jo.mentor,
+        jo.recruiter,
+        c.designation AS company_name,
+        c.image_url AS company_logo,
+        c.headline AS company_headline,
+        c.city AS company_city,
+        c.country AS company_country,
+        c.email AS company_email,
+        c.linkedin,
+        c.twitter,
+        c.portfolio AS company_website,
+        c.wallet_address,
+        c.approved AS company_approved
       FROM goodhive.job_offers jo
-      LEFT JOIN goodhive.companies c ON jo.user_id = c.user_id
-      WHERE jo.id = ${jobId}
+      LEFT JOIN goodhive.companies c ON c.user_id = jo.user_id
+      WHERE jo.id = ${jobId}::uuid
+      LIMIT 1
     `;
 
-    if (jobQuery.length === 0) {
+    const jobData = jobRows[0];
+    if (!jobData) {
       return null;
     }
 
-    const jobData = jobQuery[0];
+    const [sectionsRows, relatedJobsRows, applicationCountRows] = await Promise.all([
+      sql<{
+        content: string;
+        heading: string;
+        id: string;
+        sort_order: number;
+      }[]>`
+        SELECT id, heading, content, sort_order
+        FROM goodhive.job_sections
+        WHERE job_id = ${jobId}::uuid
+        ORDER BY sort_order ASC
+      `,
+      sql<{
+        budget: number | string | null;
+        city: string | null;
+        country: string | null;
+        currency: string | null;
+        id: string;
+        posted_at: string | null;
+        project_type: string | null;
+        title: string | null;
+      }[]>`
+        SELECT id, title, budget, currency, project_type, city, country, posted_at
+        FROM goodhive.job_offers
+        WHERE user_id = ${jobData.user_id}::uuid
+          AND id <> ${jobId}::uuid
+          AND published = true
+        ORDER BY posted_at DESC
+        LIMIT 3
+      `,
+      sql<{
+        application_count: number | string | null;
+      }[]>`
+        SELECT COUNT(*)::int AS application_count
+        FROM goodhive.job_applications
+        WHERE job_id = ${jobId}::uuid
+      `,
+    ]);
 
-    // Fetch job sections
-    const sectionsQuery = await sql`
-      SELECT id, heading, content, sort_order, created_at, updated_at
-      FROM goodhive.job_sections
-      WHERE job_id = ${jobId}
-      ORDER BY sort_order ASC
-    `;
-
-    // Fetch related jobs from same company (limit 3)
-    const relatedJobsQuery = await sql`
-      SELECT id, title, budget, currency, project_type, city, country, posted_at
-      FROM goodhive.job_offers
-      WHERE user_id = ${jobData.user_id} AND id != ${jobId} AND published = true
-      ORDER BY posted_at DESC
-      LIMIT 3
-    `;
-
-    // Fetch application count
-    const applicationCountQuery = await sql`
-      SELECT COUNT(*) as application_count
-      FROM goodhive.job_applications
-      WHERE job_id = ${jobId}
-    `.catch(() => [{ application_count: 0 }]);
-
-    // Format the response
-    const job: Job = {
-      // Job details
-      id: jobData.id,
-      title: jobData.title,
-      description: jobData.description,
-      budget: jobData.budget,
-      currency: jobData.currency,
-      projectType: jobData.project_type,
-      jobType: jobData.job_type,
-      typeEngagement: jobData.type_engagement,
-      duration: jobData.duration,
-      talent: jobData.talent === true || jobData.talent === "true",
-      mentor: jobData.mentor === true || jobData.mentor === "true",
-      recruiter: jobData.recruiter === true || jobData.recruiter === "true",
-      skills: jobData.skills
-        ? jobData.skills.split(",").map((s: string) => s.trim())
-        : [],
+    return {
+      adminFeedback: jobData.admin_feedback ?? null,
+      applicationCount: Number(applicationCountRows[0]?.application_count || 0),
+      budget: Number(jobData.budget || 0),
       city: jobData.city,
-      country: jobData.country,
-      postedAt: jobData.posted_at,
-      createdAt: jobData.posted_at,
-      published: jobData.published,
-
-      // Blockchain data
-      blockId: jobData.block_id,
-      blockchainJobId: jobData.blockchain_job_id,
-      escrowAmount: jobData.escrow_amount,
-      paymentTokenAddress: jobData.payment_token_address,
-
-      // Company information
       company: {
-        id: jobData.user_id,
-        userId: jobData.user_id,
-        name: jobData.company_name || jobData.designation,
-        logo: jobData.company_logo,
-        headline: jobData.headline,
+        approved: jobData.company_approved === true,
         city: jobData.company_city,
         country: jobData.company_country,
         email: jobData.company_email,
+        headline: stripHtml(jobData.company_headline),
+        id: jobData.user_id,
         linkedin: jobData.linkedin,
+        logo: jobData.company_logo,
+        name: jobData.company_name?.trim() || "GoodHive Company",
         twitter: jobData.twitter,
-        website: jobData.portfolio || null,
-        walletAddress: jobData.company_wallet_address || null,
+        walletAddress: jobData.wallet_address,
+        website: jobData.company_website,
       },
-
-      // Job sections
-      sections: sectionsQuery.map((section) => ({
-        id: section.id.toString(),
-        jobId: jobId,
-        heading: section.heading,
+      country: jobData.country,
+      currency: jobData.currency,
+      description: jobData.description,
+      duration: jobData.duration,
+      id: jobData.id,
+      jobType: jobData.job_type,
+      mentor: jobData.mentor === true || jobData.mentor === "true",
+      postedAt: jobData.posted_at,
+      projectType: jobData.project_type,
+      published: jobData.published === true,
+      recruiter: jobData.recruiter === true || jobData.recruiter === "true",
+      relatedJobs: relatedJobsRows.map((row) => ({
+        budget: Number(row.budget || 0),
+        city: row.city,
+        country: row.country,
+        currency: row.currency,
+        id: row.id,
+        postedAt: row.posted_at,
+        projectType: row.project_type,
+        title: row.title?.trim() || "Untitled job",
+      })),
+      reviewStatus: resolveJobReviewStatus(jobData.review_status, jobData.published),
+      sections: sectionsRows.map((section) => ({
         content: section.content,
+        heading: section.heading,
+        id: section.id,
         sortOrder: section.sort_order,
-        createdAt: section.created_at,
-        updatedAt: section.updated_at,
       })),
-
-      // Related jobs
-      relatedJobs: relatedJobsQuery.map((job) => ({
-        id: job.id,
-        title: job.title,
-        budget: job.budget,
-        currency: job.currency,
-        projectType: job.project_type,
-        city: job.city,
-        country: job.country,
-        postedAt: job.posted_at,
-      })),
-
-      // Application stats
-      applicationCount: applicationCountQuery[0]?.application_count || 0,
+      skills: jobData.skills
+        ? jobData.skills
+            .split(",")
+            .map((skill) => skill.trim())
+            .filter(Boolean)
+        : [],
+      talent: jobData.talent === true || jobData.talent === "true",
+      title: jobData.title?.trim() || "GoodHive job",
+      typeEngagement: jobData.type_engagement,
+      userId: jobData.user_id,
     };
-
-    return job;
   } catch (error) {
-    console.error('Error fetching job:', error);
+    console.error("Error fetching job:", error);
     return null;
   }
 }
 
-export async function generateMetadata({
-  params
-}: {
-  params: Promise<{ jobId: string }>
-}): Promise<Metadata> {
-  const { jobId } = await params;
-  const job = await getJob(jobId);
+async function getViewerState(job: JobPageData): Promise<ViewerState> {
+  const sessionUser = await getSessionUser();
+  const viewerUserId = sessionUser?.user_id ?? null;
+  const adminToken = cookies().get("admin_token")?.value ?? null;
+  let isAdmin = false;
 
-  if (!job) {
+  if (adminToken) {
+    try {
+      jwt.verify(adminToken, getAdminJWTSecret());
+      isAdmin = true;
+    } catch (error) {
+      isAdmin = false;
+    }
+  }
+
+  const isCompanyOwner = viewerUserId === job.userId;
+
+  if (!viewerUserId) {
     return {
-      title: 'Job Not Found | GoodHive',
-      description: 'The requested job could not be found.',
+      canEditJob: false,
+      canMessageCompany: false,
+      canPreviewUnpublished: isAdmin,
+      hasApplied: false,
+      isAdmin,
+      isApprovedTalent: false,
+      isAuthenticated: false,
+      isCompanyOwner: false,
+      userId: null,
     };
   }
 
-  const jobLocation = job.city && job.country ? `${job.city}, ${job.country}` : job.city || job.country || 'Remote';
+  const [viewerRows, applicationRows] = await Promise.all([
+    sql<{
+      has_talent_profile: boolean;
+      talent_status: string | null;
+    }[]>`
+      SELECT
+        u.talent_status,
+        EXISTS(
+          SELECT 1
+          FROM goodhive.talents t
+          WHERE t.user_id = ${viewerUserId}::uuid
+        ) AS has_talent_profile
+      FROM goodhive.users u
+      WHERE u.userid = ${viewerUserId}::uuid
+      LIMIT 1
+    `,
+    sql<{ id: string }[]>`
+      SELECT id
+      FROM goodhive.job_applications
+      WHERE job_id = ${job.id}::uuid
+        AND applicant_user_id = ${viewerUserId}::uuid
+      LIMIT 1
+    `,
+  ]);
 
-  // Handle crypto token addresses and map to standard currency codes
-  const getCurrencyCode = (currency: string) => {
-    if (!currency) return 'USD';
-    if (currency === 'USDC' || currency.startsWith('0x')) return 'USD';
-    // List of valid currency codes for Intl.NumberFormat
-    const validCurrencies = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY'];
-    return validCurrencies.includes(currency.toUpperCase()) ? currency.toUpperCase() : 'USD';
-  };
-
-  const budgetText = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: getCurrencyCode(job.currency),
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(job.budget);
+  const viewer = viewerRows[0];
+  const isApprovedTalent =
+    viewer?.has_talent_profile === true && viewer.talent_status === "approved";
 
   return {
-    title: `${job.title} at ${job.company.name} | GoodHive`,
-    description: `${job.title} position at ${job.company.name} in ${jobLocation}. Budget: ${budgetText}. Apply now on GoodHive for Web3 and blockchain opportunities.`,
-    keywords: `${job.title}, ${job.company.name}, Web3 jobs, blockchain jobs, ${jobLocation}, ${job.skills.join(', ')}`,
+    canEditJob:
+      isCompanyOwner &&
+      (job.reviewStatus === "draft" || job.reviewStatus === "rejected"),
+    canMessageCompany: isApprovedTalent && job.company.approved,
+    canPreviewUnpublished: isAdmin || isCompanyOwner,
+    hasApplied: applicationRows.length > 0,
+    isAdmin,
+    isApprovedTalent,
+    isAuthenticated: true,
+    isCompanyOwner,
+    userId: viewerUserId,
+  };
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { jobId: string };
+}): Promise<Metadata> {
+  const job = await getJob(params.jobId);
+
+  if (!job) {
+    return {
+      description: "The requested job could not be found.",
+      title: "Job Not Found | GoodHive",
+    };
+  }
+
+  const location = [job.city, job.country].filter(Boolean).join(", ") || "Remote";
+  const budget = formatBudget(job.budget, job.currency);
+
+  return {
+    description: `${job.title} at ${job.company.name} in ${location}. Budget: ${budget}.`,
     openGraph: {
-      title: `${job.title} at ${job.company.name}`,
-      description: `${job.title} position at ${job.company.name} in ${jobLocation}. Budget: ${budgetText}.`,
-      type: 'website',
+      description: `${job.title} at ${job.company.name} in ${location}. Budget: ${budget}.`,
       images: job.company.logo ? [{ url: job.company.logo }] : [],
-    },
-    twitter: {
-      card: 'summary_large_image',
       title: `${job.title} at ${job.company.name}`,
-      description: `${job.title} position at ${job.company.name} in ${jobLocation}. Budget: ${budgetText}.`,
+      type: "website",
+    },
+    title: `${job.title} at ${job.company.name} | GoodHive`,
+    twitter: {
+      card: "summary_large_image",
+      description: `${job.title} at ${job.company.name} in ${location}. Budget: ${budget}.`,
       images: job.company.logo ? [job.company.logo] : [],
+      title: `${job.title} at ${job.company.name}`,
     },
   };
 }
 
 export default async function JobPage({
-  params
+  params,
 }: {
-  params: Promise<{ jobId: string }>
+  params: { jobId: string };
 }) {
-  const { jobId } = await params;
-  const job = await getJob(jobId);
-  const viewerUserId = cookies().get("user_id")?.value ?? null;
-  const viewerTalentRows =
-    viewerUserId
-      ? await sql<{ user_id: string }[]>`
-          SELECT user_id
-          FROM goodhive.talents
-          WHERE user_id = ${viewerUserId}::uuid
-          LIMIT 1
-        `
-      : [];
-  const viewerTalentId = viewerTalentRows[0]?.user_id ?? null;
+  const job = await getJob(params.jobId);
 
-  // In development, allow viewing unpublished jobs for testing
-  const isDevelopment = process.env.NODE_ENV === 'development';
-
-  if (!job || (!job.published && !isDevelopment)) {
+  if (!job) {
     notFound();
   }
 
+  const viewer = await getViewerState(job);
+
+  if (!job.published && !viewer.canPreviewUnpublished) {
+    notFound();
+  }
+
+  const metadataBadges = [
+    getLabel(projectTypes, job.projectType, "Project"),
+    getLabel(jobTypes, job.jobType, "Job Type"),
+    getLabel(typeEngagements, job.typeEngagement, "Engagement"),
+    getLabel(projectDuration, job.duration, "Flexible duration"),
+  ];
+
   return (
-    <div className={styles.pageContainer}>
-      {/* Analytics tracking */}
+    <div className="min-h-screen bg-[#f6f4ee]">
       <JobPageAnalytics jobId={job.id} jobTitle={job.title} />
 
-      {/* Job Header */}
-      <JobPageHeader job={job} />
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="rounded-[36px] border border-[#e8dcc4] bg-[radial-gradient(circle_at_top,_rgba(255,214,102,0.28),_transparent_45%),linear-gradient(135deg,#fffaf0_0%,#ffffff_52%,#f9f4ea_100%)] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-8">
+          <div className="flex flex-col gap-8">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+              <div className="flex gap-4">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[24px] border border-white/80 bg-white shadow-sm">
+                  {job.company.logo ? (
+                    <Image
+                      alt={`${job.company.name} logo`}
+                      className="h-full w-full object-cover"
+                      height={80}
+                      src={job.company.logo}
+                      width={80}
+                    />
+                  ) : (
+                    <Building2 className="h-8 w-8 text-slate-400" />
+                  )}
+                </div>
 
-      {/* Main Content */}
-      <div className={styles.contentContainer}>
-        <div className={styles.contentGrid}>
-          {/* Job Content */}
-          <main className={styles.mainContent}>
-            {/* Job Sections - Modular Description */}
-            {job.sections && job.sections.length > 0 && (
-              <section className={styles.section}>
-                <h2 className={styles.sectionTitle}>Job Description</h2>
-                <JobSectionsDisplay
-                  sections={job.sections.map(s => ({
-                    id: s.id,
-                    heading: s.heading,
-                    content: s.content,
-                    sort_order: s.sortOrder || 0
-                  }))}
-                  defaultExpanded={false}
-                />
-              </section>
-            )}
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-amber-700">
+                      {job.company.name}
+                    </p>
+                    {job.company.headline ? (
+                      <p className="mt-1 text-sm text-slate-600">
+                        {job.company.headline}
+                      </p>
+                    ) : null}
+                  </div>
 
-            {/* Fallback Job Description - Only show if no sections exist */}
-            {job.description && (!job.sections || job.sections.length === 0) && (
-              <section className={styles.section}>
-                <h2 className={styles.sectionTitle}>Job Description</h2>
-                <div
-                  className={styles.description}
-                  dangerouslySetInnerHTML={{ __html: job.description }}
-                />
-              </section>
-            )}
+                  <div>
+                    <h1 className="text-3xl font-semibold text-slate-950 sm:text-5xl">
+                      {job.title}
+                    </h1>
+                    <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+                      <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1">
+                        <MapPin className="h-4 w-4 text-amber-600" />
+                        {[job.city, job.country].filter(Boolean).join(", ") || "Remote"}
+                      </span>
+                      <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1">
+                        <CalendarDays className="h-4 w-4 text-amber-600" />
+                        {formatRelativeDate(job.postedAt)}
+                      </span>
+                      <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1">
+                        <Users2 className="h-4 w-4 text-amber-600" />
+                        {job.applicationCount} application
+                        {job.applicationCount === 1 ? "" : "s"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-            {viewerTalentId && (
-              <YourMatchScoreCard jobId={job.id} talentId={viewerTalentId} />
-            )}
+              <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 text-right shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+                  Budget
+                </p>
+                <p className="mt-2 text-3xl font-semibold text-slate-950">
+                  {formatBudget(job.budget, job.currency)}
+                </p>
+                <p className="mt-2 text-sm text-slate-500">
+                  Review status:{" "}
+                  <span className="font-semibold capitalize text-slate-700">
+                    {job.reviewStatus.replace(/_/g, " ")}
+                  </span>
+                </p>
+              </div>
+            </div>
 
-            {/* Skills */}
-            {job.skills && job.skills.length > 0 && (
-              <section className={styles.section}>
-                <h2 className={styles.sectionTitle}>Required Skills</h2>
-                <div className={styles.skillsContainer}>
-                  {job.skills.map((skill, index) => (
-                    <span key={index} className={styles.skillTag}>
+            <div className="flex flex-wrap gap-3">
+              {metadataBadges.map((badge) => (
+                <span
+                  key={badge}
+                  className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white/90 px-4 py-2 text-sm font-medium text-slate-700"
+                >
+                  <Tag className="h-4 w-4 text-amber-600" />
+                  {badge}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {viewer.isCompanyOwner && job.reviewStatus === "rejected" && job.adminFeedback ? (
+          <div className="mt-6 rounded-[28px] border border-rose-200 bg-rose-50 px-6 py-5 text-sm text-rose-700">
+            <p className="font-semibold">Admin feedback</p>
+            <p className="mt-2 whitespace-pre-wrap">{job.adminFeedback}</p>
+          </div>
+        ) : null}
+
+        {viewer.isCompanyOwner && job.reviewStatus === "pending_review" ? (
+          <div className="mt-6 rounded-[28px] border border-amber-200 bg-amber-50 px-6 py-5 text-sm text-amber-800">
+            This job is currently under review. Company-side editing is locked until
+            an admin approves or rejects it.
+          </div>
+        ) : null}
+
+        <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1.7fr)_minmax(320px,0.9fr)]">
+          <main className="space-y-8">
+            {job.skills.length > 0 ? (
+              <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 className="text-xl font-semibold text-slate-950">Skills</h2>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  {job.skills.map((skill) => (
+                    <span
+                      key={skill}
+                      className="rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white"
+                    >
                       {skill}
                     </span>
                   ))}
                 </div>
               </section>
-            )}
+            ) : null}
 
-            {/* Related Jobs */}
-            <RelatedJobsSection
-              companyName={job.company.name}
-              relatedJobs={job.relatedJobs}
-            />
+            {job.sections.length > 0 ? (
+              <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 className="text-xl font-semibold text-slate-950">Role Overview</h2>
+                <div className="mt-6 space-y-8">
+                  {job.sections
+                    .sort((left, right) => left.sortOrder - right.sortOrder)
+                    .map((section) => (
+                      <article key={section.id}>
+                        <h3 className="text-lg font-semibold text-slate-900">
+                          {section.heading}
+                        </h3>
+                        <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-600">
+                          {section.content}
+                        </p>
+                      </article>
+                    ))}
+                </div>
+              </section>
+            ) : job.description ? (
+              <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 className="text-xl font-semibold text-slate-950">Role Overview</h2>
+                <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-slate-600">
+                  {stripHtml(job.description)}
+                </p>
+              </section>
+            ) : null}
+
+            {viewer.isApprovedTalent && viewer.userId ? (
+              <YourMatchScoreCard jobId={job.id} talentId={viewer.userId} />
+            ) : null}
+
+            {job.relatedJobs.length > 0 ? (
+              <RelatedJobsSection
+                companyName={job.company.name}
+                relatedJobs={job.relatedJobs.map((relatedJob) => ({
+                  city: relatedJob.city || "",
+                  country: relatedJob.country || "",
+                  currency: relatedJob.currency || "",
+                  id: relatedJob.id,
+                  postedAt: relatedJob.postedAt || "",
+                  projectType: relatedJob.projectType || "",
+                  title: relatedJob.title,
+                  budget: relatedJob.budget,
+                }))}
+              />
+            ) : null}
           </main>
 
-          {/* Sidebar */}
-          <aside className={styles.sidebar}>
-            <JobPageSidebar job={job} />
+          <aside className="space-y-6">
+            <JobActionPanel
+              canEditJob={viewer.canEditJob}
+              canMessageCompany={viewer.canMessageCompany}
+              companyEmail={job.company.email || ""}
+              companyName={job.company.name}
+              companyUserId={job.company.id}
+              hasApplied={viewer.hasApplied}
+              isAdmin={viewer.isAdmin}
+              isAuthenticated={viewer.isAuthenticated}
+              isCompanyOwner={viewer.isCompanyOwner}
+              isEditableState={
+                job.reviewStatus === "draft" || job.reviewStatus === "rejected"
+              }
+              isApprovedTalent={viewer.isApprovedTalent}
+              jobId={job.id}
+              jobTitle={job.title}
+              loginHref={`/auth/login?redirect=${encodeURIComponent(`/jobs/${job.id}`)}`}
+              manageApplicantsHref={`/companies/dashboard/jobs?jobId=${job.id}`}
+              openToMentor={job.mentor}
+              openToRecruiter={job.recruiter}
+              openToTalent={job.talent}
+              reviewHref={`/admin/job/${job.id}`}
+              walletAddress={job.company.walletAddress || job.company.id}
+            />
+
+            <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="text-xl font-semibold text-slate-950">About the Company</h2>
+
+              <div className="mt-5 flex items-center gap-4">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[20px] border border-slate-200 bg-slate-50">
+                  {job.company.logo ? (
+                    <Image
+                      alt={`${job.company.name} logo`}
+                      className="h-full w-full object-cover"
+                      height={64}
+                      src={job.company.logo}
+                      width={64}
+                    />
+                  ) : (
+                    <Building2 className="h-6 w-6 text-slate-400" />
+                  )}
+                </div>
+
+                <div>
+                  <p className="text-lg font-semibold text-slate-900">
+                    {job.company.name}
+                  </p>
+                  {job.company.headline ? (
+                    <p className="mt-1 text-sm text-slate-600">
+                      {job.company.headline}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+
+              {(job.company.city || job.company.country) ? (
+                <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-sm text-slate-600">
+                  <MapPin className="h-4 w-4 text-amber-600" />
+                  {[job.company.city, job.company.country].filter(Boolean).join(", ")}
+                </div>
+              ) : null}
+
+              <div className="mt-5 space-y-3 text-sm text-slate-600">
+                {job.company.website ? (
+                  <a
+                    className="flex items-center gap-2 transition hover:text-slate-900"
+                    href={job.company.website}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    <Globe className="h-4 w-4 text-amber-600" />
+                    {job.company.website}
+                  </a>
+                ) : null}
+
+                {job.company.linkedin ? (
+                  <a
+                    className="flex items-center gap-2 transition hover:text-slate-900"
+                    href={job.company.linkedin}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    <Linkedin className="h-4 w-4 text-amber-600" />
+                    LinkedIn
+                  </a>
+                ) : null}
+
+                {job.company.twitter ? (
+                  <a
+                    className="flex items-center gap-2 transition hover:text-slate-900"
+                    href={job.company.twitter}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    <Twitter className="h-4 w-4 text-amber-600" />
+                    Twitter
+                  </a>
+                ) : null}
+
+                {job.company.id ? (
+                  <a
+                    className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
+                    href={`/companies/${job.company.id}`}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    View Company Profile
+                  </a>
+                ) : null}
+              </div>
+            </section>
           </aside>
         </div>
       </div>

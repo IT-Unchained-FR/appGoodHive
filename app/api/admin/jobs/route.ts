@@ -10,6 +10,7 @@ export async function GET(req: NextRequest) {
     // Get filter parameters
     const dateRange = searchParams.get('dateRange');
     const status = searchParams.get('status');
+    const reviewStatus = searchParams.get('review_status');
     const location = searchParams.get('location');
     const sort = searchParams.get('sort') || 'latest';
 
@@ -44,7 +45,13 @@ export async function GET(req: NextRequest) {
         conditions.push(sql`published = true`);
       } else if (status === 'unpublished') {
         conditions.push(sql`published = false`);
+      } else {
+        conditions.push(sql`COALESCE(review_status, CASE WHEN published = true THEN 'approved' ELSE 'draft' END) = ${status}`);
       }
+    }
+
+    if (reviewStatus && reviewStatus !== 'all') {
+      conditions.push(sql`COALESCE(review_status, CASE WHEN published = true THEN 'approved' ELSE 'draft' END) = ${reviewStatus}`);
     }
 
     // Location filter (city or country)

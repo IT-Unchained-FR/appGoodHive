@@ -105,6 +105,8 @@ export async function GET(request: NextRequest) {
       blockchainJobId:
         item.block_id ?? item.blockchain_job_id ?? item.job_id ?? null,
       published: item.published,
+      review_status: item.review_status ?? (item.published ? "approved" : "draft"),
+      admin_feedback: item.admin_feedback ?? null,
       sections: sectionsQuery.map(section => ({
         id: section.id.toString(),
         job_id: id,

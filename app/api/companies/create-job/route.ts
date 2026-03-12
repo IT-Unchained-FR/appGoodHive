@@ -84,7 +84,9 @@ export async function POST(request: Request) {
         wallet_address,
         posted_at,
         in_saving_stage,
-        block_id
+        block_id,
+        review_status,
+        published
       ) VALUES (
         ${userId},
         ${title},
@@ -107,7 +109,9 @@ export async function POST(request: Request) {
         ${walletAddress},
         ${postedAt},
         ${in_saving_stage},
-        ${blockId}
+        ${blockId},
+        ${"draft"},
+        ${false}
       ) RETURNING id, block_id;
     `;
 

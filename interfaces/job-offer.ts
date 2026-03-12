@@ -36,5 +36,9 @@ export interface IJobOffer {
   in_saving_stage: boolean;
   block_id: number;
   published: boolean;
+  review_status?: string;
+  admin_feedback?: string | null;
+  reviewed_at?: string | null;
+  reviewed_by?: string | null;
   sections?: IJobSection[]; // New field for job sections
 }
