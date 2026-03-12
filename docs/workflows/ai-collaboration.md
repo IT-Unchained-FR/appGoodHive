@@ -23,6 +23,20 @@ This repo uses file-based collaboration between **Claude Code** (architect/plann
 
 **Chat is for coordination only. Repo files are the durable handoff record.**
 
+## Codex Prompt Files
+
+Claude Code writes ready-to-paste prompts in `docs/tasks/codex-prompts/`.
+Each file is fully self-contained — Codex needs no prior context.
+
+**How to execute a task:**
+1. Open `docs/tasks/codex-prompts/` and find the READY prompt
+2. Copy the entire file content
+3. Paste into Codex (codex.openai.com or CLI)
+4. Codex executes and returns a completion report
+5. Paste the report back to Claude Code for review
+
+---
+
 ## Standard Lifecycle
 
 ### 1. Claude Code Plans

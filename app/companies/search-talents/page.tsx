@@ -101,6 +101,7 @@ export default async function SearchTalentsPage({
     talents: [],
     count: 0,
   };
+
   const companyRows =
     viewerUserId
       ? await sql<{ user_id: string }[]>`
