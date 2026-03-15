@@ -12,7 +12,8 @@ import {
   Wallet,
   Menu,
   X,
-  BarChart3
+  BarChart3,
+  MessageSquare,
 } from "lucide-react";
 import { AuthLayout } from "@/app/components/AuthLayout/AuthLayout";
 
@@ -31,6 +32,12 @@ const sidebarItems = [
     href: "/companies/dashboard/jobs",
     label: "My Jobs",
     icon: Briefcase,
+    exact: false
+  },
+  {
+    href: "/companies/dashboard/messages",
+    label: "Messages",
+    icon: MessageSquare,
     exact: false
   },
   {
@@ -166,6 +173,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     {pathname === '/companies/dashboard/jobs' && 'Job Management'}
                     {pathname === '/companies/dashboard/analytics' && 'Analytics & Insights'}
                     {pathname === '/companies/dashboard/settings' && 'Settings'}
+                    {pathname === '/companies/dashboard/messages' && 'Messages'}
                     {pathname === '/companies/create-job' && 'Create New Job'}
                     {pathname === '/companies/my-profile' && 'Company Profile'}
                   </h1>

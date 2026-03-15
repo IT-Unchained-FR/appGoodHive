@@ -42,9 +42,13 @@ export interface MessengerThread {
 
 export interface MessengerThreadListItem extends MessengerThread {
   other_user_id: string;
+  other_user_role?: "talent" | "company" | null;
   other_user_name?: string | null;
   other_user_avatar?: string | null;
   other_user_headline?: string | null;
+  other_user_skills?: string | null;
+  other_user_location?: string | null;
+  other_user_bio?: string | null;
   last_message_id?: string | null;
   last_message_text?: string | null;
   last_message_sender_user_id?: string | null;

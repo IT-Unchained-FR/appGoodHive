@@ -43,22 +43,38 @@ export async function GET(request: NextRequest) {
           WHEN t.company_user_id = ${userId}::uuid THEN t.talent_user_id
           ELSE t.company_user_id
         END AS other_user_id,
-        COALESCE(
-          NULLIF(TRIM(CONCAT_WS(' ', other_u.first_name, other_u.last_name)), ''),
-          NULLIF(company_profile.designation, ''),
-          NULLIF(talent_profile.title, ''),
-          other_u.email,
-          'GoodHive Member'
-        ) AS other_user_name,
-        COALESCE(
-          NULLIF(talent_profile.image_url, ''),
-          NULLIF(company_profile.image_url, '')
-        ) AS other_user_avatar,
-        COALESCE(
-          NULLIF(talent_profile.title, ''),
-          NULLIF(company_profile.headline, ''),
-          NULLIF(company_profile.designation, '')
-        ) AS other_user_headline,
+        CASE
+          WHEN t.company_user_id = ${userId}::uuid THEN 'talent'
+          ELSE 'company'
+        END AS other_user_role,
+        CASE
+          WHEN t.company_user_id = ${userId}::uuid
+            THEN COALESCE(NULLIF(TRIM(CONCAT_WS(' ', talent_profile.first_name, talent_profile.last_name)), ''), other_u.email, 'GoodHive Talent')
+          ELSE
+            COALESCE(NULLIF(company_profile.designation, ''), other_u.email, 'GoodHive Company')
+        END AS other_user_name,
+        CASE
+          WHEN t.company_user_id = ${userId}::uuid THEN NULLIF(talent_profile.image_url, '')
+          ELSE NULLIF(company_profile.image_url, '')
+        END AS other_user_avatar,
+        CASE
+          WHEN t.company_user_id = ${userId}::uuid THEN NULLIF(talent_profile.title, '')
+          ELSE COALESCE(NULLIF(company_profile.headline, ''), NULLIF(company_profile.designation, ''))
+        END AS other_user_headline,
+        CASE
+          WHEN t.company_user_id = ${userId}::uuid THEN NULLIF(talent_profile.skills, '')
+          ELSE NULL
+        END AS other_user_skills,
+        CASE
+          WHEN t.company_user_id = ${userId}::uuid
+            THEN NULLIF(TRIM(CONCAT_WS(', ', talent_profile.city, talent_profile.country)), '')
+          ELSE NULL
+        END AS other_user_location,
+        CASE
+          WHEN t.company_user_id = ${userId}::uuid
+            THEN LEFT(NULLIF(TRIM(talent_profile.about_work), ''), 200)
+          ELSE LEFT(NULLIF(TRIM(company_profile.description), ''), 200)
+        END AS other_user_bio,
         lm.id AS last_message_id,
         lm.message_text AS last_message_text,
         lm.sender_user_id AS last_message_sender_user_id,

@@ -943,7 +943,7 @@ export default function MessagesPage() {
               </div>
             ) : (
               <div className="flex min-h-[64vh] flex-1 flex-col lg:min-h-0">
-                <div className="flex items-center gap-2 border-b border-slate-200 px-4 py-3">
+                <div className="flex items-center gap-3 border-b border-slate-200 px-4 py-3">
                   <button
                     type="button"
                     onClick={() => setMobileView("list")}
@@ -951,7 +951,14 @@ export default function MessagesPage() {
                   >
                     <ArrowLeft className="h-4 w-4" />
                   </button>
-                  <div className="min-w-0">
+                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-xs font-semibold text-slate-600">
+                    {selectedThread.other_user_avatar ? (
+                      <img src={selectedThread.other_user_avatar} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <span>{initialsFromName(displayNameFromThread(selectedThread))}</span>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-slate-900">
                       {displayNameFromThread(selectedThread)}
                     </p>
@@ -959,6 +966,16 @@ export default function MessagesPage() {
                       {selectedThread.other_user_headline || "Conversation"}
                     </p>
                   </div>
+                  {selectedThread.other_user_role === "company" && selectedThread.other_user_id && (
+                    <a
+                      href={`/companies/${selectedThread.other_user_id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-shrink-0 rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+                    >
+                      View Profile
+                    </a>
+                  )}
                 </div>
 
                 <div

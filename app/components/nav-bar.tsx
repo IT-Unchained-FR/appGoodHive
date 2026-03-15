@@ -60,7 +60,7 @@ const commonLinks = [
     icon: UserRound,
   },
   {
-    href: "/messages",
+    href: "/companies/dashboard/messages",
     label: "Messages",
     protected: true,
     icon: MessageSquare,
@@ -608,7 +608,7 @@ export const NavBar = () => {
                       >
                         <Icon className="h-4 w-4" />
                         <span>{label}</span>
-                        {href === "/messages" && unreadMessageCount > 0 && (
+                        {(href === "/messages" || href === "/companies/dashboard/messages") && unreadMessageCount > 0 && (
                           <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-rose-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
                             {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
                           </span>
@@ -621,7 +621,7 @@ export const NavBar = () => {
                       >
                         <Icon className="h-4 w-4" />
                         <span>{label}</span>
-                        {href === "/messages" && unreadMessageCount > 0 && (
+                        {(href === "/messages" || href === "/companies/dashboard/messages") && unreadMessageCount > 0 && (
                           <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-rose-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
                             {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
                           </span>
@@ -718,7 +718,7 @@ export const NavBar = () => {
                       >
                         <Icon className="h-4 w-4" />
                         <span>{label}</span>
-                        {href === "/messages" && unreadMessageCount > 0 && (
+                        {(href === "/messages" || href === "/companies/dashboard/messages") && unreadMessageCount > 0 && (
                           <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-rose-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
                             {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
                           </span>
@@ -731,7 +731,7 @@ export const NavBar = () => {
                       >
                         <Icon className="h-4 w-4" />
                         <span>{label}</span>
-                        {href === "/messages" && unreadMessageCount > 0 && (
+                        {(href === "/messages" || href === "/companies/dashboard/messages") && unreadMessageCount > 0 && (
                           <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-rose-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
                             {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
                           </span>
