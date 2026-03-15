@@ -83,6 +83,9 @@ export const createJobServices: createJobServicesType[] = [
 
 export const GoodHiveContractEmail = "benoit@goodhive.io";
 
+export const BenoitIntroCallUrl =
+  "https://calendly.com/benoit-kulesza/45-minutes-meeting";
+
 export const GoodhiveQuestLink = "https://zealy.io/cw/goodhive";
 
 export const GoodHiveWalletAddress =

@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import sql from "@/lib/db";
+import { getSessionUser } from "@/lib/auth/sessionUtils";
 import type { MarkThreadReadRequest } from "@/interfaces/messenger";
-
-function resolveActorUserId(request: NextRequest, fallback?: string | null) {
-  return request.headers.get("x-user-id") ?? fallback ?? null;
-}
 
 export async function POST(
   request: NextRequest,
@@ -13,15 +10,17 @@ export async function POST(
 ) {
   try {
     const { threadId } = await params;
-    const body = (await request.json()) as MarkThreadReadRequest;
-    const userId = resolveActorUserId(request, body.userId ?? null);
+    const sessionUser = await getSessionUser();
+    const userId = sessionUser?.user_id ?? null;
 
     if (!userId) {
       return NextResponse.json(
-        { message: "userId is required" },
-        { status: 400 },
+        { message: "Unauthorized" },
+        { status: 401 },
       );
     }
+
+    const body = (await request.json()) as MarkThreadReadRequest;
 
     const threadRows = await sql`
       SELECT id, company_user_id, talent_user_id, job_request_id

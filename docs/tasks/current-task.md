@@ -1,10 +1,78 @@
 # Current Task
 
 ## Status
-`IN PROGRESS — Plan-42 Full Platform Flow + Innovation Backlog (March 12, 2026)`
+`STABILIZATION SPRINT — Fix critical bugs before client campaign (March 16, 2026)`
 
 ## Last Updated
-2026-03-12
+2026-03-15
+
+## ⚠️ Benoit's Directive (March 12 meeting)
+**STOP new features. Make the existing platform work reliably.**
+Clients are being onboarded soon. Broken UX = lost talent + lost clients.
+See full meeting notes: `docs/meetings/2026-03-12-juhan-benoit.md`
+
+---
+
+## 🔥 STABILIZATION TASKS (do these before anything else)
+
+### P0 — Thirdweb credit exhaustion ← CODEX TASK
+**Root cause:** `app/providers.tsx` uses `<ThirdwebProvider>` with no config → defaults to `autoConnect: true` in Thirdweb v5. On every page load, Thirdweb SDK re-authenticates social/embedded wallets against Thirdweb's servers, consuming API credits. `AuthContext.tsx:140-175` has a `useEffect` on `account?.address` that fires on every reconnect, compounding the issue. The plan costs $5/month — the next tier is $90, so we MUST reduce consumption.
+
+**Fix:**
+1. In `app/providers.tsx` — change `<ThirdwebProvider>` to `<ThirdwebProvider autoConnect={false}>`. Iron Session (`session_token` cookie) keeps users authenticated; the wallet does NOT need to auto-reconnect on every page to maintain login state.
+2. For pages that actually need wallet connection (job creation/publish, payouts) — trigger a manual reconnect via the connect button. The user is already prompted there.
+3. In `app/contexts/AuthContext.tsx` — the `useEffect` on `account?.address` (line 140-175) can stay as-is; it will just not fire on every page load anymore since wallet won't auto-reconnect.
+
+**Do NOT change:** Iron Session auth, session_token cookie handling, or login flow.
+**Acceptance:** After change, Thirdweb credit counter should not increment on normal page navigation for logged-in users.
+
+---
+
+### P0 — DB connection stability
+- [ ] Audit all concurrent connections across environments (localhost:3000, localhost:3001, preview, prod)
+- [ ] Ensure dev environments use dev DB only; preview uses its own pool
+- [ ] Verify `pg` pool settings (`max`) are respected per environment
+- **Why:** Connection exhaustion causes random 500s on talent search, job listing, etc.
+
+### P1 — Company job dashboard: jobs not loading ← PARTIALLY FIXED
+- [x] **Dev DB migration applied (March 15):** `plan42_01_job_review_status.sql` confirmed — columns `review_status`, `admin_feedback`, `reviewed_at`, `reviewed_by` already existed on dev DB. 5 jobs backfilled to correct status.
+- [ ] **⚠️ PROD DB migration still needed** — run `psql "$PROD_DATABASE_URL" -f app/db/migrations/plan42_01_job_review_status.sql` before production deploy
+- [ ] Verify Benoit's company jobs now appear correctly on preview after next deploy
+- **Root cause was:** Query in `lib/jobs/company-jobs.ts` selected `review_status`/`admin_feedback` — columns that were missing on production DB.
+
+### P1 — Profile submission email: missing Calendly link ← BLOCKED
+- [ ] **Blocked: need correct 45-min Calendly URL from Benoit**
+- Current hardcoded URL (`app/email-templates/profile-submission-talent.tsx:5`): `https://calendly.com/benoit-goodhive` — may be generic, not the 45-min assessment slot
+- Also: email failures are silently swallowed (`my-profile/route.ts:382-386`) — add log/alert so failed sends are visible in Vercel logs
+- **Bug:** BUG-001 — Alvaro did not receive appointment link; Benoit had to send manually
+
+### P1 — Admin new-company email: "undefined undefined" ← CODEX TASK
+**Root cause:** `app/companies/my-profile/page.tsx:301-305` — the fetch to `/api/send-email` is missing the `name` field. The send-email handler's admin HTML at `app/api/send-email/route.ts:207` uses `${name}` directly (no fallback), producing "undefined".
+
+**Fix — one line in `app/companies/my-profile/page.tsx` around line 301:**
+```ts
+body: JSON.stringify({
+  email: dataForm.email,
+  name: dataForm.designation,   // ← ADD THIS LINE
+  type: "new-company",
+  subject: `Welcome to GoodHive, ${dataForm.designation}! 🌟 Let's Connect You with Top IT Talent`,
+}),
+```
+No other files need changing.
+
+### P2 — Admin talent filter: 204 response ← NO ACTION NEEDED
+**Finding:** `app/api/admin/talents/route.ts` already returns `200 + { data: [], pagination: {} }` on empty results. No code bug. Was likely a transient DB connection issue during the meeting. No fix required.
+
+### P2 — Blockchain job publish UX ← CODEX TASK
+**Context:** In `app/companies/create-job/JobForm.tsx`, there is no explicit "Publish on Blockchain" button. The current flow is: Save Draft → Submit for Review → (admin approves → published). The "Manage Funds" button (FundManager modal) exists separately but isn't surfaced prominently.
+
+**Fix:**
+- After a job is saved (not yet submitted for review), add a banner/callout: *"Fund your smart contract before submitting — this ensures your talent can be paid on-chain."* with a button that opens the FundManager modal.
+- The callout should only show if the job has no blockchain funds provisioned yet.
+- Do NOT change the submit-for-review flow itself — just add the CTA before it.
+- Keep it simple: a yellow info banner (`bg-yellow-50 border-yellow-400`) between the job form and the submit button.
+
+---
 
 ---
 

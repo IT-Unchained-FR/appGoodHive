@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
 import sql from "@/lib/db";
+import { getSessionUser } from "@/lib/auth/sessionUtils";
 import type {
   CreateMessengerMessageRequest,
   MessengerMessage,
@@ -13,10 +14,6 @@ const GOODHIVE_BASE_URL =
   "https://app.goodhive.io";
 const MESSAGES_APP_URL = `${GOODHIVE_BASE_URL}/messages`;
 const MAX_MESSAGE_LENGTH = 5000;
-
-function resolveActorUserId(request: NextRequest, fallback?: string | null) {
-  return request.headers.get("x-user-id") ?? fallback ?? null;
-}
 
 function escapeHtml(input: string) {
   return input
@@ -139,12 +136,13 @@ export async function GET(
 ) {
   try {
     const { threadId } = await params;
-    const userId = request.nextUrl.searchParams.get("userId") ?? resolveActorUserId(request);
+    const sessionUser = await getSessionUser();
+    const userId = sessionUser?.user_id ?? null;
 
     if (!userId) {
       return NextResponse.json(
-        { message: "userId is required" },
-        { status: 400 },
+        { message: "Unauthorized" },
+        { status: 401 },
       );
     }
 
@@ -197,18 +195,19 @@ export async function POST(
 ) {
   try {
     const { threadId } = await params;
-    const body = (await request.json()) as CreateMessengerMessageRequest;
-
-    const senderUserId = resolveActorUserId(request, body.senderUserId ?? null);
-    const messageText = body.messageText?.trim();
-    const messageType = body.messageType ?? "text";
+    const sessionUser = await getSessionUser();
+    const senderUserId = sessionUser?.user_id ?? null;
 
     if (!senderUserId) {
       return NextResponse.json(
-        { message: "senderUserId is required" },
-        { status: 400 },
+        { message: "Unauthorized" },
+        { status: 401 },
       );
     }
+
+    const body = (await request.json()) as CreateMessengerMessageRequest;
+    const messageText = body.messageText?.trim();
+    const messageType = body.messageType ?? "text";
 
     if (!messageText) {
       return NextResponse.json(

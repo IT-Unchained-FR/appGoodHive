@@ -1,8 +1,7 @@
 import * as React from "react";
 
 import { EmailTemplateProps } from "@/interfaces/email-template";
-
-const INTRO_CALL_URL = "https://calendly.com/benoit-goodhive";
+import { BenoitIntroCallUrl } from "@/app/constants/common";
 
 export const ProfileSubmissionTalentTemplate: React.FC<
   Readonly<EmailTemplateProps>
@@ -16,16 +15,16 @@ export const ProfileSubmissionTalentTemplate: React.FC<
         Thank you for submitting your profile. Benoit will review it shortly.
       </p>
       <p>
-        In the meantime, feel free to book an intro call:{" "}
+        In the meantime, please book your 45-minute assessment interview:{" "}
         <a
-          href={INTRO_CALL_URL}
+          href={BenoitIntroCallUrl}
           style={{
             color: "#FFC905",
             textDecoration: "none",
             fontWeight: "bold",
           }}
         >
-          {INTRO_CALL_URL}
+          {BenoitIntroCallUrl}
         </a>
       </p>
       <br />

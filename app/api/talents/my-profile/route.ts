@@ -11,7 +11,7 @@ import {
   serializeResumeArray,
 } from "@/lib/talent-profile/resume-data";
 import { expireStaleImmediateAvailability } from "@/lib/talents";
-import { GoodHiveContractEmail } from "@constants/common";
+import { BenoitIntroCallUrl, GoodHiveContractEmail } from "@constants/common";
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -105,7 +105,7 @@ async function sendProfileSubmissionEmails(request: Request, userId: string) {
       postProfileSubmissionEmail(request, {
         email: talentEmail,
         message:
-          "Thank you for submitting your profile. Benoit will review it shortly. In the meantime, feel free to book an intro call: https://calendly.com/benoit-goodhive",
+          `Thank you for submitting your profile. Benoit will review it shortly. In the meantime, please book your 45-minute assessment interview: ${BenoitIntroCallUrl}`,
         name: firstName || displayName,
         subject: "Your GoodHive profile has been received",
         type: "profile-submission-talent",

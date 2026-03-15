@@ -300,6 +300,7 @@ export default function MyProfile() {
           },
           body: JSON.stringify({
             email: dataForm.email,
+            name: dataForm.designation,
             type: "new-company",
             subject: `Welcome to GoodHive, ${dataForm.designation}! 🌟 Let's Connect You with Top IT Talent`,
           }),

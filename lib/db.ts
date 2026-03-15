@@ -10,14 +10,19 @@ const isLocalConnection =
   connectionString.includes("localhost") ||
   connectionString.includes("127.0.0.1");
 
+// Production: 10 connections per instance (prod DB, safe headroom).
+// Preview: 5 connections (dev DB, shared with local dev — enough for Vercel concurrency).
+// Local dev: 3 connections (dev DB, multiple local instances may run simultaneously).
+const vercelEnv = process.env.VERCEL_ENV; // "production" | "preview" | undefined (local)
+const maxConnections = vercelEnv === "production" ? 10 : vercelEnv === "preview" ? 5 : 3;
+
 const options = isLocalConnection
   ? {}
   : {
       ssl: {
         rejectUnauthorized: false,
       },
-      // Limit connections per serverless instance to avoid exhausting PostgreSQL max_connections
-      max: 10,
+      max: maxConnections,
     };
 
 type SqlClient = ReturnType<typeof postgres>;

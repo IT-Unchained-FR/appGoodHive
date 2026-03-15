@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
     }
 
     const targetTalentRows = await sql<TalentRow[]>`
-      SELECT description, skills, years_experience
+      SELECT description, skills, NULL::int AS years_experience
       FROM goodhive.talents
       WHERE user_id = ${talentId}::uuid
       LIMIT 1

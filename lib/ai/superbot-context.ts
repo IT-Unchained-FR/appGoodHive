@@ -36,7 +36,8 @@ export async function buildTalentContext(userId: string): Promise<TalentContext>
   const [talentRows, appRows, assignmentRows, jobRows] = await Promise.all([
     // Profile
     sql<{
-      name: string | null;
+      first_name: string | null;
+      last_name: string | null;
       skills: string | null;
       about_work: string | null;
       title: string | null;
@@ -45,9 +46,11 @@ export async function buildTalentContext(userId: string): Promise<TalentContext>
       country: string | null;
       wallet_address: string | null;
     }[]>`
-      SELECT name, skills, about_work, title, description, city, country, wallet_address
-      FROM goodhive.talents
-      WHERE user_id = ${userId}::uuid
+      SELECT t.first_name, t.last_name, t.skills, t.about_work, t.title, t.description, t.city, t.country,
+        COALESCE(NULLIF(u.thirdweb_wallet_address, ''), NULLIF(u.wallet_address, '')) AS wallet_address
+      FROM goodhive.talents t
+      LEFT JOIN goodhive.users u ON u.userid = t.user_id
+      WHERE t.user_id = ${userId}::uuid
       LIMIT 1
     `,
     // Recent applications
@@ -92,7 +95,8 @@ export async function buildTalentContext(userId: string): Promise<TalentContext>
   const t = talentRows[0];
 
   // Compute profile completeness
-  const fields = [t?.name, t?.skills, t?.about_work, t?.title, t?.city];
+  const fullName = [t?.first_name, t?.last_name].filter(Boolean).join(" ").trim();
+  const fields = [fullName, t?.skills, t?.about_work, t?.title, t?.city];
   const filled = fields.filter(Boolean).length;
   const completeness = Math.round((filled / fields.length) * 100);
 
@@ -102,7 +106,7 @@ export async function buildTalentContext(userId: string): Promise<TalentContext>
 
   return {
     profile: {
-      name: t?.name?.trim() || "GoodHive Member",
+      name: fullName || "GoodHive Member",
       skills: talentSkills,
       bio: t?.about_work?.trim() || t?.description?.trim() || "",
       title: t?.title?.trim() || "",

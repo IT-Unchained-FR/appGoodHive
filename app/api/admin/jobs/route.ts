@@ -1,10 +1,23 @@
 export const revalidate = 0; // Disable ISR completely
 
 import type { NextRequest } from "next/server";
+import { verify } from "jsonwebtoken";
+import { cookies } from "next/headers";
+import { getAdminJWTSecret } from "@/app/lib/admin-auth";
 import sql from "@/lib/db";
+
+const verifyAdminToken = async () => {
+  const cookieStore = cookies();
+  const token = cookieStore.get("admin_token")?.value;
+  if (!token) throw new Error("No token provided");
+  const decoded = verify(token, getAdminJWTSecret()) as { role: string };
+  if (decoded.role !== "admin") throw new Error("Not authorized");
+  return decoded;
+};
 
 export async function GET(req: NextRequest) {
   try {
+    await verifyAdminToken();
     const { searchParams } = new URL(req.url);
 
     // Get filter parameters
@@ -96,11 +109,13 @@ export async function GET(req: NextRequest) {
 
     return new Response(JSON.stringify(jobs), { status: 200, headers });
   } catch (error) {
+    const msg = error instanceof Error ? error.message : "Unknown error";
+    const isAuthError = msg === "No token provided" || msg === "Not authorized" || msg === "Invalid token";
     console.error("Error fetching jobs:", error);
     return new Response(
-      JSON.stringify({ message: "Error fetching jobs data" }),
+      JSON.stringify({ message: isAuthError ? "Unauthorized" : "Error fetching jobs data", error: msg }),
       {
-        status: 500,
+        status: isAuthError ? 401 : 500,
         headers: {
           "Cache-Control": "no-store, max-age=0",
         },

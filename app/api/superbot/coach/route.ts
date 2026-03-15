@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     const modelName = process.env.GEMINI_CHAT_MODEL ?? process.env.GEMINI_FAST_MODEL ?? "gemini-2.0-flash";
     const model = getGeminiModel(modelName);
     const chat = model.startChat({
-      systemInstruction: systemPrompt,
+      systemInstruction: { role: "user", parts: [{ text: systemPrompt }] },
       history: chatHistory,
     });
 

@@ -178,9 +178,10 @@ export async function POST(request: NextRequest) {
         LIMIT 1
       `,
       sql<{ user_id: string; talent_status: string | null }[]>`
-        SELECT user_id, talent_status
-        FROM goodhive.talents
-        WHERE user_id = ${talentUserId}::uuid
+        SELECT t.user_id, u.talent_status
+        FROM goodhive.talents t
+        LEFT JOIN goodhive.users u ON u.userid = t.user_id
+        WHERE t.user_id = ${talentUserId}::uuid
         LIMIT 1
       `,
     ]);

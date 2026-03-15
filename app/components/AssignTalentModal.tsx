@@ -93,7 +93,13 @@ export function AssignTalentModal({ jobId, jobTitle, isOpen, onClose }: AssignTa
         const res = await fetch(`/api/talents?search=${encodeURIComponent(search)}&limit=8`);
         if (!res.ok) return;
         const json = await res.json();
-        const list = Array.isArray(json) ? json : (json.data ?? json.talents ?? []);
+        const raw: Array<Record<string, unknown>> = Array.isArray(json) ? json : (json.data ?? json.talents ?? []);
+        const list: TalentResult[] = raw.map((t) => ({
+          user_id: (t.userId ?? t.user_id ?? "") as string,
+          name: [t.firstName ?? t.first_name, t.lastName ?? t.last_name].filter(Boolean).join(" ") || (t.name as string) || "Unnamed Talent",
+          image_url: (t.imageUrl ?? t.image_url ?? null) as string | null,
+          skills: Array.isArray(t.skills) ? (t.skills as string[]).join(", ") : ((t.skills ?? null) as string | null),
+        }));
         setResults(list.slice(0, 8));
       } catch {
         setResults([]);

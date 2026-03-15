@@ -1166,6 +1166,27 @@ export const JobForm = ({
           </div>
         )}
 
+        {!!jobData?.job_id &&
+          !currentBlockchainJobId &&
+          (currentReviewStatus === "draft" ||
+            currentReviewStatus === "rejected") && (
+            <div className="mb-4 flex items-start gap-3 rounded-lg border border-yellow-400 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+              <span className="mt-0.5 text-yellow-500">⚡</span>
+              <span>
+                <strong>Provision funds before submitting.</strong> Adding USDC
+                to your smart contract ensures your talent can be paid on-chain
+                once the mission is complete.{" "}
+                <button
+                  type="button"
+                  className="underline font-semibold hover:text-yellow-900"
+                  onClick={onManageFundsClick}
+                >
+                  Manage Funds
+                </button>
+              </span>
+            </div>
+          )}
+
         <div className="mt-12 mb-8 w-full flex justify-end gap-4 text-right">
           {!!jobData?.job_id && (
             <Tooltip content="Provisioning funds boost swift community response to your job offer.">

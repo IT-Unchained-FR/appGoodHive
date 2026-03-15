@@ -48,10 +48,10 @@ export async function POST(
     }
 
     // Verify talent exists and is approved
-    const talentRows = await sql<{ user_id: string; name: string | null; email: string | null }[]>`
-      SELECT t.user_id, t.name, u.email
+    const talentRows = await sql<{ user_id: string; first_name: string | null; last_name: string | null; email: string | null }[]>`
+      SELECT t.user_id, t.first_name, t.last_name, u.email
       FROM goodhive.talents t
-      LEFT JOIN goodhive.users u ON u.id = t.user_id
+      LEFT JOIN goodhive.users u ON u.userid = t.user_id
       WHERE t.user_id = ${body.talentUserId}::uuid LIMIT 1
     `;
     if (!talentRows[0]) {
@@ -78,7 +78,7 @@ export async function POST(
 
     // Send email to talent (non-blocking)
     const talentEmail = talentRows[0]?.email;
-    const talentName = talentRows[0]?.name?.trim() || "Talent";
+    const talentName = [talentRows[0]?.first_name, talentRows[0]?.last_name].filter(Boolean).join(" ").trim() || "Talent";
     if (talentEmail) {
       sendAssignmentRequestEmail({
         talentName,
@@ -134,7 +134,7 @@ export async function GET(
         ja.assigned_at,
         ja.responded_at,
         ja.talent_user_id,
-        t.name AS talent_name,
+        TRIM(CONCAT_WS(' ', t.first_name, t.last_name)) AS talent_name,
         t.image_url AS talent_image
       FROM goodhive.job_assignments ja
       LEFT JOIN goodhive.talents t ON t.user_id = ja.talent_user_id
