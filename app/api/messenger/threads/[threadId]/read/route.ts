@@ -20,7 +20,12 @@ export async function POST(
       );
     }
 
-    const body = (await request.json()) as MarkThreadReadRequest;
+    let body: MarkThreadReadRequest = {};
+    try {
+      body = (await request.json()) as MarkThreadReadRequest;
+    } catch {
+      // no body — use defaults
+    }
 
     const threadRows = await sql`
       SELECT id, company_user_id, talent_user_id, job_request_id

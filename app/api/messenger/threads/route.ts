@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
         CASE
           WHEN t.company_user_id = ${userId}::uuid
             THEN LEFT(NULLIF(TRIM(talent_profile.about_work), ''), 200)
-          ELSE LEFT(NULLIF(TRIM(company_profile.description), ''), 200)
+          ELSE LEFT(NULLIF(TRIM(company_profile.headline), ''), 200)
         END AS other_user_bio,
         lm.id AS last_message_id,
         lm.message_text AS last_message_text,
