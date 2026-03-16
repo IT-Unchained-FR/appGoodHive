@@ -204,15 +204,15 @@ export async function POST(request: Request) {
              <ul style="list-style: none; padding: 0;">
                <li style="margin-bottom: 8px;"><strong>Type:</strong> ${type}</li>
                <li style="margin-bottom: 8px;"><strong>Subject:</strong> ${subject}</li>
-               <li style="margin-bottom: 8px;"><strong>Sender:</strong> ${name} (${userEmail || "No email provided"})</li>
-               <li style="margin-bottom: 8px;"><strong>Receiver:</strong> ${toUserName || "N/A"} (${email})</li>
+               <li style="margin-bottom: 8px;"><strong>Sender:</strong> ${name || "N/A"} (${userEmail || "No email provided"})</li>
+               <li style="margin-bottom: 8px;"><strong>Receiver:</strong> ${toUserName || "N/A"} (${email || "N/A"})</li>
              </ul>
            </div>
-           
+           ${message ? `
            <div style="background: #fef3c7; padding: 20px; border-radius: 12px; border: 1px solid #f59e0b;">
              <strong style="color: #92400e;">Message Content:</strong><br/>
              <p style="margin-top: 10px; white-space: pre-wrap;">${message}</p>
-           </div>
+           </div>` : ""}
            
            <div style="margin-top: 20px; font-size: 14px; color: #666;">
              ${userProfile ? `<p><strong>Sender Profile:</strong> <a href="${userProfile}">${userProfile}</a></p>` : ""}
@@ -224,7 +224,7 @@ export async function POST(request: Request) {
       const adminPromise = resend.emails.send({
         from: "GoodHive System <no-reply@goodhive.io>",
         to: teamRecipientEmail,
-        subject: isDev ? `[TEST] [Admin] ${type}: ${name} -> ${toUserName}` : `[Admin] ${type}: ${name} -> ${toUserName}`,
+        subject: isDev ? `[TEST] [Admin] ${type}: ${name || "N/A"} -> ${toUserName || "N/A"}` : `[Admin] ${type}: ${name || "N/A"} -> ${toUserName || "N/A"}`,
         html: adminHtml,
       });
 

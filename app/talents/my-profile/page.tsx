@@ -1181,14 +1181,15 @@ export default function ProfilePage() {
     : profileData.approved
       ? "Approved"
       : "Not Submitted";
-  const handleNextSection = useCallback(() => {
+  const handleNextSection = useCallback(async () => {
     if (isLastChapter) return;
+    await handleFormSubmit(false);
     const nextChapter = PROFILE_CHAPTERS[currentChapterIndex + 1];
     if (nextChapter) {
       setActiveSection(nextChapter.sections[0]);
       scrollToActiveSectionTop();
     }
-  }, [currentChapterIndex, isLastChapter, scrollToActiveSectionTop]);
+  }, [currentChapterIndex, handleFormSubmit, isLastChapter, scrollToActiveSectionTop]);
 
   if (isTokenVerifying) {
     return <HoneybeeSpinner message={"Verifying authentication..."} />;
@@ -2239,11 +2240,12 @@ export default function ProfilePage() {
                         {!isLastChapter && (
                           <button
                             type="button"
-                            onClick={handleNextSection}
-                            className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-5 text-sm font-semibold text-amber-800 transition hover:-translate-y-0.5 hover:bg-amber-100"
+                            onClick={() => void handleNextSection()}
+                            disabled={saveProfileLoading}
+                            className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-5 text-sm font-semibold text-amber-800 transition hover:-translate-y-0.5 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
                           >
-                            Next Chapter
-                            <span aria-hidden="true">→</span>
+                            {saveProfileLoading ? "Saving..." : "Save & Next Chapter"}
+                            {!saveProfileLoading && <span aria-hidden="true">→</span>}
                           </button>
                         )}
                         {canShowSubmitAction && (
