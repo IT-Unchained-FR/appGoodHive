@@ -74,6 +74,14 @@
   color: #374151;
   font-size: 1rem;
   line-height: 1.6;
+
+  p {
+    margin: 0 0 0.6rem;
+    &:last-child { margin-bottom: 0; }
+  }
+  strong { font-weight: 600; color: #111827; }
+  ul, ol { padding-left: 1.25rem; margin: 0.4rem 0; }
+  li { margin-bottom: 0.2rem; }
 }
 
 .metaRow {

@@ -50,7 +50,12 @@ export const CompanyHeroSection = ({
             )}
           </div>
 
-          {headline && <p className={styles.headline}>{headline}</p>}
+          {headline && (
+            <div
+              className={styles.headline}
+              dangerouslySetInnerHTML={{ __html: headline }}
+            />
+          )}
 
           <div className={styles.metaRow}>
             {hasLocation && (
