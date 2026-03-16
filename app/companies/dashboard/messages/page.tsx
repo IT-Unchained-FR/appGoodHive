@@ -20,6 +20,11 @@ import toast from "react-hot-toast";
 const THREADS_POLL_INTERVAL_MS = 9000;
 const MESSAGES_POLL_INTERVAL_MS = 4000;
 
+function stripHtml(html: string | null | undefined): string {
+  if (!html) return "";
+  return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
 function initialsFromName(name: string) {
   return name
     .split(" ")
@@ -60,7 +65,7 @@ function TalentInfoPanel({ thread }: { thread: MessengerThreadListItem }) {
         <div>
           <p className="text-sm font-semibold text-slate-900">{name}</p>
           {thread.other_user_headline && (
-            <p className="mt-0.5 text-xs text-slate-500">{thread.other_user_headline}</p>
+            <p className="mt-0.5 text-xs text-slate-500">{stripHtml(thread.other_user_headline)}</p>
           )}
           {thread.other_user_location && (
             <p className="mt-1 flex items-center justify-center gap-1 text-xs text-slate-400">
@@ -92,7 +97,10 @@ function TalentInfoPanel({ thread }: { thread: MessengerThreadListItem }) {
       {thread.other_user_bio && (
         <div>
           <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">About</p>
-          <p className="line-clamp-4 text-xs leading-relaxed text-slate-600">{thread.other_user_bio}</p>
+          <div
+            className="line-clamp-4 text-xs leading-relaxed text-slate-600 [&_strong]:font-semibold [&_p]:mb-1"
+            dangerouslySetInnerHTML={{ __html: thread.other_user_bio }}
+          />
         </div>
       )}
 
@@ -306,7 +314,7 @@ export default function CompanyMessagesPage() {
                             )}
                           </div>
                           <p className="truncate text-xs text-slate-400">
-                            {thread.other_user_headline || thread.last_message_text || "No messages yet"}
+                            {stripHtml(thread.other_user_headline) || thread.last_message_text || "No messages yet"}
                           </p>
                         </div>
                       </div>
@@ -357,7 +365,7 @@ export default function CompanyMessagesPage() {
                   {selectedThread.other_user_name || "Talent"}
                 </p>
                 <p className="truncate text-xs text-slate-400">
-                  {selectedThread.other_user_headline || "Conversation"}
+                  {stripHtml(selectedThread.other_user_headline) || "Conversation"}
                 </p>
               </div>
             </div>

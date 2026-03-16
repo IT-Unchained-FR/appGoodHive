@@ -98,6 +98,11 @@ function formatRelativeTime(value?: string | null) {
   return rtf.format(days, "day");
 }
 
+function stripHtml(html: string | null | undefined): string {
+  if (!html) return "";
+  return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
 function displayNameFromThread(thread: MessengerThreadListItem) {
   if (thread.other_user_name?.trim()) return thread.other_user_name;
   return `User ${thread.other_user_id.slice(0, 8)}`;
@@ -963,7 +968,7 @@ export default function MessagesPage() {
                       {displayNameFromThread(selectedThread)}
                     </p>
                     <p className="truncate text-xs text-slate-500">
-                      {selectedThread.other_user_headline || "Conversation"}
+                      {stripHtml(selectedThread.other_user_headline) || "Conversation"}
                     </p>
                   </div>
                   {selectedThread.other_user_role === "company" && selectedThread.other_user_id && (
