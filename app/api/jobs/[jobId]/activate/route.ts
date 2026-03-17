@@ -19,12 +19,12 @@ export async function POST(
     const { jobId } = params;
 
     const jobRows = await sql<{
-      block_id: number | null;
       id: string;
+      payment_token_address: string | null;
       review_status: string | null;
       user_id: string;
     }[]>`
-      SELECT id, user_id, review_status, block_id
+      SELECT id, user_id, review_status, payment_token_address
       FROM goodhive.job_offers
       WHERE id = ${jobId}::uuid
       LIMIT 1
@@ -58,7 +58,7 @@ export async function POST(
       );
     }
 
-    if (job.block_id === null || job.block_id === undefined) {
+    if (!job.payment_token_address) {
       return NextResponse.json(
         {
           success: false,

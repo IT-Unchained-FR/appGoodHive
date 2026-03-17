@@ -73,16 +73,16 @@ function getPrimaryAction(job: CompanyDashboardJob) {
     };
   }
 
-  // Approved but not yet on blockchain
-  if (job.reviewStatus === "approved" && job.blockchainJobId === null) {
+  // Approved — payment token not set means step 1 (blockchain publish) not done
+  if (job.reviewStatus === "approved" && !job.paymentTokenAddress) {
     return {
       label: "Publish to Blockchain",
       type: "blockchain" as const,
     };
   }
 
-  // Approved + on blockchain but not yet funded/activated
-  if (job.reviewStatus === "approved" && job.blockchainJobId !== null) {
+  // Approved + token set means blockchain-published, but not yet funded/activated
+  if (job.reviewStatus === "approved" && job.paymentTokenAddress) {
     return {
       label: "Add Provision Fund",
       type: "blockchain" as const,

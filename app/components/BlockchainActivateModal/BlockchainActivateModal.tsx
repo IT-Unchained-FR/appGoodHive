@@ -59,7 +59,8 @@ export default function BlockchainActivateModal({
   const tokenOptions = getTokenOptions();
 
   // Derive initial step from job state — resume from wherever the company left off
-  const initialStep: Step = job.blockchainJobId !== null ? 2 : 1;
+  // payment_token_address being set means step 1 (blockchain publish) is complete
+  const initialStep: Step = job.paymentTokenAddress !== null ? 2 : 1;
 
   const [step, setStep] = useState<Step>(initialStep);
   const [selectedTokenAddress, setSelectedTokenAddress] = useState<string>(
@@ -70,7 +71,7 @@ export default function BlockchainActivateModal({
   const [tokenSymbol, setTokenSymbol] = useState<string>("");
   const [tokenDecimals, setTokenDecimals] = useState<number>(6);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [step1Done, setStep1Done] = useState(job.blockchainJobId !== null);
+  const [step1Done, setStep1Done] = useState(job.paymentTokenAddress !== null);
 
   // Resolved blockchain job ID — may be set after step 1 completes mid-session
   const [resolvedBlockchainJobId, setResolvedBlockchainJobId] = useState<
@@ -107,13 +108,13 @@ export default function BlockchainActivateModal({
 
   // Keep step in sync if job prop changes externally (e.g. parent re-renders)
   useEffect(() => {
-    if (job.blockchainJobId !== null) {
+    if (job.paymentTokenAddress !== null) {
       setStep(2);
       setStep1Done(true);
-      setResolvedBlockchainJobId(job.blockchainJobId);
-      if (job.paymentTokenAddress) {
-        setSelectedTokenAddress(job.paymentTokenAddress);
+      if (job.blockchainJobId !== null) {
+        setResolvedBlockchainJobId(job.blockchainJobId);
       }
+      setSelectedTokenAddress(job.paymentTokenAddress);
     }
   }, [job.blockchainJobId, job.paymentTokenAddress]);
 
