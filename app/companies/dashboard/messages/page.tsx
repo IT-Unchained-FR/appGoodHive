@@ -243,7 +243,7 @@ export default function CompanyMessagesPage() {
   }, [selectedThread, fetchMessages]);
 
   return (
-    <div className="-m-6 flex h-[calc(100vh-64px)] overflow-hidden bg-white">
+    <div className="flex flex-1 overflow-hidden bg-white">
       {/* Left: Thread list */}
       <div
         className={cn(
