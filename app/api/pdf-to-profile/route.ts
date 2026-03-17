@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import pdfParse from "pdf-parse";
+// Use the direct lib path to avoid pdf-parse loading test files at import time,
+// which crashes in Next.js serverless / edge environments.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require("pdf-parse/lib/pdf-parse.js");
 import {
   chunkTextForAI,
   extractJsonObject,

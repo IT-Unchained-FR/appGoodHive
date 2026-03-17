@@ -5,6 +5,7 @@ const nextConfig = {
     typedRoutes: true,
     workerThreads: false,
     cpus: 1,
+    serverComponentsExternalPackages: ["pdf-parse"],
   },
   async headers() {
     return [
