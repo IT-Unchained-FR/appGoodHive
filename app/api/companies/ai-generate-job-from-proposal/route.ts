@@ -1,27 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import { getGeminiModel } from "@/lib/gemini";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-// Skills database for validation and suggestions
-const COMMON_SKILLS = [
-  "JavaScript", "TypeScript", "React", "Node.js", "Python", "Java", "C++", "C#",
-  "PHP", "Ruby", "Go", "Rust", "Swift", "Kotlin", "HTML", "CSS", "SASS", "SCSS",
-  "Vue.js", "Angular", "Next.js", "Express.js", "Django", "Flask", "Ruby on Rails",
-  "Spring", "Laravel", "ASP.NET", "MongoDB", "PostgreSQL", "MySQL", "Redis",
-  "Docker", "Kubernetes", "AWS", "Azure", "Google Cloud", "Git", "GitHub",
-  "GitLab", "CI/CD", "Jenkins", "Terraform", "Ansible", "Linux", "Ubuntu",
-  "Machine Learning", "AI", "Data Science", "TensorFlow", "PyTorch", "Pandas",
-  "NumPy", "Scikit-learn", "Blockchain", "Ethereum", "Solidity", "Web3",
-  "Smart Contracts", "DeFi", "NFT", "Cryptocurrency", "REST API", "GraphQL",
-  "Microservices", "Agile", "Scrum", "UI/UX Design", "Figma", "Adobe Creative Suite"
-];
-
-interface JobProposalRequest {
-  jobProposal: string;
-}
+export const dynamic = "force-dynamic";
 
 interface JobSection {
   heading: string;
@@ -33,8 +13,8 @@ interface GeneratedJobData {
   title: string;
   sections: JobSection[];
   skills: string[];
-  projectType: 'fixed' | 'hourly';
-  typeEngagement: 'freelance' | 'remote' | 'any';
+  projectType: "fixed" | "hourly";
+  typeEngagement: "freelance" | "remote" | "any";
   duration: string;
   estimatedBudget: {
     min: number;
@@ -46,221 +26,128 @@ interface GeneratedJobData {
 
 export async function POST(request: NextRequest) {
   try {
-    const { jobProposal }: JobProposalRequest = await request.json();
+    const { jobProposal } = await request.json();
 
-    // Validation
     if (!jobProposal || !jobProposal.trim()) {
-      return NextResponse.json(
-        { message: "Job proposal is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ status: "error", message: "Job proposal is required" }, { status: 400 });
     }
 
-    if (jobProposal.length < 100) {
-      return NextResponse.json(
-        { message: "Job proposal must be at least 100 characters" },
-        { status: 400 }
-      );
+    if (jobProposal.trim().length < 50) {
+      return NextResponse.json({ status: "error", message: "Job proposal must be at least 50 characters" }, { status: 400 });
     }
 
     if (jobProposal.length > 5000) {
-      return NextResponse.json(
-        { message: "Job proposal must not exceed 5000 characters" },
-        { status: 400 }
-      );
+      return NextResponse.json({ status: "error", message: "Job proposal must not exceed 5000 characters" }, { status: 400 });
     }
 
-    // Construct comprehensive prompt for parsing job proposal
-    const jobGenerationPrompt = `
-You are an expert HR professional and job posting specialist. You have been given a job proposal that may be in various formats (formal, casual, bullet points, paragraphs, etc.). Your task is to analyze this proposal and extract all relevant information to create a comprehensive, professional job posting.
+    const prompt = `You are an expert HR professional and job posting specialist for GoodHive, a Web3 IT talent marketplace.
+
+Analyze the following job proposal and extract all relevant information to create a comprehensive, professional job posting.
 
 **Job Proposal:**
 ${jobProposal}
 
-**Your task is to:**
+**Instructions:**
+1. Extract or infer a professional job title (max 60 characters)
+2. Create 4-6 well-structured sections with professional HTML content using <p>, <ul>, <li>, <strong> tags:
+   - About the Role (overview, 150-200 words)
+   - Key Responsibilities (4-6 bullet points)
+   - Requirements & Qualifications (4-6 bullet points)
+   - Preferred Skills (3-4 bullet points)
+   - What We Offer (3-4 bullet points)
+3. Extract 6-12 relevant technical skills
+4. Determine: projectType (fixed or hourly), typeEngagement (freelance, remote, or any), duration, jobType (remote, hybrid, or onsite)
+5. Estimate budget in USD if not provided
 
-1. **Extract or Infer Job Title:** Create a professional job title that accurately reflects the role. If not explicitly stated, infer it from the job description.
+Duration must be one of: "lessThanSevenDays", "moreThanSevenDays", "moreThanOneMonth", "moreThanThreeMonths"
 
-2. **Create Comprehensive Job Sections:** Organize the information into 4-6 detailed sections with professional content:
-   - About the Role (150-200 words) - Overview of the position
-   - Key Responsibilities (4-6 bullet points) - Main duties and tasks
-   - Requirements & Qualifications (4-6 bullet points) - Must-have skills and experience
-   - Preferred Skills (3-4 bullet points) - Nice-to-have qualifications
-   - What We Offer (3-4 bullet points) - Benefits and perks (infer if not mentioned)
-   - About the Company (optional, 100-150 words if relevant information is provided)
-
-3. **Extract Skills:** Identify 8-12 relevant technical skills mentioned or implied in the proposal. Include programming languages, frameworks, tools, and technologies.
-
-4. **Determine Project Details:**
-   - **Project Type:** Analyze if this is a fixed-price project or hourly engagement (default to "fixed" if unclear)
-   - **Engagement Type:** Determine if this is freelance, remote employment, or flexible (default to "freelance" if unclear)
-   - **Duration:** Estimate project duration based on scope:
-     - "lessThanSevenDays" - Quick tasks
-     - "moreThanSevenDays" - Short projects (1-2 weeks)
-     - "moreThanOneMonth" - Medium projects (1-3 months)
-     - "moreThanThreeMonths" - Long-term projects (3+ months)
-   - **Job Type:** Determine if remote, hybrid, or onsite (default to "remote" if unclear)
-
-5. **Estimate Budget:** If budget is mentioned, extract it. If not mentioned, provide a reasonable estimate based on:
-   - Scope of work
-   - Required experience level
-   - Project complexity
-   - Industry standards
-
-**Guidelines:**
-- Use professional, engaging language
-- Expand brief descriptions into comprehensive content
-- If information is missing, make reasonable inferences based on context
-- Use HTML formatting for rich text (paragraphs, lists, bold text)
-- Ensure all sections are substantial and informative
-- Focus on value proposition and growth opportunities
-- Be inclusive and welcoming in tone
-
-**Response Format:**
-Return a JSON object with this exact structure:
+Return ONLY valid JSON (no markdown, no code blocks):
 {
-  "title": "Professional job title (max 60 characters)",
+  "title": "Professional job title",
   "sections": [
-    {
-      "heading": "Section Name",
-      "content": "HTML formatted content with <p>, <ul>, <li>, <strong> tags",
-      "sort_order": 0
-    }
+    { "heading": "Section Name", "content": "HTML formatted content", "sort_order": 0 }
   ],
-  "skills": ["skill1", "skill2", "skill3"],
-  "projectType": "fixed" or "hourly",
-  "typeEngagement": "freelance" or "remote" or "any",
-  "duration": "lessThanSevenDays" or "moreThanSevenDays" or "moreThanOneMonth" or "moreThanThreeMonths",
-  "estimatedBudget": {
-    "min": number,
-    "max": number,
-    "currency": "USD"
-  },
-  "jobType": "remote" or "hybrid" or "onsite"
-}
+  "skills": ["skill1", "skill2"],
+  "projectType": "fixed",
+  "typeEngagement": "freelance",
+  "duration": "moreThanOneMonth",
+  "estimatedBudget": { "min": 1000, "max": 5000, "currency": "USD" },
+  "jobType": "remote"
+}`;
 
-**Important:** Only return the JSON object, no additional text or markdown formatting.
-`;
+    const modelName = process.env.GEMINI_CHAT_MODEL ?? process.env.GEMINI_FAST_MODEL ?? "gemini-2.0-flash";
+    const model = getGeminiModel(modelName);
+    const result = await model.generateContent(prompt);
 
-    // Generate job data using OpenAI
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        {
-          role: "system",
-          content: "You are an expert HR professional who creates exceptional job postings from unstructured proposals. Always respond with valid JSON only."
-        },
-        {
-          role: "user",
-          content: jobGenerationPrompt
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 3000,
-    });
-
-    const aiResponse = completion.choices[0]?.message?.content;
-    if (!aiResponse) {
-      throw new Error("No response from AI service");
-    }
-
-    // Parse AI response
-    let generatedData: GeneratedJobData;
-    try {
-      // Clean the response to ensure it's valid JSON
-      const cleanedResponse = aiResponse.replace(/```json\n?|\n?```/g, '').trim();
-      generatedData = JSON.parse(cleanedResponse);
-    } catch (parseError) {
-      console.error("AI response parsing error:", parseError);
-      console.error("AI response:", aiResponse);
-      throw new Error("Failed to parse AI response");
-    }
-
-    // Validate and sanitize the generated data
-    if (!generatedData.title || !generatedData.sections || !Array.isArray(generatedData.sections)) {
-      throw new Error("Invalid AI response structure");
-    }
-
-    // Validate skills against our database and clean them
-    const validatedSkills = generatedData.skills
-      ?.filter(skill => typeof skill === 'string' && skill.length > 0)
-      .slice(0, 15) // Limit to 15 skills max
-      .map(skill => {
-        // Try to find exact matches in our skill database
-        const exactMatch = COMMON_SKILLS.find(s => s.toLowerCase() === skill.toLowerCase());
-        return exactMatch || skill.trim();
-      })
-      .filter(skill => skill.length > 1)
-      || [];
-
-    // Ensure sections have proper sort_order
-    const validatedSections = generatedData.sections
-      .filter(section => section.heading && section.content)
-      .map((section, index) => ({
-        ...section,
-        sort_order: index
-      }));
-
-    // Set reasonable defaults for budget if not provided or invalid
-    let estimatedBudget = generatedData.estimatedBudget;
-    if (!estimatedBudget || !estimatedBudget.min || !estimatedBudget.max) {
-      // Default budget based on typical project
-      estimatedBudget = {
-        min: 1500,
-        max: 5000,
-        currency: "USD"
-      };
-    }
-
-    const responseData: GeneratedJobData = {
-      title: generatedData.title.substring(0, 100), // Ensure title length limit
-      sections: validatedSections,
-      skills: validatedSkills,
-      projectType: generatedData.projectType === 'hourly' ? 'hourly' : 'fixed',
-      typeEngagement: ['freelance', 'remote', 'any'].includes(generatedData.typeEngagement)
-        ? generatedData.typeEngagement
-        : 'freelance',
-      duration: ['lessThanSevenDays', 'moreThanSevenDays', 'moreThanOneMonth', 'moreThanThreeMonths']
-        .includes(generatedData.duration)
-        ? generatedData.duration
-        : 'moreThanOneMonth',
-      estimatedBudget,
-      jobType: ['remote', 'hybrid', 'onsite'].includes(generatedData.jobType)
-        ? generatedData.jobType
-        : 'remote'
+    const rawResponse = result.response as unknown as {
+      text?: () => string;
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
     };
 
-    return NextResponse.json({
-      status: "success",
-      data: responseData
-    });
+    const rawText =
+      typeof rawResponse?.text === "function"
+        ? rawResponse.text()
+        : rawResponse?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 
-  } catch (error) {
-    console.error("Error generating job from proposal:", error);
+    // Strip markdown fences if present
+    const cleaned = rawText.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
-    // Return more specific error messages
-    if (error instanceof Error) {
-      if (error.message.includes("API key")) {
-        return NextResponse.json(
-          { status: "error", message: "AI service configuration error" },
-          { status: 500 }
-        );
-      }
-      if (error.message.includes("rate limit") || error.message.includes("quota")) {
-        return NextResponse.json(
-          { status: "error", message: "AI service temporarily unavailable. Please try again in a few minutes." },
-          { status: 429 }
-        );
-      }
+    let generatedData: GeneratedJobData;
+    try {
+      generatedData = JSON.parse(cleaned);
+    } catch {
+      console.error("Gemini response parsing error. Raw:", rawText);
+      return NextResponse.json(
+        { status: "error", message: "AI returned an invalid format. Please try again." },
+        { status: 422 }
+      );
     }
 
+    if (!generatedData.title || !Array.isArray(generatedData.sections)) {
+      return NextResponse.json(
+        { status: "error", message: "AI response was incomplete. Please try again." },
+        { status: 422 }
+      );
+    }
+
+    // Sanitize sections
+    const validatedSections = generatedData.sections
+      .filter((s) => s.heading && s.content)
+      .map((s, i) => ({ ...s, sort_order: i }));
+
+    // Sanitize budget
+    const budget =
+      generatedData.estimatedBudget?.min && generatedData.estimatedBudget?.max
+        ? generatedData.estimatedBudget
+        : { min: 1500, max: 5000, currency: "USD" };
+
+    const responseData: GeneratedJobData = {
+      title: String(generatedData.title).substring(0, 100),
+      sections: validatedSections,
+      skills: (generatedData.skills ?? [])
+        .filter((s) => typeof s === "string" && s.length > 1)
+        .slice(0, 15),
+      projectType: generatedData.projectType === "hourly" ? "hourly" : "fixed",
+      typeEngagement: ["freelance", "remote", "any"].includes(generatedData.typeEngagement)
+        ? generatedData.typeEngagement
+        : "freelance",
+      duration: ["lessThanSevenDays", "moreThanSevenDays", "moreThanOneMonth", "moreThanThreeMonths"].includes(
+        generatedData.duration
+      )
+        ? generatedData.duration
+        : "moreThanOneMonth",
+      estimatedBudget: budget,
+      jobType: ["remote", "hybrid", "onsite"].includes(generatedData.jobType)
+        ? generatedData.jobType
+        : "remote",
+    };
+
+    return NextResponse.json({ status: "success", data: responseData });
+  } catch (error) {
+    console.error("Error generating job from proposal:", error);
     return NextResponse.json(
-      {
-        status: "error",
-        message: "Failed to generate job posting from proposal. Please try again or use the Quick Input method."
-      },
+      { status: "error", message: "Failed to generate job posting. Please try again." },
       { status: 500 }
     );
   }
 }
-

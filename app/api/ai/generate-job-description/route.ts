@@ -85,7 +85,8 @@ export async function POST(request: NextRequest) {
 
     const prompt = buildPrompt({ title, seniority, skills, workType, budget, tone, companyName, companyBio });
 
-    const model = getGeminiModel("gemini-1.5-flash");
+    const modelName = process.env.GEMINI_CHAT_MODEL ?? process.env.GEMINI_FAST_MODEL ?? "gemini-2.0-flash";
+    const model = getGeminiModel(modelName);
     const result = await model.generateContent(prompt);
 
     const rawResponse = result.response as unknown as {
