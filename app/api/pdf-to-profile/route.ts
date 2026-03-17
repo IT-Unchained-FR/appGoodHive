@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 // which crashes in Next.js serverless / edge environments.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require("pdf-parse/lib/pdf-parse.js");
+import { getGeminiModel } from "@/lib/gemini";
 import {
   chunkTextForAI,
   extractJsonObject,
@@ -11,8 +12,7 @@ import {
   normalizeExtractedResumeFacts,
 } from "./pdf-import-utils";
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const OPENAI_MODEL = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
+const GEMINI_MODEL = process.env.GEMINI_CHAT_MODEL ?? process.env.GEMINI_FAST_MODEL ?? "gemini-2.5-flash";
 const PDF_TEXT_EXTRACTOR_URL =
   process.env.PDF_TEXT_EXTRACTOR_URL ??
   "https://pdf-text-extractor-ki7lh2h1i-jubayer-juhans-projects-85b1bbdc.vercel.app/upload-pdf";
@@ -131,42 +131,20 @@ Structured resume data:
 ${JSON.stringify(facts, null, 2)}
 `;
 
-const callOpenAIForJson = async <T,>(
+const callGeminiForJson = async <T,>(
   systemPrompt: string,
   userPrompt: string,
-  maxTokens: number,
 ) => {
-  if (!OPENAI_API_KEY) {
-    throw new Error("Server misconfiguration: OPENAI_API_KEY is missing");
-  }
-
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: OPENAI_MODEL,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: 0.2,
-      max_tokens: maxTokens,
-    }),
+  const model = getGeminiModel(GEMINI_MODEL);
+  const result = await model.generateContent({
+    systemInstruction: systemPrompt,
+    contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+    generationConfig: { temperature: 0.2 },
   });
 
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`OpenAI API error (${response.status}): ${errorBody}`);
-  }
-
-  const data = await response.json();
-  const generatedText = data.choices?.[0]?.message?.content;
-
+  const generatedText = result.response.text();
   if (!generatedText) {
-    throw new Error("No response from OpenAI");
+    throw new Error("No response from Gemini");
   }
 
   return extractJsonObject<T>(generatedText);
@@ -273,10 +251,9 @@ export async function POST(request: NextRequest) {
 
     for (let index = 0; index < chunks.length; index += 1) {
       const chunk = chunks[index];
-      const extractedChunk = await callOpenAIForJson<Record<string, unknown>>(
+      const extractedChunk = await callGeminiForJson<Record<string, unknown>>(
         EXTRACTION_SYSTEM_PROMPT,
         createChunkExtractionPrompt(chunk, index + 1, chunks.length),
-        2200,
       );
       extractedChunks.push(normalizeExtractedResumeFacts(extractedChunk));
     }
@@ -290,11 +267,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const generatedNarrative = await callOpenAIForJson<{
+    const generatedNarrative = await callGeminiForJson<{
       title?: string;
       description?: string;
       about_work?: string;
-    }>(NARRATIVE_SYSTEM_PROMPT, createNarrativePrompt(mergedFacts), 2600);
+    }>(NARRATIVE_SYSTEM_PROMPT, createNarrativePrompt(mergedFacts));
 
     const finalProfileData = {
       first_name: mergedFacts.first_name || "",
