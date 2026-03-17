@@ -166,7 +166,7 @@ async function run() {
       jobType:        ai.jobType,
       budget:         String(ai.estimatedBudget.max),
       currency:       ai.estimatedBudget.currency,
-      chain:          "polygon",
+      chain:          "polygon-amoy",
       companyName:    company.designation ?? null,
       walletAddress:  null,
       city:           null,
@@ -303,7 +303,7 @@ async function run() {
   // In real life: frontend calls smart contract → gets back on-chain job ID from JobCreated event.
   // Here we simulate a successful tx with a fake on-chain counter ID.
   const simulatedOnChainId = Math.floor(Math.random() * 900) + 100; // e.g. 542
-  const usdcPolygon = "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"; // USDC on Polygon mainnet
+  const usdcPolygon = "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582"; // USDC on Polygon Amoy
 
   info(`Simulated on-chain job ID: ${simulatedOnChainId}`);
   info(`Simulated payment token:   ${usdcPolygon} (USDC)`);

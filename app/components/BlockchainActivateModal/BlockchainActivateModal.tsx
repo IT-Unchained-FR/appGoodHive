@@ -12,7 +12,7 @@ import {
   getTokenInfo,
 } from "@/lib/contracts/erc20";
 import { getSupportedTokensForChain } from "@/lib/contracts/jobManager";
-import { ACTIVE_CHAIN_NAME } from "@/config/chains";
+import { ACTIVE_CHAIN_ID, ACTIVE_CHAIN_NAME } from "@/config/chains";
 
 export interface BlockchainActivateJob {
   blockchainJobId: number | null;

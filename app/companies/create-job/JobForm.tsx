@@ -1,6 +1,7 @@
 import FundManager from "@/app/components/FundManager";
 import JobBalance from "@/app/components/JobBalance";
 import { JobDescriptionAIBuilder } from "@/app/components/JobDescriptionAIBuilder";
+import { BlockchainActivateModal } from "@/app/components/BlockchainActivateModal";
 import JobSectionsManager from "@/app/components/job-sections-manager/job-sections-manager";
 import ProfileImageUpload from "@/app/components/profile-image-upload";
 import { useProtectedNavigation } from "@/app/hooks/useProtectedNavigation";
@@ -163,6 +164,7 @@ export const JobForm = ({
 }: JobFormProps) => {
   const [isCommissionExpanded, setIsCommissionExpanded] = useState(false);
   const [showFundManager, setShowFundManager] = useState(false);
+  const [showBlockchainModal, setShowBlockchainModal] = useState(false);
   const { navigate: protectedNavigate } = useProtectedNavigation();
 
   const jobChainLabel = useMemo(
@@ -691,10 +693,25 @@ export const JobForm = ({
   return (
     <form>
       {isReadOnlyReviewState && (
-        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          {currentReviewStatus === "pending_review"
-            ? "This job is currently under review. Editing is locked until admin action is taken."
-            : "This job has already been approved. Editing is locked for companies. Contact admin for changes."}
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
+          {currentReviewStatus === "pending_review" ? (
+            "This job is currently under review. Editing is locked until admin action is taken."
+          ) : (
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <span>
+                ✅ Your job has been <strong>approved</strong>. Publish it to
+                the blockchain and add a provision fund to make it live for
+                talents.
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowBlockchainModal(true)}
+                className="shrink-0 inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600"
+              >
+                ⚡ {jobData?.payment_token_address ? "Add Provision Fund" : "Publish to Blockchain"}
+              </button>
+            </div>
+          )}
         </div>
       )}
       {currentReviewStatus === "rejected" && jobData?.admin_feedback && (
@@ -1329,6 +1346,28 @@ export const JobForm = ({
           )}
         </div>
       </fieldset>
+
+      {/* Blockchain Activate Modal — shown for approved jobs from the banner button */}
+      {showBlockchainModal && jobData?.id && (
+        <BlockchainActivateModal
+          isOpen={showBlockchainModal}
+          job={{
+            id: jobData.id,
+            title: jobData.title ?? title,
+            blockchainJobId: jobData.block_id ? Number(jobData.block_id) : null,
+            chain: jobData.chain ?? null,
+            paymentTokenAddress: jobData.payment_token_address ?? null,
+            talentService: jobServices.talent,
+            recruiterService: jobServices.recruiter,
+            mentorService: jobServices.mentor,
+          }}
+          onClose={() => setShowBlockchainModal(false)}
+          onActivated={() => {
+            setShowBlockchainModal(false);
+            if (onRefreshJobData) onRefreshJobData();
+          }}
+        />
+      )}
 
       {/* Fund Manager Modal */}
       {showFundManager && currentBlockchainJobId && (

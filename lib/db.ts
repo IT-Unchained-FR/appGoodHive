@@ -10,11 +10,13 @@ const isLocalConnection =
   connectionString.includes("localhost") ||
   connectionString.includes("127.0.0.1");
 
-// Production: 10 connections per instance (prod DB, safe headroom).
-// Preview: 5 connections (dev DB, shared with local dev — enough for Vercel concurrency).
-// Local dev: 3 connections (dev DB, multiple local instances may run simultaneously).
+// Vercel serverless: each lambda is an isolated process — globalThis reuse only helps
+// within the same warm instance. Keep max very low so concurrent warm lambdas don't
+// exhaust Postgres max_connections.
+// Production: 3 per instance (pooler handles concurrency at the DB layer).
+// Preview/local: 2 — shared dev DB.
 const vercelEnv = process.env.VERCEL_ENV; // "production" | "preview" | undefined (local)
-const maxConnections = vercelEnv === "production" ? 10 : vercelEnv === "preview" ? 5 : 3;
+const maxConnections = vercelEnv === "production" ? 5 : 3;
 
 const options = isLocalConnection
   ? {}
@@ -23,6 +25,10 @@ const options = isLocalConnection
         rejectUnauthorized: false,
       },
       max: maxConnections,
+      // Release idle connections quickly so they don't accumulate across warm lambdas.
+      idle_timeout: 10, // seconds before an idle connection is closed
+      max_lifetime: 60 * 10, // recycle connections every 10 min
+      connect_timeout: 10, // fail fast instead of piling up waiting connections
     };
 
 type SqlClient = ReturnType<typeof postgres>;
