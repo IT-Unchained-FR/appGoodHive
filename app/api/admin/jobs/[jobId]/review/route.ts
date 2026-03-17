@@ -85,7 +85,7 @@ export async function POST(
       UPDATE goodhive.job_offers
       SET
         review_status = ${body.action === "approve" ? "approved" : "rejected"},
-        published = ${body.action === "approve"},
+        published = false,
         admin_feedback = ${body.action === "reject" ? feedback || null : null},
         reviewed_at = NOW(),
         reviewed_by = ${reviewerId}::uuid

@@ -6,10 +6,16 @@ export interface CompanyDashboardJob {
   adminFeedback: string | null;
   applicationCount: number;
   assignmentCount: number;
+  blockchainJobId: number | null;
+  chain: string | null;
   id: string;
+  mentorService: boolean;
+  paymentTokenAddress: string | null;
   postedAt: string | null;
   published: boolean;
+  recruiterService: boolean;
   reviewStatus: JobReviewStatus;
+  talentService: boolean;
   title: string;
 }
 
@@ -20,10 +26,16 @@ export async function getCompanyDashboardJobs(
     admin_feedback: string | null;
     application_count: number | string | null;
     assignment_count: number | string | null;
+    block_id: number | null;
+    chain: string | null;
     id: string;
+    mentor: boolean | string | null;
+    payment_token_address: string | null;
     posted_at: string | null;
     published: boolean | null;
+    recruiter: boolean | string | null;
     review_status: string | null;
+    talent: boolean | string | null;
     title: string | null;
   }[]>`
     SELECT
@@ -33,6 +45,12 @@ export async function getCompanyDashboardJobs(
       COALESCE(jo.published, false) AS published,
       jo.admin_feedback,
       jo.posted_at,
+      jo.block_id,
+      jo.payment_token_address,
+      jo.chain,
+      jo.talent,
+      jo.recruiter,
+      jo.mentor,
       COALESCE(app_counts.application_count, 0) AS application_count,
       0::int AS assignment_count
     FROM goodhive.job_offers jo
@@ -51,10 +69,16 @@ export async function getCompanyDashboardJobs(
     adminFeedback: row.admin_feedback ?? null,
     applicationCount: Number(row.application_count || 0),
     assignmentCount: Number(row.assignment_count || 0),
+    blockchainJobId: row.block_id !== null && row.block_id !== undefined ? Number(row.block_id) : null,
+    chain: row.chain ?? null,
     id: row.id,
+    mentorService: row.mentor === true || row.mentor === "true",
+    paymentTokenAddress: row.payment_token_address ?? null,
     postedAt: row.posted_at,
     published: row.published === true,
+    recruiterService: row.recruiter === true || row.recruiter === "true",
     reviewStatus: resolveJobReviewStatus(row.review_status, row.published),
+    talentService: row.talent === true || row.talent === "true",
     title: row.title?.trim() || "Untitled job",
   }));
 }

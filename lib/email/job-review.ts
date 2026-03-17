@@ -80,13 +80,13 @@ export async function sendJobApprovedEmail(params: {
   jobId: string;
   jobTitle: string;
 }) {
-  const jobUrl = `${GOODHIVE_BASE_URL}/jobs/${params.jobId}`;
-  const subject = `Your job "${params.jobTitle}" is approved and live!`;
-  const text = `Congratulations. Your job "${params.jobTitle}" is now visible to talents.\n\nView job: ${jobUrl}`;
+  const dashboardUrl = `${GOODHIVE_BASE_URL}/companies/dashboard/jobs`;
+  const subject = `Your job "${params.jobTitle}" has been approved — activate it on the blockchain`;
+  const text = `Great news! Your job "${params.jobTitle}" has been reviewed and approved by our team.\n\nTo make it visible to talents, please log in to your dashboard and complete the blockchain activation (publish + add provision fund).\n\nDashboard: ${dashboardUrl}`;
 
   await sendEmail({
     react: React.createElement(JobApprovedTemplate, {
-      jobLink: jobUrl,
+      jobLink: dashboardUrl,
       jobTitle: params.jobTitle,
       name: params.companyName?.trim() || "there",
     }),

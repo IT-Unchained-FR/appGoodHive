@@ -13,11 +13,15 @@ export const JobApprovedTemplate: React.FC<Readonly<EmailTemplateProps>> = (
     <div>
       <p>Hi, {recipientName}</p>
       <p>
-        Congratulations. Your job "{jobTitle}" has been approved and is now live
-        on GoodHive.
+        Great news! Your job &ldquo;{jobTitle}&rdquo; has been reviewed and
+        approved by our team.
       </p>
       <p>
-        Talents can now discover and apply to it here:{" "}
+        To make it visible to talents, please log in to your dashboard and
+        complete the blockchain activation — publish the job to Polygon and add
+        a provision fund so talents can be paid on-chain.
+      </p>
+      <p>
         <a
           href={jobLink}
           style={{
@@ -26,7 +30,7 @@ export const JobApprovedTemplate: React.FC<Readonly<EmailTemplateProps>> = (
             fontWeight: "bold",
           }}
         >
-          {jobLink}
+          Go to your dashboard →
         </a>
       </p>
       <br />

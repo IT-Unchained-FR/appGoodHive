@@ -54,7 +54,7 @@ export function useJobManager() {
   const isContractConfigured = !!JOB_MANAGER_CONTRACT_ADDRESS;
 
   // Create a new job on the blockchain
-  const createJob = useCallback(async (params: JobCreationParams): Promise<string | null> => {
+  const createJob = useCallback(async (params: JobCreationParams): Promise<{ jobId: string; transactionHash: string } | null> => {
     if (!account) {
       setError('Please connect your wallet');
       return null;
@@ -184,7 +184,8 @@ export function useJobManager() {
 
       toast.success('Job created on blockchain!');
 
-      return blockchainJobId;
+      if (!blockchainJobId) return null;
+      return { jobId: blockchainJobId, transactionHash };
     } catch (err: any) {
       console.error('Failed to create job:', err);
       const isRateLimited =

@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Briefcase, Clock3, ExternalLink, FileStack, Plus, Send, Users } from "lucide-react";
+import { Briefcase, Clock3, ExternalLink, FileStack, Plus, Send, Users, Zap } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { JobApplicationsDrawer } from "@/app/components/applications";
 import { AssignTalentModal } from "@/app/components/AssignTalentModal";
+import { BlockchainActivateModal } from "@/app/components/BlockchainActivateModal";
 import type { CompanyDashboardJob } from "@/lib/jobs/company-jobs";
 
 interface JobsManagementClientProps {
@@ -64,11 +65,27 @@ function getPrimaryAction(job: CompanyDashboardJob) {
     };
   }
 
-  if (job.reviewStatus === "approved" || job.reviewStatus === "active") {
+  if (job.reviewStatus === "active") {
     return {
       href: `/jobs/${job.id}`,
       label: "View Live",
       type: "link" as const,
+    };
+  }
+
+  // Approved but not yet on blockchain
+  if (job.reviewStatus === "approved" && job.blockchainJobId === null) {
+    return {
+      label: "Publish to Blockchain",
+      type: "blockchain" as const,
+    };
+  }
+
+  // Approved + on blockchain but not yet funded/activated
+  if (job.reviewStatus === "approved" && job.blockchainJobId !== null) {
+    return {
+      label: "Add Provision Fund",
+      type: "blockchain" as const,
     };
   }
 
@@ -89,6 +106,7 @@ export default function JobsManagementClient({
   const [isClosingJobId, setIsClosingJobId] = useState<string | null>(null);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [assignJobId, setAssignJobId] = useState<string | null>(null);
+  const [activateJobId, setActivateJobId] = useState<string | null>(null);
 
   useEffect(() => {
     setJobs(initialJobs);
@@ -319,6 +337,15 @@ export default function JobsManagementClient({
                           <ExternalLink className="h-4 w-4" />
                           {primaryAction.label}
                         </a>
+                      ) : primaryAction.type === "blockchain" ? (
+                        <button
+                          type="button"
+                          onClick={() => setActivateJobId(job.id)}
+                          className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600"
+                        >
+                          <Zap className="h-4 w-4" />
+                          {primaryAction.label}
+                        </button>
                       ) : (
                         <button
                           type="button"
@@ -413,6 +440,26 @@ export default function JobsManagementClient({
           onClose={() => setSelectedJobId(null)}
         />
       ) : null}
+
+      {activateJobId !== null && (() => {
+        const activateJob = jobs.find((j) => j.id === activateJobId);
+        if (!activateJob) return null;
+        return (
+          <BlockchainActivateModal
+            isOpen
+            job={activateJob}
+            onClose={() => setActivateJobId(null)}
+            onActivated={(jobId) => {
+              setJobs((current) =>
+                current.map((j) =>
+                  j.id === jobId ? { ...j, reviewStatus: "active", published: true } : j,
+                ),
+              );
+              setActivateJobId(null);
+            }}
+          />
+        );
+      })()}
     </>
   );
 }
