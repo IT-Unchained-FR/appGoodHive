@@ -1,4 +1,5 @@
 import { getContract, prepareContractCall, readContract, sendTransaction } from "thirdweb";
+import { getAddress } from "viem";
 import { thirdwebClient } from "../../clients/thirdwebClient";
 import { activeChain } from "../../config/chains";
 
@@ -263,7 +264,8 @@ export const JOB_MANAGER_ABI = [
 ] as const;
 
 // Contract configuration - deployed on Polygon Amoy
-export const JOB_MANAGER_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_JOB_MANAGER_CONTRACT_ADDRESS || "0xB02588d9b7CC53eA6CC99Bf6BD522e30bb6366b5";
+const rawContractAddress = (process.env.NEXT_PUBLIC_JOB_MANAGER_CONTRACT_ADDRESS || "0xB02588d9b7CC53eA6CC99Bf6BD522e30bb6366b5").trim();
+export const JOB_MANAGER_CONTRACT_ADDRESS = getAddress(rawContractAddress);
 
 // Token addresses
 export const SUPPORTED_TOKENS = {
