@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     // Status filter: pending, approved, rejected, all
     if (status && status !== 'all') {
       if (status === 'pending') {
-        conditions.push(`(inreview = true OR approved = false)`);
+        conditions.push(`(inreview = true AND approved = false)`);
       } else if (status === 'approved') {
         conditions.push(`approved = true`);
       } else if (status === 'rejected') {
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
     // Build WHERE clause
     const whereClause = conditions.length > 0
       ? `WHERE ${conditions.join(' AND ')}`
-      : 'WHERE (inreview = true OR approved = false)';
+      : 'WHERE (inreview = true AND approved = false)';
 
     // Build sort clause
     const sortMap: Record<string, string> = {

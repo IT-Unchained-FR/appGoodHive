@@ -303,7 +303,6 @@ export default function AdminCompanyApproval() {
               { value: 'pending', label: 'Pending' },
               { value: 'approved', label: 'Approved' },
               { value: 'rejected', label: 'Rejected' },
-              { value: 'all', label: 'All statuses' },
             ],
             locationFilter: true,
             sortOptions: [

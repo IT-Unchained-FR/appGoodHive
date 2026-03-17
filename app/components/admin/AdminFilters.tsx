@@ -50,9 +50,6 @@ export function AdminFilters({ config, basePath }: AdminFiltersProps) {
   // Get default status value from config
   const getDefaultStatus = useCallback(() => {
     if (Array.isArray(config.statusFilter) && config.statusFilter.length > 0) {
-      // Prefer 'all' when available so no filter is applied by default
-      const hasAllOption = config.statusFilter.some(opt => opt.value === 'all');
-      if (hasAllOption) return 'all';
       return config.statusFilter[0].value;
     }
     return 'all';
