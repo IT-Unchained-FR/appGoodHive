@@ -31,5 +31,6 @@ export const activeChain = defineChain({
   },
 });
 
-// Export chain ID for use in other parts of the app
+// Export chain ID and name for use in other parts of the app
 export const ACTIVE_CHAIN_ID = chainId;
+export const ACTIVE_CHAIN_NAME = chainName;

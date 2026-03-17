@@ -12,7 +12,7 @@ import {
   getTokenInfo,
 } from "@/lib/contracts/erc20";
 import { getSupportedTokensForChain } from "@/lib/contracts/jobManager";
-import { ACTIVE_CHAIN_ID } from "@/config/chains";
+import { ACTIVE_CHAIN_NAME } from "@/config/chains";
 
 export interface BlockchainActivateJob {
   blockchainJobId: number | null;
@@ -135,7 +135,7 @@ export default function BlockchainActivateModal({
 
     try {
       const result = await createJob({
-        chain: job.chain ?? "polygon",
+        chain: ACTIVE_CHAIN_NAME,
         databaseId: job.id,
         mentorService: job.mentorService,
         recruiterService: job.recruiterService,
@@ -151,12 +151,13 @@ export default function BlockchainActivateModal({
       const { jobId: onChainJobId } = result;
       const blockchainJobIdNum = Number(onChainJobId);
 
-      // Persist to DB
+      // Persist to DB — also save the active chain so FundManager uses the correct network
       const res = await fetch(`/api/jobs/${job.id}/blockchain-publish`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           blockchainJobId: blockchainJobIdNum,
+          chain: ACTIVE_CHAIN_NAME,
           paymentTokenAddress: selectedTokenAddress,
         }),
       });

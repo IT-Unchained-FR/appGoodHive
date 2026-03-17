@@ -19,11 +19,16 @@ export async function POST(
     const { jobId } = params;
     const body = (await request.json()) as {
       blockchainJobId?: unknown;
+      chain?: unknown;
       paymentTokenAddress?: unknown;
     };
 
     const rawBlockchainJobId = body.blockchainJobId;
     const rawTokenAddress = body.paymentTokenAddress;
+    const chain =
+      typeof body.chain === "string" && body.chain.trim()
+        ? body.chain.trim()
+        : null;
 
     if (
       rawBlockchainJobId === undefined ||
@@ -90,7 +95,8 @@ export async function POST(
       UPDATE goodhive.job_offers
       SET
         block_id = ${blockchainJobIdNum},
-        payment_token_address = ${tokenAddress}
+        payment_token_address = ${tokenAddress},
+        chain = COALESCE(${chain}, chain)
       WHERE id = ${jobId}::uuid
     `;
 
