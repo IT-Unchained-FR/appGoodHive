@@ -185,8 +185,7 @@ export const JobForm = ({
       jobData.blockchainJobId ??
       jobData.blockchain_job_id ??
       jobData.job_id ??
-      // Generate fallback if all blockchain IDs are missing
-      `${Date.now()}${Math.floor(100000 + Math.random() * 900000)}`;
+      null;
 
     if (rawId === null || rawId === undefined || rawId === "") {
       return null;
@@ -239,6 +238,7 @@ export const JobForm = ({
   const {
     isLoading: isBlockchainLoading,
     error: blockchainError,
+    createJob,
   } = useJobManager();
 
   // Calculate total percentage of selected services
@@ -607,29 +607,82 @@ export const JobForm = ({
 
   const handlePublishJob = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+
+    if (!account) {
+      toast.error("Please connect your wallet to publish the job on blockchain");
+      return;
+    }
+
+    if (!fundManagerTokenAddress) {
+      toast.error("Unable to determine token address. Please set the job currency first.");
+      return;
+    }
+
+    setIsLoading(true);
+    const toastId = "publish-job";
+
     try {
-      const updateResponse = await fetch(`/api/companies/manage-job`, {
+      // Step 1: Create job on blockchain
+      toast.loading("Creating job on blockchain…", { id: toastId });
+
+      const result = await createJob({
+        databaseId: jobData?.id,
+        tokenAddress: fundManagerTokenAddress,
+        chain: selectedChain?.value || jobData?.chain || "polygon-amoy",
+        talentService: jobServices.talent || false,
+        recruiterService: jobServices.recruiter || false,
+        mentorService: jobServices.mentor || false,
+      });
+
+      if (!result) {
+        toast.dismiss(toastId);
+        // createJob already toasted the error
+        return;
+      }
+
+      const { jobId: blockchainJobId, transactionHash } = result;
+
+      // Step 2: Sync real blockchain ID to DB
+      toast.loading("Syncing with database…", { id: toastId });
+
+      await fetch("/api/blockchain/sync-job", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobId: jobData?.id,
+          blockchainJobId,
+          transactionHash,
+          tokenAddress: fundManagerTokenAddress,
+          contractAddress: "",
+          status: "confirmed",
+        }),
+      });
+
+      // Step 3: Mark as published in DB with real blockchain ID
+      toast.loading("Publishing…", { id: toastId });
+
+      const updateResponse = await fetch("/api/companies/manage-job", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           jobId: jobData?.id,
           publish: true,
           in_saving_stage: false,
+          blockchainJobId,
+          paymentTokenAddress: fundManagerTokenAddress,
         }),
       });
 
-      if (updateResponse.ok) {
-        toast.success("Job published successfully");
-        window.location.reload();
-      } else {
+      if (!updateResponse.ok) {
         const data = await updateResponse.json();
         throw new Error(data.message || "Failed to publish job");
       }
+
+      toast.success("Job published on blockchain!", { id: toastId });
+      window.location.reload();
     } catch (error: any) {
       console.error("Error publishing job:", error);
-      toast.error(error.message || "Failed to publish job");
+      toast.error(error.message || "Failed to publish job", { id: toastId });
     } finally {
       setIsLoading(false);
     }
@@ -1281,7 +1334,7 @@ export const JobForm = ({
       {showFundManager && currentBlockchainJobId && (
         <FundManager
           jobId={currentBlockchainJobId}
-          databaseJobId={jobData.block_id || jobData.id}
+          databaseJobId={jobData.id}
           tokenAddress={fundManagerTokenAddress}
           jobChainId={jobChainId}
           jobChainLabel={jobChainLabel ?? undefined}

@@ -1,6 +1,12 @@
 import sql from "@/lib/db";
+import { getSessionUser } from "@/lib/auth/sessionUtils";
 
 export async function PATCH(request: Request) {
+  const sessionUser = await getSessionUser();
+  if (!sessionUser?.user_id) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+  }
+
   const {
     jobId,
     publish,
@@ -10,9 +16,9 @@ export async function PATCH(request: Request) {
   } = await request.json();
 
   try {
-    // Check if the job exists
+    // Check if the job exists and belongs to the session user
     const existingJob = await sql`
-      SELECT id FROM goodhive.job_offers WHERE id = ${jobId};
+      SELECT id FROM goodhive.job_offers WHERE id = ${jobId} AND user_id = ${sessionUser.user_id};
     `;
 
     if (existingJob.length === 0) {
