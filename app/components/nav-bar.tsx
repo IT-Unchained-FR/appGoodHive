@@ -24,8 +24,6 @@ import { connectModalOptions, supportedWallets } from "@/lib/auth/walletConfig";
 import {
   BriefcaseBusiness,
   CircleUserRound,
-  ClipboardList,
-  Coins,
   Kanban,
   LayoutDashboard,
   MessageSquare,
@@ -85,18 +83,6 @@ const talentsLinks = [
     label: "Career Coach",
     protected: true,
     icon: Sparkles,
-  },
-  {
-    href: "/talents/my-assignments",
-    label: "My Assignments",
-    protected: true,
-    icon: ClipboardList,
-  },
-  {
-    href: "/talents/my-payouts",
-    label: "My Payouts",
-    protected: true,
-    icon: Coins,
   },
   {
     href: "/messages",

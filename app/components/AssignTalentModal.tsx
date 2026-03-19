@@ -364,33 +364,8 @@ export function AssignTalentModal({ jobId, jobTitle, isOpen, onClose }: AssignTa
                         </span>
                       </div>
                       {a.status === "completion_requested" && (
-                        <div className="space-y-3 pl-10">
-                          <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            placeholder="Payout (USDC)"
-                            value={payoutAmount}
-                            onChange={(e) => setPayoutAmount(e.target.value)}
-                            className="w-36 rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:border-amber-400 focus:outline-none"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => void handleConfirmCompletion(a)}
-                            disabled={confirmingId === a.id}
-                            className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                          >
-                            <CheckCircle2 className="w-3 h-3" />
-                            {confirmingId === a.id
-                              ? confirmingStage === "sending"
-                                ? "Sending USDC..."
-                                : confirmingStage === "finalizing"
-                                  ? "Finalizing..."
-                                  : "Confirming..."
-                              : "Confirm & Pay"}
-                          </button>
-                        </div>
+                        <div className="pl-10">
+                          <p className="text-xs text-slate-500">Completion confirmation coming soon.</p>
                         </div>
                       )}
                     </div>

@@ -207,15 +207,6 @@ export default function MyAssignmentsPage() {
                   <div className="mt-4 flex flex-wrap gap-3">
                     <button
                       type="button"
-                      onClick={() => void handleRequestCompletion(a.id)}
-                      disabled={requestingCompletionId === a.id}
-                      className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
-                    >
-                      <Flag className="w-4 h-4" />
-                      {requestingCompletionId === a.id ? "Requesting..." : "Request Completion"}
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => router.push("/messages")}
                       className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600"
                     >
