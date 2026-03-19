@@ -16,7 +16,9 @@ const isLocalConnection =
 // Production: 3 per instance (pooler handles concurrency at the DB layer).
 // Preview/local: 2 — shared dev DB.
 const vercelEnv = process.env.VERCEL_ENV; // "production" | "preview" | undefined (local)
-const maxConnections = vercelEnv === "production" ? 5 : 3;
+// Keep very low — each warm Vercel lambda has its own pool; many instances × max = DB exhaustion.
+// Use a PgBouncer/Neon pooler URL in DATABASE_URL for proper connection management.
+const maxConnections = vercelEnv === "production" ? 2 : 1;
 
 const options = isLocalConnection
   ? {}
@@ -26,7 +28,7 @@ const options = isLocalConnection
       },
       max: maxConnections,
       // Release idle connections quickly so they don't accumulate across warm lambdas.
-      idle_timeout: 10, // seconds before an idle connection is closed
+      idle_timeout: 5, // seconds before an idle connection is closed
       max_lifetime: 60 * 10, // recycle connections every 10 min
       connect_timeout: 10, // fail fast instead of piling up waiting connections
     };
