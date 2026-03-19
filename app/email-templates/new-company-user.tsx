@@ -19,7 +19,13 @@ export const CompanyRegistrationTemplate: React.FC<
         Here&apos;s the first step: To ensure your profile is spot-on and aligns
         with your hiring needs, our team will reach out to schedule a quick
         intro call. We&apos;re excited to learn more about {name} and how we
-        can assist in finding your ideal IT talent.
+        can assist in finding your ideal IT talent.{" "}
+        <a
+          href="https://calendly.com/benoit-kulesza/goodhive-intro-call"
+          style={{ color: "#FFC905", fontWeight: "bold" }}
+        >
+          Book your quick intro call here.
+        </a>
       </p>
       <p>
         Got peers or partners who could benefit from joining GoodHive too? Feel
