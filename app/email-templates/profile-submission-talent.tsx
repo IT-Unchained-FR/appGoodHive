@@ -12,10 +12,10 @@ export const ProfileSubmissionTalentTemplate: React.FC<
     <div>
       <p>Hi, {displayName}</p>
       <p>
-        Thank you for submitting your profile. Benoit will review it shortly.
+        Thank you for submitting your profile. Our GoodHive team will review it shortly.
       </p>
       <p>
-        In the meantime, please book your 45-minute assessment interview:{" "}
+        In the meantime, please book your assessment interview:{" "}
         <a
           href={BenoitIntroCallUrl}
           style={{

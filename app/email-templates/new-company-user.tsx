@@ -1,5 +1,6 @@
 import { EmailTemplateProps } from "@/interfaces/email-template";
 import * as React from "react";
+import { CompanyIntroCallUrl } from "@/app/constants/common";
 
 export const CompanyRegistrationTemplate: React.FC<
   Readonly<EmailTemplateProps>
@@ -19,14 +20,9 @@ export const CompanyRegistrationTemplate: React.FC<
         Here&apos;s the first step: To ensure your profile is spot-on and aligns
         with your hiring needs, our team will reach out to schedule a quick
         intro call. We&apos;re excited to learn more about {name} and how we
-        can assist in finding your ideal IT talent.{" "}
-        <a
-          href="https://calendly.com/benoit-kulesza/goodhive-intro-call"
-          style={{ color: "#FFC905", fontWeight: "bold" }}
-        >
-          Book your quick intro call here.
-        </a>
+        can assist in finding your ideal IT talent.
       </p>
+      <p>Book your quick intro call here: {CompanyIntroCallUrl}</p>
       <p>
         Got peers or partners who could benefit from joining GoodHive too? Feel
         free to share your experience and let them know about us. Together, we

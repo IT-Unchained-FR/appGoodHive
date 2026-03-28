@@ -105,7 +105,7 @@ async function sendProfileSubmissionEmails(request: Request, userId: string) {
       postProfileSubmissionEmail(request, {
         email: talentEmail,
         message:
-          `Thank you for submitting your profile. Benoit will review it shortly. In the meantime, please book your 45-minute assessment interview: ${BenoitIntroCallUrl}`,
+          `Thank you for submitting your profile. Our GoodHive team will review it shortly. In the meantime, please book your assessment interview: ${BenoitIntroCallUrl}`,
         name: firstName || displayName,
         subject: "Your GoodHive profile has been received",
         type: "profile-submission-talent",
