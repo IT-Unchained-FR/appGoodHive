@@ -57,6 +57,7 @@ export default function MyProfile() {
   const imageInputValue = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(false);
   const [profileData, setProfileData] = useState({
     headline: "",
     designation: "",
@@ -894,57 +895,64 @@ export default function MyProfile() {
 
         <div className="relative container mx-auto px-6 py-8">
           {/* Status Banners */}
-          {noProfileFound && (
-            <div className="mb-8">
-              <div className="bg-gradient-to-r from-amber-400 to-yellow-500 rounded-2xl p-6 shadow-lg border-2 border-amber-300 relative overflow-hidden">
-                <div className="absolute inset-0 bg-white bg-opacity-20 backdrop-blur-sm"></div>
-                <div className="relative flex items-center">
-                  <div className="w-12 h-12 bg-white bg-opacity-30 rounded-full flex items-center justify-center mr-4">
-                    <span className="text-2xl">🚀</span>
-                  </div>
-                  <div>
-                    <h3 className="text-white font-bold text-lg mb-1">Getting Started</h3>
-                    <p className="text-amber-100">Please create a profile to continue your hive journey!</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {unapprovedProfile && (
-            <div className="mb-8">
-              <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-6 shadow-lg border-2 border-blue-400 relative overflow-hidden">
-                <div className="absolute inset-0 bg-white bg-opacity-20 backdrop-blur-sm"></div>
-                <div className="relative flex items-center">
-                  <div className="w-12 h-12 bg-white bg-opacity-30 rounded-full flex items-center justify-center mr-4">
-                    <span className="text-2xl">⏳</span>
-                  </div>
-                  <div>
-                    <h3 className="text-white font-bold text-lg mb-1">Under Review</h3>
-                    <p className="text-blue-100">Profile submitted for review. You'll be notified once it's approved.</p>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-8">
+            <div className="flex-1">
+              {noProfileFound && (
+                <div className="bg-gradient-to-r from-amber-400 to-yellow-500 rounded-2xl p-6 shadow-lg border-2 border-amber-300 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-white bg-opacity-20 backdrop-blur-sm"></div>
+                  <div className="relative flex items-center">
+                    <div className="w-12 h-12 bg-white bg-opacity-30 rounded-full flex items-center justify-center mr-4">
+                      <span className="text-2xl">🚀</span>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-bold text-lg mb-1">Getting Started</h3>
+                      <p className="text-amber-100">Please create a profile to continue your hive journey!</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
-          
-          {savedProfile && (
-            <div className="mb-8">
-              <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-6 shadow-lg border-2 border-amber-400 relative overflow-hidden">
-                <div className="absolute inset-0 bg-white bg-opacity-20 backdrop-blur-sm"></div>
-                <div className="relative flex items-center">
-                  <div className="w-12 h-12 bg-white bg-opacity-30 rounded-full flex items-center justify-center mr-4 animate-pulse">
-                    <span className="text-2xl">🐝</span>
+              )}
+
+              {unapprovedProfile && (
+                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-6 shadow-lg border-2 border-blue-400 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-white bg-opacity-20 backdrop-blur-sm"></div>
+                  <div className="relative flex items-center">
+                    <div className="w-12 h-12 bg-white bg-opacity-30 rounded-full flex items-center justify-center mr-4">
+                      <span className="text-2xl">⏳</span>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-bold text-lg mb-1">Under Review</h3>
+                      <p className="text-blue-100">Profile submitted for review. You'll be notified once it's approved.</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-white font-bold text-lg mb-1">Almost Ready!</h3>
-                    <p className="text-amber-100">Profile saved. Complete required fields and submit for review to get verified.</p>
-                  </div>
-                  <div className="absolute -right-4 -top-4 w-16 h-16 bg-white bg-opacity-10 rounded-full"></div>
                 </div>
-              </div>
+              )}
+
+              {savedProfile && (
+                <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-6 shadow-lg border-2 border-amber-400 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-white bg-opacity-20 backdrop-blur-sm"></div>
+                  <div className="relative flex items-center">
+                    <div className="w-12 h-12 bg-white bg-opacity-30 rounded-full flex items-center justify-center mr-4 animate-pulse">
+                      <span className="text-2xl">🐝</span>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-bold text-lg mb-1">Almost Ready!</h3>
+                      <p className="text-amber-100">Profile saved. Complete required fields and submit for review to get verified.</p>
+                    </div>
+                    <div className="absolute -right-4 -top-4 w-16 h-16 bg-white bg-opacity-10 rounded-full"></div>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+
+            <button
+              type="button"
+              onClick={() => setShowVideoModal(true)}
+              className="flex-shrink-0 self-end sm:self-auto inline-flex items-center gap-2 px-4 py-2 rounded-full border-2 border-amber-400 text-amber-700 bg-white bg-opacity-70 hover:bg-amber-50 transition-all duration-200 text-sm font-semibold shadow-sm"
+            >
+              <span className="w-5 h-5 flex items-center justify-center rounded-full border-2 border-amber-500 text-amber-600 text-xs font-bold leading-none">i</span>
+              How it works
+            </button>
+          </div>
 
           {/* Professional Header */}
           <div className="relative text-center mb-16 py-12">
@@ -957,6 +965,34 @@ export default function MyProfile() {
                 <span className="text-xl mr-3">🍯</span>
                 <span className="text-lg">Company Hive Profile</span>
               </div>
+
+              {/* Video Modal */}
+              {showVideoModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60" onClick={() => setShowVideoModal(false)}>
+                  <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      onClick={() => setShowVideoModal(false)}
+                      className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
+                    >
+                      ✕
+                    </button>
+                    <div className="p-4 pb-2 border-b border-gray-100">
+                      <h3 className="text-lg font-bold text-gray-800">How to set up your company profile</h3>
+                    </div>
+                    <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
+                      <iframe
+                        src="https://www.youtube.com/embed/RKx6JByoYZ4?autoplay=1"
+                        title="Company Profile Walkthrough"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="absolute inset-0 w-full h-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
               
               <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
                 Build Your

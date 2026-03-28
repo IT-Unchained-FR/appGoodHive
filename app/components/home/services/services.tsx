@@ -209,7 +209,7 @@ export const Services = () => {
                   </div>
                   <div className={styles.videoContainer}>
                     <iframe
-                      src="https://www.youtube.com/embed/4ep_oZ0khzo"
+                      src={isForTalent ? "https://www.youtube.com/embed/4ep_oZ0khzo" : "https://www.youtube.com/embed/RKx6JByoYZ4"}
                       title="GoodHive Platform Overview"
                       frameBorder="0"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
