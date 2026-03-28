@@ -86,6 +86,9 @@ export const GoodHiveContractEmail = "benoit@goodhive.io";
 export const BenoitIntroCallUrl =
   "https://calendly.com/benoit-kulesza/goodhive-intro-call";
 
+export const CompanyIntroCallUrl =
+  "https://calendly.com/benoit-kulesza/start-your-talent-sprint";
+
 export const GoodhiveQuestLink = "https://zealy.io/cw/goodhive";
 
 export const GoodHiveWalletAddress =
