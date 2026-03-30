@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CheckCircle2, Copy, ExternalLink, MessageSquare, Share2 } from "lucide-react";
 
+import { useAuthCheck } from "@/app/hooks/useAuthCheck";
 import { JobApplicationPopup } from "@/app/components/job-application-popup/job-application-popup";
 
 interface JobActionPanelProps {
@@ -19,7 +20,6 @@ interface JobActionPanelProps {
   isApprovedTalent: boolean;
   jobId: string;
   jobTitle: string;
-  loginHref: string;
   manageApplicantsHref: string;
   openToMentor?: boolean;
   openToRecruiter?: boolean;
@@ -42,7 +42,6 @@ export default function JobActionPanel({
   isApprovedTalent,
   jobId,
   jobTitle,
-  loginHref,
   manageApplicantsHref,
   openToMentor = false,
   openToRecruiter = false,
@@ -52,6 +51,7 @@ export default function JobActionPanel({
 }: JobActionPanelProps) {
   const [copied, setCopied] = useState(false);
   const [isApplicationOpen, setIsApplicationOpen] = useState(false);
+  const { checkAuthAndShowConnectPrompt } = useAuthCheck();
 
   const handleCopyLink = async () => {
     try {
@@ -152,12 +152,15 @@ export default function JobActionPanel({
           ) : null}
 
           {!isAdmin && !isCompanyOwner && !isAuthenticated ? (
-            <a
-              href={loginHref}
+            <button
+              type="button"
+              onClick={() =>
+                checkAuthAndShowConnectPrompt("apply to this job", "access-protected")
+              }
               className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600"
             >
-              Sign in to Apply
-            </a>
+              Connect Wallet to Apply
+            </button>
           ) : null}
 
           {!isAdmin && !isCompanyOwner && canMessageCompany ? (

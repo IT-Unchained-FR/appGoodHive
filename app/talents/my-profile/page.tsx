@@ -12,7 +12,10 @@ import {
   getAvailabilityLabel,
   normalizeAvailabilityStatus,
 } from "@/app/constants/availability";
-import { createJobServices } from "@/app/constants/common";
+import {
+  BenoitIntroCallUrl,
+  createJobServices,
+} from "@/app/constants/common";
 import { countries } from "@/app/constants/countries";
 import { skills } from "@/app/constants/skills";
 import { useAuthCheck } from "@/app/hooks/useAuthCheck";
@@ -20,10 +23,12 @@ import { useCurrentUserId } from "@/app/hooks/useCurrentUserId";
 import "@/app/styles/rich-text.css";
 import { uploadFileToBucket } from "@/app/utils/upload-file-bucket";
 import {
+  CalendarDays,
   BadgeCheck,
   BriefcaseBusiness,
   CircleCheckBig,
   Eye,
+  ExternalLink,
   FileText,
   Globe,
   Layers3,
@@ -392,28 +397,59 @@ function StatusBanner({ profileData }: { profileData: ProfileData }) {
           : "border-emerald-200 bg-emerald-50 text-emerald-900"
       }`}
     >
-      <div className="flex items-start gap-3">
-        <div
-          className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${
-            isUnderReview ? "bg-amber-100" : "bg-emerald-100"
-          }`}
-        >
-          {isUnderReview ? (
-            <Sparkles className="h-4 w-4" />
-          ) : (
-            <CircleCheckBig className="h-4 w-4" />
-          )}
+      <div className="flex flex-col gap-4">
+        <div className="flex items-start gap-3">
+          <div
+            className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${
+              isUnderReview ? "bg-amber-100" : "bg-emerald-100"
+            }`}
+          >
+            {isUnderReview ? (
+              <Sparkles className="h-4 w-4" />
+            ) : (
+              <CircleCheckBig className="h-4 w-4" />
+            )}
+          </div>
+          <div>
+            <p className="text-sm font-semibold">
+              {isUnderReview ? "Profile submitted" : "Profile approved"}
+            </p>
+            <p className="mt-1 text-sm leading-6">
+              {isUnderReview
+                ? "Your profile has been submitted and is currently under review. Role toggles are locked until the review is complete."
+                : "Your profile is approved. You can edit details and save updates anytime."}
+            </p>
+          </div>
         </div>
-        <div>
-          <p className="text-sm font-semibold">
-            {isUnderReview ? "Profile submitted" : "Profile approved"}
-          </p>
-          <p className="mt-1 text-sm leading-6">
-            {isUnderReview
-              ? "Your profile has been submitted and is currently under review. Role toggles are locked until the review is complete."
-              : "Your profile is approved. You can edit details and save updates anytime."}
-          </p>
-        </div>
+
+        {isUnderReview && (
+          <div className="sm:ml-12">
+            <div className="flex flex-col gap-3 rounded-[18px] border border-amber-200/90 bg-white/75 px-4 py-3 shadow-[0_8px_20px_rgba(245,158,11,0.06)] md:flex-row md:items-center md:justify-between">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700">
+                  Interview call
+                </p>
+                <p className="mt-1 text-sm font-semibold text-amber-950">
+                  Book your assessment call if you haven&apos;t already
+                </p>
+                <p className="mt-0.5 text-sm leading-6 text-amber-900/75">
+                  Use the same GoodHive interview link from your email to pick a
+                  time with Benoit. If you already booked it, you&apos;re all set.
+                </p>
+              </div>
+              <a
+                href={BenoitIntroCallUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex min-h-[42px] shrink-0 items-center justify-center gap-2 rounded-xl border border-[#f59e0b] bg-white px-4 text-sm font-semibold text-[#d97706] shadow-sm transition hover:-translate-y-0.5 hover:border-[#ea580c] hover:text-[#c2410c] hover:shadow-md"
+              >
+                <CalendarDays className="h-4 w-4" />
+                <span>Book Interview Call</span>
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -558,6 +594,23 @@ export default function ProfilePage() {
       })),
     [profileData, user],
   );
+  const approvedRoleKeys = useMemo(() => {
+    const approvedRoles = new Set<RoleKey>();
+
+    if (user?.talent_status === "approved") {
+      approvedRoles.add("talent");
+    }
+
+    if (user?.mentor_status === "approved") {
+      approvedRoles.add("mentor");
+    }
+
+    if (user?.recruiter_status === "approved") {
+      approvedRoles.add("recruiter");
+    }
+
+    return approvedRoles;
+  }, [user]);
   const rejectedSelectedRoles = useMemo(
     () =>
       selectedRoleMeta.filter(
@@ -841,26 +894,6 @@ export default function ProfilePage() {
             telegram: formData.telegram || "",
           };
 
-          if (validate) {
-            try {
-              await fetch("/api/send-email", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  name: `${formData.first_name} ${formData.last_name}`,
-                  email: formData.email,
-                  type: "new-talent",
-                  subject: `Welcome to GoodHive, ${formData.first_name}! 🎉 Your profile has been sent for review`,
-                  toUserName: `${formData.first_name} ${formData.last_name}`,
-                }),
-              });
-            } catch (error) {
-              console.error("Error sending email:", error);
-            }
-          }
-
           toast.success(
             validate
               ? "Profile sent to review by the core team!"
@@ -1001,6 +1034,20 @@ export default function ProfilePage() {
   );
 
   const handleToggleChange = useCallback((name: string, checked: boolean) => {
+    const isRoleToggle =
+      name === "talent" || name === "mentor" || name === "recruiter";
+
+    if (
+      isRoleToggle &&
+      checked === false &&
+      approvedRoleKeys.has(name as RoleKey)
+    ) {
+      toast("Approved roles stay active on your profile.", {
+        icon: "🔒",
+      });
+      return;
+    }
+
     let nextProfileData: ProfileData | null = null;
 
     setProfileData((prev) => {
@@ -1010,9 +1057,6 @@ export default function ProfilePage() {
       };
       return nextProfileData;
     });
-
-    const isRoleToggle =
-      name === "talent" || name === "mentor" || name === "recruiter";
 
     if (isRoleToggle && nextProfileData) {
       setErrors((prev) => {
@@ -1024,7 +1068,7 @@ export default function ProfilePage() {
 
       void persistRoleToggleUpdate(nextProfileData);
     }
-  }, [persistRoleToggleUpdate]);
+  }, [approvedRoleKeys, persistRoleToggleUpdate]);
 
   const handlePDFImportSuccess = async (
     generatedData: any,
@@ -1872,7 +1916,10 @@ export default function ProfilePage() {
                                 label={label}
                                 name={value}
                                 checked={isChecked ?? false}
-                                disabled={roleSelectionLocked}
+                                disabled={
+                                  roleSelectionLocked ||
+                                  approvedRoleKeys.has(value as RoleKey)
+                                }
                                 setValue={handleToggleChange}
                               />
                             );
@@ -1881,6 +1928,11 @@ export default function ProfilePage() {
                         {roleSelectionLocked && (
                           <FieldHint>
                             Role selection is locked while your profile is under review.
+                          </FieldHint>
+                        )}
+                        {!roleSelectionLocked && approvedRoleKeys.size > 0 && (
+                          <FieldHint>
+                            Approved roles stay active. Contact admin support if a role needs to be removed.
                           </FieldHint>
                         )}
                         <FieldError message={errors.role} />

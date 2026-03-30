@@ -89,9 +89,9 @@ export async function POST(req: NextRequest) {
     }
 
     const selectedRoles = ([
-      user.talent ? "talent" : null,
-      user.mentor ? "mentor" : null,
-      user.recruiter ? "recruiter" : null,
+      user.talent || user.talent_status === "approved" ? "talent" : null,
+      user.mentor || user.mentor_status === "approved" ? "mentor" : null,
+      user.recruiter || user.recruiter_status === "approved" ? "recruiter" : null,
     ].filter(Boolean) as TalentRole[]);
 
     const reviewableRoles = selectedRoles.filter((role) => {
@@ -103,7 +103,12 @@ export async function POST(req: NextRequest) {
     if (status === "approved") {
       await sql`
         UPDATE goodhive.talents
-        SET approved = true, inreview = false
+        SET
+          approved = true,
+          inreview = false,
+          talent = CASE WHEN ${selectedRoles.includes("talent")} THEN true ELSE talent END,
+          mentor = CASE WHEN ${selectedRoles.includes("mentor")} THEN true ELSE mentor END,
+          recruiter = CASE WHEN ${selectedRoles.includes("recruiter")} THEN true ELSE recruiter END
         WHERE user_id = ${userId}
       `;
       await sql`
@@ -144,7 +149,7 @@ export async function POST(req: NextRequest) {
     } else if (status === "in_review" || status === "pending") {
       await sql`
         UPDATE goodhive.talents
-        SET inreview = true
+        SET inreview = ${reviewableRoles.length > 0}
         WHERE user_id = ${userId}
       `;
       await sql`

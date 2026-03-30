@@ -41,6 +41,12 @@ interface ProfileSubmissionRecipient {
   email: string | null;
 }
 
+type UserRoleStatuses = {
+  talent_status: string | null;
+  mentor_status: string | null;
+  recruiter_status: string | null;
+};
+
 async function postProfileSubmissionEmail(
   request: Request,
   payload: {
@@ -55,6 +61,22 @@ async function postProfileSubmissionEmail(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...(request.headers.get("cookie")
+        ? { cookie: request.headers.get("cookie") as string }
+        : {}),
+      ...(request.headers.get("x-user-id")
+        ? { "x-user-id": request.headers.get("x-user-id") as string }
+        : {}),
+      ...(request.headers.get("x-user-email")
+        ? { "x-user-email": request.headers.get("x-user-email") as string }
+        : {}),
+      ...(request.headers.get("x-wallet-address")
+        ? {
+            "x-wallet-address": request.headers.get(
+              "x-wallet-address",
+            ) as string,
+          }
+        : {}),
     },
     body: JSON.stringify(payload),
   });
@@ -198,6 +220,25 @@ export async function POST(request: Request) {
       );
     }
 
+    const existingUser = await sql<UserRoleStatuses[]>`
+      SELECT talent_status, mentor_status, recruiter_status
+      FROM goodhive.users
+      WHERE userid = ${user_id}
+      LIMIT 1
+    `;
+    const existingUserStatuses = existingUser[0];
+    const effectiveRoleSelections = {
+      talent:
+        Boolean(talent) ||
+        existingUserStatuses?.talent_status === "approved",
+      mentor:
+        Boolean(mentor) ||
+        existingUserStatuses?.mentor_status === "approved",
+      recruiter:
+        Boolean(recruiter) ||
+        existingUserStatuses?.recruiter_status === "approved",
+    };
+
     const existingTalent = await sql<{ inreview: boolean | null }[]>`
       SELECT inreview
       FROM goodhive.talents
@@ -267,9 +308,9 @@ export async function POST(request: Request) {
       portfolio,
       freelance_only,
       remote_only,
-      talent,
-      mentor,
-      recruiter,
+      talent: effectiveRoleSelections.talent,
+      mentor: effectiveRoleSelections.mentor,
+      recruiter: effectiveRoleSelections.recruiter,
       hide_contact_details,
       availability: availability === true || availability === "true" || availability === "Available" ? true : false, // Normalize to boolean
       wallet_address,
@@ -307,7 +348,8 @@ export async function POST(request: Request) {
     });
 
     const columns = filteredFields.map(([key]) => key).join(", ");
-    const values = filteredFields.map(([, value]) => value);
+    const values: Array<string | number | boolean | Date | null> =
+      filteredFields.map(([, value]) => value as string | number | boolean | Date | null);
     const placeholders = filteredFields
       .map((_, index) => `$${index + 1}`)
       .join(", ");
@@ -330,7 +372,7 @@ export async function POST(request: Request) {
         UPDATE goodhive.users
         SET
           talent_status = CASE
-            WHEN ${Boolean(talent)} = true THEN
+            WHEN ${effectiveRoleSelections.talent} = true THEN
               CASE
                 WHEN talent_status = 'approved' THEN talent_status
                 ELSE 'pending'
@@ -338,7 +380,7 @@ export async function POST(request: Request) {
             ELSE talent_status
           END,
           mentor_status = CASE
-            WHEN ${Boolean(mentor)} = true THEN
+            WHEN ${effectiveRoleSelections.mentor} = true THEN
               CASE
                 WHEN mentor_status = 'approved' THEN mentor_status
                 ELSE 'pending'
@@ -346,7 +388,7 @@ export async function POST(request: Request) {
             ELSE mentor_status
           END,
           recruiter_status = CASE
-            WHEN ${Boolean(recruiter)} = true THEN
+            WHEN ${effectiveRoleSelections.recruiter} = true THEN
               CASE
                 WHEN recruiter_status = 'approved' THEN recruiter_status
                 ELSE 'pending'
@@ -354,15 +396,15 @@ export async function POST(request: Request) {
             ELSE recruiter_status
           END,
           talent_status_reason = CASE
-            WHEN ${Boolean(talent)} = true AND talent_status <> 'approved' THEN NULL
+            WHEN ${effectiveRoleSelections.talent} = true AND talent_status <> 'approved' THEN NULL
             ELSE talent_status_reason
           END,
           mentor_status_reason = CASE
-            WHEN ${Boolean(mentor)} = true AND mentor_status <> 'approved' THEN NULL
+            WHEN ${effectiveRoleSelections.mentor} = true AND mentor_status <> 'approved' THEN NULL
             ELSE mentor_status_reason
           END,
           recruiter_status_reason = CASE
-            WHEN ${Boolean(recruiter)} = true AND recruiter_status <> 'approved' THEN NULL
+            WHEN ${effectiveRoleSelections.recruiter} = true AND recruiter_status <> 'approved' THEN NULL
             ELSE recruiter_status_reason
           END
         WHERE userid = ${user_id}
@@ -506,11 +548,28 @@ export async function GET(request: NextRequest) {
     const canViewBasic = viewerAccess.isAuthenticated || isOwner;
 
     // Get approved roles from users table
-    const users = await sql`
-      SELECT approved_roles
+    const users = await sql<{
+      approved_roles: unknown[] | null;
+      talent_status: string | null;
+      mentor_status: string | null;
+      recruiter_status: string | null;
+    }[]>`
+      SELECT approved_roles, talent_status, mentor_status, recruiter_status
       FROM goodhive.users 
       WHERE userid = ${user_id}
     `;
+    const userRecord = users[0];
+    const effectiveTalent =
+      Boolean(talent.talent) || userRecord?.talent_status === "approved";
+    const effectiveMentor =
+      Boolean(talent.mentor) || userRecord?.mentor_status === "approved";
+    const effectiveRecruiter =
+      Boolean(talent.recruiter) || userRecord?.recruiter_status === "approved";
+    const isApprovedProfile =
+      Boolean(talent.approved) ||
+      userRecord?.talent_status === "approved" ||
+      userRecord?.mentor_status === "approved" ||
+      userRecord?.recruiter_status === "approved";
 
     const maskedName = maskName(talent.first_name, talent.last_name);
     const decodedDescription = talent.description
@@ -572,7 +631,11 @@ export async function GET(request: NextRequest) {
           : talent.rate
             ? Number(talent.rate)
             : undefined,
-      approved_roles: users.length > 0 ? users[0].approved_roles : [],
+      talent: effectiveTalent,
+      mentor: effectiveMentor,
+      recruiter: effectiveRecruiter,
+      approved: isApprovedProfile,
+      approved_roles: userRecord?.approved_roles ?? [],
       experience: parsedExperience,
       education: parsedEducation,
       certifications: parsedCertifications,

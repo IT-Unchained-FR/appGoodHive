@@ -35,7 +35,7 @@ export const AVAILABILITY_STATUS_OPTIONS: Array<{
   },
   {
     value: "not_looking",
-    label: "Not looking",
+    label: "Not available",
     description: "Not currently open to new opportunities",
   },
 ];
@@ -67,5 +67,5 @@ export function normalizeAvailabilityStatus(
 
 export function getAvailabilityLabel(status: AvailabilityStatus): string {
   const option = AVAILABILITY_STATUS_OPTIONS.find((item) => item.value === status);
-  return option?.label ?? "Not looking";
+  return option?.label ?? "Not available";
 }

@@ -28,6 +28,12 @@ export async function getProfileData(userId: string) {
     }
 
     const profileUser = user[0];
+    const effectiveTalent =
+      Boolean(talent[0].talent) || profileUser.talent_status === "approved";
+    const effectiveMentor =
+      Boolean(talent[0].mentor) || profileUser.mentor_status === "approved";
+    const effectiveRecruiter =
+      Boolean(talent[0].recruiter) || profileUser.recruiter_status === "approved";
 
     const getStatus = (status: string, isActive: boolean) => {
       return isActive ? status : "pending";
@@ -53,13 +59,16 @@ export async function getProfileData(userId: string) {
 
     const talentData = {
       ...talent[0],
+      talent: effectiveTalent,
+      mentor: effectiveMentor,
+      recruiter: effectiveRecruiter,
       description: safeBase64Decode(talent[0].description),
       about_work: safeBase64Decode(talent[0].about_work),
-      talent_status: getStatus(profileUser.talent_status, talent[0].talent),
-      mentor_status: getStatus(profileUser.mentor_status, talent[0].mentor),
+      talent_status: getStatus(profileUser.talent_status, effectiveTalent),
+      mentor_status: getStatus(profileUser.mentor_status, effectiveMentor),
       recruiter_status: getStatus(
         profileUser.recruiter_status,
-        talent[0].recruiter,
+        effectiveRecruiter,
       ),
       talent_approved: profileUser.talent_status === "approved" ? true : false,
     };

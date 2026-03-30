@@ -3,7 +3,6 @@
 import {
   ConnectButton,
   useActiveAccount,
-  useConnectModal,
 } from "thirdweb/react";
 
 import { useAuth } from "@/app/contexts/AuthContext";
@@ -38,7 +37,7 @@ import { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import EmailVerificationModal from "./EmailVerificationModal";
 import { ProtectedLink } from "./ProtectedLink";
@@ -143,10 +142,8 @@ export const NavBar = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const account = useActiveAccount();
-  const { connect, isConnecting } = useConnectModal();
   const { user, isAuthenticated, login, logout, refreshUser } = useAuth();
   const { setManualConnection } = useAuthCheck();
-  const connectModalShownRef = useRef(false);
   const loggedIn_user_id = useCurrentUserId();
 
   const links = pathname.startsWith("/talents")
@@ -462,23 +459,9 @@ export const NavBar = () => {
 
   useEffect(() => {
     const promptFromQuery = searchParams?.get("connectWallet") === "true";
-    const shouldPrompt =
-      promptFromQuery &&
-      !connectModalShownRef.current &&
-      !isConnecting &&
-      !isAuthenticated &&
-      !loggedIn_user_id &&
-      !account?.address;
-
-    if (!shouldPrompt) {
+    if (!promptFromQuery || typeof window === "undefined") {
       return;
     }
-
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    connectModalShownRef.current = true;
 
     const params = new URLSearchParams(searchParams!.toString());
     params.delete("connectWallet");
@@ -487,23 +470,9 @@ export const NavBar = () => {
     const { pathname: currentPathname, hash } = window.location;
     const cleanedUrl = `${currentPathname}${newQuery ? `?${newQuery}` : ""}${hash ?? ""}`;
 
-    void connect({
-      client: thirdwebClient,
-      wallets: supportedWallets,
-      chain: activeChain,
-      ...connectModalOptions,
-    }).finally(() => {
-      connectModalShownRef.current = false;
-    });
-
     // Clean up the query param to avoid repeated prompts on navigation
     router.replace(cleanedUrl as Route, { scroll: false });
   }, [
-    account?.address,
-    connect,
-    isAuthenticated,
-    isConnecting,
-    loggedIn_user_id,
     router,
     searchParams,
   ]);

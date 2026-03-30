@@ -9,6 +9,7 @@ import { activeChain } from "@/config/chains";
 import { supportedWallets, connectModalOptions } from "@/lib/auth/walletConfig";
 import styles from "./CompanyLandingPage.module.scss";
 import {
+  AlertCircle,
   Briefcase,
   Globe,
   Zap,
@@ -228,8 +229,9 @@ export default function MyProfile() {
 
       // Check for picture first
       if (!imageUrl || (typeof imageUrl === 'string' && imageUrl.trim() === '')) {
-        newErrors['image_url'] = 'Profile picture is required';
-        toast.error("🐝 Please upload a company profile picture!");
+        newErrors["image_url"] =
+          "Add a company profile picture so your profile is ready for review.";
+        toast.error("Please add a company profile picture before submitting.");
       }
 
       Object.entries(requiredFields).forEach(([key, label]) => {
@@ -296,6 +298,7 @@ export default function MyProfile() {
       if (validate) {
         await fetch("/api/send-email", {
           method: "POST",
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
           },
@@ -997,7 +1000,7 @@ export default function MyProfile() {
               <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
                 Build Your
                 <span className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 mt-2">
-                  Dream Company Profile
+                  Company Profile
                 </span>
               </h1>
               
@@ -1045,10 +1048,22 @@ export default function MyProfile() {
                     size={180}
                   />
                   {errors.image_url && (
-                    <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
-                      <p className="text-red-500 text-sm bg-white px-3 py-1 rounded-full shadow-md border border-red-200">
-                        {errors.image_url}
-                      </p>
+                    <div className="absolute left-1/2 top-full z-10 mt-4 w-[280px] -translate-x-1/2 sm:w-[320px]">
+                      <div className="rounded-2xl border border-amber-200 bg-white/95 px-4 py-3 shadow-[0_18px_50px_rgba(245,158,11,0.18)] backdrop-blur-sm">
+                        <div className="flex items-start gap-3">
+                          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-100 via-yellow-50 to-white text-amber-600 shadow-inner">
+                            <AlertCircle className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0 text-left">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-amber-500">
+                              Profile photo needed
+                            </p>
+                            <p className="mt-1 text-sm font-medium leading-5 text-stone-700">
+                              {errors.image_url}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>

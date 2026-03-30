@@ -67,7 +67,7 @@ export async function expireStaleImmediateAvailability(userId?: string | null) {
           <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;padding:24px;">
             <h2 style="margin:0 0 12px;color:#111827;">Hi ${firstName}, update your availability</h2>
             <p style="margin:0 0 16px;color:#374151;">
-              Your profile availability was automatically set to "Not looking" because "Available now"
+              Your profile availability was automatically set to "Not available" because "Available now"
               had not been refreshed in over 4 weeks.
             </p>
             <p style="margin:0 0 16px;color:#374151;">
@@ -83,7 +83,7 @@ export async function expireStaleImmediateAvailability(userId?: string | null) {
           </div>
         `,
         text:
-          `Hi ${firstName}, your availability was auto-updated to "Not looking". ` +
+          `Hi ${firstName}, your availability was auto-updated to "Not available". ` +
           `Please refresh it here: ${goodhiveBaseUrl}/talents/my-profile`,
       });
     }),

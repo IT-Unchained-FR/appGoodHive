@@ -7,7 +7,6 @@ import ContactUsTemplate from "@/app/email-templates/contact-us";
 import ContactUsConfirmationTemplate from "@/app/email-templates/contact-us-confirmation";
 import JobAppliedTemplate from "@/app/email-templates/job-applied";
 import CompanyRegistrationTemplate from "@/app/email-templates/new-company-user";
-import TalentRegistrationTemplate from "@/app/email-templates/new-talent-user";
 import ProfileSubmissionAdminTemplate from "@/app/email-templates/profile-submission-admin";
 import ProfileSubmissionTalentTemplate from "@/app/email-templates/profile-submission-talent";
 import { GoodHiveContractEmail } from "@constants/common";
@@ -20,7 +19,6 @@ const TEMPLATES = {
   "contact-company": ContactCompanyTemplate,
   "contact-us": ContactUsTemplate,
   "contact-us-confirmation": ContactUsConfirmationTemplate,
-  "new-talent": TalentRegistrationTemplate,
   "new-company": CompanyRegistrationTemplate,
   "profile-submission-admin": ProfileSubmissionAdminTemplate,
   "profile-submission-talent": ProfileSubmissionTalentTemplate,
@@ -36,7 +34,6 @@ interface RequestContentType {
     | "contact-company"
     | "contact-us"
     | "contact-us-confirmation"
-    | "new-talent"
     | "new-company"
     | "profile-submission-admin"
     | "profile-submission-talent";

@@ -1,10 +1,28 @@
 import { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
-import { Building2, CalendarDays, ExternalLink, Globe, Linkedin, MapPin, Tag, Twitter, Users2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  CalendarDays,
+  ExternalLink,
+  Globe,
+  Linkedin,
+  Lock,
+  MapPin,
+  Shield,
+  ShieldCheck,
+  Sparkles,
+  Tag,
+  Users,
+  Twitter,
+  Users2,
+} from "lucide-react";
 import jwt from "jsonwebtoken";
 
+import { CompanyInfoGuard } from "@/app/components/CompanyInfoGuard";
 import { JobPageAnalytics } from "@/app/components/job-page/JobPageAnalytics";
 import { RelatedJobsSection } from "@/app/components/job-page/RelatedJobsSection";
 import { YourMatchScoreCard } from "@/app/components/job-page/YourMatchScoreCard";
@@ -75,10 +93,13 @@ interface JobPageData {
 }
 
 interface ViewerState {
+  canViewJobDetails: boolean;
   canEditJob: boolean;
   canMessageCompany: boolean;
   canPreviewUnpublished: boolean;
   hasApplied: boolean;
+  hasApprovedCompany: boolean;
+  hasApprovedTalent: boolean;
   isAdmin: boolean;
   isApprovedTalent: boolean;
   isAuthenticated: boolean;
@@ -119,9 +140,19 @@ function getLabel(
   return options.find((option) => option.value === value)?.label || fallback;
 }
 
+function normalizeCurrencyCode(currency: string | null) {
+  const normalizedCurrency = currency?.trim().toUpperCase() || "USD";
+
+  if (normalizedCurrency.startsWith("0X")) {
+    return "USDC";
+  }
+
+  return normalizedCurrency;
+}
+
 function formatBudget(amount: number, currency: string | null) {
   const numericAmount = Number.isFinite(amount) ? amount : 0;
-  const normalizedCurrency = currency?.trim().toUpperCase() || "USD";
+  const normalizedCurrency = normalizeCurrencyCode(currency);
   const fiatCurrencies = new Set([
     "AUD",
     "CAD",
@@ -132,6 +163,12 @@ function formatBudget(amount: number, currency: string | null) {
     "JPY",
     "USD",
   ]);
+
+  if (normalizedCurrency === "USDC") {
+    return `${new Intl.NumberFormat("en-US", {
+      maximumFractionDigits: 0,
+    }).format(numericAmount)} USDC`;
+  }
 
   if (fiatCurrencies.has(normalizedCurrency)) {
     return new Intl.NumberFormat("en-US", {
@@ -145,6 +182,67 @@ function formatBudget(amount: number, currency: string | null) {
   return `${new Intl.NumberFormat("en-US", {
     maximumFractionDigits: 0,
   }).format(numericAmount)} ${normalizedCurrency}`;
+}
+
+function getAudienceLabel(job: Pick<JobPageData, "talent" | "mentor" | "recruiter">) {
+  const audiences: string[] = [];
+
+  if (job.talent) audiences.push("Talents");
+  if (job.mentor) audiences.push("Mentors");
+  if (job.recruiter) audiences.push("Recruiters");
+
+  if (audiences.length === 0) {
+    return "Open to all candidates";
+  }
+
+  if (audiences.length === 1) {
+    return `Open to ${audiences[0]}`;
+  }
+
+  if (audiences.length === 2) {
+    return `Open to ${audiences[0]} & ${audiences[1]}`;
+  }
+
+  return `Open to ${audiences.slice(0, -1).join(", ")} & ${audiences[audiences.length - 1]}`;
+}
+
+function getJobPreviewText(job: Pick<JobPageData, "description" | "sections">) {
+  const source =
+    job.sections
+      .map((section) => section.content)
+      .find((content) => content.trim().length > 0) ||
+    stripHtml(job.description);
+
+  if (!source) {
+    return "Explore the role, scope, and expectations for this opportunity on GoodHive.";
+  }
+
+  return source.length > 220 ? `${source.slice(0, 217).trimEnd()}...` : source;
+}
+
+function getOverviewCards(job: Pick<JobPageData, "projectType" | "jobType" | "typeEngagement" | "duration">) {
+  return [
+    {
+      icon: Tag,
+      label: "Project Type",
+      value: getLabel(projectTypes, job.projectType, "Project"),
+    },
+    {
+      icon: MapPin,
+      label: "Work Style",
+      value: getLabel(jobTypes, job.jobType, "Role"),
+    },
+    {
+      icon: Users,
+      label: "Engagement",
+      value: getLabel(typeEngagements, job.typeEngagement, "Flexible"),
+    },
+    {
+      icon: CalendarDays,
+      label: "Timeline",
+      value: getLabel(projectDuration, job.duration, "Flexible duration"),
+    },
+  ];
 }
 
 async function getJob(jobId: string): Promise<JobPageData | null> {
@@ -347,10 +445,13 @@ async function getViewerState(job: JobPageData): Promise<ViewerState> {
 
   if (!viewerUserId) {
     return {
+      canViewJobDetails: false,
       canEditJob: false,
       canMessageCompany: false,
       canPreviewUnpublished: isAdmin,
       hasApplied: false,
+      hasApprovedCompany: false,
+      hasApprovedTalent: false,
       isAdmin,
       isApprovedTalent: false,
       isAuthenticated: false,
@@ -361,11 +462,18 @@ async function getViewerState(job: JobPageData): Promise<ViewerState> {
 
   const [viewerRows, applicationRows] = await Promise.all([
     sql<{
+      approved_company_count: number;
       has_talent_profile: boolean;
       talent_status: string | null;
     }[]>`
       SELECT
         u.talent_status,
+        (
+          SELECT COUNT(*)::int
+          FROM goodhive.companies c
+          WHERE c.user_id = ${viewerUserId}::uuid
+            AND c.approved = true
+        ) AS approved_company_count,
         EXISTS(
           SELECT 1
           FROM goodhive.talents t
@@ -387,14 +495,20 @@ async function getViewerState(job: JobPageData): Promise<ViewerState> {
   const viewer = viewerRows[0];
   const isApprovedTalent =
     viewer?.has_talent_profile === true && viewer.talent_status === "approved";
+  const hasApprovedCompany = Number(viewer?.approved_company_count || 0) > 0;
+  const canViewJobDetails =
+    isAdmin || isCompanyOwner || isApprovedTalent || hasApprovedCompany;
 
   return {
+    canViewJobDetails,
     canEditJob:
       isCompanyOwner &&
       (job.reviewStatus === "draft" || job.reviewStatus === "rejected"),
     canMessageCompany: isApprovedTalent && job.company.approved,
     canPreviewUnpublished: isAdmin || isCompanyOwner,
     hasApplied: applicationRows.length > 0,
+    hasApprovedCompany,
+    hasApprovedTalent: isApprovedTalent,
     isAdmin,
     isApprovedTalent,
     isAuthenticated: true,
@@ -419,21 +533,36 @@ export async function generateMetadata({
 
   const location = [job.city, job.country].filter(Boolean).join(", ") || "Remote";
   const budget = formatBudget(job.budget, job.currency);
+  const sessionUser = await getSessionUser();
+  const adminToken = cookies().get("admin_token")?.value ?? null;
+  let isPrivilegedViewer = Boolean(sessionUser);
+
+  if (!isPrivilegedViewer && adminToken) {
+    try {
+      jwt.verify(adminToken, getAdminJWTSecret());
+      isPrivilegedViewer = true;
+    } catch (error) {
+      isPrivilegedViewer = false;
+    }
+  }
+
+  const companyName = isPrivilegedViewer ? job.company.name : "a verified GoodHive company";
+  const metadataImages = isPrivilegedViewer && job.company.logo ? [{ url: job.company.logo }] : [];
 
   return {
-    description: `${job.title} at ${job.company.name} in ${location}. Budget: ${budget}.`,
+    description: `${job.title} at ${companyName} in ${location}. Budget: ${budget}.`,
     openGraph: {
-      description: `${job.title} at ${job.company.name} in ${location}. Budget: ${budget}.`,
-      images: job.company.logo ? [{ url: job.company.logo }] : [],
-      title: `${job.title} at ${job.company.name}`,
+      description: `${job.title} at ${companyName} in ${location}. Budget: ${budget}.`,
+      images: metadataImages,
+      title: `${job.title} at ${companyName}`,
       type: "website",
     },
-    title: `${job.title} at ${job.company.name} | GoodHive`,
+    title: `${job.title} at ${companyName} | GoodHive`,
     twitter: {
       card: "summary_large_image",
-      description: `${job.title} at ${job.company.name} in ${location}. Budget: ${budget}.`,
-      images: job.company.logo ? [job.company.logo] : [],
-      title: `${job.title} at ${job.company.name}`,
+      description: `${job.title} at ${companyName} in ${location}. Budget: ${budget}.`,
+      images: metadataImages.map((image) => image.url),
+      title: `${job.title} at ${companyName}`,
     },
   };
 }
@@ -455,24 +584,72 @@ export default async function JobPage({
     notFound();
   }
 
-  const metadataBadges = [
-    getLabel(projectTypes, job.projectType, "Project"),
-    getLabel(jobTypes, job.jobType, "Job Type"),
-    getLabel(typeEngagements, job.typeEngagement, "Engagement"),
-    getLabel(projectDuration, job.duration, "Flexible duration"),
-  ];
+  const overviewCards = getOverviewCards(job);
+  const canViewFullDetails = viewer.canViewJobDetails;
+  const isCompanyVisible = canViewFullDetails;
+  const locationLabel = [job.city, job.country].filter(Boolean).join(", ") || "Remote";
+  const budgetLabel = formatBudget(job.budget, job.currency);
+  const audienceLabel = getAudienceLabel(job);
+  const previewText = getJobPreviewText(job);
+  const companyLocation = [job.company.city, job.company.country]
+    .filter(Boolean)
+    .join(", ");
+  const actionCompanyName = isCompanyVisible ? job.company.name : "this company";
+  const actionCompanyEmail = viewer.canMessageCompany ? job.company.email || "" : "";
+  const actionCompanyUserId =
+    viewer.canMessageCompany || viewer.isCompanyOwner || viewer.isAdmin
+      ? job.company.id
+      : "";
+  const actionWalletAddress =
+    viewer.isApprovedTalent || viewer.isCompanyOwner || viewer.isAdmin
+      ? job.company.walletAddress || job.company.id
+      : "";
+  const companyLinks = [
+    {
+      href: job.company.website,
+      icon: Globe,
+      label: job.company.website?.replace(/^https?:\/\//, "") || "Website",
+    },
+    {
+      href: job.company.linkedin,
+      icon: Linkedin,
+      label: "LinkedIn",
+    },
+    {
+      href: job.company.twitter,
+      icon: Twitter,
+      label: "Twitter",
+    },
+  ].filter((item) => Boolean(item.href));
 
   return (
-    <div className="min-h-screen bg-[#f6f4ee]">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(255,214,102,0.18),_transparent_32%),linear-gradient(180deg,#f8f5ee_0%,#f3efe7_100%)]">
       <JobPageAnalytics jobId={job.id} jobTitle={job.title} />
 
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="rounded-[36px] border border-[#e8dcc4] bg-[radial-gradient(circle_at_top,_rgba(255,214,102,0.28),_transparent_45%),linear-gradient(135deg,#fffaf0_0%,#ffffff_52%,#f9f4ea_100%)] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-8">
-          <div className="flex flex-col gap-8">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-              <div className="flex gap-4">
-                <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[24px] border border-white/80 bg-white shadow-sm">
-                  {job.company.logo ? (
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <Link
+            href="/talents/job-search"
+            className="inline-flex items-center gap-2 text-sm font-medium text-slate-700 transition hover:text-slate-950"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Jobs
+          </Link>
+
+          {!viewer.isAuthenticated ? (
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white/85 px-4 py-2 text-sm font-medium text-amber-900 shadow-sm">
+              <Sparkles className="h-4 w-4 text-amber-600" />
+              Public preview: connect your wallet to unlock company identity and contact details.
+            </div>
+          ) : null}
+        </div>
+
+        <section className="overflow-hidden rounded-[36px] border border-[#e7dcc7] bg-[radial-gradient(circle_at_top_left,_rgba(255,214,102,0.22),_transparent_36%),linear-gradient(135deg,rgba(255,251,243,0.98)_0%,rgba(255,255,255,0.98)_54%,rgba(248,242,231,0.98)_100%)] shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+          <div className="grid gap-8 p-6 sm:p-8 xl:grid-cols-[minmax(0,1.6fr)_340px]">
+            <div className="space-y-6">
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[26px] border border-white/80 bg-white shadow-sm ring-1 ring-amber-100/80">
+                  {isCompanyVisible && job.company.logo ? (
                     <Image
                       alt={`${job.company.name} logo`}
                       className="h-full w-full object-cover"
@@ -481,74 +658,158 @@ export default async function JobPage({
                       width={80}
                     />
                   ) : (
-                    <Building2 className="h-8 w-8 text-slate-400" />
+                    <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(255,214,102,0.4),_transparent_55%),linear-gradient(135deg,#fff5d7_0%,#fffefb_100%)]">
+                      <Lock className="h-8 w-8 text-amber-700" />
+                    </div>
                   )}
                 </div>
 
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-amber-700">
-                      {job.company.name}
-                    </p>
-                    {job.company.headline ? (
-                      <p className="mt-1 text-sm text-slate-600">
-                        {job.company.headline}
-                      </p>
-                    ) : null}
-                  </div>
+                <div className="min-w-0 flex-1 space-y-4">
+                  <div className="space-y-2">
+                    {isCompanyVisible ? (
+                      <div>
+                        <Link
+                          href={`/companies/${job.company.id}`}
+                          className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.28em] text-amber-800 transition hover:text-amber-950"
+                        >
+                          {job.company.name}
+                          {job.company.approved ? (
+                            <ShieldCheck className="h-4 w-4 normal-case tracking-normal" />
+                          ) : null}
+                        </Link>
+                        {job.company.headline ? (
+                          <p className="mt-2 max-w-2xl text-sm text-slate-600">
+                            {job.company.headline}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <div className="inline-flex max-w-full items-center rounded-full border border-amber-200/80 bg-white/90 px-4 py-2 shadow-sm">
+                        <CompanyInfoGuard
+                          value={undefined}
+                          seed={`${job.id}-hero-company`}
+                          isVisible={false}
+                          textClassName="uppercase tracking-[0.28em] text-amber-800"
+                          sizeClassName="text-sm font-semibold"
+                          blurAmount="blur-[8px]"
+                          placement="bottom"
+                        />
+                      </div>
+                    )}
 
-                  <div>
-                    <h1 className="text-3xl font-semibold text-slate-950 sm:text-5xl">
-                      {job.title}
-                    </h1>
-                    <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                      <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1">
-                        <MapPin className="h-4 w-4 text-amber-600" />
-                        {[job.city, job.country].filter(Boolean).join(", ") || "Remote"}
-                      </span>
-                      <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1">
-                        <CalendarDays className="h-4 w-4 text-amber-600" />
-                        {formatRelativeDate(job.postedAt)}
-                      </span>
-                      <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1">
-                        <Users2 className="h-4 w-4 text-amber-600" />
-                        {job.applicationCount} application
-                        {job.applicationCount === 1 ? "" : "s"}
-                      </span>
+                    <div className="max-w-4xl">
+                      <h1 className="text-3xl font-semibold leading-tight text-slate-950 sm:text-5xl">
+                        {job.title}
+                      </h1>
+                      <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600 sm:text-[15px]">
+                        {previewText}
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 text-right shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
-                  Budget
-                </p>
-                <p className="mt-2 text-3xl font-semibold text-slate-950">
-                  {formatBudget(job.budget, job.currency)}
-                </p>
-                <p className="mt-2 text-sm text-slate-500">
-                  Review status:{" "}
-                  <span className="font-semibold capitalize text-slate-700">
-                    {job.reviewStatus.replace(/_/g, " ")}
-                  </span>
-                </p>
+              <div className="flex flex-wrap gap-3">
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/90 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm">
+                  <MapPin className="h-4 w-4 text-amber-600" />
+                  {locationLabel}
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/90 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm">
+                  <CalendarDays className="h-4 w-4 text-amber-600" />
+                  {formatRelativeDate(job.postedAt)}
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/90 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm">
+                  <Users2 className="h-4 w-4 text-amber-600" />
+                  {job.applicationCount} application{job.applicationCount === 1 ? "" : "s"}
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/90 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm">
+                  <Tag className="h-4 w-4 text-amber-600" />
+                  {audienceLabel}
+                </span>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                {overviewCards.map((card) => (
+                  <div
+                    key={card.label}
+                    className="rounded-[24px] border border-white/80 bg-white/80 p-4 shadow-sm"
+                  >
+                    <div className="flex items-center gap-2 text-amber-700">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-amber-50">
+                        <card.icon className="h-4 w-4" />
+                      </div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        {card.label}
+                      </p>
+                    </div>
+                    <p className="mt-4 text-base font-semibold text-slate-900">{card.value}</p>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              {metadataBadges.map((badge) => (
-                <span
-                  key={badge}
-                  className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white/90 px-4 py-2 text-sm font-medium text-slate-700"
-                >
-                  <Tag className="h-4 w-4 text-amber-600" />
-                  {badge}
-                </span>
-              ))}
+            <div className="flex flex-col gap-4">
+              <div className="rounded-[28px] border border-white/80 bg-slate-950 p-6 text-white shadow-[0_18px_60px_rgba(15,23,42,0.18)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">
+                  Opportunity Budget
+                </p>
+                <p className="mt-3 text-3xl font-semibold sm:text-4xl">{budgetLabel}</p>
+                <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-200 shadow-inner shadow-emerald-950/20">
+                  <span className="h-2 w-2 rounded-full bg-emerald-300" />
+                  Budget benchmark
+                  <span className="font-semibold text-white/90">{budgetLabel}</span>
+                </div>
+
+                {viewer.isAdmin || viewer.isCompanyOwner ? (
+                  <p className="mt-5 text-sm text-slate-300">
+                    Review status:{" "}
+                    <span className="font-semibold capitalize text-white">
+                      {job.reviewStatus.replace(/_/g, " ")}
+                    </span>
+                  </p>
+                ) : (
+                  <p className="mt-5 text-sm text-slate-300">
+                    Live on GoodHive and ready for qualified candidates.
+                  </p>
+                )}
+              </div>
+
+              <div className="rounded-[28px] border border-[#eadfca] bg-white/88 p-6 shadow-sm">
+                {isCompanyVisible ? (
+                  <>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      Company Access
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-slate-950">
+                      Review the company profile and apply with context.
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <Link
+                        href={`/companies/${job.company.id}`}
+                        className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600"
+                      >
+                        View Company Profile
+                        <ExternalLink className="h-4 w-4" />
+                      </Link>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                      <Lock className="h-5 w-5" />
+                    </div>
+                    <p className="mt-4 text-lg font-semibold text-slate-950">
+                      Company details stay private in public preview mode.
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      The role information stays open, but the hiring company identity and direct links unlock after connection.
+                    </p>
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
         {viewer.isCompanyOwner && job.reviewStatus === "rejected" && job.adminFeedback ? (
           <div className="mt-6 rounded-[28px] border border-rose-200 bg-rose-50 px-6 py-5 text-sm text-rose-700">
@@ -564,16 +825,26 @@ export default async function JobPage({
           </div>
         ) : null}
 
-        <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1.7fr)_minmax(320px,0.9fr)]">
-          <main className="space-y-8">
+        <div className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1.55fr)_340px]">
+          <main className="space-y-6">
             {job.skills.length > 0 ? (
-              <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 className="text-xl font-semibold text-slate-950">Skills</h2>
+              <section className="rounded-[30px] border border-[#e6e0d5] bg-white/95 p-6 shadow-sm sm:p-7">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      What You&apos;ll Use
+                    </p>
+                    <h2 className="mt-2 text-2xl font-semibold text-slate-950">Skills</h2>
+                  </div>
+                  <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-medium text-amber-800">
+                    {job.skills.length} listed
+                  </span>
+                </div>
                 <div className="mt-4 flex flex-wrap gap-3">
                   {job.skills.map((skill) => (
                     <span
                       key={skill}
-                      className="rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white"
+                      className="rounded-full border border-slate-200 bg-slate-950 px-4 py-2 text-sm font-medium text-white shadow-sm"
                     >
                       {skill}
                     </span>
@@ -583,8 +854,11 @@ export default async function JobPage({
             ) : null}
 
             {job.sections.length > 0 ? (
-              <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 className="text-xl font-semibold text-slate-950">Role Overview</h2>
+              <section className="rounded-[30px] border border-[#e6e0d5] bg-white/95 p-6 shadow-sm sm:p-7">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Full Brief
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold text-slate-950">Role Overview</h2>
                 <div className="mt-6 space-y-8">
                   {job.sections
                     .sort((left, right) => left.sortOrder - right.sortOrder)
@@ -593,7 +867,7 @@ export default async function JobPage({
                         <h3 className="text-lg font-semibold text-slate-900">
                           {section.heading}
                         </h3>
-                        <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-600">
+                        <p className="mt-3 max-w-3xl whitespace-pre-wrap text-sm leading-7 text-slate-600 sm:text-[15px]">
                           {section.content}
                         </p>
                       </article>
@@ -601,9 +875,12 @@ export default async function JobPage({
                 </div>
               </section>
             ) : job.description ? (
-              <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 className="text-xl font-semibold text-slate-950">Role Overview</h2>
-                <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-slate-600">
+              <section className="rounded-[30px] border border-[#e6e0d5] bg-white/95 p-6 shadow-sm sm:p-7">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Full Brief
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold text-slate-950">Role Overview</h2>
+                <p className="mt-4 max-w-3xl whitespace-pre-wrap text-sm leading-7 text-slate-600 sm:text-[15px]">
                   {stripHtml(job.description)}
                 </p>
               </section>
@@ -613,9 +890,9 @@ export default async function JobPage({
               <YourMatchScoreCard jobId={job.id} talentId={viewer.userId} />
             ) : null}
 
-            {job.relatedJobs.length > 0 ? (
+            {canViewFullDetails && job.relatedJobs.length > 0 ? (
               <RelatedJobsSection
-                companyName={job.company.name}
+                companyName={viewer.isAuthenticated ? job.company.name : "this company"}
                 relatedJobs={job.relatedJobs.map((relatedJob) => ({
                   city: relatedJob.city || "",
                   country: relatedJob.country || "",
@@ -630,13 +907,13 @@ export default async function JobPage({
             ) : null}
           </main>
 
-          <aside className="space-y-6">
+          <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
             <JobActionPanel
               canEditJob={viewer.canEditJob}
               canMessageCompany={viewer.canMessageCompany}
-              companyEmail={job.company.email || ""}
-              companyName={job.company.name}
-              companyUserId={job.company.id}
+              companyEmail={actionCompanyEmail}
+              companyName={actionCompanyName}
+              companyUserId={actionCompanyUserId}
               hasApplied={viewer.hasApplied}
               isAdmin={viewer.isAdmin}
               isAuthenticated={viewer.isAuthenticated}
@@ -647,99 +924,160 @@ export default async function JobPage({
               isApprovedTalent={viewer.isApprovedTalent}
               jobId={job.id}
               jobTitle={job.title}
-              loginHref={`/auth/login?redirect=${encodeURIComponent(`/jobs/${job.id}`)}`}
               manageApplicantsHref={`/companies/dashboard/jobs?jobId=${job.id}`}
               openToMentor={job.mentor}
               openToRecruiter={job.recruiter}
               openToTalent={job.talent}
               reviewHref={`/admin/job/${job.id}`}
-              walletAddress={job.company.walletAddress || job.company.id}
+              walletAddress={actionWalletAddress}
             />
 
-            <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-slate-950">About the Company</h2>
+            <section className="rounded-[30px] border border-[#e6e0d5] bg-white/95 p-6 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Access
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold text-slate-950">Privacy & access</h2>
 
-              <div className="mt-5 flex items-center gap-4">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[20px] border border-slate-200 bg-slate-50">
-                  {job.company.logo ? (
-                    <Image
-                      alt={`${job.company.name} logo`}
-                      className="h-full w-full object-cover"
-                      height={64}
-                      src={job.company.logo}
-                      width={64}
-                    />
-                  ) : (
-                    <Building2 className="h-6 w-6 text-slate-400" />
-                  )}
-                </div>
-
-                <div>
-                  <p className="text-lg font-semibold text-slate-900">
-                    {job.company.name}
+              <div className="mt-5 space-y-4 text-sm text-slate-700">
+                <div className="flex items-start gap-3 rounded-2xl bg-amber-50/80 p-4">
+                  <Shield className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+                  <p className="leading-6 text-slate-700">
+                    Everyone can read the role summary, skills, and description. Company identity, company links, and direct contact access stay locked until the viewer has an approved talent or approved company profile.
                   </p>
-                  {job.company.headline ? (
-                    <p className="mt-1 text-sm text-slate-600">
-                      {job.company.headline}
-                    </p>
+                </div>
+              </div>
+            </section>
+
+            {canViewFullDetails ? (
+              <section className="rounded-[30px] border border-[#e6e0d5] bg-white/95 p-6 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Snapshot
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold text-slate-950">Opportunity at a glance</h2>
+
+                <div className="mt-5 space-y-4 text-sm text-slate-700">
+                  <div className="flex items-start justify-between gap-4">
+                    <span className="text-slate-500">Project type</span>
+                    <span className="text-right font-medium text-slate-900">
+                      {getLabel(projectTypes, job.projectType, "Project")}
+                    </span>
+                  </div>
+                  <div className="flex items-start justify-between gap-4">
+                    <span className="text-slate-500">Job type</span>
+                    <span className="text-right font-medium text-slate-900">
+                      {getLabel(jobTypes, job.jobType, "Role")}
+                    </span>
+                  </div>
+                  <div className="flex items-start justify-between gap-4">
+                    <span className="text-slate-500">Engagement</span>
+                    <span className="text-right font-medium text-slate-900">
+                      {getLabel(typeEngagements, job.typeEngagement, "Flexible")}
+                    </span>
+                  </div>
+                  <div className="flex items-start justify-between gap-4">
+                    <span className="text-slate-500">Timeline</span>
+                    <span className="text-right font-medium text-slate-900">
+                      {getLabel(projectDuration, job.duration, "Flexible duration")}
+                    </span>
+                  </div>
+                  <div className="flex items-start justify-between gap-4">
+                    <span className="text-slate-500">Candidate access</span>
+                    <span className="text-right font-medium text-slate-900">{audienceLabel}</span>
+                  </div>
+                </div>
+              </section>
+            ) : null}
+
+            <section className="rounded-[30px] border border-[#e6e0d5] bg-white/95 p-6 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Company
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold text-slate-950">About the Company</h2>
+
+              {isCompanyVisible ? (
+                <>
+                  <div className="mt-5 flex items-center gap-4">
+                    <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[20px] border border-slate-200 bg-slate-50">
+                      {job.company.logo ? (
+                        <Image
+                          alt={`${job.company.name} logo`}
+                          className="h-full w-full object-cover"
+                          height={64}
+                          src={job.company.logo}
+                          width={64}
+                        />
+                      ) : (
+                        <Building2 className="h-6 w-6 text-slate-400" />
+                      )}
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="text-lg font-semibold text-slate-900">
+                        {job.company.name}
+                      </p>
+                      {job.company.headline ? (
+                        <p className="mt-1 text-sm text-slate-600">{job.company.headline}</p>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {companyLocation ? (
+                    <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-sm text-slate-600">
+                      <MapPin className="h-4 w-4 text-amber-600" />
+                      {companyLocation}
+                    </div>
                   ) : null}
-                </div>
-              </div>
 
-              {(job.company.city || job.company.country) ? (
-                <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-sm text-slate-600">
-                  <MapPin className="h-4 w-4 text-amber-600" />
-                  {[job.company.city, job.company.country].filter(Boolean).join(", ")}
-                </div>
-              ) : null}
+                  <div className="mt-5 space-y-3 text-sm text-slate-600">
+                    {companyLinks.map((item) => (
+                      <a
+                        key={`${item.label}-${item.href}`}
+                        className="flex items-center gap-2 transition hover:text-slate-900"
+                        href={item.href!}
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        <item.icon className="h-4 w-4 text-amber-600" />
+                        {item.label}
+                      </a>
+                    ))}
 
-              <div className="mt-5 space-y-3 text-sm text-slate-600">
-                {job.company.website ? (
-                  <a
-                    className="flex items-center gap-2 transition hover:text-slate-900"
-                    href={job.company.website}
-                    rel="noreferrer"
-                    target="_blank"
-                  >
-                    <Globe className="h-4 w-4 text-amber-600" />
-                    {job.company.website}
-                  </a>
-                ) : null}
+                    <Link
+                      className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
+                      href={`/companies/${job.company.id}`}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      View Company Profile
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="mt-5 flex items-start gap-4">
+                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[20px] border border-amber-200 bg-amber-50 text-amber-700">
+                      <Lock className="h-6 w-6" />
+                    </div>
+                    <div className="min-w-0 space-y-2">
+                      <CompanyInfoGuard
+                        value={undefined}
+                        seed={`${job.id}-about-company`}
+                        isVisible={false}
+                        textClassName="text-slate-900"
+                        sizeClassName="text-lg font-semibold"
+                        blurAmount="blur-[8px]"
+                        placement="bottom"
+                      />
+                      <p className="text-sm leading-6 text-slate-600">
+                        Connect your wallet to reveal the hiring company, explore their profile, and unlock external links.
+                      </p>
+                    </div>
+                  </div>
 
-                {job.company.linkedin ? (
-                  <a
-                    className="flex items-center gap-2 transition hover:text-slate-900"
-                    href={job.company.linkedin}
-                    rel="noreferrer"
-                    target="_blank"
-                  >
-                    <Linkedin className="h-4 w-4 text-amber-600" />
-                    LinkedIn
-                  </a>
-                ) : null}
-
-                {job.company.twitter ? (
-                  <a
-                    className="flex items-center gap-2 transition hover:text-slate-900"
-                    href={job.company.twitter}
-                    rel="noreferrer"
-                    target="_blank"
-                  >
-                    <Twitter className="h-4 w-4 text-amber-600" />
-                    Twitter
-                  </a>
-                ) : null}
-
-                {job.company.id ? (
-                  <a
-                    className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
-                    href={`/companies/${job.company.id}`}
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    View Company Profile
-                  </a>
-                ) : null}
-              </div>
+                  <div className="mt-5 rounded-[24px] border border-dashed border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-900">
+                    This public preview keeps company identity private while still letting candidates review the role itself.
+                  </div>
+                </>
+              )}
             </section>
           </aside>
         </div>

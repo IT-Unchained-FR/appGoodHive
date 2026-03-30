@@ -22,7 +22,19 @@ export const CompanyRegistrationTemplate: React.FC<
         intro call. We&apos;re excited to learn more about {name} and how we
         can assist in finding your ideal IT talent.
       </p>
-      <p>Book your quick intro call here: {CompanyIntroCallUrl}</p>
+      <p>
+        Book your call to start your talent sprint here:{" "}
+        <a
+          href={CompanyIntroCallUrl}
+          style={{
+            color: "#FFC905",
+            textDecoration: "none",
+            fontWeight: "bold",
+          }}
+        >
+          Start your Talent Sprint
+        </a>
+      </p>
       <p>
         Got peers or partners who could benefit from joining GoodHive too? Feel
         free to share your experience and let them know about us. Together, we

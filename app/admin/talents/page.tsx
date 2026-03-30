@@ -17,8 +17,12 @@ import {
   Check,
   Copy,
   Download,
+  ExternalLink,
   Filter,
+  Globe,
+  Linkedin,
   Pencil,
+  Send,
   Trash2,
   UserCheck,
   X,
@@ -95,6 +99,24 @@ const getReferredByLabel = (row: ProfileData) => {
   }
 
   return "–";
+};
+
+const getPhoneLabel = (row: ProfileData) => {
+  const phone = row.phone_number?.trim();
+  if (!phone) return "–";
+
+  const countryCode = row.phone_country_code?.trim();
+  return countryCode ? `+${countryCode} ${phone}` : phone;
+};
+
+const getLocationLabel = (row: ProfileData) => {
+  const location = [row.city?.trim(), row.country?.trim()].filter(Boolean);
+  return location.length > 0 ? location.join(", ") : "–";
+};
+
+const getDisplayLink = (value?: string | null) => {
+  if (!value) return "–";
+  return value.replace(/^https?:\/\//, "");
 };
 
 export default function AdminManageTalents() {
@@ -290,6 +312,88 @@ export default function AdminManageTalents() {
       sortable: true,
     },
     {
+      key: "phone_number",
+      header: "Phone",
+      width: "12%",
+      sortable: false,
+      render: (_value, row) => (
+        <span className="break-words text-sm text-slate-700">
+          {getPhoneLabel(row)}
+        </span>
+      ),
+      exportValue: (row) => getPhoneLabel(row),
+    },
+    {
+      key: "location",
+      header: "Location",
+      width: "12%",
+      sortable: false,
+      render: (_value, row) => (
+        <span className="break-words text-sm text-slate-700">
+          {getLocationLabel(row)}
+        </span>
+      ),
+      exportValue: (row) => getLocationLabel(row),
+    },
+    {
+      key: "linkedin",
+      header: "LinkedIn",
+      width: "12%",
+      sortable: false,
+      render: (value) =>
+        value ? (
+          <a
+            href={value}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-sm text-blue-700 transition hover:text-blue-900"
+          >
+            <Linkedin className="h-4 w-4" />
+            <span className="truncate max-w-[120px]">{getDisplayLink(value)}</span>
+          </a>
+        ) : (
+          <span className="text-sm text-slate-500">–</span>
+        ),
+      exportValue: (row) => row.linkedin || "",
+    },
+    {
+      key: "portfolio",
+      header: "Portfolio",
+      width: "12%",
+      sortable: false,
+      render: (value) =>
+        value ? (
+          <a
+            href={value}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-sm text-slate-700 transition hover:text-slate-900"
+          >
+            <Globe className="h-4 w-4" />
+            <span className="truncate max-w-[120px]">{getDisplayLink(value)}</span>
+          </a>
+        ) : (
+          <span className="text-sm text-slate-500">–</span>
+        ),
+      exportValue: (row) => row.portfolio || "",
+    },
+    {
+      key: "telegram",
+      header: "Telegram",
+      width: "12%",
+      sortable: false,
+      render: (value) =>
+        value ? (
+          <span className="inline-flex items-center gap-1 text-sm text-slate-700">
+            <Send className="h-4 w-4" />
+            <span className="truncate max-w-[120px]">{value}</span>
+          </span>
+        ) : (
+          <span className="text-sm text-slate-500">–</span>
+        ),
+      exportValue: (row) => row.telegram || "",
+    },
+    {
       key: "referred_by",
       header: "Referred by",
       width: "16%",
@@ -462,6 +566,31 @@ export default function AdminManageTalents() {
       width: "12%",
       render: (value, row) => (
         <div className="flex items-center justify-end gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            title="Copy email"
+            onClick={() => {
+              navigator.clipboard.writeText(row.email || "");
+              toast.success("Email copied!");
+            }}
+          >
+            <Copy className="h-4 w-4 text-slate-600" />
+          </Button>
+          {row.linkedin ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              title="Open LinkedIn"
+              onClick={() => {
+                window.open(row.linkedin || "", "_blank", "noopener,noreferrer");
+              }}
+            >
+              <ExternalLink className="h-4 w-4 text-slate-600" />
+            </Button>
+          ) : null}
           <Button
             variant="ghost"
             size="icon"

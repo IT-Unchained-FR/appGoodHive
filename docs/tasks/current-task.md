@@ -146,6 +146,21 @@ No other files need changing.
 ### P3 — TASK-007 (blocked)
 - Replace blockchain section with video on company profile (waiting on Benoit's video URL)
 
+### P1 — Job detail page guest privacy + redesign (March 30, 2026)
+- [x] `app/jobs/[jobId]/page.tsx` now mirrors the job-card privacy contract for guests: job content stays visible, but company identity/profile links stay hidden until auth
+- [x] Removed public exposure of company profile links from the guest sidebar state
+- [x] Normalized token-address currency display so public budget cards show `USDC` instead of raw contract addresses
+- [x] Refactored the page layout for stronger hierarchy, spacing, and mobile-friendly production presentation
+- [x] Skills and role description remain public, while company identity/contact access is gated to approved talent / approved companies / admins / job owner
+- [x] Removed the old `?connectWallet=true` auto-popup behavior from the navbar and now only clean the query param
+- [x] Updated company welcome email CTA copy to use "Start your Talent Sprint" wording with the correct Calendly link
+- [x] Expanded admin talent table with direct outreach columns for phone, location, LinkedIn, portfolio, and Telegram plus quick-access actions
+- [x] Changed availability label from "Not looking" to "Not available" across the main status UI and stale-availability email copy
+- [x] Repaired approved-role drift for talent profiles so approved roles stay active across save/review flows and admin status changes cannot leave profiles stuck as both approved and under review
+- [x] Unified talent profile submission emails so only the server-side submission email is sent, using the updated assessment-call Calendly link and the refreshed welcome copy
+- [x] Added an in-app interview-call CTA to the talent profile review banner so submitted talents can book the same Benoit Calendly link directly from their profile page
+- [x] Polished the company profile photo validation state with softer helper copy, a branded inline error card, and a simplified hero title that now reads "Build Your Company Profile"
+
 ---
 
 ## Architecture Quick Reference
