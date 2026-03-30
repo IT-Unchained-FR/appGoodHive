@@ -3,6 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth/sessionUtils";
 import sql from "@/lib/db";
 import {
+  normalizeJobDescriptionForDisplay,
+  normalizeJobSectionsForStorage,
+} from "@/lib/jobs/format-job-content";
+import {
   COMPANY_ALWAYS_LOCKED_JOB_FIELDS,
   resolveJobReviewStatus,
 } from "@/lib/jobs/review";
@@ -281,6 +285,50 @@ export async function PATCH(
       );
     }
 
+    if (typeof updateFields.description === "string") {
+      updateFields.description = normalizeJobDescriptionForDisplay(
+        updateFields.description,
+      );
+    }
+
+    let normalizedSections: Awaited<
+      ReturnType<typeof normalizeJobSectionsForStorage>
+    >["sections"] = [];
+
+    if (Array.isArray(body.sections)) {
+      const incomingSections = body.sections
+        .map((section, index) => {
+          const heading =
+            typeof section?.heading === "string" ? section.heading.trim() : "";
+          const content =
+            typeof section?.content === "string" ? section.content.trim() : "";
+
+          if (!heading || !content) {
+            return null;
+          }
+
+          return {
+            heading,
+            content,
+            sort_order:
+              typeof section.sort_order === "number" ? section.sort_order : index,
+          };
+        })
+        .filter(Boolean) as Array<{
+        heading: string;
+        content: string;
+        sort_order: number;
+      }>;
+
+      const formattedSections = await normalizeJobSectionsForStorage(
+        incomingSections,
+        typeof body.title === "string" ? body.title : undefined,
+      );
+
+      normalizedSections = formattedSections.sections;
+      updateFields.description = formattedSections.descriptionHtml;
+    }
+
     const updateEntries = Object.entries(updateFields);
     if (updateEntries.length > 0) {
       const values = updateEntries.map(([, value]) => value);
@@ -307,17 +355,8 @@ export async function PATCH(
         WHERE job_id = ${jobId}::uuid
       `;
 
-      for (let index = 0; index < body.sections.length; index += 1) {
-        const section = body.sections[index];
-        const heading =
-          typeof section?.heading === "string" ? section.heading.trim() : "";
-        const content =
-          typeof section?.content === "string" ? section.content.trim() : "";
-
-        if (!heading || !content) {
-          continue;
-        }
-
+      for (let index = 0; index < normalizedSections.length; index += 1) {
+        const section = normalizedSections[index];
         await sql`
           INSERT INTO goodhive.job_sections (
             job_id,
@@ -326,8 +365,8 @@ export async function PATCH(
             sort_order
           ) VALUES (
             ${jobId}::uuid,
-            ${heading},
-            ${content},
+            ${section.heading},
+            ${section.content},
             ${typeof section.sort_order === "number" ? section.sort_order : index}
           )
         `;

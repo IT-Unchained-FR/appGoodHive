@@ -63,8 +63,8 @@ export const TEAM_MEMBERS = [
   {
     id: 5,
     name: "Sabbir Rifat",
-    role: "Founding Builder & Principal Frontend Engineer",
-    description: "Designs scalable frontends for collaborative Web3 products",
+    role: "Founding Builder & Principal Software Engineer",
+    description: "Designs scalable solutions for collaborative Web3 products",
     backgroundColor: "#d0e0f0",
     image: "/img/team/sabbir-rifat.png",
     linkedin: "https://www.linkedin.com/in/sabbir-rifat/",

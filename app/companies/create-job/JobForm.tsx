@@ -387,7 +387,7 @@ export const JobForm = ({
     const readableChainName = jobChainLabel
       ? jobChainLabel
           .replace(/[-_]/g, " ")
-          .replace(/\b\w/g, (char) => char.toUpperCase())
+          .replace(/\b\w/g, (char: string) => char.toUpperCase())
       : "the correct network";
     if (jobChainId && jobChainId !== ACTIVE_CHAIN_ID) {
       toast.error(
@@ -830,6 +830,9 @@ export const JobForm = ({
             sections={jobSections}
             onSectionsChange={setJobSections}
           />
+          <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-sm leading-6 text-amber-900">
+            Paste rough notes if you need to. GoodHive will automatically polish messy section text with Gemini on save, then keep the public job page clean and structured for candidates.
+          </div>
         </div>
         <div className="relative flex flex-col gap-4 mt-12 mb-10 sm:flex-row">
           <div className="flex-1">

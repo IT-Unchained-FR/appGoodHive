@@ -1,5 +1,6 @@
 import sql from "@/lib/db";
 import { IJobSection } from "@/interfaces/job-offer";
+import { normalizeJobDescriptionForDisplay, normalizeJobSectionsForStorage } from "@/lib/jobs/format-job-content";
 
 export async function POST(request: Request) {
   const {
@@ -28,6 +29,26 @@ export async function POST(request: Request) {
 
   try {
     const postedAt = new Date().toISOString();
+    const incomingSections =
+      sections && Array.isArray(sections) && sections.length > 0
+        ? sections
+        : description && description.trim()
+          ? [
+              {
+                heading: "Job Description",
+                content: description,
+                sort_order: 0,
+              } satisfies IJobSection,
+            ]
+          : [];
+
+    const { descriptionHtml, sections: normalizedSections } =
+      incomingSections.length > 0
+        ? await normalizeJobSectionsForStorage(incomingSections, title)
+        : {
+            descriptionHtml: normalizeJobDescriptionForDisplay(description),
+            sections: [] as IJobSection[],
+          };
 
     // Generate unique block_id for blockchain operations
     // Format: timestamp + random 6-digit number for uniqueness
@@ -91,7 +112,7 @@ export async function POST(request: Request) {
         ${userId},
         ${title},
         ${typeEngagement},
-        ${description},
+        ${descriptionHtml},
         ${duration},
         ${budget},
         ${chain},
@@ -123,9 +144,9 @@ export async function POST(request: Request) {
     }
 
     // Insert job sections if provided
-    if (sections && Array.isArray(sections) && sections.length > 0) {
-      for (let i = 0; i < sections.length; i++) {
-        const section = sections[i] as IJobSection;
+    if (normalizedSections.length > 0) {
+      for (let i = 0; i < normalizedSections.length; i++) {
+        const section = normalizedSections[i] as IJobSection;
         await sql`
           INSERT INTO goodhive.job_sections (
             job_id,
@@ -140,21 +161,6 @@ export async function POST(request: Request) {
           )
         `;
       }
-    } else if (description && description.trim()) {
-      // If no sections provided but description exists, create a default section
-      await sql`
-        INSERT INTO goodhive.job_sections (
-          job_id,
-          heading,
-          content,
-          sort_order
-        ) VALUES (
-          ${jobId},
-          ${"Job Description"},
-          ${description},
-          ${0}
-        )
-      `;
     }
 
     return new Response(

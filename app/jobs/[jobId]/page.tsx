@@ -23,6 +23,7 @@ import {
 import jwt from "jsonwebtoken";
 
 import { CompanyInfoGuard } from "@/app/components/CompanyInfoGuard";
+import SafeHTML from "@/app/components/SafeHTML";
 import { JobPageAnalytics } from "@/app/components/job-page/JobPageAnalytics";
 import { RelatedJobsSection } from "@/app/components/job-page/RelatedJobsSection";
 import { YourMatchScoreCard } from "@/app/components/job-page/YourMatchScoreCard";
@@ -36,6 +37,7 @@ import {
 import { getAdminJWTSecret } from "@/app/lib/admin-auth";
 import { getSessionUser } from "@/lib/auth/sessionUtils";
 import sql from "@/lib/db";
+import { normalizeJobDescriptionForDisplay } from "@/lib/jobs/format-job-content";
 import { JobReviewStatus, resolveJobReviewStatus } from "@/lib/jobs/review";
 
 interface JobPageData {
@@ -867,9 +869,21 @@ export default async function JobPage({
                         <h3 className="text-lg font-semibold text-slate-900">
                           {section.heading}
                         </h3>
-                        <p className="mt-3 max-w-3xl whitespace-pre-wrap text-sm leading-7 text-slate-600 sm:text-[15px]">
-                          {section.content}
-                        </p>
+                        <SafeHTML
+                          html={normalizeJobDescriptionForDisplay(section.content)}
+                          className="prose prose-sm mt-3 max-w-3xl break-words text-slate-600 prose-headings:text-slate-900 prose-p:leading-7 prose-p:text-slate-600 prose-li:leading-7 prose-li:text-slate-600 prose-a:text-amber-700 prose-strong:text-slate-900 sm:prose-base"
+                          allowedTags={[
+                            "a",
+                            "br",
+                            "em",
+                            "li",
+                            "ol",
+                            "p",
+                            "strong",
+                            "ul",
+                          ]}
+                          allowedAttributes={{ a: ["href", "target", "rel"] }}
+                        />
                       </article>
                     ))}
                 </div>
@@ -880,9 +894,21 @@ export default async function JobPage({
                   Full Brief
                 </p>
                 <h2 className="mt-2 text-2xl font-semibold text-slate-950">Role Overview</h2>
-                <p className="mt-4 max-w-3xl whitespace-pre-wrap text-sm leading-7 text-slate-600 sm:text-[15px]">
-                  {stripHtml(job.description)}
-                </p>
+                <SafeHTML
+                  html={normalizeJobDescriptionForDisplay(job.description)}
+                  className="prose prose-sm mt-4 max-w-3xl break-words text-slate-600 prose-headings:text-slate-900 prose-p:leading-7 prose-p:text-slate-600 prose-li:leading-7 prose-li:text-slate-600 prose-a:text-amber-700 prose-strong:text-slate-900 sm:prose-base"
+                  allowedTags={[
+                    "a",
+                    "br",
+                    "em",
+                    "li",
+                    "ol",
+                    "p",
+                    "strong",
+                    "ul",
+                  ]}
+                  allowedAttributes={{ a: ["href", "target", "rel"] }}
+                />
               </section>
             ) : null}
 

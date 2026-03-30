@@ -160,6 +160,7 @@ No other files need changing.
 - [x] Unified talent profile submission emails so only the server-side submission email is sent, using the updated assessment-call Calendly link and the refreshed welcome copy
 - [x] Added an in-app interview-call CTA to the talent profile review banner so submitted talents can book the same Benoit Calendly link directly from their profile page
 - [x] Polished the company profile photo validation state with softer helper copy, a branded inline error card, and a simplified hero title that now reads "Build Your Company Profile"
+- [x] Added Gemini-powered job section cleanup so messy pasted job text is auto-formatted on save and the public job page now renders sanitized rich content instead of escaped raw section HTML
 
 ---
 
