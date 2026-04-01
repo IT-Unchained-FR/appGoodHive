@@ -1,4 +1,5 @@
 import ContactForm from "@components/contact-form";
+import { GoodHiveQuickCallUrl } from "@/app/constants/common";
 import { MessageCircle, Phone, Mail, MapPin, Clock, Users, Sparkles, Briefcase } from "lucide-react";
 import { Metadata } from "next";
 
@@ -133,7 +134,7 @@ export default function ContactFormPage() {
                   </div>
                   
                   <a
-                    href="https://calendly.com/benoit-kulesza/virtual-coffe-10-mins"
+                    href={GoodHiveQuickCallUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="group relative flex items-center space-x-4 p-[3px] rounded-2xl transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl cursor-pointer overflow-hidden"

@@ -1,5 +1,6 @@
 import { getGeminiModel } from "./gemini";
 import { retrieveRagContexts, type RagContext } from "./ragEngine";
+import { GoodHiveQuickCallUrl } from "@/app/constants/common";
 
 const CHAT_MODEL =
   process.env.GEMINI_CHAT_MODEL ?? "models/gemini-1.5-flash";
@@ -114,7 +115,7 @@ TONE & STYLE:
 
 IMPORTANT RULES:
 1) ONLY answer based on the provided knowledge base.
-2) If the knowledge base does not cover the question, say you don't have enough information and suggest asking a more specific question. If they need a deeper answer, invite them to book a quick call: https://calendly.com/benoit-kulesza/virtual-coffe-10-mins
+2) If the knowledge base does not cover the question, say you don't have enough information and suggest asking a more specific question. If they need a deeper answer, invite them to book a quick call: ${GoodHiveQuickCallUrl}
 3) NEVER make up information about fees, features, or processes.
 4) When users ask about creating accounts, profiles, signing up, joining, applying, or hiring - you MUST indicate they should create a profile.
 5) Detect user intent: if they seem like a talent/developer, suggest talent profile. If they seem like a company/hiring, suggest company profile.
@@ -206,7 +207,7 @@ export async function generateChatResponse(
     if (ragContexts.length === 0) {
       const isWalletQuestion = /wallet/i.test(userMessage);
       const meetingLine =
-        "If you'd like a deeper walkthrough, book a quick call: https://calendly.com/benoit-kulesza/virtual-coffe-10-mins";
+        `If you'd like a deeper walkthrough, book a quick call: ${GoodHiveQuickCallUrl}`;
       return {
         reply: isWalletQuestion
           ? `I couldn't find enough information in my knowledge base to answer that. If you don't see your wallet in the connect modal, contact support: https://www.goodhive.io/contact\n\n${meetingLine}`
@@ -255,7 +256,7 @@ Analyze the user's message and respond with a JSON object (no markdown, just pur
     console.error("Chat response generation failed:", error);
     return {
       reply:
-        "I'm having trouble processing that. Could you rephrase your question? You can ask me about GoodHive's platform, tokenomics, or how to get started!\n\nIf you'd like a deeper walkthrough, book a quick call: https://calendly.com/benoit-kulesza/virtual-coffe-10-mins",
+        `I'm having trouble processing that. Could you rephrase your question? You can ask me about GoodHive's platform, tokenomics, or how to get started!\n\nIf you'd like a deeper walkthrough, book a quick call: ${GoodHiveQuickCallUrl}`,
       showProfileCta: false,
     };
   }

@@ -1,5 +1,6 @@
 "use client";
 
+import { GoodHiveQuickCallUrl } from "@/app/constants/common";
 import { MessagePopup } from "@components/message-popup";
 import { MessageCircle, Phone, Sparkles } from "lucide-react";
 import { useState } from "react";
@@ -10,7 +11,7 @@ export const ReachUs = () => {
 
   const onContactUsClick = () => {
     window.open(
-      "https://calendly.com/benoit-kulesza/virtual-coffe-10-mins",
+      GoodHiveQuickCallUrl,
       "_blank",
     );
   };
