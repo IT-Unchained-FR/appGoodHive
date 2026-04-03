@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import sql from "@/lib/db";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
-import { getAdminJWTSecret } from "@/app/lib/admin-auth";
+import { getAdminJWTSecret, isAdminAuthError } from "@/app/lib/admin-auth";
 import {
   sendTalentApprovalEmail,
   sendTalentRejectionEmail,
@@ -34,7 +34,7 @@ type TalentStatus = "approved" | "in_review" | "rejected" | "deferred" | "pendin
 
 export async function POST(req: NextRequest) {
   try {
-    await verifyAdminToken();
+    const decoded = await verifyAdminToken();
     const body = await req.json();
 
     const userId = body?.userId as string | undefined;
@@ -146,6 +146,17 @@ export async function POST(req: NextRequest) {
           approvedRoles: selectedRoles,
         });
       }
+      const adminEmail = (decoded as { email?: string }).email ?? "unknown";
+      sql`
+        INSERT INTO goodhive.admin_audit_log (admin_email, action, target_type, target_id, details)
+        VALUES (
+          ${adminEmail},
+          ${"talent." + status},
+          'talent',
+          ${userId},
+          ${JSON.stringify({ status, rejectionReason: rejectionReason ?? null })}
+        )
+      `.catch(() => {});
     } else if (status === "in_review" || status === "pending") {
       await sql`
         UPDATE goodhive.talents
@@ -203,6 +214,17 @@ export async function POST(req: NextRequest) {
             rejectionReason || "Profile submission was rejected by admin review.",
         });
       }
+      const adminEmail = (decoded as { email?: string }).email ?? "unknown";
+      sql`
+        INSERT INTO goodhive.admin_audit_log (admin_email, action, target_type, target_id, details)
+        VALUES (
+          ${adminEmail},
+          ${"talent." + status},
+          'talent',
+          ${userId},
+          ${JSON.stringify({ status, rejectionReason: rejectionReason ?? null })}
+        )
+      `.catch(() => {});
     }
 
     return new Response(
@@ -211,7 +233,7 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     console.error("Update talent status error:", error);
-    if (error instanceof Error && error.message.includes("Unauthorized")) {
+    if (isAdminAuthError(error)) {
       return new Response(JSON.stringify({ message: "Unauthorized" }), {
         status: 401,
       });

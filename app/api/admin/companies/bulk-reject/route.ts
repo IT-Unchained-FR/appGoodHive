@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import sql from "@/lib/db";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
-import { getAdminJWTSecret } from "@/app/lib/admin-auth";
+import { getAdminJWTSecret, isAdminAuthError } from "@/app/lib/admin-auth";
 import { bulkOperationSchema, validateInput } from "@/app/lib/admin-validations";
 
 export const dynamic = "force-dynamic";
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     console.error("Bulk reject error:", error);
-    if (error instanceof Error && error.message.includes("Unauthorized")) {
+    if (isAdminAuthError(error)) {
       return new Response(JSON.stringify({ message: "Unauthorized" }), {
         status: 401,
       });
@@ -81,4 +81,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

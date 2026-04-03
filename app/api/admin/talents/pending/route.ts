@@ -9,7 +9,6 @@ export async function GET(req: NextRequest) {
 
     // Get filter parameters
     const dateRange = searchParams.get('dateRange');
-    const status = searchParams.get('status') || 'in_review'; // Default to in review
     const role = searchParams.get('role');
     const sort = searchParams.get('sort') || 'latest';
 
@@ -18,18 +17,13 @@ export async function GET(req: NextRequest) {
     const params: (string | Date | number)[] = [];
     let paramIndex = 1;
 
-    // Status filter: pending, approved, rejected, all
-    if (status && status !== 'all') {
-      if (status === 'pending' || status === 'in_review') {
-        conditions.push(`(talents.inreview = true OR users.talent_status IN ('pending', 'in_review'))`);
-      } else if (status === 'approved') {
-        conditions.push(`(talents.approved = true OR users.talent_status = 'approved')`);
-      } else if (status === 'deferred') {
-        conditions.push(`users.talent_status = 'deferred'`);
-      } else if (status === 'rejected') {
-        conditions.push(`(users.talent_status = 'rejected' OR (users.talent_status IS NULL AND talents.approved = false AND talents.inreview = false))`);
-      }
-    }
+    // Talent request queue should include only profiles still awaiting admin action.
+    conditions.push(`(
+      talents.inreview = true
+      OR users.talent_status IN ('pending', 'in_review')
+    )`);
+    conditions.push(`COALESCE(users.talent_status, '') NOT IN ('approved', 'deferred', 'rejected')`);
+    conditions.push(`COALESCE(talents.approved, false) = false`);
 
     // Date filter
     if (dateRange && dateRange !== 'any') {

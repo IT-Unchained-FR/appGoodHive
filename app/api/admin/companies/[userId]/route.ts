@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import sql from "@/lib/db";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
-import { getAdminJWTSecret } from "@/app/lib/admin-auth";
+import { getAdminJWTSecret, isAdminAuthError } from "@/app/lib/admin-auth";
 import { updateCompanySchema, validateInput } from "@/app/lib/admin-validations";
 
 export const dynamic = "force-dynamic";
@@ -53,7 +53,7 @@ export async function GET(
     return new Response(JSON.stringify(company[0]), { status: 200 });
   } catch (error) {
     console.error("Get company error:", error);
-    if (error instanceof Error && error.message.includes("Unauthorized")) {
+    if (isAdminAuthError(error)) {
       return new Response(JSON.stringify({ message: "Unauthorized" }), {
         status: 401,
       });
@@ -69,7 +69,7 @@ export async function PUT(
   { params }: { params: { userId: string } },
 ) {
   try {
-    await verifyAdminToken();
+    const decoded = await verifyAdminToken();
     const { userId } = params;
 
     if (!userId) {
@@ -116,13 +116,27 @@ export async function PUT(
       WHERE user_id = ${userId}
     `;
 
+    try {
+      const adminEmail = (decoded as { email?: string }).email ?? "unknown";
+      sql`
+        INSERT INTO goodhive.admin_audit_log (admin_email, action, target_type, target_id, details)
+        VALUES (
+          ${adminEmail},
+          'company.updated',
+          'company',
+          ${userId},
+          ${JSON.stringify({ fields: Object.keys(body ?? {}) })}
+        )
+      `.catch(() => {});
+    } catch {}
+
     return new Response(
       JSON.stringify({ message: "Company updated successfully" }),
       { status: 200 },
     );
   } catch (error) {
     console.error("Update company error:", error);
-    if (error instanceof Error && error.message.includes("Unauthorized")) {
+    if (isAdminAuthError(error)) {
       return new Response(JSON.stringify({ message: "Unauthorized" }), {
         status: 401,
       });
@@ -164,7 +178,7 @@ export async function DELETE(
     );
   } catch (error) {
     console.error("Delete company error:", error);
-    if (error instanceof Error && error.message.includes("Unauthorized")) {
+    if (isAdminAuthError(error)) {
       return new Response(JSON.stringify({ message: "Unauthorized" }), {
         status: 401,
       });

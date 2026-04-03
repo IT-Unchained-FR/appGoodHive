@@ -24,7 +24,8 @@ export async function GET(req: NextRequest) {
     const dateRange = searchParams.get('dateRange');
     const status = searchParams.get('status');
     const role = searchParams.get('role');
-    const mentorStatus = searchParams.get('mentorStatus');
+    const rawSearch = searchParams.get('search');
+    const search = rawSearch?.trim().replace(/\s+/g, ' ') || '';
     const sort = searchParams.get('sort') || 'latest';
 
     // Pagination parameters
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest) {
     const offset = (page - 1) * limit;
 
     // Validate pagination params
-    if (page < 1 || limit < 1 || limit > 100) {
+    if (page < 1 || limit < 1 || limit > 5000) {
       return new Response(
         JSON.stringify({ message: "Invalid pagination parameters" }),
         { status: 400 }
@@ -89,19 +90,19 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Mentor status filter (approved/pending/deferred/rejected/not-applied)
-    if (mentorStatus && mentorStatus !== 'all') {
-      if (mentorStatus === 'approved') {
-        conditions.push(sql`t.mentor = true AND u.mentor_status = 'approved'`);
-      } else if (mentorStatus === 'pending') {
-        conditions.push(sql`t.mentor = true AND u.mentor_status = 'pending'`);
-      } else if (mentorStatus === 'deferred') {
-        conditions.push(sql`t.mentor = true AND u.mentor_status = 'deferred'`);
-      } else if (mentorStatus === 'rejected') {
-        conditions.push(sql`t.mentor = true AND u.mentor_status = 'rejected'`);
-      } else if (mentorStatus === 'not-applied') {
-        conditions.push(sql`(t.mentor = false OR t.mentor IS NULL)`);
-      }
+    if (search) {
+      const searchPattern = `%${search}%`;
+      conditions.push(sql`(
+        LOWER(COALESCE(t.first_name, '')) LIKE LOWER(${searchPattern})
+        OR LOWER(COALESCE(t.last_name, '')) LIKE LOWER(${searchPattern})
+        OR LOWER(TRIM(CONCAT(COALESCE(t.first_name, ''), ' ', COALESCE(t.last_name, '')))) LIKE LOWER(${searchPattern})
+        OR LOWER(COALESCE(t.email, '')) LIKE LOWER(${searchPattern})
+        OR CAST(t.user_id AS TEXT) LIKE ${searchPattern}
+        OR LOWER(COALESCE(t.telegram, '')) LIKE LOWER(${searchPattern})
+        OR LOWER(COALESCE(t.github, '')) LIKE LOWER(${searchPattern})
+        OR LOWER(COALESCE(t.linkedin, '')) LIKE LOWER(${searchPattern})
+        OR LOWER(COALESCE(t.portfolio, '')) LIKE LOWER(${searchPattern})
+      )`);
     }
 
     // Build sort clause

@@ -1,19 +1,10 @@
+import sql from "@/lib/db";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
-import { getAdminJWTSecret } from "@/app/lib/admin-auth";
+import { getAdminJWTSecret, isAdminAuthError } from "@/app/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
-
-interface ActionHistory {
-  id: string;
-  action: string;
-  admin_id: string;
-  target_type: string;
-  target_id: string;
-  timestamp: Date;
-  details?: Record<string, unknown>;
-}
 
 const verifyAdminToken = async (req: NextRequest) => {
   // Check Authorization header first
@@ -63,19 +54,18 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // TODO: Create audit_log table if it doesn't exist
-    // For now, return empty history or mock data
-    // In production, you would query:
-    // SELECT * FROM goodhive.audit_logs 
-    // WHERE target_type = ${targetType} AND target_id = ${targetId}
-    // ORDER BY timestamp DESC LIMIT ${limit}
-
-    // Mock structure for now - replace with actual database query
-    const history: ActionHistory[] = [];
+    const rows = await sql`
+      SELECT id, admin_email, action, target_type, target_id, details, created_at
+      FROM goodhive.admin_audit_log
+      WHERE target_type = ${targetType}
+        AND target_id = ${targetId}
+      ORDER BY created_at DESC
+      LIMIT ${limit}
+    `;
 
     return new Response(
       JSON.stringify({
-        history,
+        history: rows,
         message: "Action history retrieved successfully",
       }),
       {
@@ -87,7 +77,7 @@ export async function GET(req: NextRequest) {
     );
   } catch (error) {
     console.error("Error fetching action history:", error);
-    if (error instanceof Error && error.message.includes("Unauthorized")) {
+    if (isAdminAuthError(error)) {
       return new Response(JSON.stringify({ message: "Unauthorized" }), {
         status: 401,
       });
@@ -98,4 +88,3 @@ export async function GET(req: NextRequest) {
     );
   }
 }
-

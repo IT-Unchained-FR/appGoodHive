@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
-import { getAdminJWTSecret } from "@/app/lib/admin-auth";
+import { getAdminJWTSecret, isAdminAuthError } from "@/app/lib/admin-auth";
 import { createAdminSchema, validateInput } from "@/app/lib/admin-validations";
 
 export const dynamic = "force-dynamic";
@@ -56,9 +56,14 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     console.error("Error fetching admins:", error);
-    return new Response(JSON.stringify({ message: "Unauthorized" }), {
-      status: 401,
-    });
+    return new Response(
+      JSON.stringify({
+        message: isAdminAuthError(error) ? "Unauthorized" : "Error fetching admins",
+      }),
+      {
+        status: isAdminAuthError(error) ? 401 : 500,
+      },
+    );
   }
 }
 
@@ -121,7 +126,7 @@ export async function POST(req: Request) {
     );
   } catch (error) {
     console.error("Error creating admin:", error);
-    if (error instanceof Error && error.message === "Unauthorized") {
+    if (isAdminAuthError(error)) {
       return new Response(JSON.stringify({ message: "Unauthorized" }), {
         status: 401,
       });

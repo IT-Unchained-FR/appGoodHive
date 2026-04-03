@@ -2,7 +2,7 @@ import sql from "@/lib/db";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
-import { getAdminJWTSecret } from "@/app/lib/admin-auth";
+import { getAdminJWTSecret, isAdminAuthError } from "@/app/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -93,9 +93,11 @@ export async function GET(req: NextRequest) {
       WHERE published = true
     `;
 
-    // Get recent registrations (last 7 days)
-    // Note: users table doesn't have a timestamp column, defaulting to 0
-    const recentUsersCount = { count: 0 };
+    const [recentUsersCount] = await sql`
+      SELECT COUNT(*) AS count
+      FROM goodhive.users
+      WHERE created_at >= NOW() - INTERVAL '7 days'
+    `;
 
     // Get recent jobs (last 7 days)
     const [recentJobsCount] = await sql`
@@ -157,7 +159,7 @@ export async function GET(req: NextRequest) {
     return new Response(
       JSON.stringify({ message: "Error fetching statistics", error: String(error) }),
       {
-        status: error instanceof Error && error.message.includes("Unauthorized") ? 401 : 500,
+        status: isAdminAuthError(error) ? 401 : 500,
         headers: {
           "Content-Type": "application/json",
         },
@@ -165,4 +167,3 @@ export async function GET(req: NextRequest) {
     );
   }
 }
-

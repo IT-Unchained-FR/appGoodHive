@@ -1,7 +1,8 @@
+import sql from "@/lib/db";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
-import { getAdminJWTSecret } from "@/app/lib/admin-auth";
+import { getAdminJWTSecret, isAdminAuthError } from "@/app/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -41,25 +42,16 @@ export async function GET(req: NextRequest) {
   try {
     await verifyAdminToken(req);
 
-    // Get settings from database (create settings table if needed)
-    // For now, return default settings
-    const settings = {
-      notifications: {
-        emailNotifications: true,
-        approvalAlerts: true,
-        weeklyReports: false,
-        errorAlerts: true,
-      },
-      system: {
-        maintenanceMode: false,
-        allowRegistrations: true,
-        requireEmailVerification: true,
-      },
-      security: {
-        sessionTimeout: 30,
-        maxLoginAttempts: 5,
-      },
-    };
+    const rows = await sql<{ key: string; value: unknown }[]>`
+      SELECT key, value FROM goodhive.admin_settings
+    `;
+    const settings = rows.reduce(
+      (acc: Record<string, unknown>, row: { key: string; value: unknown }) => ({
+        ...acc,
+        [row.key]: row.value,
+      }),
+      {},
+    );
 
     return new Response(JSON.stringify(settings), {
       status: 200,
@@ -69,7 +61,7 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     console.error("Error fetching settings:", error);
-    if (error instanceof Error && error.message.includes("Unauthorized")) {
+    if (isAdminAuthError(error)) {
       return new Response(JSON.stringify({ message: "Unauthorized" }), {
         status: 401,
       });
@@ -83,14 +75,10 @@ export async function GET(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    await verifyAdminToken(req);
+    const decoded = await verifyAdminToken(req);
     const settings = await req.json();
+    const adminEmail = (decoded as { email?: string }).email ?? "unknown";
 
-    // TODO: Store settings in database
-    // For now, we'll just validate and return success
-    // In production, you would create a settings table and store these values
-
-    // Validate settings structure
     if (!settings.notifications || !settings.system || !settings.security) {
       return new Response(
         JSON.stringify({ message: "Invalid settings structure" }),
@@ -98,12 +86,16 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    // Here you would save to database:
-    // await sql`
-    //   INSERT INTO goodhive.admin_settings (key, value, updated_at)
-    //   VALUES ('notifications', ${JSON.stringify(settings.notifications)}, NOW())
-    //   ON CONFLICT (key) DO UPDATE SET value = ${JSON.stringify(settings.notifications)}, updated_at = NOW()
-    // `;
+    for (const [key, value] of Object.entries(settings)) {
+      await sql`
+        INSERT INTO goodhive.admin_settings (key, value, updated_at, updated_by)
+        VALUES (${key}, ${JSON.stringify(value)}, NOW(), ${adminEmail})
+        ON CONFLICT (key) DO UPDATE
+          SET value = ${JSON.stringify(value)},
+              updated_at = NOW(),
+              updated_by = ${adminEmail}
+      `;
+    }
 
     return new Response(
       JSON.stringify({ message: "Settings saved successfully" }),
@@ -116,7 +108,7 @@ export async function PUT(req: NextRequest) {
     );
   } catch (error) {
     console.error("Error saving settings:", error);
-    if (error instanceof Error && error.message.includes("Unauthorized")) {
+    if (isAdminAuthError(error)) {
       return new Response(JSON.stringify({ message: "Unauthorized" }), {
         status: 401,
       });
