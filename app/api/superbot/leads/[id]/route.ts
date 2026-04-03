@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import sql from "@/lib/ragDb";
 import { logSuperbotEvent } from "@/lib/superbot/events";
 import { notifyHandoff } from "@/lib/superbot/notifications";
@@ -22,7 +23,7 @@ export async function PATCH(req: Request, { params }: RouteContext) {
     body = (await req.json()) as LeadUpdateRequest;
   } catch (error) {
     console.error("Invalid lead update", error);
-    return Response.json({ error: "Invalid payload" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
   const leadRows = await sql`
@@ -34,7 +35,7 @@ export async function PATCH(req: Request, { params }: RouteContext) {
 
   const lead = leadRows[0];
   if (!lead) {
-    return Response.json({ error: "Lead not found" }, { status: 404 });
+    return NextResponse.json({ error: "Lead not found" }, { status: 404 });
   }
 
   const status = body.status ?? lead.status;
@@ -82,5 +83,5 @@ export async function PATCH(req: Request, { params }: RouteContext) {
     }
   }
 
-  return Response.json({ lead: updatedRows[0] });
+  return NextResponse.json({ lead: updatedRows[0] });
 }

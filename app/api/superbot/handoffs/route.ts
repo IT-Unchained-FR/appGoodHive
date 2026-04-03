@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import sql from "@/lib/ragDb";
 import { logSuperbotEvent } from "@/lib/superbot/events";
 import { notifyHandoff } from "@/lib/superbot/notifications";
@@ -82,7 +83,7 @@ export async function GET() {
     },
   }));
 
-  return Response.json({ handoffs });
+  return NextResponse.json({ handoffs });
 }
 
 export async function POST(req: Request) {
@@ -92,11 +93,11 @@ export async function POST(req: Request) {
     body = (await req.json()) as CreateHandoffRequest;
   } catch (error) {
     console.error("Invalid handoff payload", error);
-    return Response.json({ error: "Invalid payload" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
   if (!body.leadId) {
-    return Response.json({ error: "leadId is required" }, { status: 400 });
+    return NextResponse.json({ error: "leadId is required" }, { status: 400 });
   }
 
   const leadRows = await sql`
@@ -108,7 +109,7 @@ export async function POST(req: Request) {
 
   const lead = leadRows[0];
   if (!lead) {
-    return Response.json({ error: "Lead not found" }, { status: 404 });
+    return NextResponse.json({ error: "Lead not found" }, { status: 404 });
   }
 
   const handoffRows = await sql`
@@ -146,5 +147,5 @@ export async function POST(req: Request) {
     },
   });
 
-  return Response.json({ handoff });
+  return NextResponse.json({ handoff });
 }

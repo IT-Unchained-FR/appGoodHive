@@ -111,6 +111,15 @@ Do not remove facts from the provided data.
 Keep the HTML compatible with React Quill.
 `;
 
+function getGeminiText(response: unknown) {
+  const candidate = response as { text?: (() => string) | string } | null;
+
+  if (typeof candidate?.text === "function") {
+    return candidate.text();
+  }
+  return typeof candidate?.text === "string" ? candidate.text : "";
+}
+
 const createNarrativePrompt = (facts: ExtractedResumeFacts) => `
 Use this structured resume data to produce polished profile copy.
 Return JSON with this exact shape:
@@ -142,7 +151,7 @@ const callGeminiForJson = async <T,>(
     generationConfig: { temperature: 0.2 },
   });
 
-  const generatedText = result.response.text();
+  const generatedText = getGeminiText(result.response);
   if (!generatedText) {
     throw new Error("No response from Gemini");
   }

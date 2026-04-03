@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
     // Skills analysis
     const skillsMap = new Map<string, number>();
     jobs.forEach(job => {
-      job.skills.forEach(skill => {
+      job.skills.forEach((skill: string) => {
         const trimmedSkill = skill.trim();
         if (trimmedSkill) {
           skillsMap.set(trimmedSkill, (skillsMap.get(trimmedSkill) || 0) + 1);

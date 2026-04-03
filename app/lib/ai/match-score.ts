@@ -57,6 +57,15 @@ function tryParseModelJson(raw: string): Record<string, unknown> | null {
   }
 }
 
+function getGeminiText(response: unknown) {
+  const candidate = response as { text?: (() => string) | string } | null;
+
+  if (typeof candidate?.text === "function") {
+    return candidate.text();
+  }
+  return typeof candidate?.text === "string" ? candidate.text : "";
+}
+
 export async function computeMatchScore(
   params: ComputeMatchScoreParams,
 ): Promise<MatchScoreResult> {
@@ -84,7 +93,7 @@ Return ONLY valid JSON (no markdown, no explanation):
       process.env.GEMINI_FAST_MODEL ?? "models/gemini-2.0-flash",
     );
     const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const text = getGeminiText(result.response);
     const parsed = tryParseModelJson(text);
 
     if (!parsed) {

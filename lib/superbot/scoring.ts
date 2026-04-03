@@ -170,6 +170,10 @@ function parseFields(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
+function toJsonb(value: Record<string, unknown>) {
+  return JSON.stringify(value);
+}
+
 type SuperbotLeadRow = {
   id: string;
   session_id: string;
@@ -224,7 +228,7 @@ export async function updateLeadScore(input: {
     UPDATE goodhive.superbot_leads
     SET score = ${score},
         status = ${nextStatus},
-        fields = ${mergedFields},
+        fields = ${toJsonb(mergedFields)}::jsonb,
         updated_at = NOW()
     WHERE id = ${lead.id};
   `;

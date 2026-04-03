@@ -36,6 +36,10 @@ function parseFields(value: unknown): SessionFields {
   return value as SessionFields;
 }
 
+function toJsonb(value: Record<string, unknown> | null) {
+  return value ? JSON.stringify(value) : null;
+}
+
 export function isCtaExperimentEnabled() {
   return (process.env.SUPERBOT_CTA_EXPERIMENT_ENABLED ?? "true") !== "false";
 }
@@ -64,7 +68,7 @@ export async function getCtaExperimentVariant(session: ChatSession) {
 
   await sql`
     UPDATE goodhive.chat_sessions
-    SET fields = ${nextFields}, updated_at = NOW()
+    SET fields = ${toJsonb(nextFields)}::jsonb, updated_at = NOW()
     WHERE id = ${session.id};
   `;
 

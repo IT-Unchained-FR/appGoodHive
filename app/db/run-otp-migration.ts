@@ -1,11 +1,6 @@
 import postgres from "postgres";
 import fs from "fs";
 import path from "path";
-import * as dotenv from "dotenv";
-
-// Load environment variables
-dotenv.config({ path: ".env.local" });
-dotenv.config({ path: ".env" });
 
 async function runOTPMigration() {
   console.log("Starting OTP verification migration...");

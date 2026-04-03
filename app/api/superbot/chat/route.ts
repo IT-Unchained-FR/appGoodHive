@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { getOrCreateSession, handleIncomingMessage, logChatMessage, type EngineMessage } from "@/lib/superbot/engine";
 import { SUPERBOT_NAME } from "@/lib/superbot/constants";
 
@@ -64,14 +65,14 @@ export async function POST(req: Request) {
     body = (await req.json()) as WebChatRequest;
   } catch (error) {
     console.error("Invalid web chat payload", error);
-    return Response.json({ error: "Invalid payload" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
   const action = body.action ?? "message";
   const message = body.message?.trim() ?? "";
 
   if (!message && action !== "start") {
-    return Response.json({ error: "Message is required" }, { status: 400 });
+    return NextResponse.json({ error: "Message is required" }, { status: 400 });
   }
 
   const session = await getOrCreateSession({
@@ -106,5 +107,5 @@ export async function POST(req: Request) {
     messages,
   };
 
-  return Response.json(response);
+  return NextResponse.json(response);
 }

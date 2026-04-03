@@ -6,18 +6,34 @@ export interface EventData {
   [key: string]: string | number | boolean | undefined;
 }
 
+type AnalyticsEventData = Record<string, string | number | boolean>;
+
+const sanitizeEventData = (data?: EventData): AnalyticsEventData | undefined => {
+  if (!data) return undefined;
+
+  const sanitizedEntries = Object.entries(data).filter(
+    (entry): entry is [string, string | number | boolean] => entry[1] !== undefined,
+  );
+
+  return sanitizedEntries.length > 0
+    ? Object.fromEntries(sanitizedEntries)
+    : undefined;
+};
+
 // Custom event tracking that works with both Vercel Analytics and Google Analytics
 export const trackEvent = (eventName: string, data?: EventData) => {
   try {
+    const sanitizedData = sanitizeEventData(data);
+
     // Track with Vercel Analytics
     if (typeof window !== 'undefined') {
-      track(eventName, data);
+      track(eventName, sanitizedData);
     }
 
     // Also track with Google Analytics for comprehensive coverage
-    gaEvent(eventName, data);
+    gaEvent(eventName, sanitizedData);
 
-    console.log('Event tracked:', eventName, data);
+    console.log('Event tracked:', eventName, sanitizedData);
   } catch (error) {
     console.error('Error tracking event:', error);
   }

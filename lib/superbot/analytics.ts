@@ -3,6 +3,10 @@ import sql from "@/lib/ragDb";
 
 const APP_TIMEZONE = process.env.APP_TIMEZONE ?? "UTC";
 
+type CountRow = {
+  count: number | string | null;
+};
+
 export type SuperbotMetrics = {
   sessions: number;
   newSessions: number;
@@ -33,7 +37,7 @@ export function getDateRange(input?: { from?: string | null; to?: string | null 
   };
 }
 
-const getCount = async (query: ReturnType<typeof sql>) => {
+const getCount = async (query: PromiseLike<CountRow[]>) => {
   const rows = await query;
   const value = rows[0]?.count ?? 0;
   return Number(value);
@@ -42,37 +46,37 @@ const getCount = async (query: ReturnType<typeof sql>) => {
 export async function getSuperbotMetrics(range: { from: Date; to: Date }): Promise<SuperbotMetrics> {
   const [sessions, newSessions, leads, handoffs, inbound, outbound, ctaSent, ctaClicks] =
     await Promise.all([
-      getCount(sql`SELECT COUNT(*) as count FROM goodhive.chat_sessions`),
-      getCount(sql`
+      getCount(sql<CountRow[]>`SELECT COUNT(*) as count FROM goodhive.chat_sessions`),
+      getCount(sql<CountRow[]>`
         SELECT COUNT(*) as count
         FROM goodhive.chat_sessions
         WHERE created_at >= ${range.from} AND created_at <= ${range.to}
       `),
-      getCount(sql`SELECT COUNT(*) as count FROM goodhive.superbot_leads`),
-      getCount(sql`
+      getCount(sql<CountRow[]>`SELECT COUNT(*) as count FROM goodhive.superbot_leads`),
+      getCount(sql<CountRow[]>`
         SELECT COUNT(*) as count
         FROM goodhive.handoffs
         WHERE created_at >= ${range.from} AND created_at <= ${range.to}
       `),
-      getCount(sql`
+      getCount(sql<CountRow[]>`
         SELECT COUNT(*) as count
         FROM goodhive.chat_messages
         WHERE role = 'user'
           AND created_at >= ${range.from} AND created_at <= ${range.to}
       `),
-      getCount(sql`
+      getCount(sql<CountRow[]>`
         SELECT COUNT(*) as count
         FROM goodhive.chat_messages
         WHERE role = 'assistant'
           AND created_at >= ${range.from} AND created_at <= ${range.to}
       `),
-      getCount(sql`
+      getCount(sql<CountRow[]>`
         SELECT COUNT(*) as count
         FROM goodhive.superbot_events
         WHERE type = 'cta_sent'
           AND created_at >= ${range.from} AND created_at <= ${range.to}
       `),
-      getCount(sql`
+      getCount(sql<CountRow[]>`
         SELECT COUNT(*) as count
         FROM goodhive.superbot_events
         WHERE type = 'cta_click'
@@ -104,22 +108,22 @@ export async function getSuperbotDailyMetrics(range: { from: Date; to: Date }) {
     const dayEnd = toUtc(current.endOf("day"));
 
     const [inbound, outbound, ctaSent, ctaClicks] = await Promise.all([
-      getCount(sql`
+      getCount(sql<CountRow[]>`
         SELECT COUNT(*) as count
         FROM goodhive.chat_messages
         WHERE role = 'user' AND created_at >= ${dayStart} AND created_at <= ${dayEnd}
       `),
-      getCount(sql`
+      getCount(sql<CountRow[]>`
         SELECT COUNT(*) as count
         FROM goodhive.chat_messages
         WHERE role = 'assistant' AND created_at >= ${dayStart} AND created_at <= ${dayEnd}
       `),
-      getCount(sql`
+      getCount(sql<CountRow[]>`
         SELECT COUNT(*) as count
         FROM goodhive.superbot_events
         WHERE type = 'cta_sent' AND created_at >= ${dayStart} AND created_at <= ${dayEnd}
       `),
-      getCount(sql`
+      getCount(sql<CountRow[]>`
         SELECT COUNT(*) as count
         FROM goodhive.superbot_events
         WHERE type = 'cta_click' AND created_at >= ${dayStart} AND created_at <= ${dayEnd}

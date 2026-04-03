@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import sql from "@/lib/ragDb";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +40,10 @@ export async function GET(req: Request) {
   const sessionId = searchParams.get("sessionId")?.trim() ?? "";
 
   if (!UUID_PATTERN.test(sessionId)) {
-    return Response.json({ error: "Valid sessionId is required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Valid sessionId is required" },
+      { status: 400 },
+    );
   }
 
   const sessionRows = await sql<SessionRow[]>`
@@ -51,7 +55,7 @@ export async function GET(req: Request) {
   const session = sessionRows[0];
 
   if (!session) {
-    return Response.json({ error: "Session not found" }, { status: 404 });
+    return NextResponse.json({ error: "Session not found" }, { status: 404 });
   }
 
   const consentRows = await sql<ConsentRow[]>`
@@ -102,7 +106,7 @@ export async function GET(req: Request) {
     consent?.created_at ||
     null;
 
-  return Response.json({
+  return NextResponse.json({
     sessionId: session.id,
     linked: session.channel === "telegram" && !!session.telegram_chat_id,
     telegram: {

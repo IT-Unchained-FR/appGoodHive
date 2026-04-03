@@ -1,6 +1,20 @@
 import sql from "@/lib/db";
 import type { NextRequest } from "next/server";
 
+const getErrorDetails = (error: unknown) => {
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      stack: error.stack,
+    };
+  }
+
+  return {
+    message: "Unknown error",
+    stack: undefined,
+  };
+};
+
 export async function POST(request: Request) {
   const {
     user_id,
@@ -131,14 +145,15 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
+    const errorDetails = getErrorDetails(error);
     console.error("Error retrieving company data:", error);
-    console.error("Error stack:", error.stack);
+    console.error("Error stack:", errorDetails.stack);
 
     return new Response(
       JSON.stringify({
         message: "Error retrieving data",
-        error: error.message,
-        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        error: errorDetails.message,
+        details: process.env.NODE_ENV === 'development' ? errorDetails.stack : undefined
       }),
       {
         status: 500,

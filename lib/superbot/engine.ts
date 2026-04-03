@@ -67,6 +67,12 @@ function parseFields(value: unknown): Record<string, unknown> | null {
   return value as Record<string, unknown>;
 }
 
+function toJsonb(
+  value?: Record<string, unknown> | UserMeta | null,
+): string | null {
+  return value ? JSON.stringify(value) : null;
+}
+
 function mapSession(row: ChatSessionRow): ChatSession {
   return {
     id: row.id,
@@ -140,7 +146,7 @@ export async function logChatMessage(
 ) {
   await sql`
     INSERT INTO goodhive.chat_messages (session_id, role, text, meta)
-    VALUES (${sessionId}, ${role}, ${text}, ${meta ?? null});
+    VALUES (${sessionId}, ${role}, ${text}, ${toJsonb(meta)}::jsonb);
   `;
   await sql`
     UPDATE goodhive.chat_sessions SET updated_at = NOW() WHERE id = ${sessionId};
@@ -216,7 +222,7 @@ async function ensureConsent(
   if (channel === "web") {
     await sql`
       INSERT INTO goodhive.consents (session_id, channel, type, metadata)
-      VALUES (${session.id}, 'web', 'web_start', ${meta ?? null});
+      VALUES (${session.id}, 'web', 'web_start', ${toJsonb(meta)}::jsonb);
     `;
     return true;
   }
@@ -245,7 +251,7 @@ async function updateWebSessionContext(session: ChatSession, meta?: UserMeta) {
 
   await sql`
     UPDATE goodhive.chat_sessions
-    SET fields = ${mergedFields},
+    SET fields = ${toJsonb(mergedFields)}::jsonb,
         updated_at = NOW()
     WHERE id = ${session.id};
   `;
@@ -302,7 +308,7 @@ async function upsertTelegramLead(
   if (existingLead) {
     await sql`
       UPDATE goodhive.superbot_leads
-      SET fields = ${mergedLeadFields},
+      SET fields = ${toJsonb(mergedLeadFields)}::jsonb,
           updated_at = NOW()
       WHERE id = ${existingLead.id};
     `;
@@ -314,7 +320,7 @@ async function upsertTelegramLead(
         'telegram',
         'new',
         0,
-        ${mergedLeadFields}
+        ${toJsonb(mergedLeadFields)}::jsonb
       );
     `;
   }
@@ -339,7 +345,7 @@ async function upsertTelegramLead(
 
   await sql`
     UPDATE goodhive.chat_sessions
-    SET fields = ${mergedSessionFields},
+    SET fields = ${toJsonb(mergedSessionFields)}::jsonb,
         updated_at = NOW()
     WHERE id = ${session.id};
   `;
@@ -395,15 +401,15 @@ async function handleStart(params: {
         // Record consent for the Telegram handoff explicitly.
         await sql`
           INSERT INTO goodhive.consents (session_id, channel, type, metadata)
-          VALUES (
+        VALUES (
             ${session.id},
             'telegram',
             'telegram_start',
-            ${{
+            ${toJsonb({
               payload,
               handoff: "web_to_telegram",
               ...(meta ?? {}),
-            }}
+            })}::jsonb
           );
         `;
 
@@ -445,11 +451,11 @@ async function handleStart(params: {
       ${session.id},
       ${channel},
       ${channel === "web" ? "web_start" : "telegram_start"},
-      ${{
+      ${toJsonb({
         payload: payload || null,
         contentItemId: resolvedContent?.id ?? null,
         ...(meta ?? {}),
-      }}
+      })}::jsonb
     );
   `;
 

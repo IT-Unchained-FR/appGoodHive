@@ -2,6 +2,18 @@ import sql from "@/lib/db";
 
 import type { NextRequest } from "next/server";
 
+type JobSectionRow = {
+  id: number | string;
+  heading: string;
+  content: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : "Unknown error";
+
 export async function GET(request: NextRequest) {
   const searchParamsEntries = request.nextUrl.searchParams.entries();
   const searchParams = Object.fromEntries(searchParamsEntries);
@@ -36,7 +48,7 @@ export async function GET(request: NextRequest) {
           `;
         console.log(`Block ID search result: ${jobsQuery.length} jobs found`);
       } catch (blockIdError) {
-        console.warn("Block ID column may not exist:", blockIdError.message);
+        console.warn("Block ID column may not exist:", getErrorMessage(blockIdError));
       }
     }
 
@@ -50,7 +62,7 @@ export async function GET(request: NextRequest) {
           `;
         console.log(`Job ID search result: ${jobsQuery.length} jobs found`);
       } catch (jobIdError) {
-        console.warn("Job ID column may not exist:", jobIdError.message);
+        console.warn("Job ID column may not exist:", getErrorMessage(jobIdError));
       }
     }
 
@@ -61,9 +73,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch job sections
-    let sectionsQuery = [];
+    let sectionsQuery: JobSectionRow[] = [];
     try {
-      sectionsQuery = await sql`
+      sectionsQuery = await sql<JobSectionRow[]>`
         SELECT id, heading, content, sort_order, created_at, updated_at
         FROM goodhive.job_sections
         WHERE job_id = ${id}
@@ -71,7 +83,7 @@ export async function GET(request: NextRequest) {
       `;
       console.log(`Found ${sectionsQuery.length} job sections`);
     } catch (sectionsError) {
-      console.warn("Could not fetch job sections:", sectionsError.message);
+      console.warn("Could not fetch job sections:", getErrorMessage(sectionsError));
       sectionsQuery = []; // Fallback to empty array
     }
     const singleJob = jobsQuery.map((item) => ({

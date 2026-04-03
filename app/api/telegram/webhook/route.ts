@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import {
   getOrCreateSession,
   handleIncomingMessage,
@@ -94,7 +95,7 @@ export async function POST(req: Request) {
     update = (await req.json()) as TelegramUpdate;
   } catch (error) {
     console.error("Error parsing Telegram update:", error);
-    return Response.json({ ok: false });
+    return NextResponse.json({ ok: false });
   }
 
   const chatId = update.message?.chat.id
@@ -104,7 +105,7 @@ export async function POST(req: Request) {
       : null;
 
   if (!chatId) {
-    return Response.json({ ok: true });
+    return NextResponse.json({ ok: true });
   }
 
   const session = await getOrCreateSession({ channel: "telegram", telegramChatId: chatId });
@@ -134,5 +135,5 @@ export async function POST(req: Request) {
     send,
   });
 
-  return Response.json({ ok: true });
+  return NextResponse.json({ ok: true });
 }

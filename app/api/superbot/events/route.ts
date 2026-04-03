@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { logSuperbotEvent } from "@/lib/superbot/events";
 
 export const dynamic = "force-dynamic";
@@ -15,11 +16,14 @@ export async function POST(req: Request) {
     body = (await req.json()) as EventRequest;
   } catch (error) {
     console.error("Invalid event payload", error);
-    return Response.json({ error: "Invalid payload" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
   if (!body.sessionId || !body.type) {
-    return Response.json({ error: "sessionId and type are required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "sessionId and type are required" },
+      { status: 400 },
+    );
   }
 
   await logSuperbotEvent({
@@ -28,5 +32,5 @@ export async function POST(req: Request) {
     metadata: body.metadata ?? undefined,
   });
 
-  return Response.json({ ok: true });
+  return NextResponse.json({ ok: true });
 }
