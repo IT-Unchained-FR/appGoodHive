@@ -1,19 +1,114 @@
 # Current Task
 
 ## Status
-`STABILIZATION SPRINT — Fix critical bugs before client campaign (March 16, 2026)`
+`ADMIN PANEL OVERHAUL — Phases 2, 3, and 4 implemented; repo-wide lint/typecheck/build are green again, and the admin login redirect loop is fixed (April 3, 2026)`
 
 ## Last Updated
-2026-03-15
+2026-04-03
 
-## ⚠️ Benoit's Directive (March 12 meeting)
+## 🔥 ADMIN PANEL OVERHAUL TASKS
+
+Index: `docs/features/admin-panel-overhaul.md`
+Phase 1 (bugs):  `docs/features/admin-phase-1-fixes.md`
+Phase 2 (UI):    `docs/features/admin-phase-2-ui.md`
+Phase 3 (extras):`docs/features/admin-phase-3-extras.md`
+
+Codex pickup prompt per phase:
+> "Implement all tasks in `docs/features/admin-phase-1-fixes.md`. Read the file fully before starting."
+
+### P0 — ADMIN-001: Fix analytics SQL UNION ALL crash ← CODEX TASK
+- [x] Split `approvalRates` UNION ALL query into two separate queries in `app/api/admin/analytics/route.ts:112-128`
+- Companies SELECT has 6 columns, talents SELECT has 4 → PostgreSQL crash on every analytics load
+
+### P0 — ADMIN-002: Add JWT expiry to admin tokens ← CODEX TASK
+- [x] Add `{ expiresIn: "8h" }` to `sign()` call in `app/api/auth/admin/login/route.ts:50-53`
+- Currently tokens never expire — security risk
+
+### P1 — ADMIN-003: Implement settings persistence ← CODEX TASK
+- [x] Create `app/db/migrations/admin_infrastructure.sql` (creates `admin_settings` + `admin_audit_log` tables)
+- [x] Update settings GET to read from DB
+- [x] Update settings PUT to write to DB
+- [x] Run migration on dev
+- [ ] Run migration on prod
+- Dev migration log: `docs/admin-panel-db-migration/2026-04-03-phase-1-dev-migration.md`
+
+### P1 — ADMIN-004: Implement audit log (action history) ← CODEX TASK
+- [x] Update `app/api/admin/action-history/route.ts` to query `admin_audit_log` table
+- [x] Write audit entries in `talents/status/route.ts` (after approval/rejection)
+- [x] Write audit entries in `companies/[userId]/route.ts` (after approval/rejection/update)
+- [x] Added action history section to talent detail page so audit entries are visible there too
+
+### P1 — ADMIN-005: Fix usersLast7Days stat ← CODEX TASK
+- [x] Replace hardcoded `{ count: 0 }` with real query in `app/api/admin/statistics/route.ts:97-98`
+- [ ] Verify `goodhive.users.created_at` column exists on prod DB before deploying
+- Dev DB verification complete; prod verification is still pending
+
+### P1 — ADMIN-006: Remove console.log from charts ← CODEX TASK
+- [x] Delete `console.log` lines from `UserGrowthChart.tsx:23-25`, `JobTrendsChart.tsx`, `analytics/page.tsx`
+
+### P1 — ADMIN-007: Make admin token cookie httpOnly ← CODEX TASK
+- [x] Login route sets httpOnly cookie server-side
+- [x] Login page removes `Cookies.set("admin_token", ...)` client-side call
+- [x] All admin client pages remove `Cookies.get("admin_token")` + `Authorization` header pattern (cookie sent automatically)
+- [x] Create logout endpoint `app/api/auth/admin/logout/route.ts`
+- ⚠️ Existing admin sessions will expire on deploy — admins must re-login
+
+### P2 — ADMIN-008: Fix dashboard title duplication ← CODEX TASK
+- [x] Remove manual `<h1>` from `app/admin/page.tsx` body (AdminPageLayout already renders the title)
+
+### P2 — ADMIN-009: Fix payouts page layout ← CODEX TASK
+- [x] Wrap `app/admin/payouts/page.tsx` content in `<AdminPageLayout>`
+
+### P2 — Responsive admin shell + key pages ← CODEX TASK
+- [x] Applied Phase 2 responsive layout rules to `AdminPageLayout` and `Sidebar`
+- [x] Updated dashboard, analytics, payouts, settings, job detail, talent detail, company detail, and manage-admins for mobile/tablet layouts
+- [x] Updated admin edit modal layouts so forms/actions stack cleanly on mobile
+
+### Admin Overhaul Validation / Handoff
+- [x] `pnpm lint` runs successfully (warnings only; existing hook-deps and `<img>` warnings remain in repo)
+- [x] `pnpm build` succeeds (existing `cssstyle` resolution warnings from `isomorphic-dompurify` and dynamic server usage warnings still print during build)
+- [x] `pnpm tsc --noEmit` passes repo-wide
+- [x] Admin login now lands on `/admin` correctly after success by normalizing the admin JWT role claim and forcing a fresh navigation after login
+- [x] Admin talents search now matches derived full names like `first_name + last_name` instead of only raw row keys such as `email`
+- [x] Admin talents page now supports a persisted grid/table view switch, and the table mode exposes the full talent payload with `N/A` for empty values
+- [x] Admin talents search is now server-backed, so searches like `Jubayer`, `Juhan`, and `Jubayer Juhan` match across the full directory instead of only the currently loaded page
+- [x] Admin talents now use server pagination for faster loading, while DB-backed search/filter/sort still run across the full talent set before pagination is applied
+- [x] Removed the `mentorStatus` filter from `/admin/talents` so talent-directory search results are not silently narrowed by mentor-specific review state
+- [x] Tightened `/admin/talents` row-table mode by hiding long text columns and replacing file/image URLs with compact open-in-new-tab buttons
+- [x] `/admin/talent-approval` now behaves as a true pending-review queue and excludes already approved, deferred, or rejected talent profiles
+- [x] Admin routes are now isolated from the public wallet/session provider tree, preventing the repeated public-site `Welcome back!` auth loop on `/admin`
+- [x] Public wallet auth no longer forces an immediate `/api/auth/me` refresh after successful connect, preventing the repeated `Welcome back!` toast loop when the session cookie is still settling
+
+### P2 — ADMIN-010: Implement real report generation ← CODEX TASK
+- [x] Create `app/api/admin/reports/route.ts` (talents/companies/jobs CSV export)
+- [x] Update `handleGenerateReport` in `app/admin/analytics/page.tsx` to trigger actual download
+
+### P2 — ADMIN-011: Replace hand-rolled charts with Recharts ← CODEX TASK
+- [x] Check if `recharts` is installed; add if not (`pnpm add recharts`)
+- [x] Rewrite `UserGrowthChart.tsx` using `<AreaChart>`
+- [x] Rewrite `JobTrendsChart.tsx` using `<AreaChart>` (different color)
+
+### P3 — ADMIN-012: Remove orphaned admin components ← CODEX TASK
+- [x] Verify zero imports, then delete: `RoleManager.tsx`, `PermissionsEditor.tsx`, `ActivityFeed.tsx`, `RecentActivity.tsx`, `ApprovalQueue.tsx`, `QuickActions.tsx`, `AdminTable.tsx`, `TableFilters.tsx`, `StatusFilter.tsx`
+
+### P3 — ADMIN-013: Deduplicate Spinner in manage-admins ← CODEX TASK
+- [x] Remove inline Spinner in `app/admin/manage-admins/page.tsx`, import from `@/app/components/admin/Spinner`
+
+### P4 — Modal, detail page, and settings redesign ← CODEX TASK
+- [x] Restyled `ApprovalPopup`, `RejectionModal`, `BulkApproval`, and `DeleteConfirmDialog` to match the Phase 4 modal spec
+- [x] Rebuilt `EditTalentModal` and `EditCompanyModal` with grouped sections, sticky header/footer, and responsive form grids
+- [x] Redesigned `app/admin/talent/[user_id]/page.tsx` into the two-column desktop layout with quick actions, skills, contact, and action history cards
+- [x] Redesigned `app/admin/settings/page.tsx` with icon-led sections, descriptive switch rows, and a yellow save action
+
+---
+
+## ⚠️ Previous Directive (March 12 meeting)
 **STOP new features. Make the existing platform work reliably.**
-Clients are being onboarded soon. Broken UX = lost talent + lost clients.
 See full meeting notes: `docs/meetings/2026-03-12-juhan-benoit.md`
 
 ---
 
-## 🔥 STABILIZATION TASKS (do these before anything else)
+## 🔥 EARLIER STABILIZATION TASKS (carried over)
 
 ### P0 — Thirdweb credit exhaustion ← CODEX TASK
 **Root cause:** `app/providers.tsx` uses `<ThirdwebProvider>` with no config → defaults to `autoConnect: true` in Thirdweb v5. On every page load, Thirdweb SDK re-authenticates social/embedded wallets against Thirdweb's servers, consuming API credits. `AuthContext.tsx:140-175` has a `useEffect` on `account?.address` that fires on every reconnect, compounding the issue. The plan costs $5/month — the next tier is $90, so we MUST reduce consumption.
