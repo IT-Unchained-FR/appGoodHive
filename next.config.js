@@ -2,7 +2,6 @@
 const nextConfig = {
   reactStrictMode: false,
   experimental: {
-    typedRoutes: true,
     workerThreads: false,
     cpus: 1,
     serverComponentsExternalPackages: ["pdf-parse"],
