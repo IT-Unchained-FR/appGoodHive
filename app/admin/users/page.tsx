@@ -7,6 +7,7 @@ import { Column, EnhancedTable } from "@/app/components/admin/EnhancedTable";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
 import { AdminFilters } from "@/app/components/admin/AdminFilters";
 import { DeleteConfirmDialog } from "@/app/components/admin/DeleteConfirmDialog";
+import { StatusPill } from "@/app/components/admin/StatusPill";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import Cookies from "js-cookie";
 import { BarChart3, Copy, Download, Filter, MoreHorizontal } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -36,6 +36,43 @@ interface User {
   has_talent_profile: boolean;
   created_at?: string;
 }
+
+const renderRolePills = (user: User) => {
+  const pills = [];
+
+  if (user.mentor_status === "approved") {
+    pills.push(<StatusPill key="mentor-approved" status="approved" label="Mentor" />);
+  } else if (
+    user.mentor_status === "pending" ||
+    user.mentor_status === "in_review"
+  ) {
+    pills.push(<StatusPill key="mentor-pending" status="pending" label="Mentor Pending" />);
+  }
+
+  if (user.recruiter_status === "approved") {
+    pills.push(<StatusPill key="recruiter-approved" status="approved" label="Recruiter" />);
+  } else if (
+    user.recruiter_status === "pending" ||
+    user.recruiter_status === "in_review"
+  ) {
+    pills.push(<StatusPill key="recruiter-pending" status="pending" label="Recruiter Pending" />);
+  }
+
+  if (user.talent_status === "approved") {
+    pills.push(<StatusPill key="talent-approved" status="approved" label="Talent" />);
+  } else if (
+    user.talent_status === "pending" ||
+    user.talent_status === "in_review"
+  ) {
+    pills.push(<StatusPill key="talent-pending" status="pending" label="Talent Pending" />);
+  }
+
+  if (pills.length === 0) {
+    pills.push(<StatusPill key="no-roles" status="no_roles" label="No Roles" />);
+  }
+
+  return pills;
+};
 
 export default function AdminManageUsers() {
   const router = useRouter();
@@ -58,29 +95,15 @@ export default function AdminManageUsers() {
   const getSafeValue = (value?: string | null) =>
     value && value !== "null" ? value : undefined;
 
-  const getAuthHeaders = () => {
-    const token = Cookies.get("admin_token");
-    if (!token) {
-      router.push("/admin/login");
-      return null;
-    }
-    return {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-  };
-
   const fetchAllUsers = async () => {
     try {
       setLoading(true);
-      const headers = getAuthHeaders();
-      if (!headers) return;
 
       // Build URL with filter params
       const params = new URLSearchParams(searchParams.toString());
       const url = `/api/admin/users${params.toString() ? `?${params.toString()}` : ''}`;
 
-      const response = await fetch(url, { headers });
+      const response = await fetch(url);
 
       if (response.status === 401) {
         router.push("/admin/login");
@@ -102,12 +125,11 @@ export default function AdminManageUsers() {
 
   const fetchUserRelatedData = async (userId: string) => {
     try {
-      const headers = getAuthHeaders();
-      if (!headers) return;
-
-      const response = await fetch(`/api/admin/users/${userId}/related`, {
-        headers,
-      });
+      const response = await fetch(`/api/admin/users/${userId}/related`);
+      if (response.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
       const data = await response.json();
       setRelatedData(data);
     } catch (error) {
@@ -121,13 +143,14 @@ export default function AdminManageUsers() {
 
     try {
       setDeleteLoading(true);
-      const headers = getAuthHeaders();
-      if (!headers) return;
-
       const response = await fetch(`/api/admin/users/${userToDelete.id}`, {
         method: "DELETE",
-        headers,
       });
+
+      if (response.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
 
       const data = await response.json();
 
@@ -244,53 +267,7 @@ export default function AdminManageUsers() {
       key: "roles",
       header: "Approved Roles",
       width: "20%",
-      render: (value, row) => (
-        <div className="flex gap-2 flex-wrap">
-          {row.mentor_status === "approved" && (
-            <Badge className="bg-green-500 text-white hover:bg-green-600 text-xs">
-              Mentor
-            </Badge>
-          )}
-          {(row.mentor_status === "pending" || row.mentor_status === "in_review") && (
-            <Badge className="bg-amber-500 text-white hover:bg-amber-600 text-xs">
-              Mentor (Pending)
-            </Badge>
-          )}
-          {row.recruiter_status === "approved" && (
-            <Badge className="bg-green-500 text-white hover:bg-green-600 text-xs">
-              Recruiter
-            </Badge>
-          )}
-          {(row.recruiter_status === "pending" || row.recruiter_status === "in_review") && (
-            <Badge className="bg-amber-500 text-white hover:bg-amber-600 text-xs">
-              Recruiter (Pending)
-            </Badge>
-          )}
-          {row.talent_status === "approved" && (
-            <Badge className="bg-green-500 text-white hover:bg-green-600 text-xs">
-              Talent
-            </Badge>
-          )}
-          {(row.talent_status === "pending" || row.talent_status === "in_review") && (
-            <Badge className="bg-amber-500 text-white hover:bg-amber-600 text-xs">
-              Talent (Pending)
-            </Badge>
-          )}
-          {row.mentor_status !== "approved" &&
-            row.recruiter_status !== "approved" &&
-            row.talent_status !== "approved" &&
-            row.mentor_status !== "pending" &&
-            row.recruiter_status !== "pending" &&
-            row.talent_status !== "pending" &&
-            row.mentor_status !== "in_review" &&
-            row.recruiter_status !== "in_review" &&
-            row.talent_status !== "in_review" && (
-              <Badge className="bg-gray-500 text-white hover:bg-gray-600 text-xs">
-                No Roles
-              </Badge>
-            )}
-        </div>
-      ),
+      render: (_value, row) => <div className="flex flex-wrap gap-2">{renderRolePills(row)}</div>,
     },
     {
       key: "talent_profile",
@@ -309,9 +286,11 @@ export default function AdminManageUsers() {
             Talent Profile
           </Button>
         ) : (
-          <Badge className="bg-gray-600 text-gray-200 hover:bg-gray-500 w-[150px] text-center align-middle justify-center">
-            No Talent Profile
-          </Badge>
+          <StatusPill
+            status="no_profile"
+            label="No Talent Profile"
+            className="w-[150px] justify-center"
+          />
         ),
     },
     {
@@ -512,49 +491,7 @@ function UserCard({ user }: { user: User }) {
         </div>
       </div>
       <div className="flex flex-wrap gap-2">
-        {user.mentor_status === "approved" && (
-          <Badge className="bg-green-500 text-white hover:bg-green-600 text-xs">
-            Mentor
-          </Badge>
-        )}
-        {(user.mentor_status === "pending" || user.mentor_status === "in_review") && (
-          <Badge className="bg-amber-500 text-white hover:bg-amber-600 text-xs">
-            Mentor (Pending)
-          </Badge>
-        )}
-        {user.recruiter_status === "approved" && (
-          <Badge className="bg-green-500 text-white hover:bg-green-600 text-xs">
-            Recruiter
-          </Badge>
-        )}
-        {(user.recruiter_status === "pending" || user.recruiter_status === "in_review") && (
-          <Badge className="bg-amber-500 text-white hover:bg-amber-600 text-xs">
-            Recruiter (Pending)
-          </Badge>
-        )}
-        {user.talent_status === "approved" && (
-          <Badge className="bg-green-500 text-white hover:bg-green-600 text-xs">
-            Talent
-          </Badge>
-        )}
-        {(user.talent_status === "pending" || user.talent_status === "in_review") && (
-          <Badge className="bg-amber-500 text-white hover:bg-amber-600 text-xs">
-            Talent (Pending)
-          </Badge>
-        )}
-        {user.mentor_status !== "approved" &&
-          user.recruiter_status !== "approved" &&
-          user.talent_status !== "approved" &&
-          user.mentor_status !== "pending" &&
-          user.recruiter_status !== "pending" &&
-          user.talent_status !== "pending" &&
-          user.mentor_status !== "in_review" &&
-          user.recruiter_status !== "in_review" &&
-          user.talent_status !== "in_review" && (
-            <Badge className="bg-gray-500 text-white hover:bg-gray-600 text-xs">
-              No Roles
-            </Badge>
-          )}
+        {renderRolePills(user)}
       </div>
       <div className="flex items-center justify-between text-sm text-gray-700">
         <span>
@@ -580,9 +517,11 @@ function UserCard({ user }: { user: User }) {
           View Talent Profile
         </Button>
       ) : (
-        <Badge className="bg-gray-600 text-gray-200 hover:bg-gray-500 w-full text-center justify-center">
-          No Talent Profile
-        </Badge>
+        <StatusPill
+          status="no_profile"
+          label="No Talent Profile"
+          className="w-full justify-center"
+        />
       )}
     </div>
   );

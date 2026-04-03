@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Plus, X } from "lucide-react";
@@ -26,7 +27,7 @@ function ActionButton({ icon: Icon, label, href, onClick }: QuickAction) {
 
   if (href) {
     return (
-      <Link href={href} onClick={onClick} className="inline-flex w-full">
+      <Link href={href as Route} onClick={onClick} className="inline-flex w-full">
         {content}
       </Link>
     );

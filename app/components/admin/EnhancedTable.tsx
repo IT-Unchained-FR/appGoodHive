@@ -41,6 +41,7 @@ export interface Column<T> {
   sortable?: boolean;
   render?: (value: any, row: T) => React.ReactNode;
   exportValue?: (row: T) => string | number | null | undefined; // Function to get exportable value
+  searchValue?: (row: T) => string | number | null | undefined;
   filterable?: boolean;
   visible?: boolean; // For column visibility
 }
@@ -58,6 +59,15 @@ interface EnhancedTableProps<T> {
   columns: Column<T>[];
   searchable?: boolean;
   searchPlaceholder?: string;
+  searchQuery?: string;
+  onSearchQueryChange?: (value: string) => void;
+  disableClientSearch?: boolean;
+  currentPage?: number;
+  onPageChange?: (page: number) => void;
+  pageSize?: number;
+  onPageSizeChange?: (pageSize: number) => void;
+  totalItems?: number;
+  disableClientPagination?: boolean;
   pagination?: boolean;
   itemsPerPage?: number;
   pageSizeOptions?: number[];
@@ -78,11 +88,73 @@ interface EnhancedTableProps<T> {
 
 type SortDirection = "asc" | "desc" | null;
 
+const statusBadgeClasses: Record<string, string> = {
+  approved: "bg-green-50 text-green-700",
+  active: "bg-green-50 text-green-700",
+  published: "bg-blue-50 text-blue-700",
+  pending: "bg-amber-50 text-amber-700",
+  in_review: "bg-amber-50 text-amber-700",
+  pending_review: "bg-amber-50 text-amber-700",
+  deferred: "bg-gray-100 text-gray-600",
+  rejected: "bg-red-50 text-red-700",
+  unpublished: "bg-gray-100 text-gray-500",
+  closed: "bg-gray-100 text-gray-600",
+  draft: "bg-gray-100 text-gray-600",
+  failed: "bg-red-50 text-red-700",
+  confirmed: "bg-green-50 text-green-700",
+  pending_tx: "bg-amber-50 text-amber-700",
+};
+
+function renderStatusBadge(status: string) {
+  const normalized = status.toLowerCase().trim().replace(/\s+/g, "_");
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${statusBadgeClasses[normalized] ?? "bg-gray-100 text-gray-600"}`}
+    >
+      {normalized.replace(/_/g, " ")}
+    </span>
+  );
+}
+
+function normalizeSearchText(value: string) {
+  return value.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function getSearchableText(value: unknown) {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    typeof value === "bigint"
+  ) {
+    return String(value);
+  }
+
+  return "";
+}
+
 export function EnhancedTable<T extends Record<string, any>>({
   data,
   columns,
   searchable = true,
   searchPlaceholder = "Search...",
+  searchQuery: controlledSearchQuery,
+  onSearchQueryChange,
+  disableClientSearch = false,
+  currentPage: controlledCurrentPage,
+  onPageChange,
+  pageSize: controlledPageSize,
+  onPageSizeChange,
+  totalItems,
+  disableClientPagination = false,
   pagination = true,
   itemsPerPage = 10,
   pageSizeOptions = [10, 25, 50],
@@ -100,9 +172,9 @@ export function EnhancedTable<T extends Record<string, any>>({
   renderMobileCard,
   cardBreakpoint = 768,
 }: EnhancedTableProps<T>) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(itemsPerPage);
+  const [internalSearchQuery, setInternalSearchQuery] = useState("");
+  const [internalCurrentPage, setInternalCurrentPage] = useState(1);
+  const [internalPageSize, setInternalPageSize] = useState(itemsPerPage);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [selectedRows, setSelectedRows] = useState<Set<string | number>>(
@@ -118,6 +190,9 @@ export function EnhancedTable<T extends Record<string, any>>({
   const [showFilterBuilder, setShowFilterBuilder] = useState(false);
   const [savedPresets, setSavedPresets] = useState<any[]>([]);
   const [isMobile, setIsMobile] = useState(false);
+  const searchQuery = controlledSearchQuery ?? internalSearchQuery;
+  const currentPage = controlledCurrentPage ?? internalCurrentPage;
+  const pageSize = controlledPageSize ?? internalPageSize;
 
   // Track viewport width to toggle card view on mobile
   useEffect(() => {
@@ -238,14 +313,21 @@ export function EnhancedTable<T extends Record<string, any>>({
     let result = data;
 
     // Apply search query
-    if (searchQuery) {
+    if (!disableClientSearch && searchQuery) {
+      const normalizedQuery = normalizeSearchText(searchQuery);
       result = result.filter((row) => {
         return displayColumns.some((col) => {
-          const value = row[col.key];
-          if (value === null || value === undefined) return false;
-          return String(value)
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase());
+          const rawValue =
+            col.searchValue?.(row) ?? col.exportValue?.(row) ?? row[col.key];
+          const normalizedValue = normalizeSearchText(
+            getSearchableText(rawValue),
+          );
+
+          if (!normalizedValue) {
+            return false;
+          }
+
+          return normalizedValue.includes(normalizedQuery);
         });
       });
     }
@@ -258,12 +340,19 @@ export function EnhancedTable<T extends Record<string, any>>({
     return result;
   }, [
     data,
+    disableClientSearch,
     searchQuery,
     displayColumns,
     customFilters,
     filterLogic,
     applyCustomFilters,
   ]);
+
+  useEffect(() => {
+    if (controlledCurrentPage === undefined) {
+      setInternalCurrentPage(1);
+    }
+  }, [controlledCurrentPage, searchQuery]);
 
   // Sort data
   const sortedData = useMemo(() => {
@@ -289,14 +378,18 @@ export function EnhancedTable<T extends Record<string, any>>({
   // Paginate data
   const paginatedData = useMemo(() => {
     if (!sortedData) return [];
-    if (!pagination) return sortedData;
+    if (!pagination || disableClientPagination) return sortedData;
 
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
     return sortedData.slice(startIndex, endIndex);
-  }, [sortedData, currentPage, pageSize, pagination]);
+  }, [sortedData, currentPage, pageSize, pagination, disableClientPagination]);
 
-  const totalPages = Math.ceil((filteredData?.length || 0) / pageSize) || 1;
+  const visibleTotalItems = disableClientPagination
+    ? totalItems ?? filteredData?.length ?? 0
+    : filteredData?.length ?? 0;
+
+  const totalPages = Math.max(1, Math.ceil(visibleTotalItems / pageSize));
 
   // Get selected items
   const selectedItems = useMemo(() => {
@@ -458,12 +551,36 @@ export function EnhancedTable<T extends Record<string, any>>({
   );
 
   const showCardView = mobileCardView && isMobile;
+  const shouldRenderStatusBadge = useCallback(
+    (columnKey: string, value: unknown) => {
+      if (typeof value !== "string") return false;
+      if (!value.trim()) return false;
+
+      return /(status|state)$/i.test(columnKey) || columnKey === "review_status";
+    },
+    [],
+  );
+
+  const renderCellValue = useCallback(
+    (column: Column<T>, row: T) => {
+      const value = row[column.key];
+
+      if (column.render) {
+        return column.render(value, row);
+      }
+
+      if (shouldRenderStatusBadge(column.key, value)) {
+        return renderStatusBadge(value);
+      }
+
+      return String(value ?? "");
+    },
+    [shouldRenderStatusBadge],
+  );
 
   const DefaultCard = ({ row }: { row: T }) => {
     return (
-      <div
-        className="border border-gray-200 rounded-lg p-4 bg-white space-y-3 shadow-sm"
-      >
+      <div className="space-y-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
         <div className="space-y-2">
           {displayColumns.map((col) => (
             <div key={col.key} className="flex justify-between items-start gap-3">
@@ -471,7 +588,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                 {col.header}
               </span>
               <div className="text-sm text-gray-900 text-right">
-                {col.render ? col.render(row[col.key], row) : String(row[col.key] ?? "")}
+                {renderCellValue(col, row)}
               </div>
             </div>
           ))}
@@ -488,17 +605,26 @@ export function EnhancedTable<T extends Record<string, any>>({
         enableFilterBuilder ||
         (selectable && selectedItems.length > 0) ||
         columns.length > 1) && (
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4 flex-1">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
             {searchable && (
-              <div className="relative flex-1 max-w-md">
+              <div className="relative w-full flex-1 sm:max-w-md">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder={searchPlaceholder}
                   value={searchQuery}
                   onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setCurrentPage(1);
+                    const nextQuery = e.target.value;
+                    if (onSearchQueryChange) {
+                      onSearchQueryChange(nextQuery);
+                    } else {
+                      setInternalSearchQuery(nextQuery);
+                    }
+                    if (onPageChange) {
+                      onPageChange(1);
+                    } else {
+                      setInternalCurrentPage(1);
+                    }
                   }}
                   className="pl-8"
                 />
@@ -515,7 +641,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                 variant="outline"
                 size="sm"
                 onClick={() => setShowFilterBuilder(true)}
-                className="gap-2"
+                className="w-full gap-2 sm:w-auto"
               >
                 <Filter className="h-4 w-4" />
                 Custom Filters
@@ -527,14 +653,14 @@ export function EnhancedTable<T extends Record<string, any>>({
               </Button>
             )}
             {selectable && selectedItems.length > 0 && (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <Badge variant="secondary" className="px-3 py-1">
                   {selectedItems.length} selected
                 </Badge>
                 {bulkActions.length > 0 && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" className="w-full sm:w-auto">
                         <MoreVertical className="h-4 w-4 mr-2" />
                         Bulk Actions
                       </Button>
@@ -562,11 +688,11 @@ export function EnhancedTable<T extends Record<string, any>>({
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             {showCardView && sortableColumns.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
+                  <Button variant="outline" size="sm" className="w-full gap-2 sm:w-auto">
                     Sort
                     <ChevronDown className="h-4 w-4" />
                   </Button>
@@ -589,7 +715,7 @@ export function EnhancedTable<T extends Record<string, any>>({
             {columns.length > 1 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
+                  <Button variant="outline" size="sm" className="w-full gap-2 sm:w-auto">
                     {visibleColumns.size === columns.length ? (
                       <Eye className="h-4 w-4" />
                     ) : (
@@ -735,11 +861,11 @@ export function EnhancedTable<T extends Record<string, any>>({
             Array.from({ length: pageSize }).map((_, idx) => (
               <div
                 key={idx}
-                className="border border-gray-200 rounded-lg p-4 bg-gray-50 animate-pulse h-32"
+                className="h-32 animate-pulse rounded-2xl border border-gray-100 bg-gray-50 p-4"
               />
             ))
           ) : paginatedData.length === 0 ? (
-            <div className="border rounded-lg p-6 text-center text-gray-500 bg-white">
+            <div className="rounded-2xl border border-gray-100 bg-white p-6 text-center text-gray-500">
               {emptyMessage}
             </div>
           ) : (
@@ -756,7 +882,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                 <div
                   key={rowId}
                   className={`${selectable ? "relative" : ""} ${
-                    isSelected && selectable ? "ring-2 ring-[#FFC905]/60 rounded-lg" : ""
+                    isSelected && selectable ? "rounded-2xl ring-2 ring-[#FFC905]/60" : ""
                   }`}
                 >
                   {selectable && (
@@ -776,12 +902,12 @@ export function EnhancedTable<T extends Record<string, any>>({
           )}
         </div>
       ) : (
-        <div className="border rounded-lg overflow-hidden">
+        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
           <Table>
-            <TableHeader>
-              <TableRow>
+            <TableHeader className="bg-gray-50 border-b border-gray-100">
+              <TableRow className="border-b border-gray-100">
                 {selectable && (
-                  <TableHead className="w-[50px]">
+                  <TableHead className="w-[50px] py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                     <Checkbox
                       checked={isAllSelected}
                       onCheckedChange={handleSelectAll}
@@ -792,9 +918,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                   <TableHead
                     key={column.key}
                     style={{ width: column.width }}
-                    className={
-                      column.sortable ? "cursor-pointer hover:bg-gray-50" : ""
-                    }
+                    className={`py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 ${column.sortable ? "cursor-pointer hover:bg-gray-100" : ""}`}
                     onClick={() => column.sortable && handleSort(column.key)}
                   >
                     <div className="flex items-center gap-2">
@@ -810,7 +934,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                 <TableRow>
                   <TableCell
                     colSpan={displayColumns.length + (selectable ? 1 : 0)}
-                    className="text-center py-8"
+                    className="py-8 text-center text-sm text-gray-500"
                   >
                     <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#FFC905]"></div>
@@ -833,10 +957,10 @@ export function EnhancedTable<T extends Record<string, any>>({
                   return (
                     <TableRow
                       key={rowId}
-                      className={isSelected ? "bg-[#FFC905]/10" : ""}
+                      className={`border-b border-gray-50 transition-colors hover:bg-gray-50 last:border-0 ${isSelected ? "bg-[#FFC905]/10" : ""}`}
                     >
                       {selectable && (
-                        <TableCell>
+                        <TableCell className="py-3 px-4 text-sm text-gray-700">
                           <Checkbox
                             checked={isSelected}
                             onCheckedChange={() => handleSelectRow(row, index)}
@@ -844,10 +968,8 @@ export function EnhancedTable<T extends Record<string, any>>({
                         </TableCell>
                       )}
                       {displayColumns.map((column) => (
-                        <TableCell key={column.key}>
-                          {column.render
-                            ? column.render(row[column.key], row)
-                            : String(row[column.key] || "")}
+                        <TableCell key={column.key} className="py-3 px-4 text-sm text-gray-700">
+                          {renderCellValue(column, row)}
                         </TableCell>
                       ))}
                     </TableRow>
@@ -861,19 +983,19 @@ export function EnhancedTable<T extends Record<string, any>>({
 
       {/* Pagination */}
       {pagination && totalPages > 1 && (
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-sm text-gray-600">
             {filteredData.length > 0 ? (
               <>
                 Showing{" "}
                 <span className="font-medium">
-                  {Math.min((currentPage - 1) * pageSize + 1, filteredData.length)}
+                  {Math.min((currentPage - 1) * pageSize + 1, visibleTotalItems)}
                 </span>{" "}
                 to{" "}
                 <span className="font-medium">
-                  {Math.min(currentPage * pageSize, filteredData.length)}
+                  {Math.min(currentPage * pageSize, visibleTotalItems)}
                 </span>{" "}
-                of <span className="font-medium">{filteredData.length}</span>{" "}
+                of <span className="font-medium">{visibleTotalItems}</span>{" "}
                 results
               </>
             ) : (
@@ -885,15 +1007,24 @@ export function EnhancedTable<T extends Record<string, any>>({
               </span>
             )}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <span>Rows:</span>
               <select
                 value={pageSize}
                 onChange={(e) => {
                   const next = Number(e.target.value);
-                  setPageSize(next);
-                  setCurrentPage(1);
+                  if (onPageSizeChange) {
+                    onPageSizeChange(next);
+                  } else {
+                    setInternalPageSize(next);
+                  }
+
+                  if (onPageChange) {
+                    onPageChange(1);
+                  } else {
+                    setInternalCurrentPage(1);
+                  }
                 }}
                 className="border border-gray-200 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#FFC905] focus:border-transparent bg-white"
               >
@@ -907,7 +1038,14 @@ export function EnhancedTable<T extends Record<string, any>>({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              onClick={() => {
+                const nextPage = Math.max(currentPage - 1, 1);
+                if (onPageChange) {
+                  onPageChange(nextPage);
+                } else {
+                  setInternalCurrentPage(nextPage);
+                }
+              }}
               disabled={currentPage === 1}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -918,9 +1056,14 @@ export function EnhancedTable<T extends Record<string, any>>({
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
+              onClick={() => {
+                const nextPage = Math.min(currentPage + 1, totalPages);
+                if (onPageChange) {
+                  onPageChange(nextPage);
+                } else {
+                  setInternalCurrentPage(nextPage);
+                }
+              }}
               disabled={currentPage === totalPages}
             >
               <ChevronRight className="h-4 w-4" />

@@ -1,8 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import CompanyAdminView from "@/app/components/CompanyAdminView/CompanyAdminView";
-import { EditCompanyModal } from "@/app/components/admin/EditCompanyModal";
+import {
+  EditCompanyModal,
+  type Company,
+} from "@/app/components/admin/EditCompanyModal";
 import { ActionHistory } from "@/app/components/admin/ActionHistory";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
@@ -19,6 +23,7 @@ type CompanyAdminViewProfileProps = {
 export default function CompaniesPage({
   params,
 }: CompanyAdminViewProfileProps) {
+  const router = useRouter();
   const [company, setCompany] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +41,10 @@ export default function CompaniesPage({
     try {
       setIsLoading(true);
       const response = await fetch(`/api/admin/companies/${user_id}`);
+      if (response.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
       if (!response.ok) {
         throw new Error("Failed to fetch company data");
       }
@@ -49,7 +58,7 @@ export default function CompaniesPage({
     }
   };
 
-  const handleSave = async (updatedCompany: Record<string, unknown>) => {
+  const handleSave = async (updatedCompany: Company) => {
     try {
       const response = await fetch(`/api/admin/companies/${user_id}`, {
         method: "PUT",
@@ -58,6 +67,11 @@ export default function CompaniesPage({
         },
         body: JSON.stringify(updatedCompany),
       });
+
+      if (response.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
 
       if (!response.ok) {
         throw new Error("Failed to update company");
@@ -115,30 +129,31 @@ export default function CompaniesPage({
       title={company.designation || "Company Details"}
       subtitle="Company profile details"
       breadcrumbLabels={breadcrumbLabels}
+      actions={
+        <Button
+          variant="outline"
+          onClick={() => setShowEditModal(true)}
+          className="w-full gap-2 sm:w-auto"
+        >
+          <Pencil className="h-4 w-4" />
+          Edit Company
+        </Button>
+      }
     >
-      <div className="w-full mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Company Details</h1>
-          <Button
-            variant="outline"
-            onClick={() => setShowEditModal(true)}
-            className="gap-2"
-          >
-            <Pencil className="h-4 w-4" />
-            Edit Company
-          </Button>
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
+        <div className="space-y-4 sm:space-y-6 lg:col-span-2">
+          <CompanyAdminView {...company} />
         </div>
-
-        <CompanyAdminView {...company} />
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Action History</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ActionHistory targetType="company" targetId={user_id} />
-          </CardContent>
-        </Card>
+        <div className="space-y-4 sm:space-y-6">
+          <Card className="rounded-2xl border border-gray-100 shadow-sm">
+            <CardHeader>
+              <CardTitle>Action History</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ActionHistory targetType="company" targetId={user_id} />
+            </CardContent>
+          </Card>
+        </div>
 
         <EditCompanyModal
           open={showEditModal}

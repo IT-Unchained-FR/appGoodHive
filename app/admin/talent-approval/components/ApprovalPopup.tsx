@@ -4,15 +4,13 @@ import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ProfileData } from "@/app/talents/my-profile/page";
 import toast from "react-hot-toast";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 type ApprovalTypes = {
   mentor: boolean;
@@ -98,75 +96,126 @@ export default function ApprovalPopup({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Approve as</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-4 py-4">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="mentor" className="flex flex-col">
-                <span className="text-base">Mentor</span>
-                <span className="text-sm text-muted-foreground">
-                  Approve as a mentor{" "}
-                  {user.mentor && !superView ? " (Applied For)" : ""}
-                </span>
-              </Label>
-              <Switch
-                id="mentor"
-                checked={approvalTypes.mentor}
-                onCheckedChange={() => handleApprovalChange("mentor")}
-              />
+      <DialogContent className="sm:max-w-[480px] p-0">
+        <div className="border-b border-gray-100 px-6 pb-4 pt-6">
+          <div className="mb-1 flex items-center gap-3">
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-green-50">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
             </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="talent" className="flex flex-col">
-                <span className="text-base">Talent</span>
-                <span className="text-sm text-muted-foreground">
-                  Approve as a talent{" "}
-                  {user.talent && !superView ? " (Applied For)" : ""}
-                </span>
-              </Label>
-              <Switch
-                id="talent"
-                checked={approvalTypes.talent}
-                onCheckedChange={() => handleApprovalChange("talent")}
-              />
-            </div>
+            <DialogTitle className="text-base font-bold text-gray-900">
+              Approve Talent
+            </DialogTitle>
           </div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="recruiter" className="flex flex-col">
-              <span className="text-base">Recruiter</span>
-              <span className="text-sm text-muted-foreground">
-                Approve as a recruiter{" "}
-                {user.recruiter && !superView ? " (Applied For)" : ""}
+          <p className="ml-11 text-xs text-gray-400">
+            Grant platform access for the selected roles
+          </p>
+        </div>
+
+        <div className="space-y-4 px-6 py-5">
+          <div className="flex items-center gap-3 rounded-xl bg-gray-50 p-3">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#FFC905]">
+              <span className="text-xs font-bold text-black">
+                {(user.first_name?.[0] ?? "") + (user.last_name?.[0] ?? "")}
               </span>
-            </Label>
-            <Switch
-              id="recruiter"
-              checked={approvalTypes.recruiter}
-              onCheckedChange={() => handleApprovalChange("recruiter")}
-            />
-          </div>
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-yellow-800">
-                This will approve the user for the selected roles and grant them platform access.
-                Please verify all details before confirming.
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-gray-900">
+                {user.first_name} {user.last_name}
+              </p>
+              <p className="truncate text-xs text-gray-400">
+                {user.email ?? ""}
               </p>
             </div>
           </div>
-        </div>
-        <Button onClick={handleApprove} disabled={loading}>
-          {loading ? (
-            <div className="flex items-center gap-2">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              Processing...
+
+          <div>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
+              Select roles to approve
+            </p>
+            <div className="divide-y divide-gray-100 rounded-xl bg-gray-50">
+              <div className="flex items-center justify-between px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium text-gray-800">Talent</p>
+                  <p className="text-xs text-gray-400">
+                    {user.talent && !superView
+                      ? "Applied for this role"
+                      : "Approve as a talent"}
+                  </p>
+                </div>
+                <Switch
+                  checked={approvalTypes.talent}
+                  onCheckedChange={() => handleApprovalChange("talent")}
+                />
+              </div>
+              <div className="flex items-center justify-between px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium text-gray-800">Mentor</p>
+                  <p className="text-xs text-gray-400">
+                    {user.mentor && !superView
+                      ? "Applied for this role"
+                      : "Approve as a mentor"}
+                  </p>
+                </div>
+                <Switch
+                  checked={approvalTypes.mentor}
+                  onCheckedChange={() => handleApprovalChange("mentor")}
+                />
+              </div>
+              <div className="flex items-center justify-between px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium text-gray-800">
+                    Recruiter
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {user.recruiter && !superView
+                      ? "Applied for this role"
+                      : "Approve as a recruiter"}
+                  </p>
+                </div>
+                <Switch
+                  checked={approvalTypes.recruiter}
+                  onCheckedChange={() => handleApprovalChange("recruiter")}
+                />
+              </div>
             </div>
-          ) : (
-            "Approve"
-          )}
-        </Button>
+          </div>
+
+          <div className="flex items-start gap-2 rounded-xl border border-amber-100 bg-amber-50 p-3">
+            <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500" />
+            <p className="text-xs leading-relaxed text-amber-800">
+              This will grant the selected roles and platform access. Verify all
+              details before confirming.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col-reverse gap-2 border-t border-gray-100 px-6 pb-6 pt-4 sm:flex-row">
+          <Button
+            variant="outline"
+            className="h-10 flex-1 rounded-xl"
+            onClick={() => setOpen(false)}
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+          <Button
+            className="h-10 flex-1 rounded-xl bg-[#FFC905] font-semibold text-black hover:bg-[#e6b400]"
+            onClick={handleApprove}
+            disabled={loading}
+          >
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent" />
+                Processing...
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4" />
+                Approve
+              </span>
+            )}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -9,18 +9,7 @@ import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@headlessui/react";
 import { useRouter } from "next/navigation";
-import Cookies from "js-cookie";
 import { Plus, RefreshCw } from "lucide-react";
-
-// Update the Spinner component
-const Spinner = () => (
-  <div className="flex justify-center items-center py-8">
-    <div className="relative w-10 h-10">
-      <div className="w-10 h-10 rounded-full border-4 border-gray-200"></div>
-      <div className="absolute top-0 left-0 w-10 h-10 rounded-full border-4 border-[#FFC905] border-t-transparent animate-spin"></div>
-    </div>
-  </div>
-);
 
 interface Admin {
   id: number;
@@ -45,26 +34,11 @@ export default function AdminsPage() {
     fetchAdmins();
   }, []);
 
-  const getAuthHeaders = () => {
-    const token = Cookies.get("admin_token");
-    if (!token) {
-      router.push("/admin/login");
-      return null;
-    }
-    return {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-  };
-
   const fetchAdmins = async () => {
     setLoading(true); // Set loading to true when fetching starts
     try {
-      const headers = getAuthHeaders();
-      if (!headers) return;
-
       const response = await fetch("/api/admin/admins", {
-        headers,
+        credentials: "include",
       });
 
       if (response.status === 401) {
@@ -89,12 +63,12 @@ export default function AdminsPage() {
     setError("");
 
     try {
-      const headers = getAuthHeaders();
-      if (!headers) return;
-
       const response = await fetch("/api/admin/admins", {
         method: "POST",
-        headers,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
         body: JSON.stringify(formData),
       });
 
@@ -146,15 +120,16 @@ export default function AdminsPage() {
     <AdminPageLayout
       title="Manage Admins"
       subtitle="Add and manage platform administrators"
-    >
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Admins</h1>
-        <Button onClick={() => setIsOpen(true)} className="gap-2 bg-[#FFC905] hover:bg-[#FFC905]/80 text-black">
+      actions={
+        <Button
+          onClick={() => setIsOpen(true)}
+          className="w-full gap-2 bg-[#FFC905] text-black hover:bg-[#FFC905]/80 sm:w-auto"
+        >
           <Plus className="h-4 w-4" />
           Create New Admin
         </Button>
-      </div>
-
+      }
+    >
       <EnhancedTable
         data={admins}
         columns={columns}
@@ -181,7 +156,7 @@ export default function AdminsPage() {
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
 
         <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="w-full max-w-md rounded-lg bg-white p-8">
+          <Dialog.Panel className="w-full max-w-md rounded-lg bg-white p-4 sm:p-6">
             <Dialog.Title className="text-lg font-medium mb-4">
               Create New Admin
             </Dialog.Title>
@@ -247,18 +222,19 @@ export default function AdminsPage() {
 
                 {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
 
-                <div className="flex justify-end gap-3">
+                <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setIsOpen(false)}
+                    className="w-full sm:w-auto"
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
-                    className="bg-[#FFC905] text-black hover:bg-[#FFC905]/80"
                     disabled={loading}
+                    className="w-full bg-[#FFC905] text-black hover:bg-[#FFC905]/80 sm:w-auto"
                   >
                     {loading ? "Creating..." : "Create Admin"}
                   </Button>

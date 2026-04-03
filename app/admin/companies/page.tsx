@@ -8,11 +8,10 @@ import { Column, EnhancedTable } from "@/app/components/admin/EnhancedTable";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
 import { AdminFilters } from "@/app/components/admin/AdminFilters";
+import { StatusPill } from "@/app/components/admin/StatusPill";
 import { generateCountryFlag } from "@/app/utils/generate-country-flag";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import Cookies from "js-cookie";
 import { Building2, Download, Filter, Pencil, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -60,29 +59,15 @@ export default function AdminManageCompanies() {
   const getSafeValue = (value?: string | null) =>
     value && value !== "null" ? value : undefined;
 
-  const getAuthHeaders = () => {
-    const token = Cookies.get("admin_token");
-    if (!token) {
-      router.push("/admin/login");
-      return null;
-    }
-    return {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-  };
-
   const fetchAllCompanies = async () => {
     try {
       setLoading(true);
-      const headers = getAuthHeaders();
-      if (!headers) return;
 
       // Build URL with filter params
       const params = new URLSearchParams(searchParams.toString());
       const url = `/api/admin/companies${params.toString() ? `?${params.toString()}` : ""}`;
 
-      const response = await fetch(url, { headers });
+      const response = await fetch(url);
 
       if (response.status === 401) {
         router.push("/admin/login");
@@ -118,13 +103,14 @@ export default function AdminManageCompanies() {
 
     try {
       setDeleteLoading(true);
-      const headers = getAuthHeaders();
-      if (!headers) return;
-
       const response = await fetch(`/api/admin/companies/${userToDelete}`, {
         method: "DELETE",
-        headers,
       });
+
+      if (response.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
 
       if (!response.ok) {
         const error = await response.json();
@@ -159,6 +145,11 @@ export default function AdminManageCompanies() {
           body: JSON.stringify(updatedCompany),
         },
       );
+
+      if (response.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
 
       if (!response.ok) {
         throw new Error("Failed to update company");
@@ -222,8 +213,8 @@ export default function AdminManageCompanies() {
         <div className="flex flex-col">
           <span>{row.city}</span>
           <img
-            src={generateCountryFlag(row.country)}
-            alt={row.country}
+            src={generateCountryFlag(row.country ?? "") || ""}
+            alt={row.country ?? "Country"}
             height={20}
             width={20}
             className="mt-1"
@@ -238,20 +229,14 @@ export default function AdminManageCompanies() {
       sortable: true,
       render: (value, row) => (
         <div className="flex flex-col gap-1">
-          <Badge
-            className={`${
-              row.approved ? "bg-green-500" : "bg-orange-500"
-            } text-white`}
-          >
-            {row.approved ? "Approved" : "Pending"}
-          </Badge>
-          <Badge
-            className={`${
-              row.published ? "bg-blue-500" : "bg-gray-400"
-            } text-white text-xs`}
-          >
-            {row.published ? "Published" : "Unpublished"}
-          </Badge>
+          <StatusPill
+            status={row.approved ? "approved" : "pending"}
+            label={row.approved ? "Approved" : "Pending"}
+          />
+          <StatusPill
+            status={row.published ? "published" : "unpublished"}
+            label={row.published ? "Published" : "Unpublished"}
+          />
         </div>
       ),
     },
@@ -461,10 +446,14 @@ function CompanyCard({
           <div className="font-semibold text-gray-900">{company.designation}</div>
           <div className="text-sm text-gray-600 break-words">{company.email}</div>
           <div className="flex flex-wrap gap-2 mt-2">
-            <Badge className={company.approved ? "bg-green-500 text-white" : "bg-orange-500 text-white"}>
-              {company.approved ? "Approved" : "Pending"}
-            </Badge>
-            <Badge variant="secondary">{company.status || "Active"}</Badge>
+            <StatusPill
+              status={company.approved ? "approved" : "pending"}
+              label={company.approved ? "Approved" : "Pending"}
+            />
+            <StatusPill
+              status={company.status || "active"}
+              label={company.status || "Active"}
+            />
           </div>
         </div>
       </div>

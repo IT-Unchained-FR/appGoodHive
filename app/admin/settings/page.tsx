@@ -1,31 +1,85 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
-import { Settings, Bell, Shield, Database, Mail } from "lucide-react";
+import { Bell, Settings, Shield } from "lucide-react";
 import toast from "react-hot-toast";
 
+const settingsCardClass =
+  "rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6";
+const rowClass = "flex items-center justify-between py-3.5";
+
+function SettingsSection({
+  icon: Icon,
+  iconClassName,
+  title,
+  description,
+  children,
+}: {
+  icon: typeof Bell;
+  iconClassName: string;
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={settingsCardClass}>
+      <div className="mb-5 flex items-center gap-3">
+        <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${iconClassName}`}>
+          <Icon className="h-4 w-4" />
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+          <p className="text-xs text-gray-400">{description}</p>
+        </div>
+      </div>
+      <div className="divide-y divide-gray-50">{children}</div>
+    </div>
+  );
+}
+
+function SwitchRow({
+  label,
+  description,
+  value,
+  onChange,
+  id,
+}: {
+  label: string;
+  description: string;
+  value: boolean;
+  onChange: (value: boolean) => void;
+  id: string;
+}) {
+  return (
+    <div className={rowClass}>
+      <div className="pr-3">
+        <p className="text-sm font-medium text-gray-800">{label}</p>
+        <p className="text-xs text-gray-400">{description}</p>
+      </div>
+      <Switch id={id} checked={value} onCheckedChange={onChange} />
+    </div>
+  );
+}
+
 export default function SettingsPage() {
+  const router = useRouter();
   const [notifications, setNotifications] = useState({
     emailNotifications: true,
     approvalAlerts: true,
     weeklyReports: false,
     errorAlerts: true,
   });
-
   const [systemSettings, setSystemSettings] = useState({
     maintenanceMode: false,
     allowRegistrations: true,
     requireEmailVerification: true,
   });
-
   const [securitySettings, setSecuritySettings] = useState({
     sessionTimeout: 30,
     maxLoginAttempts: 5,
@@ -38,7 +92,13 @@ export default function SettingsPage() {
 
   const fetchSettings = async () => {
     try {
-      const response = await fetch("/api/admin/settings");
+      const response = await fetch("/api/admin/settings", {
+        credentials: "include",
+      });
+      if (response.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
       if (response.ok) {
         const data = await response.json();
         setNotifications(data.notifications || notifications);
@@ -58,12 +118,18 @@ export default function SettingsPage() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           notifications,
           system: systemSettings,
           security: securitySettings,
         }),
       });
+
+      if (response.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
 
       if (!response.ok) {
         throw new Error("Failed to save settings");
@@ -83,207 +149,150 @@ export default function SettingsPage() {
       title="Settings"
       subtitle="Manage admin panel preferences and configuration"
     >
-      <div className="w-full mx-auto space-y-6 max-w-4xl">
-      {/* Header */}
-      {/* Notification Settings */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Bell className="h-5 w-5 text-[#FFC905]" />
-            <CardTitle>Notification Settings</CardTitle>
-          </div>
-          <CardDescription>
-            Configure how and when you receive notifications
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="email-notifications">Email Notifications</Label>
-              <p className="text-sm text-gray-500">
-                Receive email updates for important events
-              </p>
-            </div>
-            <Switch
-              id="email-notifications"
-              checked={notifications.emailNotifications}
-              onCheckedChange={(checked) =>
-                setNotifications({ ...notifications, emailNotifications: checked })
-              }
-            />
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="approval-alerts">Approval Alerts</Label>
-              <p className="text-sm text-gray-500">
-                Get notified when new approvals are needed
-              </p>
-            </div>
-            <Switch
-              id="approval-alerts"
-              checked={notifications.approvalAlerts}
-              onCheckedChange={(checked) =>
-                setNotifications({ ...notifications, approvalAlerts: checked })
-              }
-            />
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="weekly-reports">Weekly Reports</Label>
-              <p className="text-sm text-gray-500">
-                Receive weekly summary reports
-              </p>
-            </div>
-            <Switch
-              id="weekly-reports"
-              checked={notifications.weeklyReports}
-              onCheckedChange={(checked) =>
-                setNotifications({ ...notifications, weeklyReports: checked })
-              }
-            />
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="error-alerts">Error Alerts</Label>
-              <p className="text-sm text-gray-500">
-                Get notified about system errors
-              </p>
-            </div>
-            <Switch
-              id="error-alerts"
-              checked={notifications.errorAlerts}
-              onCheckedChange={(checked) =>
-                setNotifications({ ...notifications, errorAlerts: checked })
-              }
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="mx-auto w-full max-w-4xl space-y-4 sm:space-y-6">
+        <SettingsSection
+          icon={Bell}
+          iconClassName="bg-blue-50 text-blue-600"
+          title="Notifications"
+          description="Control email and alert preferences"
+        >
+          <SwitchRow
+            id="email-notifications"
+            label="Email Notifications"
+            description="Receive email alerts for platform activity"
+            value={notifications.emailNotifications}
+            onChange={(checked) =>
+              setNotifications({ ...notifications, emailNotifications: checked })
+            }
+          />
+          <SwitchRow
+            id="approval-alerts"
+            label="Approval Alerts"
+            description="Get notified when new approvals are pending"
+            value={notifications.approvalAlerts}
+            onChange={(checked) =>
+              setNotifications({ ...notifications, approvalAlerts: checked })
+            }
+          />
+          <SwitchRow
+            id="weekly-reports"
+            label="Weekly Reports"
+            description="Receive a summary report every Monday"
+            value={notifications.weeklyReports}
+            onChange={(checked) =>
+              setNotifications({ ...notifications, weeklyReports: checked })
+            }
+          />
+          <SwitchRow
+            id="error-alerts"
+            label="Error Alerts"
+            description="Get alerts when system errors occur"
+            value={notifications.errorAlerts}
+            onChange={(checked) =>
+              setNotifications({ ...notifications, errorAlerts: checked })
+            }
+          />
+        </SettingsSection>
 
-      {/* System Settings */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Settings className="h-5 w-5 text-[#FFC905]" />
-            <CardTitle>System Settings</CardTitle>
-          </div>
-          <CardDescription>
-            Configure system-wide settings and preferences
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="maintenance-mode">Maintenance Mode</Label>
-              <p className="text-sm text-gray-500">
-                Temporarily disable the platform for maintenance
-              </p>
-            </div>
-            <Switch
-              id="maintenance-mode"
-              checked={systemSettings.maintenanceMode}
-              onCheckedChange={(checked) =>
-                setSystemSettings({ ...systemSettings, maintenanceMode: checked })
-              }
-            />
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="allow-registrations">Allow New Registrations</Label>
-              <p className="text-sm text-gray-500">
-                Enable or disable new user registrations
-              </p>
-            </div>
-            <Switch
-              id="allow-registrations"
-              checked={systemSettings.allowRegistrations}
-              onCheckedChange={(checked) =>
-                setSystemSettings({ ...systemSettings, allowRegistrations: checked })
-              }
-            />
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="email-verification">Require Email Verification</Label>
-              <p className="text-sm text-gray-500">
-                Require users to verify their email addresses
-              </p>
-            </div>
-            <Switch
-              id="email-verification"
-              checked={systemSettings.requireEmailVerification}
-              onCheckedChange={(checked) =>
-                setSystemSettings({ ...systemSettings, requireEmailVerification: checked })
-              }
-            />
-          </div>
-        </CardContent>
-      </Card>
+        <SettingsSection
+          icon={Settings}
+          iconClassName="bg-purple-50 text-purple-600"
+          title="System"
+          description="Platform-wide operational controls"
+        >
+          <SwitchRow
+            id="maintenance-mode"
+            label="Maintenance Mode"
+            description="Temporarily disable public access to the platform"
+            value={systemSettings.maintenanceMode}
+            onChange={(checked) =>
+              setSystemSettings({ ...systemSettings, maintenanceMode: checked })
+            }
+          />
+          <SwitchRow
+            id="allow-registrations"
+            label="Allow Registrations"
+            description="Allow new users to sign up"
+            value={systemSettings.allowRegistrations}
+            onChange={(checked) =>
+              setSystemSettings({ ...systemSettings, allowRegistrations: checked })
+            }
+          />
+          <SwitchRow
+            id="email-verification"
+            label="Require Email Verification"
+            description="New accounts must verify their email"
+            value={systemSettings.requireEmailVerification}
+            onChange={(checked) =>
+              setSystemSettings({
+                ...systemSettings,
+                requireEmailVerification: checked,
+              })
+            }
+          />
+        </SettingsSection>
 
-      {/* Security Settings */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-[#FFC905]" />
-            <CardTitle>Security</CardTitle>
-          </div>
-          <CardDescription>
-            Manage security and access control settings
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="session-timeout">Session Timeout (minutes)</Label>
+        <SettingsSection
+          icon={Shield}
+          iconClassName="bg-orange-50 text-orange-600"
+          title="Security"
+          description="Session and authentication safeguards"
+        >
+          <div className={rowClass}>
+            <div className="pr-3">
+              <p className="text-sm font-medium text-gray-800">
+                Session Timeout
+              </p>
+              <p className="text-xs text-gray-400">
+                Minutes of inactivity before admin is logged out
+              </p>
+            </div>
             <Input
-              id="session-timeout"
               type="number"
               value={securitySettings.sessionTimeout}
               onChange={(e) =>
                 setSecuritySettings({
                   ...securitySettings,
-                  sessionTimeout: Number(e.target.value),
+                  sessionTimeout: parseInt(e.target.value, 10) || 0,
                 })
               }
-              className="mt-2"
+              className="h-9 w-20 rounded-lg border-gray-200 text-center text-sm"
             />
-            <p className="text-sm text-gray-500 mt-1">
-              Automatically log out admins after inactivity
-            </p>
           </div>
-          <Separator />
-          <div>
-            <Label htmlFor="max-login-attempts">Max Login Attempts</Label>
+          <div className={rowClass}>
+            <div className="pr-3">
+              <p className="text-sm font-medium text-gray-800">
+                Max Login Attempts
+              </p>
+              <p className="text-xs text-gray-400">
+                Failed sign-ins allowed before account lockout
+              </p>
+            </div>
             <Input
-              id="max-login-attempts"
               type="number"
               value={securitySettings.maxLoginAttempts}
               onChange={(e) =>
                 setSecuritySettings({
                   ...securitySettings,
-                  maxLoginAttempts: Number(e.target.value),
+                  maxLoginAttempts: parseInt(e.target.value, 10) || 0,
                 })
               }
-              className="mt-2"
+              className="h-9 w-20 rounded-lg border-gray-200 text-center text-sm"
             />
-            <p className="text-sm text-gray-500 mt-1">
-              Number of failed login attempts before account lockout
-            </p>
           </div>
-        </CardContent>
-      </Card>
+        </SettingsSection>
 
-      {/* Save Button */}
-      <div className="flex justify-end">
-        <Button onClick={handleSave} size="lg" disabled={loading}>
-          {loading ? "Saving..." : "Save Settings"}
-        </Button>
+        <div className="flex justify-end border-t border-gray-100 bg-white px-4 py-4 sm:px-6">
+          <Button
+            onClick={handleSave}
+            disabled={loading}
+            className="h-10 w-full rounded-xl bg-[#FFC905] px-6 font-semibold text-black hover:bg-[#e6b400] sm:w-auto"
+          >
+            {loading ? "Saving..." : "Save Settings"}
+          </Button>
+        </div>
       </div>
-      </div>
+
       <QuickActionFAB
         actions={[
           {

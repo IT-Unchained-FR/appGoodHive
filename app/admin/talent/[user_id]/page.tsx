@@ -3,22 +3,24 @@ import {
   Calendar,
   CheckCircle,
   DollarSign,
-  Github,
   Globe,
   Linkedin,
   Mail,
   MapPin,
+  Pencil,
   Phone,
-  Twitter,
+  Send,
   XCircle,
 } from "lucide-react";
 import { ProfileData } from "@/app/talents/my-profile/types";
 import { Metadata } from "next";
+import Link from "next/link";
 
 import "@/app/styles/rich-text.css";
 import { getProfileData } from "@/lib/fetch-profile-data";
 import Image from "next/image";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
+import { ActionHistory } from "@/app/components/admin/ActionHistory";
 import SafeHTML from "@/app/components/SafeHTML";
 import { formatRateRange } from "@/app/utils/format-rate-range";
 import CvAdminManager from "./CvAdminManager";
@@ -37,18 +39,52 @@ type MyProfilePageProps = {
   };
 };
 
+type AdminTalentProfile = ProfileData & {
+  last_active?: string;
+  website?: string | null;
+};
+
 export const revalidate = 0;
+
+const cardClass = "rounded-2xl border border-gray-100 bg-white p-5 shadow-sm";
+const sectionLabelClass =
+  "mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400";
+
+function DetailRow({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Mail;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-gray-50">
+        <Icon className="h-4 w-4 text-gray-500" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+          {label}
+        </p>
+        <p className="break-words text-sm text-gray-700">{value}</p>
+      </div>
+    </div>
+  );
+}
 
 export default async function Page(context: MyProfilePageProps) {
   const { user_id } = context.params;
 
-  const user: ProfileData = await getProfileData(user_id);
+  const user = (await getProfileData(user_id)) as AdminTalentProfile;
 
   const breadcrumbLabels = {
     [user_id]: `${user.first_name} ${user.last_name}`,
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "Unknown";
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
@@ -61,239 +97,208 @@ export default async function Page(context: MyProfilePageProps) {
   const isApprovedTalent =
     user.talent_status === "approved" || user.approved === true;
 
+  const skillList = String(user.skills || "")
+    .split(",")
+    .map((skill) => skill.trim())
+    .filter(Boolean);
+
   return (
     <AdminPageLayout
       title={`${user.first_name} ${user.last_name}`}
-      subtitle="Talent Profile Details"
+      subtitle="Talent Profile"
       breadcrumbLabels={breadcrumbLabels}
     >
-      <div className="bg-white shadow-lg rounded-lg overflow-hidden max-w-3xl mx-auto">
-        <div className="bg-gradient-to-r from-yellow-300 to-yellow-500 p-6 text-white">
-          <div className="flex items-center space-x-4">
-            <div className="w-24 h-24 rounded-full bg-gray-300 flex items-center justify-center text-3xl font-bold text-gray-600">
-              {user.image_url ? (
-                <Image
-                  src={user.image_url}
-                  alt={`${user.first_name} ${user.last_name}`}
-                  className="w-full h-full object-cover rounded-full"
-                  height={96}
-                  width={96}
-                />
-              ) : (
-                `${user.first_name[0]}${user.last_name[0]}`
-              )}
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">{`${user.first_name} ${user.last_name}`}</h1>
-              <p className="text-lg">{user.title}</p>
-              {/* <p className="text-sm">{user.description}</p> */}
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6 space-y-4">
-          <div className="">
-            <h2 className="text-xl font-semibold mb-2">Description</h2>
-            <SafeHTML
-              html={user.description || ""}
-              className="text-gray-700 rich-text-content"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4 border-t pt-4">
-            <div className="flex items-center space-x-2 text-gray-600">
-              <MapPin size={18} />
-              <span>{`${user.city}, ${user.country}`}</span>
-            </div>
-            <div className="flex items-center space-x-2 text-gray-600">
-              <Phone size={18} />
-              <span>{`${user.phone_country_code}${user.phone_number}`}</span>
-            </div>
-            <div className="flex items-center space-x-2 text-gray-600">
-              <Mail size={18} />
-              <span>{user.email}</span>
-            </div>
-            {user.telegram && (
-              <div className="flex items-center space-x-2 text-gray-600">
-                <span className="font-bold">Telegram:</span>
-                <span>@{user.telegram}</span>
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
+        <div className="space-y-4 sm:space-y-6 lg:col-span-2">
+          <div className={`${cardClass} p-5 sm:p-6`}>
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                {user.image_url ? (
+                  <Image
+                    src={user.image_url}
+                    alt={`${user.first_name} ${user.last_name}`}
+                    width={72}
+                    height={72}
+                    className="h-16 w-16 rounded-2xl object-cover sm:h-[72px] sm:w-[72px]"
+                  />
+                ) : (
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#FFC905] text-xl font-bold text-black sm:h-[72px] sm:w-[72px]">
+                    {user.first_name?.[0]}
+                    {user.last_name?.[0]}
+                  </div>
+                )}
               </div>
-            )}
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900">
+                      {user.first_name} {user.last_name}
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      {user.title || "No title"}
+                    </p>
+                  </div>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      isApprovedTalent
+                        ? "bg-green-50 text-green-700"
+                        : "bg-amber-50 text-amber-700"
+                    }`}
+                  >
+                    {isApprovedTalent ? "Approved" : "Pending Review"}
+                  </span>
+                </div>
+                {user.country ? (
+                  <div className="mt-2 flex items-center gap-1 text-xs text-gray-400">
+                    <MapPin className="h-3 w-3" />
+                    {user.city ? `${user.city}, ` : ""}
+                    {user.country}
+                  </div>
+                ) : null}
+              </div>
+            </div>
           </div>
 
-          <div className="border-t pt-4">
-            <h2 className="text-xl font-semibold mb-2">About Work</h2>
+          <div className={cardClass}>
+            <p className={sectionLabelClass}>About</p>
             <SafeHTML
-              html={user.about_work || ""}
-              className="text-gray-700 rich-text-content"
+              html={user.description || "<p>No description provided.</p>"}
+              className="rich-text-content text-gray-700"
             />
           </div>
 
-          <div className="border-t pt-4">
-            <h2 className="text-xl font-semibold mb-2">Skills</h2>
-            {/* <div className="flex flex-wrap gap-2">
-              {user.skills.split(",").map((skill: string, index: number) => (
-                <span
-                  key={index}
-                  className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm"
-                >
-                  {skill.trim()}
-                </span>
-              ))}
-            </div> */}
-          </div>
+          {skillList.length > 0 ? (
+            <div className={cardClass}>
+              <p className={sectionLabelClass}>Skills</p>
+              <div className="flex flex-wrap gap-2">
+                {skillList.map((skill) => (
+                  <span
+                    key={skill}
+                    className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
-          <div className="border-t pt-4 grid grid-cols-2 gap-4">
-            <div className="flex items-center space-x-2 text-gray-600">
-              <Briefcase size={18} />
-              <span>
-                {user.freelance_only
-                  ? "Freelance Only"
-                  : "Open to All Opportunities"}
-              </span>
+          <div className={cardClass}>
+            <p className={sectionLabelClass}>Work Details</p>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <DetailRow
+                icon={DollarSign}
+                label="Rate"
+                value={formatRateRange({
+                  minRate: user.min_rate ?? user.rate,
+                  maxRate: user.max_rate ?? user.rate,
+                  currency: "$",
+                  suffix: "/hr",
+                })}
+              />
+              <DetailRow
+                icon={Briefcase}
+                label="Work Setup"
+                value={
+                  user.freelance_only
+                    ? "Freelance only"
+                    : "Open to multiple opportunity types"
+                }
+              />
+              <DetailRow
+                icon={Globe}
+                label="Remote Preference"
+                value={user.remote_only ? "Remote only" : "Open to on-site"}
+              />
+              <DetailRow
+                icon={Calendar}
+                label="Availability"
+                value={user.availability ? "Available" : "Unavailable"}
+              />
             </div>
-            <div className="flex items-center space-x-2 text-gray-600">
-              <Globe size={18} />
-              <span>{user.remote_only ? "Remote Only" : "Open to On-site"}</span>
-            </div>
-          <div className="flex items-center space-x-2 text-gray-600">
-            <DollarSign size={18} />
-            <span>
-              {formatRateRange({
-                minRate: user.min_rate ?? user.rate,
-                maxRate: user.max_rate ?? user.rate,
-                currency: "$",
-                suffix: "/hr",
-              })}
-            </span>
-          </div>
-            {/* <div className="flex items-center space-x-2 text-gray-600">
-              <User size={18} />
-              <span>ID: {user.id}</span>
-            </div> */}
-          </div>
 
-          <div className="border-t pt-4 grid grid-cols-2 gap-4">
-            <div className="flex items-center space-x-2 text-gray-600">
-              <Calendar size={18} />
-              <span>Last active: {formatDate(user.last_active)}</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              {user.availability ? (
-                <span className="flex items-center text-green-600">
-                  <CheckCircle size={18} className="mr-1" /> Available
-                </span>
-              ) : (
-                <span className="flex items-center text-red-600">
-                  <XCircle size={18} className="mr-1" /> Unavailable
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="border-t pt-4 grid grid-cols-3 gap-4">
-            <div className="flex items-center space-x-2 text-gray-600">
-              <span className="font-bold">Talent Status:</span>
-              <span className="capitalize">{user.talent_status}</span>
-            </div>
-            <div className="flex items-center space-x-2 text-gray-600">
-              <span className="font-bold">Mentor Status:</span>
-              <span>
-                {(user.mentor_status &&
-                  user.mentor_status.charAt(0).toUpperCase() +
-                    user.mentor_status.slice(1)) ||
-                  "N/A"}
-              </span>
-            </div>
-            <div className="flex items-center space-x-2 text-gray-600">
-              <span className="font-bold">Recruiter Status:</span>
-              <span>
-                {(user.recruiter_status &&
-                  user.recruiter_status.charAt(0).toUpperCase() +
-                    user.recruiter_status.slice(1)) ||
-                  "N/A"}
-              </span>
+            <div className="mt-5 border-t border-gray-100 pt-5">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                Goals
+              </p>
+              <SafeHTML
+                html={user.about_work || "<p>No work preferences provided.</p>"}
+                className="rich-text-content text-gray-700"
+              />
             </div>
           </div>
 
-          {/* <div className="border-t pt-4 grid grid-cols-3 gap-4">
-            <div className="flex items-center space-x-2 text-gray-600">
-              <span className="font-bold">Talent:</span>
-              <span>{user.talent ? "Yes" : "No"}</span>
-            </div>
-            <div className="flex items-center space-x-2 text-gray-600">
-              <span className="font-bold">Mentor:</span>
-              <span>{user.mentor ? "Yes" : "No"}</span>
-            </div>
-            <div className="flex items-center space-x-2 text-gray-600">
-              <span className="font-bold">Recruiter:</span>
-              <span>{user.recruiter ? "Yes" : "No"}</span>
-            </div>
-          </div> */}
-
-          {user.wallet_address && (
-            <div className="border-t pt-4">
-              <h2 className="text-xl font-semibold mb-2">Wallet Address</h2>
-              <p className="text-gray-700 break-all">{user.wallet_address}</p>
-            </div>
-          )}
-
-          <div className="border-t pt-4">
+          <div className={cardClass}>
+            <p className={sectionLabelClass}>CV</p>
             <CvAdminManager
               userId={user_id}
               initialCvUrl={user.cv_url}
               isApproved={isApprovedTalent}
             />
           </div>
+        </div>
 
-          <div className="border-t pt-4 flex flex-wrap gap-4">
-            {user.linkedin && (
-              <a
-                href={user.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-600 hover:text-blue-600"
-              >
-                <Linkedin size={24} />
-              </a>
-            )}
-            {user.github && (
-              <a
-                href={user.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-600 hover:text-gray-900"
-              >
-                <Github size={24} />
-              </a>
-            )}
-            {user.twitter && (
-              <a
-                href={user.twitter}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-600 hover:text-blue-400"
-              >
-                <Twitter size={24} />
-              </a>
-            )}
-            {user.website && (
-              <a
-                href={user.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-600 hover:text-green-600"
-              >
-                <Globe size={24} />
-              </a>
-            )}
+        <div className="space-y-4 sm:space-y-6">
+          <div className={cardClass}>
+            <p className={sectionLabelClass}>Actions</p>
+            <div className="space-y-2">
+              {!isApprovedTalent ? (
+                <Link href="/admin/talent-approval" className="block">
+                  <span className="flex w-full items-center gap-2 rounded-xl bg-[rgba(255,201,5,0.12)] px-4 py-2.5 text-sm font-semibold text-[#8a6d00] transition-colors hover:bg-[rgba(255,201,5,0.2)]">
+                    <CheckCircle className="h-4 w-4" />
+                    Approve Talent
+                  </span>
+                </Link>
+              ) : null}
+              <Link href="/admin/talent-approval" className="block">
+                <span className="flex w-full items-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100">
+                  <XCircle className="h-4 w-4" />
+                  Reject
+                </span>
+              </Link>
+              <Link href="/admin/talents" className="block">
+                <span className="flex w-full items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100">
+                  <Pencil className="h-4 w-4" />
+                  Edit Profile
+                </span>
+              </Link>
+            </div>
           </div>
 
-          {user.referrer && (
-            <div className="border-t pt-4">
-              <h2 className="text-xl font-semibold mb-2">Referrer</h2>
-              <p className="text-gray-700">{user.referrer}</p>
+          <div className={cardClass}>
+            <p className={sectionLabelClass}>Contact Info</p>
+            <div className="space-y-4">
+              <DetailRow icon={Mail} label="Email" value={user.email} />
+              <DetailRow
+                icon={Phone}
+                label="Phone"
+                value={`${user.phone_country_code || ""}${user.phone_number || ""}` || "Not provided"}
+              />
+              {user.linkedin ? (
+                <DetailRow icon={Linkedin} label="LinkedIn" value={user.linkedin} />
+              ) : null}
+              {user.telegram ? (
+                <DetailRow icon={Send} label="Telegram" value={`@${user.telegram}`} />
+              ) : null}
+              {user.portfolio || user.website ? (
+                <DetailRow
+                  icon={Globe}
+                  label="Portfolio"
+                  value={user.portfolio || user.website || ""}
+                />
+              ) : null}
+              <DetailRow
+                icon={Calendar}
+                label="Last Active"
+                value={formatDate(user.last_active || new Date().toISOString())}
+              />
             </div>
-          )}
+          </div>
+
+          <div className={cardClass}>
+            <p className={sectionLabelClass}>Action History</p>
+            <ActionHistory targetType="talent" targetId={user_id} />
+          </div>
         </div>
       </div>
     </AdminPageLayout>

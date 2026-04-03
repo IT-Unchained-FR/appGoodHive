@@ -8,11 +8,11 @@ import { EditTalentModal } from "@/app/components/admin/EditTalentModal";
 import { Column, EnhancedTable } from "@/app/components/admin/EnhancedTable";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
 import { AdminFilters } from "@/app/components/admin/AdminFilters";
+import { StatusPill } from "@/app/components/admin/StatusPill";
 import { ProfileData } from "@/app/talents/my-profile/page";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import Cookies from "js-cookie";
+import { Switch } from "@/components/ui/switch";
 import {
   Check,
   Copy,
@@ -29,9 +29,269 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import ApprovalPopup from "../talent-approval/components/ApprovalPopup";
+
+const EMPTY_CELL_LABEL = "N/A";
+const TALENT_VIEW_STORAGE_KEY = "admin-talents-view-mode";
+
+type TalentViewMode = "grid" | "table";
+
+const TALENT_DETAIL_LABELS: Record<string, string> = {
+  full_name: "Full Name",
+  first_name: "First Name",
+  last_name: "Last Name",
+  image_url: "Image URL",
+  cv_url: "CV URL",
+  title: "Title",
+  description: "Description",
+  country: "Country",
+  city: "City",
+  phone_country_code: "Phone Country Code",
+  phone_number: "Phone Number",
+  phone: "Phone",
+  location: "Location",
+  email: "Email",
+  about_work: "About Work",
+  min_rate: "Min Rate",
+  max_rate: "Max Rate",
+  rate: "Rate",
+  freelance_only: "Freelance Only",
+  remote_only: "Remote Only",
+  skills: "Skills",
+  linkedin: "LinkedIn",
+  github: "GitHub",
+  twitter: "Twitter",
+  stackoverflow: "Stack Overflow",
+  portfolio: "Portfolio",
+  telegram: "Telegram",
+  talent: "Talent",
+  mentor: "Mentor",
+  recruiter: "Recruiter",
+  talent_status: "Talent Status",
+  mentor_status: "Mentor Status",
+  recruiter_status: "Recruiter Status",
+  talent_status_reason: "Talent Status Reason",
+  mentor_status_reason: "Mentor Status Reason",
+  recruiter_status_reason: "Recruiter Status Reason",
+  hide_contact_details: "Hide Contact Details",
+  referrer: "Referrer",
+  referrer_name: "Referrer Name",
+  referrer_email: "Referrer Email",
+  referrer_user_id: "Referrer User ID",
+  availability: "Availability",
+  availability_status: "Availability Status",
+  availability_updated_at: "Availability Updated",
+  wallet_address: "Wallet Address",
+  approved: "Approved",
+  user_id: "User ID",
+  inreview: "In Review",
+  referred_by: "Referred By",
+  approved_roles: "Approved Roles",
+  experience: "Experience",
+  education: "Education",
+  certifications: "Certifications",
+  projects: "Projects",
+  languages: "Languages",
+  current_company: "Current Company",
+  user_created_at: "User Created",
+  created_at: "Created",
+  years_experience: "Years Experience",
+  actions: "Actions",
+};
+
+const TALENT_DETAIL_PRIORITY = [
+  "full_name",
+  "first_name",
+  "last_name",
+  "title",
+  "email",
+  "user_id",
+  "current_company",
+  "years_experience",
+  "location",
+  "country",
+  "city",
+  "phone",
+  "phone_country_code",
+  "phone_number",
+  "availability_status",
+  "availability",
+  "availability_updated_at",
+  "talent",
+  "talent_status",
+  "talent_status_reason",
+  "mentor",
+  "mentor_status",
+  "mentor_status_reason",
+  "recruiter",
+  "recruiter_status",
+  "recruiter_status_reason",
+  "approved",
+  "inreview",
+  "freelance_only",
+  "remote_only",
+  "hide_contact_details",
+  "min_rate",
+  "max_rate",
+  "rate",
+  "wallet_address",
+  "linkedin",
+  "github",
+  "twitter",
+  "stackoverflow",
+  "portfolio",
+  "telegram",
+  "image_url",
+  "cv_url",
+  "skills",
+  "description",
+  "about_work",
+  "referrer",
+  "referrer_name",
+  "referrer_email",
+  "referrer_user_id",
+  "referred_by",
+  "approved_roles",
+  "experience",
+  "education",
+  "certifications",
+  "projects",
+  "languages",
+  "created_at",
+  "user_created_at",
+];
+
+const TALENT_URL_FIELDS = new Set([
+  "image_url",
+  "cv_url",
+  "linkedin",
+  "github",
+  "twitter",
+  "stackoverflow",
+  "portfolio",
+]);
+
+const TALENT_LONG_TEXT_FIELDS = new Set([
+  "description",
+  "about_work",
+  "skills",
+  "approved_roles",
+  "experience",
+  "education",
+  "certifications",
+  "projects",
+  "languages",
+]);
+
+const TALENT_TABLE_HIDDEN_FIELDS = new Set([
+  "description",
+  "about_work",
+  "skills",
+  "approved_roles",
+  "experience",
+  "education",
+  "certifications",
+  "projects",
+  "languages",
+]);
+
+const isEmptyTalentValue = (value: unknown) => {
+  if (value === null || value === undefined) {
+    return true;
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed.length === 0 || trimmed.toLowerCase() === "null";
+  }
+
+  if (Array.isArray(value)) {
+    return value.length === 0;
+  }
+
+  if (typeof value === "object") {
+    return Object.keys(value as Record<string, unknown>).length === 0;
+  }
+
+  return false;
+};
+
+const humanizeTalentField = (field: string) =>
+  TALENT_DETAIL_LABELS[field] ||
+  field
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
+const formatTalentDateValue = (value: unknown) => {
+  const date = value instanceof Date ? value : new Date(String(value));
+
+  if (Number.isNaN(date.getTime())) {
+    return EMPTY_CELL_LABEL;
+  }
+
+  return date.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+};
+
+const getDetailedTalentValue = (row: ProfileData, key: string) => {
+  if (key === "full_name") {
+    return `${row.first_name || ""} ${row.last_name || ""}`.trim();
+  }
+
+  if (key === "location") {
+    const location = [row.city?.trim(), row.country?.trim()].filter(Boolean);
+    return location.join(", ");
+  }
+
+  if (key === "phone") {
+    const phone = row.phone_number?.trim();
+    const countryCode = row.phone_country_code?.trim();
+
+    if (!phone) {
+      return "";
+    }
+
+    return countryCode ? `+${countryCode} ${phone}` : phone;
+  }
+
+  return (row as Record<string, unknown>)[key];
+};
+
+const getDetailedTalentText = (row: ProfileData, key: string) => {
+  const value = getDetailedTalentValue(row, key);
+
+  if (isEmptyTalentValue(value)) {
+    return EMPTY_CELL_LABEL;
+  }
+
+  if (typeof value === "boolean") {
+    return value ? "Yes" : "No";
+  }
+
+  if (value instanceof Date) {
+    return formatTalentDateValue(value);
+  }
+
+  if (
+    typeof value === "string" &&
+    (key.endsWith("_at") || key === "created_at" || key === "user_created_at")
+  ) {
+    return formatTalentDateValue(value);
+  }
+
+  if (Array.isArray(value) || typeof value === "object") {
+    return JSON.stringify(value, null, 2);
+  }
+
+  return String(value).trim() || EMPTY_CELL_LABEL;
+};
 
 const getTalentApprovalStatus = (row: ProfileData) => {
   if (row.talent_status === "approved" || row.approved) return "approved";
@@ -49,32 +309,45 @@ const getTalentApprovalStatus = (row: ProfileData) => {
 
 const renderTalentApprovalBadge = (row: ProfileData) => {
   const status = getTalentApprovalStatus(row);
-  if (status === "approved") {
+  if (status === "approved") return <StatusPill status="approved" label="Approved" />;
+  if (status === "deferred") return <StatusPill status="deferred" label="Deferred" />;
+  if (status === "rejected") return <StatusPill status="rejected" label="Rejected" />;
+  return <StatusPill status="in_review" label="In Review" />;
+};
+
+const renderBooleanStatusPill = (active: boolean, activeLabel: string, inactiveLabel: string) => (
+  <StatusPill
+    status={active ? "approved" : "pending"}
+    label={active ? activeLabel : inactiveLabel}
+  />
+);
+
+const renderMentorStatusPill = (row: ProfileData) => {
+  if (row.mentor === true && row.mentor_status === "approved") {
+    return <StatusPill status="approved" label="Mentor Approved" />;
+  }
+  if (row.mentor === true && row.mentor_status === "pending") {
+    return <StatusPill status="pending" label="Mentor Pending" />;
+  }
+  if (row.mentor === true && row.mentor_status === "deferred") {
     return (
-      <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">
-        Approved
-      </Badge>
+      <StatusPill
+        status="deferred"
+        label="Mentor Deferred"
+        title={row.mentor_status_reason || "Reapply later"}
+      />
     );
   }
-  if (status === "deferred") {
+  if (row.mentor === true && row.mentor_status === "rejected") {
     return (
-      <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
-        Deferred
-      </Badge>
+      <StatusPill
+        status="rejected"
+        label="Mentor Rejected"
+        title={row.mentor_status_reason || "Rejected"}
+      />
     );
   }
-  if (status === "rejected") {
-    return (
-      <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700">
-        Rejected
-      </Badge>
-    );
-  }
-  return (
-    <Badge variant="outline" className="border-yellow-200 bg-yellow-50 text-yellow-700">
-      In Review
-    </Badge>
-  );
+  return <StatusPill status="pending" label="Mentor No" />;
 };
 
 const getReferredByLabel = (row: ProfileData) => {
@@ -119,10 +392,26 @@ const getDisplayLink = (value?: string | null) => {
   return value.replace(/^https?:\/\//, "");
 };
 
+const TALENT_URL_BUTTON_LABELS: Record<string, string> = {
+  image_url: "View Image",
+  cv_url: "Open CV",
+  linkedin: "Open LinkedIn",
+  github: "Open GitHub",
+  twitter: "Open X",
+  stackoverflow: "Open StackOverflow",
+  portfolio: "Open Portfolio",
+};
+
 export default function AdminManageTalents() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const searchParamsString = searchParams.toString();
+  const serverSearchQuery = searchParams.get("search") || "";
+  const currentPage = Math.max(1, Number(searchParams.get("page") || "1") || 1);
+  const currentPageSize = Math.max(
+    1,
+    Number(searchParams.get("limit") || "25") || 25,
+  );
   const [talents, setTalents] = useState<ProfileData[]>([]);
   const [totalTalents, setTotalTalents] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -134,33 +423,76 @@ export default function AdminManageTalents() {
   const [showApprovePopup, setShowApprovePopup] = useState(false);
   const [editingTalent, setEditingTalent] = useState<ProfileData | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [viewMode, setViewMode] = useState<TalentViewMode>("grid");
+  const [searchQuery, setSearchQuery] = useState(serverSearchQuery);
 
   const getSafeValue = (value?: string | null) =>
     value && value !== "null" ? value : undefined;
 
-  const getAuthHeaders = () => {
-    const token = Cookies.get("admin_token");
-    if (!token) {
-      router.push("/admin/login");
-      return null;
+  useEffect(() => {
+    const savedViewMode = window.localStorage.getItem(TALENT_VIEW_STORAGE_KEY);
+    if (savedViewMode === "grid" || savedViewMode === "table") {
+      setViewMode(savedViewMode);
     }
-    return {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-  };
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(TALENT_VIEW_STORAGE_KEY, viewMode);
+  }, [viewMode]);
+
+  useEffect(() => {
+    setSearchQuery(serverSearchQuery);
+  }, [serverSearchQuery]);
+
+  const updateTalentQueryParams = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParamsString);
+
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value === null || value === "") {
+          params.delete(key);
+        } else {
+          params.set(key, value);
+        }
+      });
+
+      const nextQuery = params.toString();
+      router.replace(nextQuery ? `/admin/talents?${nextQuery}` : "/admin/talents", {
+        scroll: false,
+      });
+    },
+    [router, searchParamsString],
+  );
+
+  useEffect(() => {
+    const normalizedSearch = searchQuery.trim().replace(/\s+/g, " ");
+    const normalizedServerSearch = serverSearchQuery
+      .trim()
+      .replace(/\s+/g, " ");
+
+    if (normalizedSearch === normalizedServerSearch) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      updateTalentQueryParams({
+        search: normalizedSearch || null,
+        page: "1",
+      });
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [searchQuery, serverSearchQuery, updateTalentQueryParams]);
 
   const fetchAllTalents = async () => {
     try {
       setLoading(true);
-      const headers = getAuthHeaders();
-      if (!headers) return;
 
       // Build URL with filter params
       const params = new URLSearchParams(searchParamsString);
       const url = `/api/admin/talents${params.toString() ? `?${params.toString()}` : ''}`;
 
-      const response = await fetch(url, { headers });
+      const response = await fetch(url);
 
       if (response.status === 401) {
         router.push("/admin/login");
@@ -197,14 +529,18 @@ export default function AdminManageTalents() {
 
     try {
       setDeleteLoading(true);
-      const headers = getAuthHeaders();
-      if (!headers) return;
-
       const response = await fetch(`/api/admin/talents/${userToDelete}`, {
         method: "DELETE",
-        headers,
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ userId: userToDelete }),
       });
+
+      if (response.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
 
       if (!response.ok) {
         throw new Error("Failed to delete talent");
@@ -226,14 +562,18 @@ export default function AdminManageTalents() {
   const handleSaveTalent = async (updatedTalent: ProfileData) => {
     try {
       setLoading(true);
-      const headers = getAuthHeaders();
-      if (!headers) return;
-
       const response = await fetch(`/api/admin/talents/${updatedTalent.user_id}`, {
         method: "PUT",
-        headers,
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(updatedTalent),
       });
+
+      if (response.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
 
       if (!response.ok) {
         throw new Error("Failed to update talent");
@@ -250,12 +590,96 @@ export default function AdminManageTalents() {
     }
   };
 
-  const columns: Column<ProfileData>[] = [
+  const renderTalentActions = useCallback(
+    (row: ProfileData) => (
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          title="Copy email"
+          onClick={() => {
+            navigator.clipboard.writeText(row.email || "");
+            toast.success("Email copied!");
+          }}
+        >
+          <Copy className="h-4 w-4 text-slate-600" />
+        </Button>
+        {row.linkedin ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            title="Open LinkedIn"
+            onClick={() => {
+              window.open(row.linkedin || "", "_blank", "noopener,noreferrer");
+            }}
+          >
+            <ExternalLink className="h-4 w-4 text-slate-600" />
+          </Button>
+        ) : null}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          title="Edit talent"
+          onClick={() => {
+            setEditingTalent(row);
+            setShowEditModal(true);
+          }}
+          disabled={loading}
+        >
+          <Pencil className="h-4 w-4 text-blue-500" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          title="Approve/Manage roles"
+          onClick={() => {
+            setSelectedUser(row);
+            setShowApprovePopup(true);
+          }}
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          title="Delete talent"
+          onClick={() => {
+            setUserToDelete(row.user_id || "");
+            setSelectedTalent(row);
+            setShowDeleteConfirm(true);
+          }}
+          disabled={loading}
+        >
+          <Trash2 className="h-4 w-4 text-red-500" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="whitespace-nowrap"
+          onClick={() => {
+            window.open(`/admin/talent/${row.user_id}`, "_blank");
+          }}
+        >
+          View Profile
+        </Button>
+      </div>
+    ),
+    [loading],
+  );
+
+  const compactColumns: Column<ProfileData>[] = [
     {
       key: "name",
       header: "Talent Name",
       width: "15%",
       sortable: true,
+      exportValue: (row) =>
+        `${row.first_name || ""} ${row.last_name || ""}`.trim(),
       render: (value, row) => (
         <div className="flex items-center gap-2">
           <Avatar className="h-12 w-12">
@@ -428,7 +852,7 @@ export default function AdminManageTalents() {
               </button>
             </>
           ) : (
-            <Badge className="bg-orange-500 text-white">Not Available</Badge>
+            <StatusPill status="pending" label="Not Available" />
           )}
         </div>
       ),
@@ -438,15 +862,8 @@ export default function AdminManageTalents() {
       header: "Talent Status",
       width: "8%",
       sortable: true,
-      render: (value, row) => (
-        <Badge
-          className={`${
-            row.talent === true ? "bg-green-500" : "bg-orange-500"
-          } text-white`}
-        >
-          {row.talent ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
-        </Badge>
-      ),
+      render: (_value, row) =>
+        renderBooleanStatusPill(Boolean(row.talent), "Talent Yes", "Talent No"),
     },
     {
       key: "talent_status",
@@ -467,83 +884,23 @@ export default function AdminManageTalents() {
       header: "Mentor Status",
       width: "8%",
       sortable: true,
-      render: (value, row) => {
-        const isMentorApplicant = row.mentor === true;
-        const mentorStatus = row.mentor_status;
-
-        // Applied for mentor and approved
-        if (isMentorApplicant && mentorStatus === 'approved') {
-          return (
-            <Badge className="bg-green-500 text-white">
-              <Check className="h-3 w-3" />
-            </Badge>
-          );
-        }
-
-        // Applied for mentor but pending approval
-        if (isMentorApplicant && mentorStatus === 'pending') {
-          return (
-            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-              Pending
-            </Badge>
-          );
-        }
-
-        // Applied for mentor but deferred (come back later)
-        if (isMentorApplicant && mentorStatus === 'deferred') {
-          return (
-            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200" title={row.mentor_status_reason || 'Reapply later'}>
-              Deferred
-            </Badge>
-          );
-        }
-
-        // Applied for mentor but rejected
-        if (isMentorApplicant && mentorStatus === 'rejected') {
-          return (
-            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200" title={row.mentor_status_reason || 'Rejected'}>
-              Rejected
-            </Badge>
-          );
-        }
-
-        // Did not apply for mentor
-        return (
-          <Badge className="bg-orange-500 text-white">
-            <X className="h-3 w-3" />
-          </Badge>
-        );
-      },
+      render: (_value, row) => renderMentorStatusPill(row),
     },
     {
       key: "recruiter",
       header: "Recruiter Status",
       width: "8%",
       sortable: true,
-      render: (value, row) => (
-        <Badge
-          className={`${
-            row.recruiter === true ? "bg-green-500" : "bg-orange-500"
-          } text-white`}
-        >
-          {row.recruiter ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
-        </Badge>
-      ),
+      render: (_value, row) =>
+        renderBooleanStatusPill(Boolean(row.recruiter), "Recruiter Yes", "Recruiter No"),
     },
     {
       key: "approved",
       header: "Account Status",
       width: "8%",
       sortable: true,
-      render: (value, row) => (
-        <Badge
-          className={`${
-            row.approved ? "bg-green-500" : "bg-orange-500"
-          } text-white`}
-        >
-          {row.approved ? "Approved" : "Pending"}
-        </Badge>
-      ),
+      render: (_value, row) =>
+        renderBooleanStatusPill(Boolean(row.approved), "Approved", "Pending"),
     },
     {
       key: "created_at",
@@ -564,86 +921,125 @@ export default function AdminManageTalents() {
       key: "actions",
       header: "Actions",
       width: "12%",
-      render: (value, row) => (
-        <div className="flex items-center justify-end gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            title="Copy email"
-            onClick={() => {
-              navigator.clipboard.writeText(row.email || "");
-              toast.success("Email copied!");
-            }}
-          >
-            <Copy className="h-4 w-4 text-slate-600" />
-          </Button>
-          {row.linkedin ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              title="Open LinkedIn"
-              onClick={() => {
-                window.open(row.linkedin || "", "_blank", "noopener,noreferrer");
-              }}
-            >
-              <ExternalLink className="h-4 w-4 text-slate-600" />
-            </Button>
-          ) : null}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            title="Edit talent"
-            onClick={() => {
-              setEditingTalent(row);
-              setShowEditModal(true);
-            }}
-            disabled={loading}
-          >
-            <Pencil className="h-4 w-4 text-blue-500" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            title="Approve/Manage roles"
-            onClick={() => {
-              setSelectedUser(row);
-              setShowApprovePopup(true);
-            }}
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            title="Delete talent"
-            onClick={() => {
-              setUserToDelete(row.user_id || "");
-              setSelectedTalent(row);
-              setShowDeleteConfirm(true);
-            }}
-            disabled={loading}
-          >
-            <Trash2 className="h-4 w-4 text-red-500" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="whitespace-nowrap"
-            onClick={() => {
-              window.open(`/admin/talent/${row.user_id}`, "_blank");
-            }}
-          >
-            View Profile
-          </Button>
-        </div>
-      ),
+      render: (_value, row) => renderTalentActions(row),
     },
   ];
+
+  const detailedColumns = useMemo<Column<ProfileData>[]>(() => {
+    const dynamicKeys = new Set<string>();
+
+    talents.forEach((talent) => {
+      Object.keys(talent).forEach((key) => dynamicKeys.add(key));
+    });
+
+    const orderedKeys = [
+      ...TALENT_DETAIL_PRIORITY.filter(
+        (key) =>
+          key === "full_name" ||
+          key === "location" ||
+          key === "phone" ||
+          (!TALENT_TABLE_HIDDEN_FIELDS.has(key) && dynamicKeys.has(key)),
+      ),
+      ...Array.from(dynamicKeys)
+        .filter(
+          (key) =>
+            !TALENT_DETAIL_PRIORITY.includes(key) &&
+            !TALENT_TABLE_HIDDEN_FIELDS.has(key),
+        )
+        .sort((left, right) => left.localeCompare(right)),
+    ];
+
+    return [
+      ...orderedKeys.map((key) => ({
+        key,
+        header: humanizeTalentField(key),
+        width: TALENT_LONG_TEXT_FIELDS.has(key) ? "320px" : "180px",
+        exportValue: (row: ProfileData) => getDetailedTalentText(row, key),
+        searchValue: (row: ProfileData) => getDetailedTalentText(row, key),
+        render: (_value: unknown, row: ProfileData) => {
+          const rawValue = getDetailedTalentValue(row, key);
+          const displayValue = getDetailedTalentText(row, key);
+
+          if (displayValue === EMPTY_CELL_LABEL) {
+            return <span className="text-sm text-slate-500">{EMPTY_CELL_LABEL}</span>;
+          }
+
+          if (typeof rawValue === "boolean") {
+            return (
+              <StatusPill
+                status={rawValue ? "approved" : "pending"}
+                label={rawValue ? "Yes" : "No"}
+              />
+            );
+          }
+
+          if (
+            typeof rawValue === "string" &&
+            key.toLowerCase().includes("status") &&
+            !key.toLowerCase().includes("reason")
+          ) {
+            return (
+              <StatusPill
+                status={rawValue}
+                label={rawValue.replace(/_/g, " ")}
+              />
+            );
+          }
+
+          if (TALENT_URL_FIELDS.has(key) && typeof rawValue === "string") {
+            return (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 whitespace-nowrap"
+                onClick={() => {
+                  window.open(rawValue, "_blank", "noopener,noreferrer");
+                }}
+              >
+                {TALENT_URL_BUTTON_LABELS[key] || `Open ${humanizeTalentField(key)}`}
+              </Button>
+            );
+          }
+
+          if (Array.isArray(rawValue) || typeof rawValue === "object") {
+            return (
+              <span
+                className="block max-w-[14rem] truncate text-sm text-slate-700"
+                title={displayValue}
+              >
+                {displayValue}
+              </span>
+            );
+          }
+
+          return (
+            <span
+              className="block max-w-[14rem] truncate text-sm text-slate-700"
+              title={displayValue}
+            >
+              {displayValue}
+            </span>
+          );
+        },
+      })),
+      {
+        key: "actions",
+        header: "Actions",
+        width: "240px",
+        render: (_value, row) => renderTalentActions(row),
+        exportValue: () => EMPTY_CELL_LABEL,
+        searchValue: () => "",
+      },
+    ];
+  }, [renderTalentActions, talents]);
+
+  const activeColumns = (viewMode === "grid" ? compactColumns : detailedColumns).map(
+    (column) => ({
+      ...column,
+      sortable: false,
+    }),
+  );
 
   const talentActions = [
     {
@@ -697,18 +1093,6 @@ export default function AdminManageTalents() {
                 { value: 'talent', label: 'Talent' },
                 { value: 'mentor', label: 'Mentor' },
                 { value: 'recruiter', label: 'Recruiter' },
-              ],
-            },
-            {
-              key: 'mentorStatus',
-              label: 'Mentor Status',
-              options: [
-                { value: 'all', label: 'All mentor statuses' },
-                { value: 'approved', label: '✓ Approved mentors' },
-                { value: 'pending', label: '⏳ Pending review' },
-                { value: 'deferred', label: '🔄 Deferred (reapply later)' },
-                { value: 'rejected', label: '✗ Rejected' },
-                { value: 'not-applied', label: 'Not applied' },
               ],
             },
           ],
@@ -768,37 +1152,86 @@ export default function AdminManageTalents() {
                 {totalTalents || talents?.length || 0} talents • search, edit roles, or approve.
               </p>
             </div>
+            <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+              <span
+                className={`text-sm font-medium ${
+                  viewMode === "grid" ? "text-gray-900" : "text-gray-500"
+                }`}
+              >
+                Grid view
+              </span>
+              <Switch
+                checked={viewMode === "table"}
+                onCheckedChange={(checked) =>
+                  setViewMode(checked ? "table" : "grid")
+                }
+                aria-label="Toggle talent view mode"
+              />
+              <span
+                className={`text-sm font-medium ${
+                  viewMode === "table" ? "text-gray-900" : "text-gray-500"
+                }`}
+              >
+                Row table view
+              </span>
+            </div>
           </div>
+          {viewMode === "table" ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              Detailed table mode shows the full talent payload returned by the admin API.
+              Empty values appear as {EMPTY_CELL_LABEL}, and you can scroll horizontally to inspect every column.
+            </div>
+          ) : null}
           <EnhancedTable
+            key={viewMode}
             data={talents}
-            columns={columns}
+            columns={activeColumns}
             searchable={true}
-            searchPlaceholder="Search by name, email, user ID, or wallet address..."
+            searchQuery={searchQuery}
+            onSearchQueryChange={setSearchQuery}
+            disableClientSearch
+            currentPage={currentPage}
+            onPageChange={(page) => updateTalentQueryParams({ page: String(page) })}
+            pageSize={currentPageSize}
+            onPageSizeChange={(pageSize) =>
+              updateTalentQueryParams({ limit: String(pageSize), page: "1" })
+            }
+            totalItems={totalTalents}
+            disableClientPagination
+            searchPlaceholder={
+              viewMode === "grid"
+                ? "Search by first name, last name, full name, email, user ID, or profile links..."
+                : "Search the full talent directory..."
+            }
             pagination={true}
-            itemsPerPage={10}
+            itemsPerPage={viewMode === "grid" ? 10 : 25}
             exportable={true}
             loading={loading}
             emptyMessage="No talents found"
-            pageSizeOptions={[10, 25, 50]}
-            mobileCardView
-            renderMobileCard={(talent) => (
-              <TalentCard
-                talent={talent}
-                onEdit={() => {
-                  setEditingTalent(talent);
-                  setShowEditModal(true);
-                }}
-                onApprove={() => {
-                  setSelectedUser(talent);
-                  setShowApprovePopup(true);
-                }}
-                onDelete={() => {
-                  setUserToDelete(talent.user_id || "");
-                  setSelectedTalent(talent);
-                  setShowDeleteConfirm(true);
-                }}
-              />
-            )}
+            pageSizeOptions={viewMode === "grid" ? [10, 25, 50] : [10, 25, 50, 100]}
+            mobileCardView={viewMode === "grid"}
+            renderMobileCard={
+              viewMode === "grid"
+                ? (talent) => (
+                    <TalentCard
+                      talent={talent}
+                      onEdit={() => {
+                        setEditingTalent(talent);
+                        setShowEditModal(true);
+                      }}
+                      onApprove={() => {
+                        setSelectedUser(talent);
+                        setShowApprovePopup(true);
+                      }}
+                      onDelete={() => {
+                        setUserToDelete(talent.user_id || "");
+                        setSelectedTalent(talent);
+                        setShowDeleteConfirm(true);
+                      }}
+                    />
+                  )
+                : undefined
+            }
           />
         </div>
       </div>
@@ -848,38 +1281,10 @@ function TalentCard({
             Referred by: {getReferredByLabel(talent)}
           </div>
           <div className="flex flex-wrap gap-2 mt-2">
-            <Badge className={talent.talent ? "bg-green-500 text-white" : "bg-orange-500 text-white"}>
-              Talent {talent.talent ? "Yes" : "No"}
-            </Badge>
+            {renderBooleanStatusPill(Boolean(talent.talent), "Talent Yes", "Talent No")}
             {renderTalentApprovalBadge(talent)}
-            <Badge
-              className={
-                talent.mentor && talent.mentor_status === 'approved'
-                  ? "bg-green-500 text-white"
-                  : talent.mentor && talent.mentor_status === 'pending'
-                  ? "bg-yellow-500 text-white"
-                  : talent.mentor && talent.mentor_status === 'deferred'
-                  ? "bg-blue-500 text-white"
-                  : talent.mentor && talent.mentor_status === 'rejected'
-                  ? "bg-red-500 text-white"
-                  : "bg-orange-500 text-white"
-              }
-              title={talent.mentor_status_reason || undefined}
-            >
-              Mentor{" "}
-              {talent.mentor && talent.mentor_status === 'approved'
-                ? "Approved"
-                : talent.mentor && talent.mentor_status === 'pending'
-                ? "Pending"
-                : talent.mentor && talent.mentor_status === 'deferred'
-                ? "Deferred"
-                : talent.mentor && talent.mentor_status === 'rejected'
-                ? "Rejected"
-                : "No"}
-            </Badge>
-            <Badge className={talent.recruiter ? "bg-green-500 text-white" : "bg-orange-500 text-white"}>
-              Recruiter {talent.recruiter ? "Yes" : "No"}
-            </Badge>
+            {renderMentorStatusPill(talent)}
+            {renderBooleanStatusPill(Boolean(talent.recruiter), "Recruiter Yes", "Recruiter No")}
           </div>
         </div>
       </div>
@@ -890,9 +1295,7 @@ function TalentCard({
             ? `${talent.wallet_address.slice(0, 6)}...${talent.wallet_address.slice(-4)}`
             : "N/A"}
         </span>
-        <Badge className={talent.approved ? "bg-green-500 text-white" : "bg-orange-500 text-white"}>
-          {talent.approved ? "Approved" : "Pending"}
-        </Badge>
+        {renderBooleanStatusPill(Boolean(talent.approved), "Approved", "Pending")}
       </div>
       <div className="text-xs text-gray-500">
         Created: {talent.created_at ? new Date(talent.created_at).toLocaleDateString() : "N/A"}

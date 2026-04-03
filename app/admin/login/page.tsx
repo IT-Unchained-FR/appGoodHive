@@ -1,12 +1,9 @@
 "use client";
 
 import React from "react";
-import Cookies from "js-cookie";
-import toast, { Toaster } from "react-hot-toast";
-import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 const AdminLogin = () => {
-  const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -31,14 +28,15 @@ const AdminLogin = () => {
       const responseBody = await response.json();
 
       if (response.ok) {
-        Cookies.set("admin_token", responseBody.token);
-        Cookies.set("admin_user", JSON.stringify(responseBody.user));
-        router.push("/admin");
+        if (responseBody.user?.email) {
+          localStorage.setItem("admin_email", responseBody.user.email);
+        }
         toast.success("Login successful!");
+        window.location.assign("/admin");
       } else {
         toast.error(responseBody.message || "Login failed");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("An error occurred during login");
     } finally {
       setIsLoading(false);
@@ -46,21 +44,28 @@ const AdminLogin = () => {
   };
 
   return (
-    <>
-      <main className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-          <h1 className="text-2xl font-bold text-center mb-6">Admin Login</h1>
+    <main className="min-h-screen bg-[#f4f6f8] flex items-center justify-center p-4">
+      <div className="w-full max-w-sm">
+        <div className="mb-8 flex items-center justify-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFC905]">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 text-black">
+              <path d="M12 2L4 6.5v11L12 22l8-4.5v-11L12 2zm6 14.27L12 19.9l-6-3.63V7.73L12 4.1l6 3.63v8.54z" />
+            </svg>
+          </div>
+          <span className="text-xl font-bold text-gray-900">GoodHive Admin</span>
+        </div>
+
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
+          <h2 className="mb-1 text-lg font-bold text-gray-900">Sign in</h2>
+          <p className="mb-6 text-sm text-gray-400">Access your admin dashboard</p>
+
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email Field */}
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
                 Email
               </label>
               <input
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FFC905] focus:border-transparent"
+                className="h-11 w-full rounded-xl border border-gray-200 px-3.5 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#FFC905]"
                 placeholder="Enter admin email"
                 name="email"
                 type="email"
@@ -68,16 +73,12 @@ const AdminLogin = () => {
               />
             </div>
 
-            {/* Password Field */}
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="password" className="mb-1 block text-sm font-medium text-gray-700">
                 Password
               </label>
               <input
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FFC905] focus:border-transparent"
+                className="h-11 w-full rounded-xl border border-gray-200 px-3.5 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#FFC905]"
                 placeholder="Enter password"
                 name="password"
                 type="password"
@@ -85,12 +86,11 @@ const AdminLogin = () => {
               />
             </div>
 
-            {/* Submit Button */}
             <button
-              className={`w-full py-2 px-4 rounded-md text-black font-medium ${
+              className={`h-11 w-full rounded-xl font-semibold text-black transition-colors ${
                 isLoading
-                  ? "bg-[#FFC905] opacity-50 cursor-not-allowed"
-                  : "bg-[#FFC905] hover:bg-[#FFD935]"
+                  ? "cursor-not-allowed bg-[#FFC905] opacity-50"
+                  : "bg-[#FFC905] hover:bg-[#e6b400]"
               }`}
               type="submit"
               disabled={isLoading}
@@ -99,8 +99,8 @@ const AdminLogin = () => {
             </button>
           </form>
         </div>
-      </main>
-    </>
+      </div>
+    </main>
   );
 };
 

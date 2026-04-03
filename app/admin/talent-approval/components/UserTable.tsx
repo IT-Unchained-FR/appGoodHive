@@ -13,6 +13,11 @@ import toast from "react-hot-toast";
 import ApprovalPopup from "./ApprovalPopup";
 import moment from "moment";
 
+type ApprovedRole = {
+  role: string;
+  approved_at: string;
+};
+
 interface UserTableProps {
   users: ProfileData[];
   fetchData: () => void;
@@ -64,7 +69,7 @@ export function UserTable({
               <TableCell>{user.mentor ? "Yes" : "No"}</TableCell>
               <TableCell>{user.recruiter ? "Yes" : "No"}</TableCell>
               <TableCell>
-                {user.approved_roles?.map((role: { role: string; approved_at: string }, index: number) => {
+                {(user.approved_roles as ApprovedRole[] | undefined)?.map((role, index) => {
                   return (
                     <div key={index}>
                       {role.role.charAt(0).toUpperCase() + role.role.slice(1)} (

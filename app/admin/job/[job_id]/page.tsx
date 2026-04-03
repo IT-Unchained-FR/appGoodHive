@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { Spinner } from "@/app/components/admin/Spinner";
 import { IJobOffer } from "@/interfaces/job-offer";
@@ -25,7 +25,6 @@ import {
 } from "@/app/constants/common";
 import { chains } from "@/app/constants/chains";
 import { Textarea } from "@/components/ui/textarea";
-import Cookies from "js-cookie";
 
 // Currency options from tokens.json
 const currencyOptions = [
@@ -37,6 +36,7 @@ const currencyOptions = [
 
 export default function AdminEditJobPage() {
   const params = useParams();
+  const router = useRouter();
   const job_id = params.job_id as string;
 
   const [job, setJob] = useState<IJobOffer | null>(null);
@@ -52,24 +52,21 @@ export default function AdminEditJobPage() {
         }
       : undefined;
 
-  const getAuthHeaders = () => {
-    const token = Cookies.get("admin_token");
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-
-    return headers;
-  };
-
   useEffect(() => {
     if (job_id) {
       fetch(`/api/admin/job/${job_id}`)
-        .then((res) => res.json())
+        .then(async (res) => {
+          if (res.status === 401) {
+            router.push("/admin/login");
+            return null;
+          }
+
+          return res.json();
+        })
         .then((data) => {
+          if (!data) {
+            return;
+          }
           setJob(data);
           setInitialJob(data);
           setReviewFeedback(data.admin_feedback || "");
@@ -81,7 +78,7 @@ export default function AdminEditJobPage() {
           setLoading(false);
         });
     }
-  }, [job_id]);
+  }, [job_id, router]);
 
   const hasChanges = useMemo(() => {
     if (!job || !initialJob) return false;
@@ -118,6 +115,11 @@ export default function AdminEditJobPage() {
         body: JSON.stringify(job),
       });
 
+      if (response.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
+
       if (response.ok) {
         const updatedJob = await response.json();
         setJob(updatedJob);
@@ -139,12 +141,19 @@ export default function AdminEditJobPage() {
     try {
       const response = await fetch(`/api/admin/jobs/${job_id}/review`, {
         method: "POST",
-        headers: getAuthHeaders(),
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           action,
           feedback: reviewFeedback,
         }),
       });
+
+      if (response.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
 
       const data = await response.json();
       if (!response.ok) {
@@ -211,9 +220,9 @@ export default function AdminEditJobPage() {
     >
       <div className="space-y-8 max-w-4xl mx-auto">
         {/* Job Details Section */}
-        <div className="p-6 bg-white rounded-lg shadow">
-          <h3 className="text-xl font-semibold mb-6">Job Details</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="rounded-lg bg-white p-4 shadow sm:p-6">
+          <h3 className="mb-6 text-xl font-semibold">Job Details</h3>
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="title">Job Title</Label>
               <Input
@@ -326,9 +335,9 @@ export default function AdminEditJobPage() {
         </div>
 
         {/* Technical Details Section */}
-        <div className="p-6 bg-white rounded-lg shadow">
-          <h3 className="text-xl font-semibold mb-6">Technical Details</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="rounded-lg bg-white p-4 shadow sm:p-6">
+          <h3 className="mb-6 text-xl font-semibold">Technical Details</h3>
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="skills">Skills (comma-separated)</Label>
               <Input
@@ -342,9 +351,9 @@ export default function AdminEditJobPage() {
         </div>
 
         {/* Budget & Chain Section */}
-        <div className="p-6 bg-white rounded-lg shadow">
-          <h3 className="text-xl font-semibold mb-6">Budget & Blockchain</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="rounded-lg bg-white p-4 shadow sm:p-6">
+          <h3 className="mb-6 text-xl font-semibold">Budget & Blockchain</h3>
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="budget">Budget</Label>
               <Input
@@ -397,8 +406,8 @@ export default function AdminEditJobPage() {
         </div>
 
         {/* Status Section */}
-        <div className="p-6 bg-white rounded-lg shadow">
-          <h3 className="text-xl font-semibold mb-6">Status</h3>
+        <div className="rounded-lg bg-white p-4 shadow sm:p-6">
+          <h3 className="mb-6 text-xl font-semibold">Status</h3>
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="review_status">Review Status</Label>
@@ -408,7 +417,7 @@ export default function AdminEditJobPage() {
                 disabled
               />
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:space-x-4">
               <Label htmlFor="published" className="flex-grow">
                 Published
               </Label>
@@ -421,7 +430,7 @@ export default function AdminEditJobPage() {
                 }
               />
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:space-x-4">
               <Label htmlFor="in_saving_stage" className="flex-grow">
                 In Saving Stage
               </Label>
@@ -452,8 +461,8 @@ export default function AdminEditJobPage() {
           </div>
         </div>
 
-        <div className="p-6 bg-white rounded-lg shadow">
-          <h3 className="text-xl font-semibold mb-6">Admin Review</h3>
+        <div className="rounded-lg bg-white p-4 shadow sm:p-6">
+          <h3 className="mb-6 text-xl font-semibold">Admin Review</h3>
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="admin_feedback">Feedback</Label>
@@ -465,12 +474,13 @@ export default function AdminEditJobPage() {
                 placeholder="Add optional feedback for the company..."
               />
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col-reverse gap-3 sm:flex-row">
               <Button
                 type="button"
                 onClick={() => handleReview("approve")}
                 disabled={isReviewing}
                 size="lg"
+                className="w-full sm:w-auto"
               >
                 Approve Job
               </Button>
@@ -480,6 +490,7 @@ export default function AdminEditJobPage() {
                 disabled={isReviewing}
                 size="lg"
                 variant="destructive"
+                className="w-full sm:w-auto"
               >
                 Reject Job
               </Button>
@@ -492,6 +503,7 @@ export default function AdminEditJobPage() {
             onClick={handleSave}
             disabled={!hasChanges || isSaving}
             size="lg"
+            className="w-full sm:w-auto"
           >
             {isSaving ? "Saving..." : "Save Changes"}
           </Button>

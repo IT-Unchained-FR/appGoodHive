@@ -46,6 +46,7 @@ export default function ApprovalPopup({
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           userId: user.user_id,
         }),

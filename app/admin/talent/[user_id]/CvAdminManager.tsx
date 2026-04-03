@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { FileText, Trash2, Upload } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -138,7 +137,7 @@ export default function CvAdminManager({
       <div className="flex items-center gap-3">
         <span className="font-semibold text-gray-700">CV</span>
         {cvUrl ? (
-          <Link
+          <a
             href={cvUrl}
             target="_blank"
             rel="noopener noreferrer"
@@ -146,7 +145,7 @@ export default function CvAdminManager({
           >
             <FileText size={16} />
             View current CV
-          </Link>
+          </a>
         ) : (
           <span className="text-sm text-gray-500">No CV on file</span>
         )}

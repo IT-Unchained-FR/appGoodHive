@@ -4,9 +4,7 @@ import { useState } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,16 +52,23 @@ export function DeleteConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-red-600">
-            <AlertTriangle className="h-5 w-5" />
-            Delete {entityType.charAt(0).toUpperCase() + entityType.slice(1)}
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[460px] p-0">
+        <div className="border-b border-gray-100 px-6 pb-4 pt-6">
+          <div className="mb-1 flex items-center gap-3">
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-red-50">
+              <AlertTriangle className="h-4 w-4 text-red-500" />
+            </div>
+            <DialogTitle className="text-base font-bold text-gray-900">
+              Delete {entityType.charAt(0).toUpperCase() + entityType.slice(1)}
+            </DialogTitle>
+          </div>
+          <p className="ml-11 text-xs text-red-400">
+            This action is permanent and cannot be undone
+          </p>
+        </div>
 
-        <div className="space-y-4 py-4">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="space-y-4 px-6 py-5">
+          <div className="rounded-xl border border-red-100 bg-red-50 p-4">
             <p className="text-sm text-red-800 font-semibold mb-2">
               You are about to permanently delete:
             </p>
@@ -108,17 +113,20 @@ export function DeleteConfirmDialog({
               )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="confirm-delete" className="text-sm font-medium">
-              Type <span className="font-mono font-bold">DELETE</span> to
-              confirm:
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="confirm-delete"
+              className="block text-xs font-semibold uppercase tracking-wide text-gray-500"
+            >
+              Type <span className="font-mono font-bold text-gray-700">DELETE</span>{" "}
+              to confirm
             </Label>
             <Input
               id="confirm-delete"
               value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)}
-              placeholder="Type DELETE to confirm"
-              className="font-mono"
+              placeholder="DELETE"
+              className="h-10 rounded-xl border-gray-200 font-mono focus:border-red-300 focus:ring-red-300"
               disabled={loading}
             />
           </div>
@@ -129,22 +137,23 @@ export function DeleteConfirmDialog({
           </p>
         </div>
 
-        <DialogFooter>
+        <div className="flex flex-col-reverse gap-2 border-t border-gray-100 px-6 pb-6 pt-4 sm:flex-row">
           <Button
             variant="outline"
+            className="h-10 flex-1 rounded-xl"
             onClick={() => handleOpenChange(false)}
             disabled={loading}
           >
             Cancel
           </Button>
           <Button
-            variant="destructive"
+            className="h-10 flex-1 rounded-xl bg-red-500 font-semibold text-white hover:bg-red-600"
             onClick={handleConfirm}
             disabled={confirmText.toLowerCase() !== "delete" || loading}
           >
             {loading ? "Deleting..." : "Delete Permanently"}
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

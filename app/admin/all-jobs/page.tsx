@@ -7,7 +7,7 @@ import { Column, EnhancedTable } from "@/app/components/admin/EnhancedTable";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
 import { AdminFilters } from "@/app/components/admin/AdminFilters";
 import { DeleteConfirmDialog } from "@/app/components/admin/DeleteConfirmDialog";
-import { Badge } from "@/components/ui/badge";
+import { StatusPill } from "@/app/components/admin/StatusPill";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { IJobOffer } from "@/interfaces/job-offer";
 import Image from "next/image";
-import Cookies from "js-cookie";
 import { Download, Filter, MoreHorizontal } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -36,18 +35,6 @@ export default function AdminAllJobs() {
   } | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const getAuthHeaders = () => {
-    const token = Cookies.get("admin_token");
-    if (!token) {
-      router.push("/admin/login");
-      return null;
-    }
-    return {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-  };
-
   const fetchJobs = async () => {
     try {
       setLoading(true);
@@ -56,6 +43,10 @@ export default function AdminAllJobs() {
       const url = `/api/admin/jobs${params.toString() ? `?${params.toString()}` : ''}`;
 
       const response = await fetch(url);
+      if (response.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
       if (!response.ok) {
         throw new Error(`Failed to fetch jobs: ${response.status}`);
       }
@@ -78,13 +69,14 @@ export default function AdminAllJobs() {
 
     try {
       setDeleteLoading(true);
-      const headers = getAuthHeaders();
-      if (!headers) return;
-
       const response = await fetch(`/api/admin/job/${jobToDelete.id}`, {
         method: "DELETE",
-        headers,
       });
+
+      if (response.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
 
       const data = await response.json();
 
@@ -111,17 +103,17 @@ export default function AdminAllJobs() {
 
     switch (status) {
       case "pending_review":
-        return { label: "Pending Review", variant: "secondary" as const, className: "bg-amber-100 text-amber-900" };
+        return { label: "Pending Review", status: "pending_review" };
       case "approved":
-        return { label: "Approved", variant: "default" as const, className: "bg-emerald-100 text-emerald-900" };
+        return { label: "Approved", status: "approved" };
       case "rejected":
-        return { label: "Rejected", variant: "destructive" as const, className: "bg-red-100 text-red-900" };
+        return { label: "Rejected", status: "rejected" };
       case "active":
-        return { label: "Active", variant: "secondary" as const, className: "bg-blue-100 text-blue-900" };
+        return { label: "Active", status: "active" };
       case "closed":
-        return { label: "Closed", variant: "secondary" as const, className: "bg-slate-200 text-slate-900" };
+        return { label: "Closed", status: "closed" };
       default:
-        return { label: "Draft", variant: "secondary" as const, className: "bg-slate-100 text-slate-900" };
+        return { label: "Draft", status: "draft" };
     }
   };
 
@@ -179,9 +171,10 @@ export default function AdminAllJobs() {
       width: "15%",
       sortable: true,
       render: (_value: unknown, row: IJobOffer) => (
-        <Badge className={getReviewStatusMeta(row).className}>
-          {getReviewStatusMeta(row).label}
-        </Badge>
+        <StatusPill
+          status={getReviewStatusMeta(row).status}
+          label={getReviewStatusMeta(row).label}
+        />
       ),
     },
     {
@@ -331,6 +324,57 @@ export default function AdminAllJobs() {
               exportable={true}
               loading={loading}
               emptyMessage="No jobs found"
+              mobileCardView
+              renderMobileCard={(job) => (
+                <div className="space-y-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <Image
+                      src={job.image_url || "/img/placeholder.png"}
+                      alt={job.title}
+                      width={48}
+                      height={48}
+                      className="rounded-md object-cover"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-semibold text-gray-900">
+                        {job.title}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {job.company_name || "N/A"}
+                      </div>
+                      <div className="mt-2">
+                        <StatusPill
+                          status={getReviewStatusMeta(job).status}
+                          label={getReviewStatusMeta(job).label}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 text-sm text-gray-700">
+                    <p>
+                      <span className="font-medium">Budget:</span> {job.budget || "N/A"}
+                    </p>
+                    <p>
+                      <span className="font-medium">Chain:</span> {job.chain || "N/A"}
+                    </p>
+                    <p>
+                      <span className="font-medium">Created:</span>{" "}
+                      {job.created_at
+                        ? new Date(job.created_at).toLocaleDateString()
+                        : "N/A"}
+                    </p>
+                  </div>
+                  <div className="flex justify-end">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(`/admin/job/${job.id}`, "_blank")}
+                    >
+                      View/Edit Job
+                    </Button>
+                  </div>
+                </div>
+              )}
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
@@ -359,16 +403,10 @@ export default function AdminAllJobs() {
                             <div className="font-semibold text-gray-900">
                               {job.title}
                             </div>
-                            <Badge
-                              variant={job.status === "Published" ? "default" : "destructive"}
-                              className={
-                                job.status === "Published"
-                                  ? "bg-black text-white"
-                                  : "bg-red-500 text-white"
-                              }
-                            >
-                              {job.status}
-                            </Badge>
+                            <StatusPill
+                              status={job.status}
+                              label={job.status}
+                            />
                           </div>
                           <div className="text-sm text-gray-600">
                             {job.company || "N/A"} • {job.chain || "Chain N/A"}
@@ -385,9 +423,7 @@ export default function AdminAllJobs() {
                           .filter(Boolean)
                           .slice(0, 4)
                           .map((skill) => (
-                            <Badge key={skill} variant="secondary">
-                              {skill}
-                            </Badge>
+                            <StatusPill key={skill} status="pending" label={skill} />
                           ))}
                       </div>
                       <div className="flex items-center justify-between text-sm text-gray-600">

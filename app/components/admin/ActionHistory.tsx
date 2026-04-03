@@ -8,13 +8,15 @@ import moment from "moment";
 interface ActionHistoryItem {
   id: string;
   action: string;
-  actor: string;
+  actor?: string;
+  admin_email?: string;
   target_type: "talent" | "company" | "job" | "user";
   target_id: string;
-  target_name: string;
-  timestamp: string;
-  details?: string;
-  status: "success" | "failed" | "pending";
+  target_name?: string;
+  timestamp?: string;
+  created_at?: string;
+  details?: string | Record<string, unknown> | null;
+  status?: "success" | "failed" | "pending";
 }
 
 interface ActionHistoryProps {
@@ -81,6 +83,34 @@ export function ActionHistory({
     }
   };
 
+  const formatDetails = (details: ActionHistoryItem["details"]) => {
+    if (!details) {
+      return null;
+    }
+
+    if (typeof details === "string") {
+      return details;
+    }
+
+    if (Array.isArray((details as { fields?: unknown }).fields)) {
+      return `Fields updated: ${((details as { fields: string[] }).fields).join(", ")}`;
+    }
+
+    if (typeof (details as { status?: unknown }).status === "string") {
+      const statusLabel = `Status: ${(details as { status: string }).status}`;
+      const rejectionReason = (details as { rejectionReason?: string | null })
+        .rejectionReason;
+
+      if (rejectionReason) {
+        return `${statusLabel} (${rejectionReason})`;
+      }
+
+      return statusLabel;
+    }
+
+    return JSON.stringify(details);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -117,17 +147,23 @@ export function ActionHistory({
                 <p className="text-sm font-medium text-gray-900">
                   {item.action}
                 </p>
-                {getStatusBadge(item.status)}
+                {item.status ? getStatusBadge(item.status) : null}
               </div>
               <div className="flex items-center gap-2 text-xs text-gray-500">
                 <User className="h-3 w-3" />
-                <span>{item.actor}</span>
+                <span>{item.admin_email || item.actor || "Unknown admin"}</span>
                 <span>•</span>
                 <Clock className="h-3 w-3" />
-                <span>{moment(item.timestamp).fromNow()}</span>
+                <span>
+                  {moment(
+                    item.created_at || item.timestamp || new Date().toISOString(),
+                  ).fromNow()}
+                </span>
               </div>
-              {item.details && (
-                <p className="text-xs text-gray-600 mt-1">{item.details}</p>
+              {formatDetails(item.details) && (
+                <p className="text-xs text-gray-600 mt-1">
+                  {formatDetails(item.details)}
+                </p>
               )}
             </div>
           </div>

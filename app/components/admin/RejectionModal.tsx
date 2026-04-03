@@ -4,12 +4,9 @@ import { useState } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { XCircle, AlertCircle } from "lucide-react";
 
@@ -30,6 +27,13 @@ export function RejectionModal({
 }: RejectionModalProps) {
   const [rejectionReason, setRejectionReason] = useState("");
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      setRejectionReason("");
+    }
+    onOpenChange(nextOpen);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!rejectionReason.trim()) {
@@ -46,47 +50,59 @@ export function RejectionModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-red-600">
-            <XCircle className="h-5 w-5" />
-            Reject {itemName || "Item"}
-          </DialogTitle>
-        </DialogHeader>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-[460px] p-0">
+        <div className="border-b border-gray-100 px-6 pb-4 pt-6">
+          <div className="mb-1 flex items-center gap-3">
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-red-50">
+              <XCircle className="h-4 w-4 text-red-500" />
+            </div>
+            <DialogTitle className="text-base font-bold text-gray-900">
+              Reject {itemName ? `"${itemName}"` : "Application"}
+            </DialogTitle>
+          </div>
+          <p className="ml-11 text-xs text-gray-400">
+            This reason will be sent to the applicant
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="rejection-reason" className="text-sm font-medium">
-              Rejection Reason *
-            </Label>
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-4 px-6 py-5">
+            <div className="space-y-1.5">
+              <label
+                htmlFor="rejection-reason"
+                className="block text-xs font-semibold uppercase tracking-wide text-gray-500"
+              >
+                Rejection Reason <span className="text-red-400">*</span>
+              </label>
             <Textarea
               id="rejection-reason"
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
-              placeholder="Please provide a detailed reason for rejection..."
-              className="mt-2 min-h-[120px]"
+              placeholder="Explain why this application is being rejected. Be specific — this message is sent to the applicant."
+              className="min-h-[120px] resize-none rounded-xl border-gray-200 text-sm focus:border-[#FFC905] focus:ring-[#FFC905]"
+              maxLength={500}
               required
             />
-            <p className="text-xs text-gray-500 mt-1">
-              This reason will be stored and may be visible to the user.
-            </p>
-          </div>
+              <p className="text-xs text-gray-400">
+                {rejectionReason.length}/500 characters
+              </p>
+            </div>
 
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-red-800">
-                This action will reject {itemName || "the selected item"}. This
-                action cannot be undone.
+            <div className="flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 p-3">
+              <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-400" />
+              <p className="text-xs leading-relaxed text-red-700">
+                This action cannot be undone. The applicant will be notified
+                with the reason above.
               </p>
             </div>
           </div>
 
-          <DialogFooter>
+          <div className="flex flex-col-reverse gap-2 border-t border-gray-100 px-6 pb-6 pt-4 sm:flex-row">
             <Button
               type="button"
               variant="outline"
+              className="h-10 flex-1 rounded-xl"
               onClick={() => {
                 setRejectionReason("");
                 onOpenChange(false);
@@ -97,12 +113,22 @@ export function RejectionModal({
             </Button>
             <Button
               type="submit"
-              variant="destructive"
+              className="h-10 flex-1 rounded-xl bg-red-500 font-semibold text-white hover:bg-red-600"
               disabled={loading || !rejectionReason.trim()}
             >
-              {loading ? "Rejecting..." : "Confirm Rejection"}
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Rejecting...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <XCircle className="h-4 w-4" />
+                  Confirm Rejection
+                </span>
+              )}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

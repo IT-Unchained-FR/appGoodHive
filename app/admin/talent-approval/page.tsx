@@ -3,14 +3,14 @@
 export const dynamic = "force-dynamic";
 
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { EnhancedTable, Column } from "@/app/components/admin/EnhancedTable";
 import { AdminFilters } from "@/app/components/admin/AdminFilters";
 import { Spinner } from "@/app/components/admin/Spinner";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
+import { StatusPill } from "@/app/components/admin/StatusPill";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +33,7 @@ type ProfileDataWithName = ProfileData & {
 };
 
 export default function AdminTalentApproval() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [users, setUsers] = useState<ProfileDataWithName[]>([]);
   const [loading, setLoading] = useState(false);
@@ -52,7 +53,7 @@ export default function AdminTalentApproval() {
     if (status === "rejected") {
       return "rejected";
     }
-    if (status === "pending" || status === "in_review" || user.inReview) {
+    if (status === "pending" || status === "in_review" || user.inreview) {
       return "in_review";
     }
     return "in_review";
@@ -74,11 +75,17 @@ export default function AdminTalentApproval() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           userId: user.user_id,
           status,
         }),
       });
+
+      if (response.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
 
       if (!response.ok) {
         throw new Error("Failed to update talent status");
@@ -124,11 +131,17 @@ export default function AdminTalentApproval() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           userIds: itemIds,
           approvalTypes: approvalTypes || { talent: true },
         }),
       });
+
+      if (response.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
 
       if (!response.ok) {
         throw new Error("Failed to approve talents");
@@ -153,12 +166,18 @@ export default function AdminTalentApproval() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           userIds: itemIds,
           rejectionReason:
             reason || "Rejected by admin review due to profile requirements.",
         }),
       });
+
+      if (response.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
 
       if (!response.ok) {
         throw new Error("Failed to reject talents");
@@ -224,29 +243,13 @@ export default function AdminTalentApproval() {
       render: (_value: unknown, row: ProfileDataWithName) => {
         const status = getTalentStatus(row);
         if (status === "approved") {
-          return (
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-              Approved
-            </Badge>
-          );
+          return <StatusPill status="approved" label="Approved" />;
         } else if (status === "deferred") {
-          return (
-            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-              Deferred
-            </Badge>
-          );
+          return <StatusPill status="deferred" label="Deferred" />;
         } else if (status === "rejected") {
-          return (
-            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-              Rejected
-            </Badge>
-          );
+          return <StatusPill status="rejected" label="Rejected" />;
         } else {
-          return (
-            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-              In Review
-            </Badge>
-          );
+          return <StatusPill status="in_review" label="In Review" />;
         }
       },
     },
@@ -265,31 +268,13 @@ export default function AdminTalentApproval() {
         return (
           <div className="flex flex-col gap-2 w-full justify-center items-center">
             {row.talent && (
-              <Badge
-                style={{ width: "100%", justifyContent: "center" }}
-                variant="outline"
-                className="bg-yellow-50 text-yellow-700 border-yellow-200 w-fit"
-              >
-                Talent
-              </Badge>
+              <StatusPill status="pending" label="Talent" className="w-fit justify-center" />
             )}
             {row.mentor && (
-              <Badge
-                style={{ width: "100%", justifyContent: "center" }}
-                variant="outline"
-                className="bg-yellow-50 text-yellow-700 border-yellow-200 w-fit"
-              >
-                Mentor
-              </Badge>
+              <StatusPill status="pending" label="Mentor" className="w-fit justify-center" />
             )}
             {row.recruiter && (
-              <Badge
-                style={{ width: "100%", justifyContent: "center" }}
-                variant="outline"
-                className="bg-yellow-50 text-yellow-700 border-yellow-200 w-fit"
-              >
-                Recruiter
-              </Badge>
+              <StatusPill status="pending" label="Recruiter" className="w-fit justify-center" />
             )}
           </div>
         );
@@ -415,17 +400,20 @@ export default function AdminTalentApproval() {
     try {
       setLoading(true);
       const params = new URLSearchParams(searchParams.toString());
-
-      if (!params.has("status")) {
-        params.set("status", "all");
-      }
+      params.delete("status");
 
       const url = `/api/admin/talents/pending${params.toString() ? `?${params.toString()}` : ''}`;
       const response = await fetch(url, {
         headers: {
           "Cache-Control": "no-store, max-age=0",
         },
+        credentials: "include",
       });
+
+      if (response.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
       const data = await response.json();
 
       if (!response.ok || !Array.isArray(data)) {
@@ -445,7 +433,7 @@ export default function AdminTalentApproval() {
     } finally {
       setLoading(false);
     }
-  }, [searchParams]);
+  }, [router, searchParams]);
 
   useEffect(() => {
     fetchPendingUsers();
@@ -462,18 +450,23 @@ export default function AdminTalentApproval() {
     <AdminPageLayout
       title="Talents Join Requests"
       subtitle="Review and approve talent applications"
+      actions={
+        selectedItems.length > 0 ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowBulkApproval(true)}
+            className="w-full sm:w-auto"
+          >
+            Manage Selected ({selectedItems.length})
+          </Button>
+        ) : undefined
+      }
     >
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <AdminFilters
           config={{
             dateFilter: true,
-            statusFilter: [
-              { value: 'in_review', label: 'In Review' },
-              { value: 'approved', label: 'Approved' },
-              { value: 'deferred', label: 'Deferred' },
-              { value: 'rejected', label: 'Rejected' },
-              { value: 'all', label: 'All statuses' },
-            ],
             customFilters: [
               {
                 key: 'role',
@@ -500,7 +493,7 @@ export default function AdminTalentApproval() {
         />
 
         {selectedItems.length > 0 && (
-          <div className="bg-[#FFC905]/10 border border-[#FFC905] rounded-lg p-3 flex items-center justify-between">
+          <div className="flex flex-col gap-3 rounded-lg border border-[#FFC905] bg-[#FFC905]/10 p-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <Checkbox
                 checked={selectedItems.length === users.length}
@@ -514,6 +507,7 @@ export default function AdminTalentApproval() {
               variant="outline"
               size="sm"
               onClick={() => setShowBulkApproval(true)}
+              className="w-full sm:w-auto"
             >
               Manage Selected ({selectedItems.length})
             </Button>
@@ -611,35 +605,15 @@ function TalentApprovalCard({
   const getStatusBadge = () => {
     const status = user.talent_status;
     if (status === "approved" || user.approved) {
-      return (
-        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-          Approved
-        </Badge>
-      );
+      return <StatusPill status="approved" label="Approved" />;
     } else if (status === "deferred") {
-      return (
-        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-          Deferred
-        </Badge>
-      );
+      return <StatusPill status="deferred" label="Deferred" />;
     } else if (status === "rejected") {
-      return (
-        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-          Rejected
-        </Badge>
-      );
-    } else if (status === "pending" || status === "in_review" || user.inReview) {
-      return (
-        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-          In Review
-        </Badge>
-      );
+      return <StatusPill status="rejected" label="Rejected" />;
+    } else if (status === "pending" || status === "in_review" || user.inreview) {
+      return <StatusPill status="in_review" label="In Review" />;
     }
-    return (
-      <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-        In Review
-      </Badge>
-    );
+    return <StatusPill status="in_review" label="In Review" />;
   };
 
   return (
@@ -669,19 +643,13 @@ function TalentApprovalCard({
       )}
       <div className="flex flex-wrap gap-2">
         {user.talent && (
-          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-            Talent
-          </Badge>
+          <StatusPill status="pending" label="Talent" />
         )}
         {user.mentor && (
-          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-            Mentor
-          </Badge>
+          <StatusPill status="pending" label="Mentor" />
         )}
         {user.recruiter && (
-          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-            Recruiter
-          </Badge>
+          <StatusPill status="pending" label="Recruiter" />
         )}
       </div>
       <div className="flex flex-wrap gap-2">

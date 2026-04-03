@@ -21,10 +21,10 @@ import {
   Download,
   Calendar,
 } from "lucide-react";
-import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import Spinner from "@/app/components/Spinner/Spinner";
 import { Badge } from "@/components/ui/badge";
+import toast from "react-hot-toast";
 
 interface AnalyticsData {
   userGrowth: Array<{ date: string; count: number }>;
@@ -59,34 +59,16 @@ export default function AnalyticsPage() {
     fetchAnalytics();
   }, []);
 
-  const getAuthHeaders = () => {
-    const token = Cookies.get("admin_token");
-    if (!token) {
-      router.push("/admin/login");
-      return null;
-    }
-    return {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-  };
-
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const headers = getAuthHeaders();
-      if (!headers) return;
-
       const params = new URLSearchParams();
       if (dateRange.startDate) params.append("startDate", dateRange.startDate);
       if (dateRange.endDate) params.append("endDate", dateRange.endDate);
 
-      const response = await fetch(
-        `/api/admin/analytics?${params.toString()}`,
-        { headers }
-      );
+      const response = await fetch(`/api/admin/analytics?${params.toString()}`);
 
       if (response.status === 401) {
         router.push("/admin/login");
@@ -98,9 +80,6 @@ export default function AnalyticsPage() {
       }
 
       const data = await response.json();
-      console.log("Analytics data received:", data);
-      console.log("User growth data:", data.userGrowth);
-      console.log("Job trends data:", data.jobTrends);
       setAnalytics(data);
     } catch (err) {
       console.error("Error fetching analytics:", err);
@@ -110,10 +89,49 @@ export default function AnalyticsPage() {
     }
   };
 
-  const handleGenerateReport = async (params: { startDate: string; endDate: string; format: string }) => {
-    // TODO: Implement report generation
-    // This would call an API endpoint to generate and download the report
-    console.log("Report generation params:", params);
+  const handleGenerateReport = async (params: {
+    type: "talents" | "companies" | "jobs";
+    format: "csv";
+    startDate?: string;
+    endDate?: string;
+  }) => {
+    try {
+      setLoading(true);
+      const query = new URLSearchParams({
+        type: params.type,
+        format: params.format,
+      });
+
+      if (params.startDate) {
+        query.set("startDate", params.startDate);
+      }
+
+      if (params.endDate) {
+        query.set("endDate", params.endDate);
+      }
+
+      const response = await fetch(`/api/admin/reports?${query.toString()}`);
+      if (!response.ok) {
+        throw new Error("Failed to generate report");
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `goodhive-${params.type}-report.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success("Report downloaded successfully");
+    } catch (error) {
+      console.error("Error generating report:", error);
+      toast.error("Failed to generate report");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDateRangeChange = () => {
@@ -154,11 +172,11 @@ export default function AnalyticsPage() {
       title="Analytics Dashboard"
       subtitle="Platform insights and performance metrics"
     >
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Date Range Filter */}
-        <div className="bg-white rounded-lg border p-4">
-          <div className="flex items-end gap-4">
-            <div className="flex-1">
+        <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+            <div className="w-full sm:flex-1">
               <Label htmlFor="start-date">Start Date</Label>
               <Input
                 id="start-date"
@@ -170,7 +188,7 @@ export default function AnalyticsPage() {
                 className="mt-1"
               />
             </div>
-            <div className="flex-1">
+            <div className="w-full sm:flex-1">
               <Label htmlFor="end-date">End Date</Label>
               <Input
                 id="end-date"
@@ -181,33 +199,36 @@ export default function AnalyticsPage() {
                 }
                 className="mt-1"
               />
+            </div>
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+              <Button onClick={handleDateRangeChange} className="gap-2 w-full sm:w-auto">
+                <Calendar className="h-4 w-4" />
+                Apply Filter
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={() => {
+                  setDateRange({ startDate: "", endDate: "" });
+                  fetchAnalytics();
+                }}
+              >
+                Clear
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowReportGenerator(true)}
+                className="gap-2 w-full sm:w-auto"
+              >
+                <Download className="h-4 w-4" />
+                Generate Report
+              </Button>
+            </div>
+          </div>
         </div>
-            <Button onClick={handleDateRangeChange} className="gap-2">
-              <Calendar className="h-4 w-4" />
-              Apply Filter
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDateRange({ startDate: "", endDate: "" });
-                fetchAnalytics();
-              }}
-            >
-              Clear
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setShowReportGenerator(true)}
-              className="gap-2"
-            >
-              <Download className="h-4 w-4" />
-              Generate Report
-          </Button>
-        </div>
-      </div>
 
         {/* Summary Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <StatCard
             title="Total Talents"
             value={analytics.usersByRole.talents.toLocaleString()}
@@ -241,15 +262,15 @@ export default function AnalyticsPage() {
       </div>
 
         {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <UserGrowthChart data={analytics.userGrowth} loading={loading} />
           <JobTrendsChart data={analytics.jobTrends} loading={loading} />
         </div>
 
         {/* Approval Rates */}
-        <div className="bg-white rounded-lg border p-6">
+        <div className="bg-white rounded-lg border p-4 sm:p-6">
           <h3 className="text-lg font-semibold mb-4">Approval Rates</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {talentApproval && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">

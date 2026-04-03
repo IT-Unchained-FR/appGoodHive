@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
+import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -111,7 +112,7 @@ export function Breadcrumbs({ customLabels, className = "" }: BreadcrumbsProps) 
             <React.Fragment key={crumb.href}>
               {!isLast ? (
                 <Link
-                  href={crumb.href}
+                  href={crumb.href as Route}
                   className="flex items-center text-gray-500 hover:text-[#FFC905] transition-colors"
                   aria-label={crumb.label}
                 >
@@ -151,7 +152,7 @@ export function Breadcrumbs({ customLabels, className = "" }: BreadcrumbsProps) 
             <React.Fragment key={crumb.href}>
               {!isLast ? (
                 <Link
-                  href={crumb.href}
+                  href={crumb.href as Route}
                   className="flex items-center gap-1.5 text-gray-600 hover:text-[#FFC905] transition-colors"
                 >
                   <Icon size={14} />

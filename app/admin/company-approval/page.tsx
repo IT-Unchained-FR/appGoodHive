@@ -3,15 +3,15 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { EnhancedTable, Column } from "@/app/components/admin/EnhancedTable";
 import { AdminFilters } from "@/app/components/admin/AdminFilters";
 import { BulkApproval } from "@/app/components/admin/BulkApproval";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
+import { StatusPill } from "@/app/components/admin/StatusPill";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +34,7 @@ interface Company {
 }
 
 export default function AdminCompanyApproval() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [users, setUsers] = useState<Company[]>([]);
   const [loading, setLoading] = useState(false);
@@ -74,10 +75,16 @@ export default function AdminCompanyApproval() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           userIds: itemIds,
         }),
       });
+
+      if (response.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
 
       if (!response.ok) {
         throw new Error("Failed to approve companies");
@@ -102,11 +109,17 @@ export default function AdminCompanyApproval() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           userIds: itemIds,
           reason: reason || "Rejected by admin",
         }),
       });
+
+      if (response.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
 
       if (!response.ok) {
         throw new Error("Failed to reject companies");
@@ -168,23 +181,11 @@ export default function AdminCompanyApproval() {
       },
       render: (_value: unknown, row: Company) => {
         if (row.approved) {
-          return (
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-              Approved
-            </Badge>
-          );
+          return <StatusPill status="approved" label="Approved" />;
         } else if (row.inReview) {
-          return (
-            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-              Pending
-            </Badge>
-          );
+          return <StatusPill status="pending" label="Pending" />;
         } else {
-          return (
-            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-              Rejected
-            </Badge>
-          );
+          return <StatusPill status="rejected" label="Rejected" />;
         }
       },
     },
@@ -261,7 +262,13 @@ export default function AdminCompanyApproval() {
         headers: {
           "Cache-Control": "no-store, max-age=0",
         },
+        credentials: "include",
       });
+
+      if (response.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
       const data = await response.json();
 
       if (!response.ok || !Array.isArray(data)) {
@@ -294,8 +301,20 @@ export default function AdminCompanyApproval() {
     <AdminPageLayout
       title="Company Join Requests"
       subtitle="Review and approve company applications"
+      actions={
+        selectedItems.length > 0 ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowBulkApproval(true)}
+            className="w-full sm:w-auto"
+          >
+            Manage Selected ({selectedItems.length})
+          </Button>
+        ) : undefined
+      }
     >
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <AdminFilters
           config={{
             dateFilter: true,
@@ -316,7 +335,7 @@ export default function AdminCompanyApproval() {
         />
 
         {selectedItems.length > 0 && (
-          <div className="bg-[#FFC905]/10 border border-[#FFC905] rounded-lg p-3 flex items-center justify-between">
+          <div className="flex flex-col gap-3 rounded-lg border border-[#FFC905] bg-[#FFC905]/10 p-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <Checkbox
                 checked={selectedItems.length === users.length}
@@ -330,6 +349,7 @@ export default function AdminCompanyApproval() {
               variant="outline"
               size="sm"
               onClick={() => setShowBulkApproval(true)}
+              className="w-full sm:w-auto"
             >
               Manage Selected ({selectedItems.length})
             </Button>
@@ -422,23 +442,11 @@ function CompanyApprovalCard({
 
   const getStatusBadge = () => {
     if (company.approved) {
-      return (
-        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-          Approved
-        </Badge>
-      );
+      return <StatusPill status="approved" label="Approved" />;
     } else if (company.inReview) {
-      return (
-        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-          Pending
-        </Badge>
-      );
+      return <StatusPill status="pending" label="Pending" />;
     } else {
-      return (
-        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-          Rejected
-        </Badge>
-      );
+      return <StatusPill status="rejected" label="Rejected" />;
     }
   };
 

@@ -6,13 +6,19 @@ interface StatCardProps {
   title: string;
   value: string | number;
   icon: LucideIcon;
-  trend?: {
-    value: number;
-    isPositive: boolean;
-  };
+  trend?: { value: number; isPositive: boolean };
   description?: string;
   color?: "blue" | "green" | "yellow" | "purple" | "red" | "orange";
 }
+
+const palette = {
+  blue: { bg: "#eff6ff", icon: "#2563eb" },
+  green: { bg: "#f0fdf4", icon: "#16a34a" },
+  yellow: { bg: "#fefce8", icon: "#d97706" },
+  purple: { bg: "#f5f3ff", icon: "#7c3aed" },
+  red: { bg: "#fef2f2", icon: "#dc2626" },
+  orange: { bg: "#fff7ed", icon: "#ea580c" },
+};
 
 export function StatCard({
   title,
@@ -22,41 +28,38 @@ export function StatCard({
   description,
   color = "blue",
 }: StatCardProps) {
-  const colorClasses = {
-    blue: "bg-blue-50 text-blue-600 border-blue-200",
-    green: "bg-green-50 text-green-600 border-green-200",
-    yellow: "bg-yellow-50 text-yellow-600 border-yellow-200",
-    purple: "bg-purple-50 text-purple-600 border-purple-200",
-    red: "bg-red-50 text-red-600 border-red-200",
-    orange: "bg-orange-50 text-orange-600 border-orange-200",
-  };
+  const { bg, icon: iconColor } = palette[color];
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">{title}</p>
-          <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">{value}</p>
-          {trend && (
-            <div className="flex items-center gap-1 flex-wrap">
+    <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-5">
+      <div className="flex items-start justify-between gap-3 sm:gap-4">
+        <div className="min-w-0 flex-1">
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400 sm:mb-2">
+            {title}
+          </p>
+          <p className="mb-1.5 text-2xl font-bold leading-none text-gray-900 sm:mb-2 sm:text-3xl">
+            {value}
+          </p>
+          {trend ? (
+            <div className="flex flex-wrap items-center gap-1.5">
               <span
-                className={`text-xs sm:text-sm font-medium ${
-                  trend.isPositive ? "text-green-600" : "text-red-600"
-                }`}
+                className={`text-xs font-semibold ${trend.isPositive ? "text-green-600" : "text-red-500"}`}
               >
                 {trend.isPositive ? "↑" : "↓"} {Math.abs(trend.value)}
               </span>
-              <span className="text-xs sm:text-sm text-gray-500 truncate">{description || "vs last period"}</span>
+              {description ? (
+                <span className="text-xs text-gray-400">{description}</span>
+              ) : null}
             </div>
-          )}
-          {description && !trend && (
-            <p className="text-xs text-gray-500 mt-1 sm:mt-2">{description}</p>
-          )}
+          ) : description ? (
+            <p className="text-xs text-gray-400">{description}</p>
+          ) : null}
         </div>
         <div
-          className={`p-2 sm:p-3 rounded-lg border ${colorClasses[color]} flex-shrink-0`}
+          className="flex-shrink-0 rounded-xl p-2 sm:p-2.5"
+          style={{ backgroundColor: bg }}
         >
-          <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
+          <Icon className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: iconColor }} />
         </div>
       </div>
     </div>

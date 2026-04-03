@@ -1,5 +1,6 @@
 'use client';
 
+import type { Route } from 'next';
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { X } from 'lucide-react';
@@ -93,7 +94,19 @@ export function AdminFilters({ config, basePath }: AdminFiltersProps) {
 
   // Apply filters to URL
   const applyFilters = useCallback(() => {
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(searchParamsString);
+    const managedKeys = [
+      'dateRange',
+      'status',
+      'role',
+      'location',
+      'type',
+      'sort',
+      'page',
+      ...(config.customFilters?.map((filter) => filter.key) || []),
+    ];
+
+    managedKeys.forEach((key) => params.delete(key));
 
     // Add date range
     if (dateRange && dateRange !== 'any') {
@@ -134,8 +147,8 @@ export function AdminFilters({ config, basePath }: AdminFiltersProps) {
     });
 
     const query = params.toString();
-    router.replace(query ? `${basePath}?${query}` : basePath, { scroll: false });
-  }, [basePath, customFilterValues, dateRange, getDefaultStatus, location, role, router, sortOrder, status, type]);
+    router.replace((query ? `${basePath}?${query}` : basePath) as Route, { scroll: false });
+  }, [basePath, config.customFilters, customFilterValues, dateRange, getDefaultStatus, location, role, router, searchParamsString, sortOrder, status, type]);
 
   // Auto-apply when filters change (with debounce for text inputs)
   useEffect(() => {
@@ -156,15 +169,27 @@ export function AdminFilters({ config, basePath }: AdminFiltersProps) {
     setSortOrder('latest');
     setCustomFilterValues({});
 
-    // Build URL with default status if it's not 'all'
+    const params = new URLSearchParams(searchParamsString);
+    const managedKeys = [
+      'dateRange',
+      'status',
+      'role',
+      'location',
+      'type',
+      'sort',
+      'page',
+      ...(config.customFilters?.map((filter) => filter.key) || []),
+    ];
+
+    managedKeys.forEach((key) => params.delete(key));
+
     const defaultStatus = getDefaultStatus();
     if (defaultStatus !== 'all') {
-      const params = new URLSearchParams();
       params.set('status', defaultStatus);
-      router.replace(`${basePath}?${params.toString()}`, { scroll: false });
-    } else {
-      router.replace(basePath, { scroll: false });
     }
+
+    const query = params.toString();
+    router.replace((query ? `${basePath}?${query}` : basePath) as Route, { scroll: false });
   };
 
   // Remove individual filter
