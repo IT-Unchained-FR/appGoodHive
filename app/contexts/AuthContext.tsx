@@ -174,21 +174,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     void initializeAuth();
   }, [account?.address]);
 
-  // Update wallet connection status and handle disconnection
+  // Keep session auth stable even if the wallet connector briefly reconnects.
   useEffect(() => {
-    // If wallet disconnected and user was wallet-authenticated, logout
-    if (!account?.address && authState.user?.auth_method === "wallet" && authState.isAuthenticated) {
-      console.log("Wallet disconnected, logging out wallet user...");
-      logout();
-      return;
-    }
-
-    // Update wallet connection status
     setAuthState(prev => ({
       ...prev,
       walletConnected: !!account?.address,
     }));
-  }, [account?.address, authState.isAuthenticated, authState.user?.auth_method, logout]);
+  }, [account?.address]);
 
   const contextValue: AuthContextType = {
     ...authState,

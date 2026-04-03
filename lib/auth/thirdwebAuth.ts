@@ -139,6 +139,8 @@ export async function authenticateWithWallet(
     
     const response = await fetch("/api/auth/thirdweb-login", {
       method: "POST",
+      credentials: "include",
+      cache: "no-store",
       headers: {
         "Content-Type": "application/json",
       },

@@ -48,14 +48,39 @@ export async function POST(req: Request) {
 
       // Generate JWT token
       const token = sign(
-        { email: admin.email, role: admin.role },
+        {
+          email: admin.email,
+          role: "admin",
+          adminRole: admin.role,
+        },
         getAdminJWTSecret(),
+        { expiresIn: "8h" },
       );
+
+      const forwardedProto = req.headers.get("x-forwarded-proto");
+      const requestProtocol = (() => {
+        try {
+          return new URL(req.url).protocol;
+        } catch {
+          return null;
+        }
+      })();
+      const isHttpsRequest =
+        forwardedProto === "https" || requestProtocol === "https:";
+      const cookieValue = [
+        `admin_token=${token}`,
+        "Path=/",
+        "HttpOnly",
+        "SameSite=Lax",
+        "Max-Age=28800",
+        isHttpsRequest ? "Secure" : "",
+      ]
+        .filter(Boolean)
+        .join("; ");
 
       return new Response(
         JSON.stringify({
           message: "Login Successful",
-          token,
           user: {
             name: admin.name,
             email: admin.email,
@@ -64,6 +89,10 @@ export async function POST(req: Request) {
         }),
         {
           status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            "Set-Cookie": cookieValue,
+          },
         },
       );
     } catch (error) {

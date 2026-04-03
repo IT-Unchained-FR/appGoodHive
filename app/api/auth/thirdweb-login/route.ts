@@ -443,17 +443,26 @@ export async function POST(req: Request) {
         .setExpirationTime("7d") // 7 days expiry
         .sign(JWT_SECRET);
 
+      const responseUser = {
+        user_id: user.userid,
+        email: user.email,
+        wallet_address: user.wallet_address,
+        thirdweb_wallet_address: user.thirdweb_wallet_address,
+        auth_method: user.auth_method,
+        talent: user.talent || false,
+        mentor: user.mentor || false,
+        recruiter: user.recruiter || false,
+        talent_status: user.talent_status || "pending",
+        mentor_status: user.mentor_status || "pending",
+        recruiter_status: user.recruiter_status || "pending",
+      };
+
       // Create response with user data
       const response = NextResponse.json({
         message: isNewUser
           ? "Account created successfully"
           : "Login successful",
-        user: {
-          user_id: user.userid,
-          email: user.email,
-          wallet_address: user.wallet_address,
-          auth_method: user.auth_method,
-        },
+        user: responseUser,
         isNewUser,
         hasDuplicates,
         duplicateAccounts: duplicateAccounts.map((acc) => ({
@@ -497,15 +506,8 @@ export async function POST(req: Request) {
       response.cookies.set(
         "loggedIn_user",
         JSON.stringify({
-          user_id: user.userid,
-          email: user.email,
-          wallet_address: user.wallet_address,
-          talent: user.talent || false,
-          mentor: user.mentor || false,
-          recruiter: user.recruiter || false,
+          ...responseUser,
           talent_status: talentApprovalStatus,
-          mentor_status: user.mentor_status || "pending",
-          recruiter_status: user.recruiter_status || "pending",
         }),
         {
           httpOnly: false,

@@ -13,15 +13,16 @@ import { connectModalOptions, supportedWallets } from "@/lib/auth/walletConfig";
 import { ReturnUrlManager } from "@/app/utils/returnUrlManager";
 import { useCallback, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useActiveAccount, useConnectModal } from "thirdweb/react";
 import { useCurrentUserId } from "./useCurrentUserId";
 import { dispatchAuthChanged } from "@/app/utils/authEvents";
 
 export function useAuthCheck() {
-  const { isAuthenticated, user, login, refreshUser } = useAuth();
+  const { isAuthenticated, user, login } = useAuth();
   const account = useActiveAccount();
   const pathname = usePathname();
+  const router = useRouter();
   const user_id = useCurrentUserId();
   const { connect, isConnecting } = useConnectModal();
   const connectInFlightRef = useRef(false);
@@ -84,8 +85,8 @@ export function useAuthCheck() {
 
         if (authResult.success && authResult.user) {
           login(authResult.user);
-          await refreshUser();
           dispatchAuthChanged();
+          router.refresh();
           return true;
         }
 
@@ -97,7 +98,7 @@ export function useAuthCheck() {
         authInFlightRef.current = false;
       }
     },
-    [account, login, refreshUser, sessionAuthenticated],
+    [account, login, router, sessionAuthenticated],
   );
 
   const openConnectModal = useCallback(async () => {

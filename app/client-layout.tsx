@@ -27,6 +27,10 @@ export function ClientLayout({ children }: ClientLayoutProps) {
   const showSuperbot = !isAdminSection;
 
   useEffect(() => {
+    if (isAdminSection) {
+      return;
+    }
+
     try {
       const loggedInUserCookie = Cookies.get("loggedIn_user");
 
@@ -58,7 +62,11 @@ export function ClientLayout({ children }: ClientLayoutProps) {
     } catch (error) {
       console.error("Error checking user status for onboarding:", error);
     }
-  }, []);
+  }, [isAdminSection]);
+
+  if (isAdminSection) {
+    return <div className="min-h-screen">{children}</div>;
+  }
 
   return (
     <Providers>

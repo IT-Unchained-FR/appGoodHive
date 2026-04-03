@@ -2,6 +2,33 @@ import { NextResponse } from "next/server";
 
 const THIRDWEB_API_BASE = "https://in-app-wallet.thirdweb.com/api/2023-11-30/embedded-wallet";
 
+type ThirdwebProfile = {
+  type: "google" | "email" | "apple" | "facebook" | "x";
+  email?: string;
+  username?: string;
+  name?: string;
+  picture?: string;
+};
+
+type ThirdwebAccountDetails = {
+  email?: string;
+  username?: string;
+  name?: string;
+  picture?: string;
+};
+
+type ThirdwebLinkedAccount = {
+  type?: string;
+  details?: ThirdwebAccountDetails | null;
+};
+
+type ThirdwebUserResponse = {
+  userId?: string;
+  walletAddress?: string;
+  email?: string;
+  linkedAccounts?: ThirdwebLinkedAccount[];
+};
+
 // Get user details from Thirdweb by wallet address
 export async function GET(req: Request) {
   try {
@@ -55,10 +82,16 @@ export async function GET(req: Request) {
       );
     }
 
-    const userData = await response.json();
+    const userData = (await response.json()) as ThirdwebUserResponse;
     
     // Extract relevant information
-    const userInfo = {
+    const userInfo: {
+      userId?: string;
+      walletAddress?: string;
+      email?: string;
+      linkedAccounts: ThirdwebLinkedAccount[];
+      profiles: ThirdwebProfile[];
+    } = {
       userId: userData.userId,
       walletAddress: userData.walletAddress,
       email: userData.email,
@@ -68,7 +101,7 @@ export async function GET(req: Request) {
 
     // Extract profile information from linked accounts
     if (userData.linkedAccounts) {
-      userData.linkedAccounts.forEach((account: any) => {
+      userData.linkedAccounts.forEach((account) => {
         if (account.type === "google" && account.details) {
           userInfo.profiles.push({
             type: "google",
@@ -108,7 +141,7 @@ export async function GET(req: Request) {
     // Get primary email (prefer from profiles, fallback to userData.email)
     let primaryEmail = userData.email;
     if (!primaryEmail && userInfo.profiles.length > 0) {
-      const emailProfile = userInfo.profiles.find(p => p.email);
+      const emailProfile = userInfo.profiles.find((profile) => profile.email);
       primaryEmail = emailProfile?.email;
     }
 

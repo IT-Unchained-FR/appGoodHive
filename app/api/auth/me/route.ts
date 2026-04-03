@@ -6,6 +6,15 @@ import sql from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
+type SessionJwtPayload = {
+  user_id?: string;
+  email?: string;
+  wallet_address?: string;
+  auth_method?: string;
+  iat?: number;
+  exp?: number;
+};
+
 export async function GET() {
   try {
     // Get the session token from cookies
@@ -20,19 +29,27 @@ export async function GET() {
     }
 
     // Verify the JWT token
-    const { payload } = await jwtVerify(sessionToken, JWT_SECRET);
+    const { payload } = await jwtVerify<SessionJwtPayload>(sessionToken, JWT_SECRET);
+    const userId = payload.user_id;
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Invalid session token" },
+        { status: 401 },
+      );
+    }
 
     console.log(payload, "payload");
     const users = await sql`
       SELECT talent_status, mentor_status, recruiter_status
       FROM goodhive.users
-      WHERE userid = ${payload.user_id}
+      WHERE userid = ${userId}
     `;
     const statusRow = users[0] || {};
 
     // Return the user data from the token
     return NextResponse.json({
-      user_id: payload.user_id,
+      user_id: userId,
       email: payload.email,
       wallet_address: payload.wallet_address,
       auth_method: payload.auth_method || "email",
