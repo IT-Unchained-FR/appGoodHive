@@ -37,7 +37,7 @@ import { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import EmailVerificationModal from "./EmailVerificationModal";
 import { ProtectedLink } from "./ProtectedLink";
@@ -138,11 +138,12 @@ export const NavBar = () => {
   const [walletAddressToVerify, setWalletAddressToVerify] = useState("");
   const [showOnboardingPopup, setShowOnboardingPopup] = useState(false);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+  const autoAuthAddressRef = useRef<string | null>(null);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
   const account = useActiveAccount();
-  const { user, isAuthenticated, login, logout, refreshUser } = useAuth();
+  const { user, isAuthenticated, login, logout } = useAuth();
   const { setManualConnection } = useAuthCheck();
   const loggedIn_user_id = useCurrentUserId();
 
@@ -153,10 +154,9 @@ export const NavBar = () => {
       : commonLinks;
 
   const syncAfterAuth = useCallback(async () => {
-    await refreshUser();
     dispatchAuthChanged();
     router.refresh();
-  }, [refreshUser, router]);
+  }, [router]);
 
   const refreshUnreadMessages = useCallback(async () => {
     if (!loggedIn_user_id) {
@@ -213,9 +213,26 @@ export const NavBar = () => {
 
   // Handle wallet connection/disconnection
   useEffect(() => {
+    const normalizedAddress = account?.address?.toLowerCase() ?? null;
+
+    if (!normalizedAddress) {
+      autoAuthAddressRef.current = null;
+      return;
+    }
+
+    if (loggedIn_user_id || isAuthenticated) {
+      autoAuthAddressRef.current = normalizedAddress;
+      return;
+    }
+
+    if (autoAuthAddressRef.current === normalizedAddress || isAuthenticating) {
+      return;
+    }
+
     const handleWalletAuth = async () => {
       if (account?.address && !loggedIn_user_id && !isAuthenticating) {
         setIsAuthenticating(true);
+        autoAuthAddressRef.current = normalizedAddress;
 
         try {
           // Debug the account object structure
@@ -330,6 +347,7 @@ export const NavBar = () => {
             // Clear auth context after handling
             ReturnUrlManager.clearAuthContext();
           } else if (authResult.requiresEmailVerification) {
+            autoAuthAddressRef.current = null;
             // User doesn't exist - need email verification
             console.log(
               "Email verification required for wallet:",
@@ -338,9 +356,11 @@ export const NavBar = () => {
             setWalletAddressToVerify(walletData.address);
             setShowEmailVerification(true);
           } else {
+            autoAuthAddressRef.current = null;
             toast.error(authResult.error || "Authentication failed");
           }
         } catch (error) {
+          autoAuthAddressRef.current = null;
           console.error("Wallet authentication error:", error);
           toast.error("Failed to authenticate wallet");
         } finally {
@@ -353,6 +373,7 @@ export const NavBar = () => {
   }, [
     account,
     handlePostAuthRouting,
+    isAuthenticated,
     isAuthenticating,
     loggedIn_user_id,
     login,

@@ -9,7 +9,7 @@ import { PaginationProps } from "./pagination.types";
 export const Pagination: FC<PaginationProps> = (props) => {
   const {
     itemsPerPage,
-    activePage,
+    activePage = 1,
     totalItems,
     query,
     isSearchTalent = false,
@@ -23,7 +23,7 @@ export const Pagination: FC<PaginationProps> = (props) => {
   const maxPagesToShow = 7;
   const shouldShowDots = numberOfPages > maxPagesToShow;
 
-  const getVisiblePages = () => {
+  const getVisiblePages = (): Array<number | "..."> => {
     if (!shouldShowDots) {
       return Array.from({ length: numberOfPages }, (_, i) => i + 1);
     }

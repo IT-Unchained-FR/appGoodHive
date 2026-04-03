@@ -112,6 +112,7 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
   } = profileData;
 
   const isOwner = user?.user_id === profileData.user_id;
+  const talentUserId = profileData.user_id ?? "";
   const canViewSensitive =
     isOwner ||
     (!!user &&
@@ -148,7 +149,7 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
       {/* Company action: Save to Pipeline */}
       {isAuthenticated && !isOwner && (
         <div className="flex justify-end px-6 pt-4 pb-0">
-          <SaveToPipelineButton talentId={profileData.user_id} />
+          <SaveToPipelineButton talentId={talentUserId} />
         </div>
       )}
 
@@ -157,7 +158,7 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
         first_name={first_name}
         last_name={last_name}
         title={title}
-        talent_user_id={profileData.user_id}
+        talent_user_id={talentUserId}
         city={city}
         country={country}
         image_url={image_url}
@@ -250,10 +251,10 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
             stackoverflow={stackoverflow ?? undefined}
             canViewSensitive={canViewSensitive}
           />
-          {profileData.user_id && (
+          {talentUserId && (
             <div className="mt-4">
               <QuickRequestComposer
-                targetTalentUserId={profileData.user_id}
+                targetTalentUserId={talentUserId}
                 talentName={`${first_name || ""} ${last_name || ""}`.trim() || "this talent"}
               />
             </div>

@@ -34,8 +34,11 @@ export const talentProfileValidation = yup.object().shape({
     )
     .min(0, "Maximum rate must be at least 0")
     .when("min_rate", (minRate, schema) =>
-      minRate !== undefined
-        ? schema.min(minRate as number, "Maximum rate must be at least minimum rate")
+      (Array.isArray(minRate) ? minRate[0] : minRate) !== undefined
+        ? schema.min(
+            Number(Array.isArray(minRate) ? minRate[0] : minRate),
+            "Maximum rate must be at least minimum rate",
+          )
         : schema,
     ),
 }).test(

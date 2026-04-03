@@ -18,7 +18,7 @@ type CompanyProfilePageProps = {
     userId: string;
   };
   searchParams: {
-    id?: number;
+    id?: string;
   };
 };
 
@@ -121,7 +121,7 @@ export default function CompanyProfilePage(context: CompanyProfilePageProps) {
         // Only fetch balance for featured job using block_id
         if (singleJob?.block_id) {
           const balance = await getJobBalance(singleJob.block_id.toString());
-          setJobBalances({ [singleJob.id.toString()]: balance });
+          setJobBalances({ [singleJob.id.toString()]: Number(balance) });
         }
       } catch (error) {
         console.error("Error fetching job balance:", error);

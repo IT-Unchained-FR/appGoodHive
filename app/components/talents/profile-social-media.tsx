@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { FC, useEffect, useState } from "react";
 import { useAuth } from "@/app/contexts/AuthContext";
 
@@ -39,47 +38,52 @@ export const TalentSocialMedia: FC<Props> = (props) => {
       {isShowDetails && (
         <div className="flex gap-2">
           {linkedin && (
-            <Link
+            <a
               href={linkedin}
               target="_blank"
+              rel="noopener noreferrer"
               className="relative w-7 h-7 rounded-full"
             >
               <Image src="/icons/linkedin.svg" alt="social-icon" fill />
-            </Link>
+            </a>
           )}
 
           {telegram && (
-            <Link
+            <a
               href={`https://t.me/${telegram}`}
               target="_blank"
+              rel="noopener noreferrer"
               className="relative w-7 h-7 rounded-full"
             >
               <Image src="/icons/telegram.svg" alt="social-icon" fill />
-            </Link>
+            </a>
           )}
 
           {github && (
-            <Link
+            <a
               href={github}
               target="_blank"
+              rel="noopener noreferrer"
               className="relative w-7 h-7 rounded-full"
             >
               <Image src="/icons/github.svg" alt="social-icon" fill />
-            </Link>
+            </a>
           )}
           {stackoverflow && (
-            <Link
+            <a
               href={stackoverflow}
               target="_blank"
+              rel="noopener noreferrer"
               className="relative w-7 h-7 rounded-full"
             >
               <Image src="/icons/stackoverflow.svg" alt="social-icon" fill />
-            </Link>
+            </a>
           )}
           {twitter && (
-            <Link
+            <a
               href={twitter}
               target="_blank"
+              rel="noopener noreferrer"
               className="relative w-7 h-7 rounded-full"
             >
               <Image
@@ -88,16 +92,17 @@ export const TalentSocialMedia: FC<Props> = (props) => {
                 fill
                 className="rounded-full"
               />
-            </Link>
+            </a>
           )}
           {portfolio && (
-            <Link
+            <a
               href={portfolio}
               target="_blank"
+              rel="noopener noreferrer"
               className="relative w-7 h-7 rounded-full"
             >
               <Image src="/icons/portfolio.svg" alt="social-icon" fill />
-            </Link>
+            </a>
           )}
         </div>
       )}

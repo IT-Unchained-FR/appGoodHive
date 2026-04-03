@@ -341,11 +341,12 @@ export async function getJobBalance(jobId: DatabaseIdentifier): Promise<bigint> 
 
 export async function getUserJobs(userAddress: string): Promise<bigint[]> {
   const contract = getJobManagerContract();
-  return await readContract({
+  const jobs = await readContract({
     contract,
     method: "getUserJobs",
     params: [userAddress],
   });
+  return [...jobs];
 }
 
 export async function calculateTotalFees(jobId: DatabaseIdentifier, baseAmount: bigint): Promise<bigint> {

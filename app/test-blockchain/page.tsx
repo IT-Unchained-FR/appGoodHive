@@ -4,13 +4,14 @@ import { useState } from 'react';
 import { useActiveAccount, ConnectButton } from 'thirdweb/react';
 import { useJobManager } from '@/hooks/contracts/useJobManager';
 import { JOB_MANAGER_CONTRACT_ADDRESS } from '@/lib/contracts/jobManager';
+import { thirdwebClient } from '@/clients/thirdwebClient';
 import toast, { Toaster } from 'react-hot-toast';
 
 export default function TestBlockchain() {
   const account = useActiveAccount();
   const { createJob, isLoading, error, isContractConfigured } = useJobManager();
   const [testStatus, setTestStatus] = useState<string>('');
-  const [jobId, setJobId] = useState<number | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
 
   const runTest = async () => {
     if (!account) {
@@ -43,9 +44,9 @@ export default function TestBlockchain() {
       });
 
       if (result) {
-        setJobId(result);
-        setTestStatus(`✅ Success! Job created with blockchain ID: ${result}`);
-        toast.success(`Job ${result} created successfully!`);
+        setJobId(result.jobId);
+        setTestStatus(`✅ Success! Job created with blockchain ID: ${result.jobId}`);
+        toast.success(`Job ${result.jobId} created successfully!`);
       } else {
         setTestStatus('❌ Job creation failed - no ID returned');
       }
@@ -110,7 +111,7 @@ export default function TestBlockchain() {
 
           {!account && (
             <div className="mb-6">
-              <ConnectButton />
+              <ConnectButton client={thirdwebClient} />
             </div>
           )}
         </div>

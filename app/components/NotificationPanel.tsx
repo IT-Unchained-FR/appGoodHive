@@ -100,7 +100,7 @@ export function NotificationPanel({
     if (!notification.read) onMarkRead(notification.id);
     const href = getHref(notification);
     if (href) {
-      router.push(href);
+      router.push(href as any);
       onClose();
     }
   };

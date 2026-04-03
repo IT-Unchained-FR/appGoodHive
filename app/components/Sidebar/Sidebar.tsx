@@ -4,19 +4,19 @@ import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Users,
-  Building2,
-  UserCheck,
-  Network,
-  LogOut,
-  Settings,
-  HelpCircle,
-  Bell,
-  Home,
-  CreditCard,
   BarChart3,
+  Briefcase,
+  Building2,
+  CreditCard,
+  HelpCircle,
+  Home,
+  LogOut,
+  Network,
+  Settings,
+  Shield,
+  UserCheck,
+  Users,
 } from "lucide-react";
-import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import styles from "./Sidebar.module.css";
 
@@ -24,123 +24,140 @@ interface SidebarProps {
   children?: React.ReactNode;
 }
 
-interface NavItem {
+type NavDef = {
   href: string;
-  icon: React.ReactNode;
+  icon: React.ElementType;
   label: string;
   dataE2e?: string;
-}
+};
 
-const personalNavItems: NavItem[] = [
+const mainNav: NavDef[] = [
   {
     href: "/admin",
-    icon: <Home className={styles.navIcon} />,
+    icon: Home,
     label: "Dashboard",
     dataE2e: "admin-dashboard-menu",
   },
+];
+
+const approvalNav: NavDef[] = [
   {
     href: "/admin/talent-approval",
-    icon: <UserCheck className={styles.navIcon} />,
+    icon: UserCheck,
     label: "Approve Talents",
     dataE2e: "talent-approval-menu",
   },
   {
     href: "/admin/company-approval",
-    icon: <Building2 className={styles.navIcon} />,
+    icon: Building2,
     label: "Approve Companies",
     dataE2e: "company-approval-menu",
   },
-  {
-    href: "/admin/all-jobs",
-    icon: <Users className={styles.navIcon} />,
-    label: "All Jobs",
-    dataE2e: "all-jobs-menu",
-  },
+];
+
+const managementNav: NavDef[] = [
   {
     href: "/admin/talents",
-    icon: <Network className={styles.navIcon} />,
+    icon: Network,
     label: "All Talents",
     dataE2e: "talents-menu",
   },
   {
     href: "/admin/companies",
-    icon: <Building2 className={styles.navIcon} />,
+    icon: Building2,
     label: "All Companies",
     dataE2e: "companies-menu",
   },
   {
     href: "/admin/users",
-    icon: <Users className={styles.navIcon} />,
+    icon: Users,
     label: "All Users",
     dataE2e: "users-menu",
   },
   {
+    href: "/admin/all-jobs",
+    icon: Briefcase,
+    label: "All Jobs",
+    dataE2e: "all-jobs-menu",
+  },
+  {
+    href: "/admin/payouts",
+    icon: CreditCard,
+    label: "Payouts",
+    dataE2e: "payouts-menu",
+  },
+];
+
+const systemNav: NavDef[] = [
+  {
     href: "/admin/manage-admins",
-    icon: <Users className={styles.navIcon} />,
+    icon: Shield,
     label: "Manage Admins",
     dataE2e: "manage-admins-menu",
   },
   {
     href: "/admin/analytics",
-    icon: <BarChart3 className={styles.navIcon} />,
+    icon: BarChart3,
     label: "Analytics",
     dataE2e: "analytics-menu",
   },
 ];
 
-const bottomNavItems: NavItem[] = [
-  {
-    href: "/admin/settings",
-    icon: <Settings className={styles.navIcon} />,
-    label: "Settings",
-    dataE2e: "settings-menu",
-  },
-  {
-    href: "/admin/support",
-    icon: <HelpCircle className={styles.navIcon} />,
-    label: "Support",
-    dataE2e: "support-menu",
-  },
+const bottomNav: NavDef[] = [
+  { href: "/admin/settings", icon: Settings, label: "Settings" },
+  { href: "/admin/support", icon: HelpCircle, label: "Support" },
 ];
 
 const Sidebar = ({ children }: SidebarProps) => {
   const pathname = usePathname();
   const router = useRouter();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
+  const [adminEmail, setAdminEmail] = React.useState("");
 
-  // If we're on the login page, don't apply the admin layout
+  React.useEffect(() => {
+    setAdminEmail(
+      typeof window !== "undefined"
+        ? (localStorage.getItem("admin_email") ?? "")
+        : "",
+    );
+  }, []);
+
   if (pathname === "/admin/login") {
     return <>{children}</>;
   }
 
-  const handleLogout = () => {
-    Cookies.remove("admin_token");
+  const handleLogout = async () => {
+    await fetch("/api/auth/admin/logout", { method: "POST" });
+    localStorage.removeItem("admin_email");
     toast.success("Logged out successfully");
     router.push("/admin/login");
   };
 
-  const isActiveLink = (href: string) => {
-    if (href === "/admin") {
-      return pathname === "/admin" || pathname === "/admin/";
-    }
-    return pathname === href || pathname.startsWith(href + "/");
-  };
+  const isActive = (href: string) =>
+    href === "/admin"
+      ? pathname === "/admin" || pathname === "/admin/"
+      : pathname === href || pathname.startsWith(href + "/");
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
+  const initials = adminEmail ? adminEmail.slice(0, 2).toUpperCase() : "AD";
 
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-  };
+  const NavItem = ({ href, icon: Icon, label, dataE2e }: NavDef) => (
+    <Link
+      href={href as any}
+      data-e2e={dataE2e}
+      className={`${styles.navItem} ${isActive(href) ? styles.navItemActive : ""}`}
+      onClick={() => setOpen(false)}
+    >
+      <Icon className={styles.navIcon} />
+      <span className={styles.navLabel}>{label}</span>
+    </Link>
+  );
 
   return (
     <div className={styles.layout}>
-      {/* Mobile Header */}
       <div className={styles.mobileHeader}>
         <button
           className={styles.hamburger}
-          onClick={toggleMobileMenu}
+          onClick={() => setOpen(!open)}
           aria-label="Toggle menu"
         >
           <svg
@@ -149,7 +166,7 @@ const Sidebar = ({ children }: SidebarProps) => {
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            {isMobileMenuOpen ? (
+            {open ? (
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -166,86 +183,83 @@ const Sidebar = ({ children }: SidebarProps) => {
             )}
           </svg>
         </button>
-        <h2 className={styles.mobileTitle}>Admin Dashboard</h2>
+        <span className={styles.mobileTitle}>GoodHive Admin</span>
       </div>
 
-      {/* Backdrop */}
-      {isMobileMenuOpen && (
-        <div
-          className={styles.backdrop}
-          onClick={closeMobileMenu}
-        />
-      )}
+      {open && <div className={styles.backdrop} onClick={() => setOpen(false)} />}
 
-      <aside className={`${styles.sidebar} ${isMobileMenuOpen ? styles.sidebarOpen : ""}`}>
+      <aside className={`${styles.sidebar} ${open ? styles.sidebarOpen : ""}`}>
+        <div className={styles.sidebarHeader}>
+          <div className={styles.logoMark}>
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L4 6.5v11L12 22l8-4.5v-11L12 2zm6 14.27L12 19.9l-6-3.63V7.73L12 4.1l6 3.63v8.54z" />
+            </svg>
+          </div>
+          <span className={styles.logoText}>GoodHive</span>
+          <span className={styles.logoBadge}>Admin</span>
+        </div>
+
         <div className={styles.sidebarContent}>
-          {/* Header */}
-          <div className={styles.sidebarHeader}>
-            <h2 className={styles.sidebarTitle}>Admin Dashboard</h2>
+          <div className={styles.navSection}>
+            <div className={styles.navList}>
+              {mainNav.map((item) => (
+                <NavItem key={item.href} {...item} />
+              ))}
+            </div>
           </div>
 
-          {/* Navigation Section */}
-          <div className={styles.navigationSection}>
-            <div className={styles.sectionLabel}>
-              <p>Navigation</p>
-            </div>
-
-            {/* Nav Items */}
-            <nav className={styles.navList}>
-              {personalNavItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href as any}
-                  data-e2e={item.dataE2e}
-                  className={`${styles.navItem} ${
-                    isActiveLink(item.href) ? styles.navItemActive : ""
-                  }`}
-                  onClick={closeMobileMenu}
-                >
-                  {item.icon}
-                  <span className={styles.navLabel}>{item.label}</span>
-                </Link>
+          <div className={styles.navSection}>
+            <span className={styles.sectionLabel}>Approvals</span>
+            <div className={styles.navList}>
+              {approvalNav.map((item) => (
+                <NavItem key={item.href} {...item} />
               ))}
-            </nav>
+            </div>
+          </div>
+
+          <div className={styles.navSection}>
+            <span className={styles.sectionLabel}>Management</span>
+            <div className={styles.navList}>
+              {managementNav.map((item) => (
+                <NavItem key={item.href} {...item} />
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.navSection}>
+            <span className={styles.sectionLabel}>System</span>
+            <div className={styles.navList}>
+              {systemNav.map((item) => (
+                <NavItem key={item.href} {...item} />
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Bottom Section */}
         <div className={styles.bottomSection}>
-          <nav className={styles.bottomNav}>
-            {bottomNavItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href as any}
-                data-e2e={item.dataE2e}
-                className={styles.navItem}
-                onClick={closeMobileMenu}
-              >
-                {item.icon}
-                <span className={styles.navLabel}>{item.label}</span>
-              </Link>
+          <div className={styles.bottomNav}>
+            {bottomNav.map((item) => (
+              <NavItem key={item.href} {...item} />
             ))}
-
             <button
               onClick={handleLogout}
-              className={`${styles.navItem} ${styles.logoutButton}`}
+              className={`${styles.navItem} ${styles.logoutItem}`}
             >
               <LogOut className={styles.navIcon} />
               <span className={styles.navLabel}>Logout</span>
             </button>
-          </nav>
+          </div>
 
-          {/* Brand Footer */}
-          <div className={styles.brandFooter}>
-            <div className={styles.brandInfo}>
-              <span className={styles.brandName}>GoodHive</span>
-              <span className={styles.brandBadge}>ADMIN</span>
+          <div className={styles.adminCard}>
+            <div className={styles.adminAvatar}>{initials}</div>
+            <div className={styles.adminInfo}>
+              <p className={styles.adminName}>{adminEmail || "Administrator"}</p>
+              <p className={styles.adminRole}>Admin</p>
             </div>
           </div>
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className={styles.mainContent}>
         <div className={styles.contentWrapper}>{children}</div>
       </main>

@@ -16,8 +16,8 @@ import { useAuthCheck } from "@/app/hooks/useAuthCheck";
 import { formatRateRange } from "@/app/utils/format-rate-range";
 
 interface Props {
-  jobId?: string; // UUID string
-  blockId?: number;
+  jobId?: string | number;
+  blockId?: number | string;
   uniqueId: string;
   type: string;
   title: string;
@@ -34,7 +34,7 @@ interface Props {
   description: string;
   skills: string[];
   buttonText: string;
-  escrowAmount?: boolean;
+  escrowAmount?: number | boolean;
   escrowCurrency?: string;
   walletAddress?: string;
   mentor?: boolean;
@@ -115,6 +115,9 @@ export const Card: FC<Props> = ({
   };
 
   const profileImage = (imageError || !image) ? getFallbackImage() : image;
+  const normalizedJobId = jobId !== undefined ? String(jobId) : undefined;
+  const normalizedBlockId =
+    typeof blockId === "string" ? Number(blockId) : blockId;
 
   // Know more link
   const knowMoreLink =
@@ -126,7 +129,7 @@ export const Card: FC<Props> = ({
   // Handle click tracking
   const handleCardClick = () => {
     if (type === "job" && jobId) {
-      analytics.jobCardClicked(jobId, title, postedBy);
+      analytics.jobCardClicked(String(jobId), title, postedBy);
     } else if (type === "talent") {
       analytics.buttonClicked('talent_profile_view', 'talent_card');
     }
@@ -134,7 +137,7 @@ export const Card: FC<Props> = ({
 
   // Flag & Escrow Icon - ensure all cards have flags
   const countryFlag = generateCountryFlag(country);
-  const hasEscrow = jobId !== undefined && escrowAmount;
+  const hasEscrow = jobId !== undefined && Boolean(escrowAmount);
 
   // Skills - show max 3 skills for consistent sizing
   const displaySkills = skills.slice(0, 3);
@@ -201,8 +204,8 @@ export const Card: FC<Props> = ({
 
           {/* USDC balance */}
           <OptimizedJobBalance
-            jobId={jobId}
-            blockId={blockId}
+            jobId={normalizedJobId}
+            blockId={normalizedBlockId}
             currency={currency}
             amount={budget}
           />
@@ -215,7 +218,7 @@ export const Card: FC<Props> = ({
           {hideCompanyDetails ? (
             <CompanyInfoGuard
               isVisible={false}
-              seed={jobId || uniqueId || title}
+              seed={normalizedJobId || uniqueId || title}
               compact
               placement="top"
               className="relative flex-shrink-0"
@@ -291,7 +294,7 @@ export const Card: FC<Props> = ({
                   <span className="overflow-visible">
                     <CompanyInfoGuard
                       value={undefined}
-                      seed={jobId || uniqueId || title}
+                      seed={normalizedJobId || uniqueId || title}
                       isVisible={false}
                       compact
                       placeholder={hideTalentDetails ? "Connect to view talent" : undefined}
@@ -438,7 +441,7 @@ export const Card: FC<Props> = ({
             )}
 
             {/* View Details Button */}
-            <Link href={knowMoreLink} onClick={handleCardClick}>
+            <a href={knowMoreLink} onClick={handleCardClick}>
               <button className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-[#FFC905] to-[#FFD93D] hover:from-[#FF8C05] hover:to-[#FFC905] rounded-xl transition-all duration-200 transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#FFC905]/50 w-full">
                 <span>View Details</span>
                 <svg
@@ -455,7 +458,7 @@ export const Card: FC<Props> = ({
                   />
                 </svg>
               </button>
-            </Link>
+            </a>
           </div>
         </div>
 

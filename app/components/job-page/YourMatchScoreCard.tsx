@@ -46,12 +46,18 @@ export function YourMatchScoreCard({ jobId, talentId }: YourMatchScoreCardProps)
               gaps?: string[];
             }
           | undefined;
+        const reasons = data?.reasons;
+        const gaps = data?.gaps;
 
         if (!isActive) return;
         setMatchScore({
           score: typeof data?.score === "number" ? data.score : null,
-          reasons: Array.isArray(data?.reasons) ? data.reasons.slice(0, 3) : [],
-          gaps: Array.isArray(data?.gaps) ? data.gaps.slice(0, 3) : [],
+          reasons: Array.isArray(reasons)
+            ? reasons.filter((reason): reason is string => typeof reason === "string").slice(0, 3)
+            : [],
+          gaps: Array.isArray(gaps)
+            ? gaps.filter((gap): gap is string => typeof gap === "string").slice(0, 3)
+            : [],
         });
       } catch {
         if (isActive) {

@@ -1,3 +1,2 @@
-export * from './PopupModal';
 export * from './PopupModal.types';
-
+export * from './PopupModal.utils';

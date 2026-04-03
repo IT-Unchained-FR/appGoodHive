@@ -133,12 +133,18 @@ export default function TalentResult({
                     gaps?: string[];
                   }
                 | undefined;
+              const reasons = data?.reasons;
+              const gaps = data?.gaps;
 
               return {
                 talentId,
                 score: typeof data?.score === "number" ? data.score : null,
-                reasons: Array.isArray(data?.reasons) ? data.reasons : [],
-                gaps: Array.isArray(data?.gaps) ? data.gaps : [],
+                reasons: Array.isArray(reasons)
+                  ? reasons.filter((reason): reason is string => typeof reason === "string")
+                  : [],
+                gaps: Array.isArray(gaps)
+                  ? gaps.filter((gap): gap is string => typeof gap === "string")
+                  : [],
                 error: false,
               };
             } catch {

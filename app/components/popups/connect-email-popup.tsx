@@ -50,7 +50,7 @@ export function ConnectEmailPopup({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ wallet_address, email, password }),
+        body: JSON.stringify({ user_id, email, password }),
       });
 
       const data = await response.json();

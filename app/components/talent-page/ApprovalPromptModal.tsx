@@ -15,7 +15,7 @@ export default function ApprovalPromptModal({ open, onClose }: ApprovalPromptMod
 
   const handleNavigate = (path: string) => {
     onClose();
-    router.push(path);
+    router.push(path as any);
   };
 
   return (

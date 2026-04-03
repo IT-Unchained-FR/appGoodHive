@@ -53,6 +53,7 @@ export default function FundManager({
         .replace(/[-_]/g, ' ')
         .replace(/\b\w/g, (char) => char.toUpperCase())
     : 'the correct network';
+  const hasWithdrawableBalance = Boolean(jobBalance) && Number(jobBalance) > 0;
 
   // Load token info and user balance
   useEffect(() => {
@@ -451,8 +452,7 @@ export default function FundManager({
                     onClick={() => handleWithdrawFunds(true)}
                     disabled={
                       actionsDisabled ||
-                      !jobBalance ||
-                      jobBalance === 0n
+                      !hasWithdrawableBalance
                     }
                     className="w-full py-2 px-4 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                   >

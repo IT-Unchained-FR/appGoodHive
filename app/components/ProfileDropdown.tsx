@@ -51,7 +51,7 @@ export const ProfileDropdown: FC<ProfileDropdownProps> = ({
   const { navigate: protectedNavigate } = useProtectedNavigation();
 
   const handleNavigation = (href: string, authDescription: string) => {
-    protectedNavigate(href as Route, authDescription);
+    protectedNavigate(href as Route, { authDescription });
   };
 
   // Don't render dropdown if user is not authenticated

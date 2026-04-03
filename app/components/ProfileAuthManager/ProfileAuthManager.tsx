@@ -189,7 +189,9 @@ export const ProfileAuthManager = () => {
             {authMethods?.email_verified ? (
               <Check className="w-5 h-5 text-green-600" />
             ) : (
-              <AlertCircle className="w-5 h-5 text-yellow-600" title="Email not verified" />
+              <span title="Email not verified">
+                <AlertCircle className="w-5 h-5 text-yellow-600" />
+              </span>
             )}
           </div>
         )}

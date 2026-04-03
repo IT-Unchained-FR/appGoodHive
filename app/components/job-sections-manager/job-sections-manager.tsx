@@ -141,7 +141,7 @@ export const JobSectionsManager: React.FC<JobSectionsManagerProps> = ({
 
     // Update collapsed state
     setCollapsedSections(prev => {
-      const newSet = new Set();
+      const newSet = new Set<number>();
       prev.forEach(sortOrder => {
         if (sortOrder < index) {
           newSet.add(sortOrder);
@@ -190,7 +190,7 @@ export const JobSectionsManager: React.FC<JobSectionsManagerProps> = ({
       // Update collapsed state to match new order
       const wasActiveCollapsed = collapsedSections.has(oldIndex);
       setCollapsedSections(prev => {
-        const newSet = new Set();
+        const newSet = new Set<number>();
         prev.forEach(sortOrder => {
           if (sortOrder === oldIndex) {
             if (wasActiveCollapsed) newSet.add(newIndex);

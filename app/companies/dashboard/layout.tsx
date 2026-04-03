@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -22,7 +23,12 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
-const sidebarItems = [
+const sidebarItems: Array<{
+  href: Route;
+  label: string;
+  icon: typeof LayoutDashboard;
+  exact: boolean;
+}> = [
   {
     href: "/companies/dashboard",
     label: "Overview",
@@ -210,7 +216,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               </div>
 
               <Link
-                href="/companies/create-job"
+                href={"/companies/create-job" as Route}
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 transition-all shadow-sm"
               >
                 <Plus className="w-4 h-4" />

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useActiveAccount } from 'thirdweb/react';
-import { parseEventLogs, sendTransaction, waitForReceipt } from 'thirdweb';
+import { parseEventLogs, prepareEvent, sendTransaction, waitForReceipt } from 'thirdweb';
 import toast from 'react-hot-toast';
 
 import {
@@ -97,9 +97,13 @@ export function useJobManager() {
 
       try {
         const events = parseEventLogs({
-          abi: JOB_MANAGER_ABI,
           logs: receipt.logs,
-          eventName: 'JobCreated'
+          events: [
+            prepareEvent({
+              signature:
+                "event JobCreated(uint256 indexed jobId, uint256 indexed databaseId, address indexed owner, address tokenAddress, string chain)",
+            }),
+          ],
         });
 
         console.debug('JobCreated events', events);
@@ -149,7 +153,7 @@ export function useJobManager() {
             try {
               const jobData = await getJob(Number(jobId));
               if (!jobData) {
-                return;
+                continue;
               }
 
               const jobDatabaseId =
