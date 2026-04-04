@@ -78,6 +78,60 @@ export const updateCompanySchema = z.object({
 
 export type UpdateCompanyInput = z.infer<typeof updateCompanySchema>;
 
+const optionalNumericField = z.preprocess((value) => {
+  if (value === "" || value === null || value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value === "string") {
+    const normalized = value.trim();
+    if (!normalized) return undefined;
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : value;
+  }
+
+  return value;
+}, z.number().nonnegative().optional());
+
+// Talent update validation
+export const updateTalentSchema = z.object({
+  first_name: z.string().min(1).max(100).optional(),
+  last_name: z.string().min(1).max(100).optional(),
+  email: z.string().email().optional(),
+  title: z.string().max(200).optional(),
+  description: z.string().max(12000).optional(),
+  country: z.string().length(2, "Country code must be 2 characters").optional().or(z.literal("")),
+  city: z.string().max(100).optional(),
+  phone_country_code: z
+    .string()
+    .regex(/^\+?[0-9,\-\s]{1,24}$/, "Invalid phone country code")
+    .optional()
+    .or(z.literal("")),
+  phone_number: z
+    .string()
+    .regex(/^[0-9()\-\s]{6,20}$/, "Invalid phone number")
+    .optional()
+    .or(z.literal("")),
+  about_work: z.string().max(12000).optional(),
+  min_rate: optionalNumericField,
+  max_rate: optionalNumericField,
+  freelance_only: z.boolean().optional(),
+  remote_only: z.boolean().optional(),
+  skills: z.string().max(4000).optional(),
+  linkedin: z.string().url().optional().or(z.literal("")),
+  github: z.string().url().optional().or(z.literal("")),
+  twitter: z.string().url().optional().or(z.literal("")),
+  stackoverflow: z.string().url().optional().or(z.literal("")),
+  portfolio: z.string().url().optional().or(z.literal("")),
+  telegram: z.string().max(100).optional(),
+  approved: z.boolean().optional(),
+  talent: z.boolean().optional(),
+  mentor: z.boolean().optional(),
+  recruiter: z.boolean().optional(),
+});
+
+export type UpdateTalentInput = z.infer<typeof updateTalentSchema>;
+
 // Validation helper function
 export function validateInput<T>(
   schema: z.ZodSchema<T>,

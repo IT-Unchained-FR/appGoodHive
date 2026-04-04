@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode, useEffect, useState } from "react";
+import { countries } from "@/app/constants/countries";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +28,15 @@ type PreferenceToggleKey = "freelance_only" | "remote_only";
 const inputClassName = "h-10 rounded-lg border-gray-200 text-sm";
 const labelClassName = "mb-1 block text-xs font-medium text-gray-500";
 const textareaClassName =
-  "min-h-[120px] rounded-lg border-gray-200 text-sm focus:border-[#FFC905] focus:ring-[#FFC905]";
+  "min-h-[140px] rounded-lg border-gray-200 text-sm focus:border-[#FFC905] focus:ring-[#FFC905]";
+
+type CountryOption = {
+  value: string;
+  label: string;
+  phoneCode: string;
+};
+
+const countryOptions = countries as CountryOption[];
 
 function FieldLabel({ children }: { children: ReactNode }) {
   return <label className={labelClassName}>{children}</label>;
@@ -41,6 +50,94 @@ function SectionHeading({ children }: { children: ReactNode }) {
   );
 }
 
+function decodeHtmlEntities(value: string) {
+  if (typeof window === "undefined") {
+    return value
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = value;
+  return textarea.value;
+}
+
+function htmlToEditorText(value: string | null | undefined) {
+  if (!value) return "";
+
+  return decodeHtmlEntities(
+    value
+      .replace(/<\s*br\s*\/?>/gi, "\n")
+      .replace(/<\/p>/gi, "\n\n")
+      .replace(/<li>/gi, "• ")
+      .replace(/<\/li>/gi, "\n")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\u00a0/g, " "),
+  )
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function editorTextToHtml(value: string | null | undefined) {
+  const trimmed = value?.trim();
+  if (!trimmed) return "";
+
+  return trimmed
+    .split(/\n{2,}/)
+    .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, "<br />")}</p>`)
+    .join("");
+}
+
+function normalizePhoneCode(value: string | null | undefined) {
+  return value?.replace(/\s+/g, " ").trim() || "";
+}
+
+function normalizeOptionalNumber(value: unknown) {
+  if (value === null || value === undefined || value === "") {
+    return undefined;
+  }
+
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : undefined;
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number(value.trim());
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+
+  return undefined;
+}
+
+function findCountryOption(value: string | null | undefined) {
+  const normalized = value?.trim().toLowerCase();
+  if (!normalized) return null;
+
+  return (
+    countryOptions.find(
+      (country) =>
+        country.value.toLowerCase() === normalized ||
+        country.label.toLowerCase() === normalized,
+    ) || null
+  );
+}
+
 export function EditTalentModal({
   open,
   onOpenChange,
@@ -49,22 +146,29 @@ export function EditTalentModal({
 }: EditTalentModalProps) {
   const [formData, setFormData] = useState<Partial<ProfileData>>({});
   const [loading, setLoading] = useState(false);
+  const [countryQuery, setCountryQuery] = useState("");
 
   useEffect(() => {
     if (talent) {
+      const matchedCountry = findCountryOption(talent.country || "");
+      const resolvedCountry = matchedCountry?.value || talent.country || "";
+      const resolvedPhoneCode =
+        matchedCountry?.phoneCode || normalizePhoneCode(talent.phone_country_code);
+
+      setCountryQuery(matchedCountry?.label || talent.country || "");
       setFormData({
         first_name: talent.first_name || "",
         last_name: talent.last_name || "",
         email: talent.email || "",
         title: talent.title || "",
-        description: talent.description || "",
-        country: talent.country || "",
+        description: htmlToEditorText(talent.description),
+        country: resolvedCountry,
         city: talent.city || "",
-        phone_country_code: talent.phone_country_code || "",
+        phone_country_code: resolvedPhoneCode,
         phone_number: talent.phone_number || "",
-        about_work: talent.about_work || "",
-        min_rate: talent.min_rate ?? talent.rate ?? undefined,
-        max_rate: talent.max_rate ?? talent.rate ?? undefined,
+        about_work: htmlToEditorText(talent.about_work),
+        min_rate: normalizeOptionalNumber(talent.min_rate ?? talent.rate),
+        max_rate: normalizeOptionalNumber(talent.max_rate ?? talent.rate),
         freelance_only: talent.freelance_only || false,
         remote_only: talent.remote_only || false,
         skills: talent.skills || "",
@@ -89,13 +193,69 @@ export function EditTalentModal({
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleCountryChange = (value: string) => {
+    setCountryQuery(value);
+
+    const match = findCountryOption(value);
+    if (match) {
+      setFormData((prev) => ({
+        ...prev,
+        country: match.value,
+        phone_country_code: match.phoneCode,
+      }));
+      return;
+    }
+
+    if (!value.trim()) {
+      setFormData((prev) => ({
+        ...prev,
+        country: "",
+        phone_country_code: "",
+      }));
+    }
+  };
+
+  const handleCountryBlur = () => {
+    const match = findCountryOption(countryQuery);
+    if (match) {
+      setCountryQuery(match.label);
+      setFormData((prev) => ({
+        ...prev,
+        country: match.value,
+        phone_country_code: match.phoneCode,
+      }));
+      return;
+    }
+
+    if (!countryQuery.trim()) {
+      setCountryQuery("");
+      setFormData((prev) => ({
+        ...prev,
+        country: "",
+        phone_country_code: "",
+      }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!talent) return;
 
     try {
       setLoading(true);
-      await onSave({ ...talent, ...formData } as ProfileData);
+      const matchedCountry = findCountryOption(countryQuery);
+
+      await onSave({
+        ...talent,
+        ...formData,
+        country: matchedCountry?.value || (formData.country || ""),
+        phone_country_code:
+          matchedCountry?.phoneCode ||
+          normalizePhoneCode(formData.phone_country_code),
+        phone_number: formData.phone_number?.trim() || "",
+        description: editorTextToHtml(formData.description),
+        about_work: editorTextToHtml(formData.about_work),
+      } as ProfileData);
       toast.success("Talent updated successfully");
       onOpenChange(false);
     } catch (error) {
@@ -220,16 +380,31 @@ export function EditTalentModal({
                     value={formData.description || ""}
                     onChange={(e) => setField("description", e.target.value)}
                     className={textareaClassName}
+                    placeholder="Short professional summary. Plain text is fine; line breaks will be preserved."
                   />
+                  <p className="mt-1 text-xs text-gray-400">
+                    Existing HTML formatting is flattened here for cleaner editing.
+                  </p>
                 </div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
                     <FieldLabel>Country</FieldLabel>
                     <Input
-                      value={formData.country || ""}
-                      onChange={(e) => setField("country", e.target.value)}
+                      list="admin-talent-country-options"
+                      value={countryQuery}
+                      onChange={(e) => handleCountryChange(e.target.value)}
+                      onBlur={handleCountryBlur}
                       className={inputClassName}
+                      placeholder="Start typing a country"
                     />
+                    <datalist id="admin-talent-country-options">
+                      {countryOptions.map((country) => (
+                        <option key={country.value} value={country.label} />
+                      ))}
+                    </datalist>
+                    <p className="mt-1 text-xs text-gray-400">
+                      Select a country to keep location and dialing code consistent.
+                    </p>
                   </div>
                   <div>
                     <FieldLabel>City</FieldLabel>
@@ -249,12 +424,14 @@ export function EditTalentModal({
                 <div>
                   <FieldLabel>Phone Country Code</FieldLabel>
                   <Input
-                    value={formData.phone_country_code || ""}
-                    onChange={(e) =>
-                      setField("phone_country_code", e.target.value)
-                    }
-                    className={inputClassName}
+                    value={normalizePhoneCode(formData.phone_country_code)}
+                    className={`${inputClassName} bg-gray-50 text-gray-500`}
+                    placeholder="Select a country first"
+                    readOnly
                   />
+                  <p className="mt-1 text-xs text-gray-400">
+                    Auto-filled from the country selection.
+                  </p>
                 </div>
                 <div>
                   <FieldLabel>Phone Number</FieldLabel>
@@ -262,6 +439,7 @@ export function EditTalentModal({
                     value={formData.phone_number || ""}
                     onChange={(e) => setField("phone_number", e.target.value)}
                     className={inputClassName}
+                    placeholder="Digits only"
                   />
                 </div>
               </div>
@@ -319,7 +497,11 @@ export function EditTalentModal({
                     value={formData.about_work || ""}
                     onChange={(e) => setField("about_work", e.target.value)}
                     className={textareaClassName}
+                    placeholder="Describe the kind of work this talent is looking for, strengths, and preferences."
                   />
+                  <p className="mt-1 text-xs text-gray-400">
+                    Use plain text. Paragraphs will be saved cleanly.
+                  </p>
                 </div>
                 <div className="divide-y divide-gray-100 rounded-xl bg-gray-50">
                   {preferenceRows.map(({ id, label, desc }) => (

@@ -592,7 +592,6 @@ export default async function JobPage({
   const locationLabel = [job.city, job.country].filter(Boolean).join(", ") || "Remote";
   const budgetLabel = formatBudget(job.budget, job.currency);
   const audienceLabel = getAudienceLabel(job);
-  const previewText = getJobPreviewText(job);
   const companyLocation = [job.company.city, job.company.country]
     .filter(Boolean)
     .join(", ");
@@ -679,11 +678,6 @@ export default async function JobPage({
                             <ShieldCheck className="h-4 w-4 normal-case tracking-normal" />
                           ) : null}
                         </Link>
-                        {job.company.headline ? (
-                          <p className="mt-2 max-w-2xl text-sm text-slate-600">
-                            {job.company.headline}
-                          </p>
-                        ) : null}
                       </div>
                     ) : (
                       <div className="inline-flex max-w-full items-center rounded-full border border-amber-200/80 bg-white/90 px-4 py-2 shadow-sm">
@@ -703,9 +697,11 @@ export default async function JobPage({
                       <h1 className="text-3xl font-semibold leading-tight text-slate-950 sm:text-5xl">
                         {job.title}
                       </h1>
-                      <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600 sm:text-[15px]">
-                        {previewText}
-                      </p>
+                      {isCompanyVisible && job.company.headline ? (
+                        <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600 sm:text-[15px]">
+                          {job.company.headline}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -1022,29 +1018,37 @@ export default async function JobPage({
 
               {isCompanyVisible ? (
                 <>
-                  <div className="mt-5 flex items-center gap-4">
-                    <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[20px] border border-slate-200 bg-slate-50">
-                      {job.company.logo ? (
-                        <Image
-                          alt={`${job.company.name} logo`}
-                          className="h-full w-full object-cover"
-                          height={64}
-                          src={job.company.logo}
-                          width={64}
-                        />
-                      ) : (
-                        <Building2 className="h-6 w-6 text-slate-400" />
-                      )}
+                  <div className="mt-5 rounded-[26px] bg-[linear-gradient(180deg,#fffdf8_0%,#f9f5ec_100%)] p-5 ring-1 ring-[#eee2cb]">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm">
+                        {job.company.logo ? (
+                          <Image
+                            alt={`${job.company.name} logo`}
+                            className="h-full w-full object-cover"
+                            height={72}
+                            src={job.company.logo}
+                            width={72}
+                          />
+                        ) : (
+                          <Building2 className="h-7 w-7 text-slate-400" />
+                        )}
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                          Hiring company
+                        </p>
+                        <p className="mt-2 text-xl font-semibold leading-tight text-slate-950">
+                          {job.company.name}
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="min-w-0">
-                      <p className="text-lg font-semibold text-slate-900">
-                        {job.company.name}
+                    {job.company.headline ? (
+                      <p className="mt-4 text-[13px] leading-6 text-slate-600">
+                        {job.company.headline}
                       </p>
-                      {job.company.headline ? (
-                        <p className="mt-1 text-sm text-slate-600">{job.company.headline}</p>
-                      ) : null}
-                    </div>
+                    ) : null}
                   </div>
 
                   {companyLocation ? (
@@ -1079,24 +1083,32 @@ export default async function JobPage({
                 </>
               ) : (
                 <>
-                  <div className="mt-5 flex items-start gap-4">
-                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[20px] border border-amber-200 bg-amber-50 text-amber-700">
-                      <Lock className="h-6 w-6" />
+                  <div className="mt-5 rounded-[26px] bg-[linear-gradient(180deg,#fffdf8_0%,#f9f5ec_100%)] p-5 ring-1 ring-[#eee2cb]">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-[22px] border border-amber-200 bg-amber-50 text-amber-700">
+                        <Lock className="h-7 w-7" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                          Hiring company
+                        </p>
+                        <div className="mt-2">
+                          <CompanyInfoGuard
+                            value={undefined}
+                            seed={`${job.id}-about-company`}
+                            isVisible={false}
+                            textClassName="text-slate-900"
+                            sizeClassName="text-xl font-semibold leading-tight"
+                            blurAmount="blur-[8px]"
+                            placement="bottom"
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div className="min-w-0 space-y-2">
-                      <CompanyInfoGuard
-                        value={undefined}
-                        seed={`${job.id}-about-company`}
-                        isVisible={false}
-                        textClassName="text-slate-900"
-                        sizeClassName="text-lg font-semibold"
-                        blurAmount="blur-[8px]"
-                        placement="bottom"
-                      />
-                      <p className="text-sm leading-6 text-slate-600">
-                        Connect your wallet to reveal the hiring company, explore their profile, and unlock external links.
-                      </p>
-                    </div>
+
+                    <p className="mt-4 text-[13px] leading-6 text-slate-600">
+                      Connect your wallet to reveal the hiring company, explore their profile, and unlock external links.
+                    </p>
                   </div>
 
                   <div className="mt-5 rounded-[24px] border border-dashed border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-900">

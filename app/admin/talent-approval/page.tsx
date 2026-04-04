@@ -7,10 +7,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { EnhancedTable, Column } from "@/app/components/admin/EnhancedTable";
 import { AdminFilters } from "@/app/components/admin/AdminFilters";
-import { Spinner } from "@/app/components/admin/Spinner";
 import { Button } from "@/components/ui/button";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
-import { StatusPill } from "@/app/components/admin/StatusPill";
+import { getSharedTalentColumns } from "@/app/components/admin/sharedTalentColumns";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +22,6 @@ import { ProfileData } from "@/app/talents/my-profile/page";
 import ApprovalPopup from "./components/ApprovalPopup";
 import { BulkApproval } from "@/app/components/admin/BulkApproval";
 import toast from "react-hot-toast";
-import moment from "moment";
 
 type ProfileDataWithName = ProfileData & {
   name?: string;
@@ -195,10 +193,11 @@ export default function AdminTalentApproval() {
   };
 
   const columns: Column<ProfileDataWithName>[] = [
+    // Select checkbox
     {
       key: "select",
       header: "",
-      width: "5%",
+      width: "3%",
       render: (_value: unknown, row: ProfileDataWithName) => (
         <Checkbox
           checked={selectedItems.some((item) => item.user_id === row.user_id)}
@@ -207,165 +206,13 @@ export default function AdminTalentApproval() {
         />
       ),
     },
-    {
-      key: "name",
-      header: "Name",
-      width: "22%",
-      sortable: true,
-      exportValue: (row: ProfileDataWithName) =>
-        `${row.first_name || ""} ${row.last_name || ""}`.trim(),
-      render: (_value: unknown, row: ProfileDataWithName) => {
-        const fullName = `${row.first_name || ""} ${row.last_name || ""}`.trim();
-        if (!fullName) {
-          return (
-            <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100">
-                <span className="text-xs text-gray-400">?</span>
-              </div>
-              <span className="text-xs italic text-gray-400">No name set</span>
-            </div>
-          );
-        }
-        const initials = [row.first_name?.[0], row.last_name?.[0]].filter(Boolean).join("").toUpperCase();
-        return (
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#FFC905]/20 text-[10px] font-bold text-[#a07800]">
-              {initials || "?"}
-            </div>
-            <span className="font-medium truncate" title={fullName}>
-              {fullName.length > 22 ? `${fullName.substring(0, 22)}…` : fullName}
-            </span>
-          </div>
-        );
-      },
-    },
-    {
-      key: "status",
-      header: "Status",
-      width: "12%",
-      exportValue: (row: ProfileDataWithName) => {
-        const status = getTalentStatus(row);
-        if (status === "approved") return "Approved";
-        if (status === "deferred") return "Deferred";
-        if (status === "rejected") return "Rejected";
-        return "In Review";
-      },
-      render: (_value: unknown, row: ProfileDataWithName) => {
-        const status = getTalentStatus(row);
-        if (status === "approved") {
-          return <StatusPill status="approved" label="Approved" />;
-        } else if (status === "deferred") {
-          return <StatusPill status="deferred" label="Deferred" />;
-        } else if (status === "rejected") {
-          return <StatusPill status="rejected" label="Rejected" />;
-        } else {
-          return <StatusPill status="in_review" label="In Review" />;
-        }
-      },
-    },
-    {
-      key: "applied_for",
-      header: "Applied For",
-      width: "12%",
-      exportValue: (row: ProfileDataWithName) => {
-        const roles: string[] = [];
-        if (row.talent) roles.push("Talent");
-        if (row.mentor) roles.push("Mentor");
-        if (row.recruiter) roles.push("Recruiter");
-        return roles.join(", ") || "";
-      },
-      render: (_value: unknown, row: ProfileDataWithName) => {
-        const hasRoles = row.talent || row.mentor || row.recruiter;
-        if (!hasRoles) {
-          return (
-            <span className="inline-flex items-center gap-1 rounded-md border border-dashed border-gray-200 px-2 py-0.5 text-xs text-gray-400">
-              Not specified
-            </span>
-          );
-        }
-        return (
-          <div className="flex flex-col gap-1 w-full justify-center items-center">
-            {row.talent && (
-              <StatusPill status="pending" label="Talent" className="w-fit justify-center" />
-            )}
-            {row.mentor && (
-              <StatusPill status="pending" label="Mentor" className="w-fit justify-center" />
-            )}
-            {row.recruiter && (
-              <StatusPill status="pending" label="Recruiter" className="w-fit justify-center" />
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      key: "email",
-      header: "Email",
-      width: "20%",
-      sortable: true,
-      render: (value: unknown) => {
-        if (!value) {
-          return (
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-gray-200 px-2 py-0.5 text-xs text-gray-400">
-              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-              </svg>
-              No email
-            </span>
-          );
-        }
-        return <span className="text-sm truncate">{String(value)}</span>;
-      },
-    },
-    {
-      key: "referrer_name",
-      header: "Referred By",
-      width: "20%",
-      exportValue: (row: ProfileDataWithName) => {
-        if (!row.referred_by) return "Direct signup";
-        return row.referrer_name
-          ? `${row.referrer_name} (${row.referred_by})`
-          : row.referred_by;
-      },
-      render: (_value: unknown, row: ProfileDataWithName) => {
-        if (!row.referred_by) {
-          return (
-            <span className="text-xs font-medium text-slate-400">
-              Direct signup
-            </span>
-          );
-        }
-
-        return (
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-slate-900">
-              {row.referrer_name || "Referral source"}
-            </p>
-            <p className="truncate text-xs text-slate-500">
-              Code: {row.referred_by}
-            </p>
-          </div>
-        );
-      },
-    },
-    {
-      key: "created_at",
-      header: "Created on",
-      width: "13%",
-      sortable: true,
-      exportValue: (row: ProfileDataWithName) => {
-        const createdAt = row.user_created_at || row.created_at;
-        return createdAt ? moment(createdAt).format("MMM D, YYYY") : "N/A";
-      },
-      render: (value: string, row: ProfileDataWithName) => {
-        const createdAt = row.user_created_at || value;
-        return createdAt ? moment(createdAt).format("MMM D, YYYY") : "N/A";
-      },
-    },
+    // All shared talent data columns
+    ...getSharedTalentColumns(),
+    // Approval-specific actions
     {
       key: "actions",
       header: "Actions",
-      width: "8%",
+      width: "5%",
       render: (_value: unknown, row: ProfileDataWithName) => (
         <div className="flex justify-end">
           <DropdownMenu>
@@ -375,49 +222,19 @@ export default function AdminTalentApproval() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={(e: React.MouseEvent) => {
-                  e.stopPropagation();
-                  window.open(`/admin/talent/${row.user_id}`, "_blank");
-                }}
-              >
+              <DropdownMenuItem className="cursor-pointer" onClick={(e: React.MouseEvent) => { e.stopPropagation(); window.open(`/admin/talent/${row.user_id}`, "_blank"); }}>
                 View Profile
               </DropdownMenuItem>
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={(e: React.MouseEvent) => {
-                  e.stopPropagation();
-                  handleApproveClick(row);
-                }}
-              >
+              <DropdownMenuItem className="cursor-pointer" onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleApproveClick(row); }}>
                 Approve
               </DropdownMenuItem>
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={(e: React.MouseEvent) => {
-                  e.stopPropagation();
-                  handleStatusUpdate(row, "in_review");
-                }}
-              >
+              <DropdownMenuItem className="cursor-pointer" onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleStatusUpdate(row, "in_review"); }}>
                 Mark In Review
               </DropdownMenuItem>
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={(e: React.MouseEvent) => {
-                  e.stopPropagation();
-                  handleStatusUpdate(row, "deferred");
-                }}
-              >
+              <DropdownMenuItem className="cursor-pointer" onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleStatusUpdate(row, "deferred"); }}>
                 Mark Deferred
               </DropdownMenuItem>
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={(e: React.MouseEvent) => {
-                  e.stopPropagation();
-                  handleStatusUpdate(row, "rejected");
-                }}
-              >
+              <DropdownMenuItem className="cursor-pointer" onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleStatusUpdate(row, "rejected"); }}>
                 Reject
               </DropdownMenuItem>
             </DropdownMenuContent>

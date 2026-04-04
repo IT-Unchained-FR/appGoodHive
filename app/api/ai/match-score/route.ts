@@ -45,6 +45,17 @@ function normalizeStringList(value: unknown): string[] {
     .slice(0, 3);
 }
 
+function buildResponseData(row: CacheRow) {
+  const reasons = normalizeStringList(row.reasons);
+  const gaps = normalizeStringList(row.gaps);
+
+  return {
+    score: row.score === null ? null : Number(row.score),
+    reasons,
+    gaps,
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as {
@@ -144,18 +155,23 @@ export async function POST(request: NextRequest) {
 
     if (cachedRows.length > 0) {
       const cached = cachedRows[0];
-      return NextResponse.json(
-        {
-          success: true,
-          data: {
-            score: cached.score === null ? null : Number(cached.score),
-            reasons: normalizeStringList(cached.reasons),
-            gaps: normalizeStringList(cached.gaps),
-            cached: true,
+      const cachedData = buildResponseData(cached);
+
+      if (
+        cachedData.score !== null &&
+        (cachedData.reasons.length > 0 || cachedData.gaps.length > 0)
+      ) {
+        return NextResponse.json(
+          {
+            success: true,
+            data: {
+              ...cachedData,
+              cached: true,
+            },
           },
-        },
-        { status: 200 },
-      );
+          { status: 200 },
+        );
+      }
     }
 
     const talent = targetTalentRows[0];

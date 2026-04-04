@@ -4,7 +4,7 @@
 `ADMIN PANEL OVERHAUL — Phases 2, 3, and 4 implemented; repo-wide lint/typecheck/build are green again, and the admin login redirect loop is fixed (April 3, 2026)`
 
 ## Last Updated
-2026-04-03
+2026-04-04
 
 ## 🔥 ADMIN PANEL OVERHAUL TASKS
 
@@ -76,8 +76,12 @@ Codex pickup prompt per phase:
 - [x] Removed the `mentorStatus` filter from `/admin/talents` so talent-directory search results are not silently narrowed by mentor-specific review state
 - [x] Tightened `/admin/talents` row-table mode by hiding long text columns and replacing file/image URLs with compact open-in-new-tab buttons
 - [x] `/admin/talent-approval` now behaves as a true pending-review queue and excludes already approved, deferred, or rejected talent profiles
+- [x] `/admin/talents` and `/admin/talent-approval` now show table skeleton loaders during fetches instead of flashing live column headers/content shells
+- [x] `/admin/talents` row actions now use a cleaner `View + More` pattern so actions stay aligned and readable without overcrowding the table
+- [x] `/admin/talents` edit modal now normalizes rich-text fields for cleaner editing, derives phone country code from selected country, and saves through a real admin `PUT` route
 - [x] Admin routes are now isolated from the public wallet/session provider tree, preventing the repeated public-site `Welcome back!` auth loop on `/admin`
 - [x] Public wallet auth no longer forces an immediate `/api/auth/me` refresh after successful connect, preventing the repeated `Welcome back!` toast loop when the session cookie is still settling
+- [x] Company opportunity cards now use icon-led labeled metadata blocks, status-aware budget styling, and cleaner preview fallbacks so job attributes read clearly instead of as ambiguous pills
 
 ### P2 — ADMIN-010: Implement real report generation ← CODEX TASK
 - [x] Create `app/api/admin/reports/route.ts` (talents/companies/jobs CSV export)
@@ -255,6 +259,11 @@ No other files need changing.
 - [x] Unified talent profile submission emails so only the server-side submission email is sent, using the updated assessment-call Calendly link and the refreshed welcome copy
 - [x] Added an in-app interview-call CTA to the talent profile review banner so submitted talents can book the same Benoit Calendly link directly from their profile page
 - [x] Polished the company profile photo validation state with softer helper copy, a branded inline error card, and a simplified hero title that now reads "Build Your Company Profile"
+- [x] Rebuilt the public company profile page with a calmer 2026-style layout, stronger spacing hierarchy, published-only job cards, and direct contact details gated to approved viewers or admins only
+- [x] Cleaned the public job hero so the company summary now sits under the role title and the duplicate job-preview paragraph is removed from the top section
+- [x] Tightened the company-profile hero typography and moved the opportunities grid to a full-width section so job cards no longer get squeezed by the sidebar
+- [x] Redesigned the job-page company sidebar card so the logo and company summary stack cleanly instead of compressing the text beside the profile image
+- [x] Refined company opportunities with active/inactive tabs for owner/admin views, explicit job-status signals, cooler slate budget badges, and human-friendly job metadata labels
 - [x] Added Gemini-powered job section cleanup so messy pasted job text is auto-formatted on save and the public job page now renders sanitized rich content instead of escaped raw section HTML
 
 ---

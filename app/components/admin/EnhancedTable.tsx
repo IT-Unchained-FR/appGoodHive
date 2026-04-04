@@ -550,6 +550,14 @@ export function EnhancedTable<T extends Record<string, any>>({
     [columns],
   );
 
+  const skeletonRowCount = Math.max(5, Math.min(pageSize, 8));
+  const desktopSkeletonColumns = useMemo(() => {
+    const columnCount = Math.min(Math.max(displayColumns.length, 3), 4);
+    const widths = ["34%", "26%", "22%", "18%"];
+
+    return widths.slice(0, columnCount);
+  }, [displayColumns.length]);
+
   const showCardView = mobileCardView && isMobile;
   const shouldRenderStatusBadge = useCallback(
     (columnKey: string, value: unknown) => {
@@ -901,6 +909,53 @@ export function EnhancedTable<T extends Record<string, any>>({
             })
           )}
         </div>
+      ) : loading ? (
+        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+          <div className="border-b border-gray-100 bg-gray-50">
+            <div className="flex">
+              {selectable && (
+                <div className="w-[50px] px-4 py-3">
+                  <div className="h-4 w-4 animate-pulse rounded bg-gray-200" />
+                </div>
+              )}
+              {desktopSkeletonColumns.map((width, index) => (
+                <div
+                  key={`skeleton-header-${index}`}
+                  style={{ width }}
+                  className="flex-1 px-4 py-3"
+                >
+                  <div
+                    className="h-3 animate-pulse rounded bg-gray-200"
+                    style={{ width: `${Math.max(36, 72 - (index % 3) * 12)}%` }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            {Array.from({ length: skeletonRowCount }).map((_, rowIndex) => (
+              <div key={rowIndex} className="flex border-b border-gray-50 last:border-0">
+                {selectable && (
+                  <div className="flex w-[50px] items-center px-4 py-4">
+                    <div className="h-4 w-4 animate-pulse rounded bg-gray-100" />
+                  </div>
+                )}
+                {desktopSkeletonColumns.map((width, columnIndex) => (
+                  <div
+                    key={`skeleton-row-${rowIndex}-column-${columnIndex}`}
+                    style={{ width }}
+                    className="flex flex-1 items-center px-4 py-4"
+                  >
+                    <div
+                      className="h-4 animate-pulse rounded bg-gray-100"
+                      style={{ width: `${Math.max(42, 86 - ((rowIndex + columnIndex) % 4) * 14)}%` }}
+                    />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
           <Table>
@@ -930,18 +985,7 @@ export function EnhancedTable<T extends Record<string, any>>({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={displayColumns.length + (selectable ? 1 : 0)}
-                    className="py-8 text-center text-sm text-gray-500"
-                  >
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#FFC905]"></div>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : paginatedData.length === 0 ? (
+              {paginatedData.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={displayColumns.length + (selectable ? 1 : 0)}

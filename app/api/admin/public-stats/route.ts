@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import sql from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -9,12 +10,12 @@ export async function GET() {
     const [companies] = await sql`SELECT COUNT(*) as count FROM goodhive.companies`;
     const [jobs] = await sql`SELECT COUNT(*) as count FROM goodhive.job_offers`;
 
-    return Response.json({
+    return NextResponse.json({
       talents: Number(talents?.count || 0),
       companies: Number(companies?.count || 0),
       jobs: Number(jobs?.count || 0),
     });
   } catch {
-    return Response.json({ talents: null, companies: null, jobs: null }, { status: 500 });
+    return NextResponse.json({ talents: null, companies: null, jobs: null }, { status: 500 });
   }
 }
