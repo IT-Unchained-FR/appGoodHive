@@ -1,10 +1,10 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 @import url("https://fonts.googleapis.com/css2?family=Montserrat");
 @import "./styles/rich-text.css";
 @import "./styles/company-animations.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 .logo-svg {
   width: 31px;

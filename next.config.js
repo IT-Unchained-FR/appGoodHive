@@ -2,9 +2,7 @@
 const nextConfig = {
   reactStrictMode: false,
   experimental: {
-    workerThreads: false,
-    cpus: 1,
-    serverComponentsExternalPackages: ["pdf-parse"],
+    serverComponentsExternalPackages: ["pdf-parse", "puppeteer", "pdf2pic", "pdfjs-dist"],
   },
   async headers() {
     return [
