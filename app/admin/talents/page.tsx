@@ -316,38 +316,58 @@ const renderTalentApprovalBadge = (row: ProfileData) => {
 };
 
 const renderBooleanStatusPill = (active: boolean, activeLabel: string, inactiveLabel: string) => (
-  <StatusPill
-    status={active ? "approved" : "pending"}
-    label={active ? activeLabel : inactiveLabel}
-  />
+  <span
+    title={active ? activeLabel : inactiveLabel}
+    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ${
+      active
+        ? "bg-green-50 text-green-700 ring-1 ring-green-200"
+        : "bg-gray-100 text-gray-400 ring-1 ring-gray-200"
+    }`}
+  >
+    {active ? (
+      <svg className="h-3 w-3 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+      </svg>
+    ) : (
+      <svg className="h-3 w-3 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+      </svg>
+    )}
+    {active ? activeLabel.replace(/ Yes$/, "").replace(/ No$/, "") : inactiveLabel.replace(/ Yes$/, "").replace(/ No$/, "")}
+  </span>
 );
 
 const renderMentorStatusPill = (row: ProfileData) => {
   if (row.mentor === true && row.mentor_status === "approved") {
-    return <StatusPill status="approved" label="Mentor Approved" />;
+    return (
+      <span title="Mentor Approved" className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-green-200 whitespace-nowrap">
+        <svg className="h-3 w-3 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" /></svg>
+        Mentor
+      </span>
+    );
   }
   if (row.mentor === true && row.mentor_status === "pending") {
-    return <StatusPill status="pending" label="Mentor Pending" />;
-  }
-  if (row.mentor === true && row.mentor_status === "deferred") {
     return (
-      <StatusPill
-        status="deferred"
-        label="Mentor Deferred"
-        title={row.mentor_status_reason || "Reapply later"}
-      />
+      <span title="Mentor Pending" className="inline-flex items-center gap-1 rounded-full bg-yellow-50 px-2 py-0.5 text-xs font-medium text-yellow-700 ring-1 ring-yellow-200 whitespace-nowrap">
+        <svg className="h-3 w-3 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clipRule="evenodd" /></svg>
+        Mentor
+      </span>
     );
   }
-  if (row.mentor === true && row.mentor_status === "rejected") {
+  if (row.mentor === true && (row.mentor_status === "deferred" || row.mentor_status === "rejected")) {
     return (
-      <StatusPill
-        status="rejected"
-        label="Mentor Rejected"
-        title={row.mentor_status_reason || "Rejected"}
-      />
+      <span title={`Mentor ${row.mentor_status}`} className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600 ring-1 ring-red-200 whitespace-nowrap">
+        <svg className="h-3 w-3 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" /></svg>
+        Mentor
+      </span>
     );
   }
-  return <StatusPill status="pending" label="Mentor No" />;
+  return (
+    <span title="Not a mentor" className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-400 ring-1 ring-gray-200 whitespace-nowrap">
+      <svg className="h-3 w-3 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" /></svg>
+      Mentor
+    </span>
+  );
 };
 
 const getReferredByLabel = (row: ProfileData) => {
@@ -378,8 +398,15 @@ const getPhoneLabel = (row: ProfileData) => {
   const phone = row.phone_number?.trim();
   if (!phone) return "–";
 
-  const countryCode = row.phone_country_code?.trim();
-  return countryCode ? `+${countryCode} ${phone}` : phone;
+  // Strip any leading + from stored country code to avoid ++XX
+  const rawCode = row.phone_country_code?.trim().replace(/^\+/, "");
+  if (!rawCode) return phone;
+
+  // Avoid prepending if the phone number already starts with the country code
+  const prefix = `+${rawCode}`;
+  if (phone.startsWith(prefix) || phone.startsWith(rawCode)) return phone;
+
+  return `${prefix} ${phone}`;
 };
 
 const getLocationLabel = (row: ProfileData) => {
@@ -818,6 +845,118 @@ export default function AdminManageTalents() {
       exportValue: (row) => row.telegram || "",
     },
     {
+      key: "github",
+      header: "GitHub",
+      width: "12%",
+      sortable: false,
+      render: (value) =>
+        value ? (
+          <a
+            href={value}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-sm text-slate-700 transition hover:text-slate-900"
+          >
+            <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" /></svg>
+            <span className="truncate max-w-[100px]">{getDisplayLink(value)}</span>
+          </a>
+        ) : (
+          <span className="text-sm text-slate-400">–</span>
+        ),
+      exportValue: (row) => row.github || "",
+    },
+    {
+      key: "stackoverflow",
+      header: "StackOverflow",
+      width: "12%",
+      sortable: false,
+      render: (value) =>
+        value ? (
+          <a
+            href={value}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-sm text-orange-600 transition hover:text-orange-800"
+          >
+            <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M15 21h-10v-2h10v2zm6-11.665l-1.571-9.335-1.993.346 1.57 9.335 1.994-.346zm-7.277 6.886l-9.548-1.998-.409 1.958 9.548 1.998.409-1.958zm1.873-3.12l-8.868-4.711-.903 1.699 8.868 4.712.903-1.7zm2.938-5.782l-7.444-6.92-1.303 1.4 7.444 6.92 1.303-1.4zm-1.528 11.681h-9v2h9v-2z" /></svg>
+            <span className="truncate max-w-[100px]">{getDisplayLink(value)}</span>
+          </a>
+        ) : (
+          <span className="text-sm text-slate-400">–</span>
+        ),
+      exportValue: (row) => row.stackoverflow || "",
+    },
+    {
+      key: "twitter",
+      header: "Twitter / X",
+      width: "12%",
+      sortable: false,
+      render: (value) =>
+        value ? (
+          <a
+            href={value}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-sm text-slate-700 transition hover:text-slate-900"
+          >
+            <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.736-8.836L2.25 2.25h6.944l4.258 5.632zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+            <span className="truncate max-w-[100px]">{getDisplayLink(value)}</span>
+          </a>
+        ) : (
+          <span className="text-sm text-slate-400">–</span>
+        ),
+      exportValue: (row) => row.twitter || "",
+    },
+    {
+      key: "cv_url",
+      header: "CV",
+      width: "8%",
+      sortable: false,
+      render: (value) =>
+        value ? (
+          <a
+            href={value}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-blue-200 hover:bg-blue-100 transition whitespace-nowrap"
+          >
+            <svg className="h-3 w-3 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+            View CV
+          </a>
+        ) : (
+          <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-400 ring-1 ring-gray-200 whitespace-nowrap">No CV</span>
+        ),
+      exportValue: (row) => row.cv_url || "",
+    },
+    {
+      key: "availability_status",
+      header: "Availability",
+      width: "10%",
+      sortable: false,
+      render: (_value, row) => {
+        const status = row.availability_status || (row.availability ? "immediately" : null);
+        if (!status) return <span className="text-sm text-slate-400">–</span>;
+        const map: Record<string, { label: string; color: string }> = {
+          immediately: { label: "Available", color: "bg-green-50 text-green-700 ring-green-200" },
+          within_month: { label: "Soon", color: "bg-yellow-50 text-yellow-700 ring-yellow-200" },
+          actively_looking: { label: "Looking", color: "bg-blue-50 text-blue-700 ring-blue-200" },
+          open_to_opportunities: { label: "Open", color: "bg-purple-50 text-purple-700 ring-purple-200" },
+          not_available: { label: "Not Available", color: "bg-gray-100 text-gray-500 ring-gray-200" },
+          not_looking: { label: "Not Available", color: "bg-gray-100 text-gray-500 ring-gray-200" },
+        };
+        // Fallback: humanize unknown snake_case values
+        const humanize = (s: string) => s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+        const config = map[status] || { label: humanize(status), color: "bg-gray-100 text-gray-500 ring-gray-200" };
+        return (
+          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1 whitespace-nowrap ${config.color}`}>
+            <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${config.color.includes("green") ? "bg-green-500" : config.color.includes("yellow") ? "bg-yellow-500" : config.color.includes("blue") ? "bg-blue-500" : config.color.includes("purple") ? "bg-purple-500" : "bg-gray-400"}`} />
+            {config.label}
+          </span>
+        );
+      },
+      exportValue: (row) => row.availability_status || "",
+    },
+    {
       key: "referred_by",
       header: "Referred by",
       width: "16%",
@@ -852,7 +991,9 @@ export default function AdminManageTalents() {
               </button>
             </>
           ) : (
-            <StatusPill status="pending" label="Not Available" />
+            <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-400 ring-1 ring-gray-200 whitespace-nowrap">
+              No wallet
+            </span>
           )}
         </div>
       ),
