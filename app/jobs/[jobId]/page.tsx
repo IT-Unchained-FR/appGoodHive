@@ -247,6 +247,84 @@ function getOverviewCards(job: Pick<JobPageData, "projectType" | "jobType" | "ty
   ];
 }
 
+function MatchScoreLockedCard({
+  jobId,
+  viewer,
+}: {
+  jobId: string;
+  viewer: ViewerState;
+}) {
+  let title = "Unlock your AI match analysis";
+  let description =
+    "Sign in with an approved talent profile to see why your background matches this role, along with strengths and skill gaps.";
+  let ctaHref = `/jobs/${jobId}?connectWallet=true`;
+  let ctaLabel = "Connect to unlock";
+
+  if (viewer.isAuthenticated && !viewer.isApprovedTalent) {
+    title = "AI match is available after talent approval";
+    description =
+      "This score is personalized for approved talent profiles. Once your profile is approved, GoodHive can explain your fit, strengths, and gaps for this role.";
+    ctaHref = "/talents/my-profile";
+    ctaLabel = "Complete your talent profile";
+  } else if (viewer.hasApprovedCompany || viewer.isCompanyOwner) {
+    title = "AI match is built for talent profiles";
+    description =
+      "This section compares a talent profile against the role requirements. Company viewers can review job details here, while match analysis appears for approved talents.";
+    ctaHref = "/companies/search-talents";
+    ctaLabel = "Search talents";
+  } else if (viewer.isAdmin) {
+    title = "AI match is shown for approved talent accounts";
+    description =
+      "The match panel is personalized and becomes visible when the viewer is an approved talent account for this role.";
+    ctaHref = `/jobs/${jobId}`;
+    ctaLabel = "Refresh page";
+  }
+
+  return (
+    <section className="rounded-[30px] border border-[#e6e0d5] bg-white/95 p-6 shadow-sm sm:p-7">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
+            <Sparkles className="h-3.5 w-3.5" />
+            AI Match Analysis
+          </p>
+          <h2 className="mt-3 text-2xl font-semibold text-slate-950">{title}</h2>
+        </div>
+        <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-600">
+          <Lock className="h-4 w-4" />
+          Locked
+        </span>
+      </div>
+
+      <div className="mt-5 rounded-[26px] bg-[linear-gradient(180deg,#fffdf8_0%,#f8f4ea_100%)] p-5 ring-1 ring-[#eee2cb]">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+              <Lock className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-medium uppercase tracking-[0.16em] text-slate-400">
+                Personalized insight
+              </p>
+              <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
+                {description}
+              </p>
+            </div>
+          </div>
+
+          <Link
+            href={ctaHref}
+            className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+          >
+            {ctaLabel}
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 async function getJob(jobId: string): Promise<JobPageData | null> {
   try {
     const jobRows = await sql<{
@@ -910,7 +988,9 @@ export default async function JobPage({
 
             {viewer.isApprovedTalent && viewer.userId ? (
               <YourMatchScoreCard jobId={job.id} talentId={viewer.userId} />
-            ) : null}
+            ) : (
+              <MatchScoreLockedCard jobId={job.id} viewer={viewer} />
+            )}
 
             {canViewFullDetails && job.relatedJobs.length > 0 ? (
               <RelatedJobsSection

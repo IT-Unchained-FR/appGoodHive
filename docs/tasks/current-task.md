@@ -82,6 +82,7 @@ Codex pickup prompt per phase:
 - [x] Admin routes are now isolated from the public wallet/session provider tree, preventing the repeated public-site `Welcome back!` auth loop on `/admin`
 - [x] Public wallet auth no longer forces an immediate `/api/auth/me` refresh after successful connect, preventing the repeated `Welcome back!` toast loop when the session cookie is still settling
 - [x] Company opportunity cards now use icon-led labeled metadata blocks, status-aware budget styling, and cleaner preview fallbacks so job attributes read clearly instead of as ambiguous pills
+- [x] Public job pages now show a locked AI match-analysis placeholder for non-approved or logged-out viewers, so preview deployments no longer make the feature appear missing
 
 ### P2 — ADMIN-010: Implement real report generation ← CODEX TASK
 - [x] Create `app/api/admin/reports/route.ts` (talents/companies/jobs CSV export)
