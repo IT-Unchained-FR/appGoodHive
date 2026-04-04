@@ -17,13 +17,13 @@ export async function GET(req: NextRequest) {
     const params: (string | Date | number)[] = [];
     let paramIndex = 1;
 
-    // Talent request queue should include only profiles still awaiting admin action.
-    conditions.push(`(
-      talents.inreview = true
-      OR users.talent_status IN ('pending', 'in_review')
-    )`);
+    // Only show talents that have explicitly submitted their profile for review.
+    // inreview = true is set when the talent clicks "Submit for Review".
+    conditions.push(`talents.inreview = true`);
     conditions.push(`COALESCE(users.talent_status, '') NOT IN ('approved', 'deferred', 'rejected')`);
     conditions.push(`COALESCE(talents.approved, false) = false`);
+    // Must have a name — profiles without a name were never properly submitted
+    conditions.push(`(TRIM(COALESCE(talents.first_name, '')) != '' OR TRIM(COALESCE(talents.last_name, '')) != '')`);
 
     // Date filter
     if (dateRange && dateRange !== 'any') {

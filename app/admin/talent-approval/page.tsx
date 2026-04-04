@@ -216,15 +216,25 @@ export default function AdminTalentApproval() {
         `${row.first_name || ""} ${row.last_name || ""}`.trim(),
       render: (_value: unknown, row: ProfileDataWithName) => {
         const fullName = `${row.first_name || ""} ${row.last_name || ""}`.trim();
-        return (
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="flex flex-col min-w-0">
-              <span className="font-medium" title={fullName}>
-                {fullName.length > 25
-                  ? `${fullName.substring(0, 25)}...`
-                  : fullName}
-              </span>
+        if (!fullName) {
+          return (
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100">
+                <span className="text-xs text-gray-400">?</span>
+              </div>
+              <span className="text-xs italic text-gray-400">No name set</span>
             </div>
+          );
+        }
+        const initials = [row.first_name?.[0], row.last_name?.[0]].filter(Boolean).join("").toUpperCase();
+        return (
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#FFC905]/20 text-[10px] font-bold text-[#a07800]">
+              {initials || "?"}
+            </div>
+            <span className="font-medium truncate" title={fullName}>
+              {fullName.length > 22 ? `${fullName.substring(0, 22)}…` : fullName}
+            </span>
           </div>
         );
       },
@@ -265,8 +275,16 @@ export default function AdminTalentApproval() {
         return roles.join(", ") || "";
       },
       render: (_value: unknown, row: ProfileDataWithName) => {
+        const hasRoles = row.talent || row.mentor || row.recruiter;
+        if (!hasRoles) {
+          return (
+            <span className="inline-flex items-center gap-1 rounded-md border border-dashed border-gray-200 px-2 py-0.5 text-xs text-gray-400">
+              Not specified
+            </span>
+          );
+        }
         return (
-          <div className="flex flex-col gap-2 w-full justify-center items-center">
+          <div className="flex flex-col gap-1 w-full justify-center items-center">
             {row.talent && (
               <StatusPill status="pending" label="Talent" className="w-fit justify-center" />
             )}
@@ -285,6 +303,19 @@ export default function AdminTalentApproval() {
       header: "Email",
       width: "20%",
       sortable: true,
+      render: (value: unknown) => {
+        if (!value) {
+          return (
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-gray-200 px-2 py-0.5 text-xs text-gray-400">
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+              </svg>
+              No email
+            </span>
+          );
+        }
+        return <span className="text-sm truncate">{String(value)}</span>;
+      },
     },
     {
       key: "referrer_name",
