@@ -1,5 +1,6 @@
 import { getAdminJWTSecret } from "@/app/lib/admin-auth";
 import { CompanyOpportunitiesTabs } from "@/app/components/companies/CompanyOpportunitiesTabs";
+import { CompanyMessageBtn } from "@/app/components/companies/CompanyMessageBtn";
 import { generateCountryFlag } from "@/app/utils/generate-country-flag";
 import { getSessionUser } from "@/lib/auth/sessionUtils";
 import sql from "@/lib/db";
@@ -777,6 +778,14 @@ export default async function CompanyProfilePage({
                   {!company.email && !phoneLabel && !company.address && (
                     <div className="rounded-[20px] bg-white/78 px-4 py-5 text-sm leading-7 text-slate-500 ring-1 ring-black/5">
                       This company has not shared direct contact details yet.
+                    </div>
+                  )}
+                  {viewerState.isApprovedTalent && !viewerState.isCompanyOwner && (
+                    <div className="pt-1">
+                      <CompanyMessageBtn
+                        companyUserId={params.userId}
+                        companyName={companyName}
+                      />
                     </div>
                   )}
                 </div>

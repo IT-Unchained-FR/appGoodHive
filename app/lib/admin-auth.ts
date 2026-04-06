@@ -56,3 +56,10 @@ export function requireAdminAuth(request: NextRequest): Response | null {
 
   return null;
 }
+
+export function isAdminAuthError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    ["No token provided", "Invalid token", "Not authorized"].includes(error.message)
+  );
+}
