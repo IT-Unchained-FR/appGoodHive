@@ -53,6 +53,8 @@ export type ProfileData = {
   languages?: ResumeLanguage[];
   current_company?: string;
   years_experience?: number;
+  last_active?: string;
+  website?: string;
 };
 
 export interface CountryOption {

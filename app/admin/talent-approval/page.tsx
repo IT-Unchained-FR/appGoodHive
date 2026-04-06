@@ -3,13 +3,14 @@
 export const dynamic = "force-dynamic";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { EnhancedTable, Column } from "@/app/components/admin/EnhancedTable";
 import { AdminFilters } from "@/app/components/admin/AdminFilters";
+import { Spinner } from "@/app/components/admin/Spinner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
-import { getSharedTalentColumns } from "@/app/components/admin/sharedTalentColumns";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +23,7 @@ import { ProfileData } from "@/app/talents/my-profile/page";
 import ApprovalPopup from "./components/ApprovalPopup";
 import { BulkApproval } from "@/app/components/admin/BulkApproval";
 import toast from "react-hot-toast";
+import moment from "moment";
 
 type ProfileDataWithName = ProfileData & {
   name?: string;
@@ -31,7 +33,6 @@ type ProfileDataWithName = ProfileData & {
 };
 
 export default function AdminTalentApproval() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [users, setUsers] = useState<ProfileDataWithName[]>([]);
   const [loading, setLoading] = useState(false);
@@ -73,17 +74,11 @@ export default function AdminTalentApproval() {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include",
         body: JSON.stringify({
           userId: user.user_id,
           status,
         }),
       });
-
-      if (response.status === 401) {
-        router.push("/admin/login");
-        return;
-      }
 
       if (!response.ok) {
         throw new Error("Failed to update talent status");
@@ -129,17 +124,11 @@ export default function AdminTalentApproval() {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include",
         body: JSON.stringify({
           userIds: itemIds,
           approvalTypes: approvalTypes || { talent: true },
         }),
       });
-
-      if (response.status === 401) {
-        router.push("/admin/login");
-        return;
-      }
 
       if (!response.ok) {
         throw new Error("Failed to approve talents");
@@ -164,18 +153,12 @@ export default function AdminTalentApproval() {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include",
         body: JSON.stringify({
           userIds: itemIds,
           rejectionReason:
             reason || "Rejected by admin review due to profile requirements.",
         }),
       });
-
-      if (response.status === 401) {
-        router.push("/admin/login");
-        return;
-      }
 
       if (!response.ok) {
         throw new Error("Failed to reject talents");
@@ -193,11 +176,10 @@ export default function AdminTalentApproval() {
   };
 
   const columns: Column<ProfileDataWithName>[] = [
-    // Select checkbox
     {
       key: "select",
       header: "",
-      width: "3%",
+      width: "5%",
       render: (_value: unknown, row: ProfileDataWithName) => (
         <Checkbox
           checked={selectedItems.some((item) => item.user_id === row.user_id)}
@@ -206,13 +188,168 @@ export default function AdminTalentApproval() {
         />
       ),
     },
-    // All shared talent data columns
-    ...getSharedTalentColumns(),
-    // Approval-specific actions
+    {
+      key: "name",
+      header: "Name",
+      width: "22%",
+      sortable: true,
+      exportValue: (row: ProfileDataWithName) =>
+        `${row.first_name || ""} ${row.last_name || ""}`.trim(),
+      render: (_value: unknown, row: ProfileDataWithName) => {
+        const fullName = `${row.first_name || ""} ${row.last_name || ""}`.trim();
+        return (
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex flex-col min-w-0">
+              <span className="font-medium" title={fullName}>
+                {fullName.length > 25
+                  ? `${fullName.substring(0, 25)}...`
+                  : fullName}
+              </span>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      key: "status",
+      header: "Status",
+      width: "12%",
+      exportValue: (row: ProfileDataWithName) => {
+        const status = getTalentStatus(row);
+        if (status === "approved") return "Approved";
+        if (status === "deferred") return "Deferred";
+        if (status === "rejected") return "Rejected";
+        return "In Review";
+      },
+      render: (_value: unknown, row: ProfileDataWithName) => {
+        const status = getTalentStatus(row);
+        if (status === "approved") {
+          return (
+            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+              Approved
+            </Badge>
+          );
+        } else if (status === "deferred") {
+          return (
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+              Deferred
+            </Badge>
+          );
+        } else if (status === "rejected") {
+          return (
+            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+              Rejected
+            </Badge>
+          );
+        } else {
+          return (
+            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+              In Review
+            </Badge>
+          );
+        }
+      },
+    },
+    {
+      key: "applied_for",
+      header: "Applied For",
+      width: "12%",
+      exportValue: (row: ProfileDataWithName) => {
+        const roles: string[] = [];
+        if (row.talent) roles.push("Talent");
+        if (row.mentor) roles.push("Mentor");
+        if (row.recruiter) roles.push("Recruiter");
+        return roles.join(", ") || "";
+      },
+      render: (_value: unknown, row: ProfileDataWithName) => {
+        return (
+          <div className="flex flex-col gap-2 w-full justify-center items-center">
+            {row.talent && (
+              <Badge
+                style={{ width: "100%", justifyContent: "center" }}
+                variant="outline"
+                className="bg-yellow-50 text-yellow-700 border-yellow-200 w-fit"
+              >
+                Talent
+              </Badge>
+            )}
+            {row.mentor && (
+              <Badge
+                style={{ width: "100%", justifyContent: "center" }}
+                variant="outline"
+                className="bg-yellow-50 text-yellow-700 border-yellow-200 w-fit"
+              >
+                Mentor
+              </Badge>
+            )}
+            {row.recruiter && (
+              <Badge
+                style={{ width: "100%", justifyContent: "center" }}
+                variant="outline"
+                className="bg-yellow-50 text-yellow-700 border-yellow-200 w-fit"
+              >
+                Recruiter
+              </Badge>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: "email",
+      header: "Email",
+      width: "20%",
+      sortable: true,
+    },
+    {
+      key: "referrer_name",
+      header: "Referred By",
+      width: "20%",
+      exportValue: (row: ProfileDataWithName) => {
+        if (!row.referred_by) return "Direct signup";
+        return row.referrer_name
+          ? `${row.referrer_name} (${row.referred_by})`
+          : row.referred_by;
+      },
+      render: (_value: unknown, row: ProfileDataWithName) => {
+        if (!row.referred_by) {
+          return (
+            <span className="text-xs font-medium text-slate-400">
+              Direct signup
+            </span>
+          );
+        }
+
+        return (
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-slate-900">
+              {row.referrer_name || "Referral source"}
+            </p>
+            <p className="truncate text-xs text-slate-500">
+              Code: {row.referred_by}
+            </p>
+          </div>
+        );
+      },
+    },
+    {
+      key: "created_at",
+      header: "Created on",
+      width: "13%",
+      sortable: true,
+      exportValue: (row: ProfileDataWithName) => {
+        const createdAt = row.user_created_at || row.created_at;
+        return createdAt ? moment(createdAt).format("MMM D, YYYY") : "N/A";
+      },
+      render: (value: string, row: ProfileDataWithName) => {
+        const createdAt = row.user_created_at || value;
+        return createdAt ? moment(createdAt).format("MMM D, YYYY") : "N/A";
+      },
+    },
     {
       key: "actions",
       header: "Actions",
-      width: "5%",
+      width: "8%",
       render: (_value: unknown, row: ProfileDataWithName) => (
         <div className="flex justify-end">
           <DropdownMenu>
@@ -222,19 +359,49 @@ export default function AdminTalentApproval() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem className="cursor-pointer" onClick={(e: React.MouseEvent) => { e.stopPropagation(); window.open(`/admin/talent/${row.user_id}`, "_blank"); }}>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  window.open(`/admin/talent/${row.user_id}`, "_blank");
+                }}
+              >
                 View Profile
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleApproveClick(row); }}>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  handleApproveClick(row);
+                }}
+              >
                 Approve
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleStatusUpdate(row, "in_review"); }}>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  handleStatusUpdate(row, "in_review");
+                }}
+              >
                 Mark In Review
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleStatusUpdate(row, "deferred"); }}>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  handleStatusUpdate(row, "deferred");
+                }}
+              >
                 Mark Deferred
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleStatusUpdate(row, "rejected"); }}>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  handleStatusUpdate(row, "rejected");
+                }}
+              >
                 Reject
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -248,20 +415,17 @@ export default function AdminTalentApproval() {
     try {
       setLoading(true);
       const params = new URLSearchParams(searchParams.toString());
-      params.delete("status");
+
+      if (!params.has("status")) {
+        params.set("status", "all");
+      }
 
       const url = `/api/admin/talents/pending${params.toString() ? `?${params.toString()}` : ''}`;
       const response = await fetch(url, {
         headers: {
           "Cache-Control": "no-store, max-age=0",
         },
-        credentials: "include",
       });
-
-      if (response.status === 401) {
-        router.push("/admin/login");
-        return;
-      }
       const data = await response.json();
 
       if (!response.ok || !Array.isArray(data)) {
@@ -281,7 +445,7 @@ export default function AdminTalentApproval() {
     } finally {
       setLoading(false);
     }
-  }, [router, searchParams]);
+  }, [searchParams]);
 
   useEffect(() => {
     fetchPendingUsers();
@@ -298,23 +462,18 @@ export default function AdminTalentApproval() {
     <AdminPageLayout
       title="Talents Join Requests"
       subtitle="Review and approve talent applications"
-      actions={
-        selectedItems.length > 0 ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowBulkApproval(true)}
-            className="w-full sm:w-auto"
-          >
-            Manage Selected ({selectedItems.length})
-          </Button>
-        ) : undefined
-      }
     >
-      <div className="space-y-4 sm:space-y-6">
+      <div className="space-y-6">
         <AdminFilters
           config={{
             dateFilter: true,
+            statusFilter: [
+              { value: 'in_review', label: 'In Review' },
+              { value: 'approved', label: 'Approved' },
+              { value: 'deferred', label: 'Deferred' },
+              { value: 'rejected', label: 'Rejected' },
+              { value: 'all', label: 'All statuses' },
+            ],
             customFilters: [
               {
                 key: 'role',
@@ -341,7 +500,7 @@ export default function AdminTalentApproval() {
         />
 
         {selectedItems.length > 0 && (
-          <div className="flex flex-col gap-3 rounded-lg border border-[#FFC905] bg-[#FFC905]/10 p-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="bg-[#FFC905]/10 border border-[#FFC905] rounded-lg p-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Checkbox
                 checked={selectedItems.length === users.length}
@@ -355,7 +514,6 @@ export default function AdminTalentApproval() {
               variant="outline"
               size="sm"
               onClick={() => setShowBulkApproval(true)}
-              className="w-full sm:w-auto"
             >
               Manage Selected ({selectedItems.length})
             </Button>
@@ -453,15 +611,35 @@ function TalentApprovalCard({
   const getStatusBadge = () => {
     const status = user.talent_status;
     if (status === "approved" || user.approved) {
-      return <StatusPill status="approved" label="Approved" />;
+      return (
+        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+          Approved
+        </Badge>
+      );
     } else if (status === "deferred") {
-      return <StatusPill status="deferred" label="Deferred" />;
+      return (
+        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+          Deferred
+        </Badge>
+      );
     } else if (status === "rejected") {
-      return <StatusPill status="rejected" label="Rejected" />;
+      return (
+        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+          Rejected
+        </Badge>
+      );
     } else if (status === "pending" || status === "in_review" || user.inreview) {
-      return <StatusPill status="in_review" label="In Review" />;
+      return (
+        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+          In Review
+        </Badge>
+      );
     }
-    return <StatusPill status="in_review" label="In Review" />;
+    return (
+      <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+        In Review
+      </Badge>
+    );
   };
 
   return (
@@ -491,13 +669,19 @@ function TalentApprovalCard({
       )}
       <div className="flex flex-wrap gap-2">
         {user.talent && (
-          <StatusPill status="pending" label="Talent" />
+          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+            Talent
+          </Badge>
         )}
         {user.mentor && (
-          <StatusPill status="pending" label="Mentor" />
+          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+            Mentor
+          </Badge>
         )}
         {user.recruiter && (
-          <StatusPill status="pending" label="Recruiter" />
+          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+            Recruiter
+          </Badge>
         )}
       </div>
       <div className="flex flex-wrap gap-2">

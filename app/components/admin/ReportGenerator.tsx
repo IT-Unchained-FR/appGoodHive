@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Download, FileText, Calendar } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface ReportGeneratorProps {
   open: boolean;
@@ -26,9 +27,9 @@ interface ReportGeneratorProps {
   onGenerate: (params: ReportParams) => Promise<void>;
 }
 
-interface ReportParams {
-  type: "talents" | "companies" | "jobs";
-  format: "csv";
+export interface ReportParams {
+  type: "users" | "jobs" | "approvals" | "activity" | "full";
+  format: "csv" | "json" | "pdf";
   startDate?: string;
   endDate?: string;
 }
@@ -40,7 +41,7 @@ export function ReportGenerator({
 }: ReportGeneratorProps) {
   const [loading, setLoading] = useState(false);
   const [params, setParams] = useState<ReportParams>({
-    type: "talents",
+    type: "full",
     format: "csv",
   });
 
@@ -48,8 +49,10 @@ export function ReportGenerator({
     try {
       setLoading(true);
       await onGenerate(params);
+      toast.success("Report generated successfully");
       onOpenChange(false);
     } catch (error) {
+      toast.error("Failed to generate report");
       console.error(error);
     } finally {
       setLoading(false);
@@ -79,9 +82,11 @@ export function ReportGenerator({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="talents">Talents Report</SelectItem>
-                <SelectItem value="companies">Companies Report</SelectItem>
+                <SelectItem value="full">Full Report</SelectItem>
+                <SelectItem value="users">Users Report</SelectItem>
                 <SelectItem value="jobs">Jobs Report</SelectItem>
+                <SelectItem value="approvals">Approvals Report</SelectItem>
+                <SelectItem value="activity">Activity Report</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -99,11 +104,13 @@ export function ReportGenerator({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="csv">CSV</SelectItem>
+                <SelectItem value="json">JSON</SelectItem>
+                <SelectItem value="pdf">PDF</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="start-date">Start Date (Optional)</Label>
               <div className="relative">
@@ -137,19 +144,11 @@ export function ReportGenerator({
           </div>
         </div>
 
-        <DialogFooter className="flex-col-reverse gap-2 sm:flex-row">
-          <Button
-            variant="outline"
-            className="w-full sm:w-auto"
-            onClick={() => onOpenChange(false)}
-          >
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button
-            onClick={handleGenerate}
-            disabled={loading}
-            className="w-full gap-2 sm:w-auto"
-          >
+          <Button onClick={handleGenerate} disabled={loading} className="gap-2">
             <Download className="h-4 w-4" />
             {loading ? "Generating..." : "Generate Report"}
           </Button>
@@ -158,3 +157,4 @@ export function ReportGenerator({
     </Dialog>
   );
 }
+

@@ -83,7 +83,7 @@ export const createJobServices: createJobServicesType[] = [
 
 export const GoodHiveContractEmail = "benoit@goodhive.io";
 
-export const BenoitIntroCallUrl =
+export const GoodHiveIntroCallUrl =
   "https://calendly.com/goodhive/goodhive-intro-call";
 
 export const CompanyIntroCallUrl =

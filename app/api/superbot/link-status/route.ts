@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import sql from "@/lib/ragDb";
+import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
@@ -40,10 +40,7 @@ export async function GET(req: Request) {
   const sessionId = searchParams.get("sessionId")?.trim() ?? "";
 
   if (!UUID_PATTERN.test(sessionId)) {
-    return NextResponse.json(
-      { error: "Valid sessionId is required" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Valid sessionId is required" }, { status: 400 });
   }
 
   const sessionRows = await sql<SessionRow[]>`

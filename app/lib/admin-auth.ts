@@ -1,5 +1,4 @@
-import { NextRequest } from "next/server";
-import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
 /**
@@ -21,52 +20,21 @@ export function getAdminJWTSecret(): string {
 }
 
 /**
- * Verify admin JWT token from request headers or httpOnly cookie
+ * Verify admin JWT token from request headers
  * Returns the decoded token payload if valid, null otherwise
  */
-type AdminTokenPayload = jwt.JwtPayload & {
-  email?: string;
-  role?: string;
-};
-
-function decodeAdminToken(token: string): AdminTokenPayload | null {
+export function verifyAdminToken(request: NextRequest): any {
   try {
-    const decoded = jwt.verify(token, getAdminJWTSecret());
-    if (typeof decoded !== "object" || decoded.role !== "admin") {
-      return null;
-    }
-
-    return decoded as AdminTokenPayload;
-  } catch (error) {
-    return null;
-  }
-}
-
-export function verifyAdminToken(
-  request: NextRequest,
-): AdminTokenPayload | null {
-  try {
-    const authHeader =
-      request.headers.get("authorization") ??
-      request.headers.get("Authorization");
-    const bearerToken = authHeader?.startsWith("Bearer ")
-      ? authHeader.split(" ")[1]
-      : null;
-
-    if (bearerToken) {
-      const decoded = decodeAdminToken(bearerToken);
-      if (decoded) {
-        return decoded;
-      }
-    }
-
-    const token = cookies().get("admin_token")?.value;
+    const token = request.headers.get("Authorization")?.split(" ")[1];
 
     if (!token) {
       return null;
     }
 
-    return decodeAdminToken(token);
+    const secret = getAdminJWTSecret();
+    const decoded = jwt.verify(token, secret);
+
+    return decoded;
   } catch (error) {
     return null;
   }
@@ -80,25 +48,11 @@ export function requireAdminAuth(request: NextRequest): Response | null {
   const decoded = verifyAdminToken(request);
 
   if (!decoded) {
-    return new Response(
-      JSON.stringify({ error: "Unauthorized - Invalid or missing admin token" }),
-      {
-        status: 401,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      },
+    return NextResponse.json(
+      { error: "Unauthorized - Invalid or missing admin token" },
+      { status: 401 }
     );
   }
 
   return null;
-}
-
-export function isAdminAuthError(error: unknown): boolean {
-  return (
-    error instanceof Error &&
-    ["No token provided", "Invalid token", "Not authorized"].includes(
-      error.message,
-    )
-  );
 }

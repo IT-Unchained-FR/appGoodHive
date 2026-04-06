@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { logSuperbotEvent } from "@/lib/superbot/events";
+import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
@@ -20,10 +20,7 @@ export async function POST(req: Request) {
   }
 
   if (!body.sessionId || !body.type) {
-    return NextResponse.json(
-      { error: "sessionId and type are required" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "sessionId and type are required" }, { status: 400 });
   }
 
   await logSuperbotEvent({

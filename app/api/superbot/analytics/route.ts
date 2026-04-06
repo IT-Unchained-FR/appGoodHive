@@ -1,9 +1,5 @@
+import { getDateRange, getSuperbotDailyMetrics, getSuperbotMetrics } from "@/lib/superbot/analytics";
 import { NextResponse } from "next/server";
-import {
-  getDateRange,
-  getSuperbotDailyMetrics,
-  getSuperbotMetrics,
-} from "@/lib/superbot/analytics";
 
 export const dynamic = "force-dynamic";
 

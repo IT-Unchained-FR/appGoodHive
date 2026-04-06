@@ -1,9 +1,6 @@
 import sql from "@/lib/db";
 import { getSessionUser } from "@/lib/auth/sessionUtils";
 
-const getErrorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : "Unknown error";
-
 export async function PATCH(request: Request) {
   const sessionUser = await getSessionUser();
   if (!sessionUser?.user_id) {
@@ -65,10 +62,7 @@ export async function PATCH(request: Request) {
           WHERE id = ${jobId};
         `;
       } catch (blockIdError) {
-        console.warn(
-          "Could not update block_id, column may not exist:",
-          getErrorMessage(blockIdError),
-        );
+        console.warn("Could not update block_id, column may not exist:", (blockIdError as Error).message);
       }
     }
 
@@ -80,10 +74,7 @@ export async function PATCH(request: Request) {
           WHERE id = ${jobId};
         `;
       } catch (tokenAddressError) {
-        console.warn(
-          "Could not update payment_token_address, column may not exist:",
-          getErrorMessage(tokenAddressError),
-        );
+        console.warn("Could not update payment_token_address, column may not exist:", (tokenAddressError as Error).message);
       }
     }
 

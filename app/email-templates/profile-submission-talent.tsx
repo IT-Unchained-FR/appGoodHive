@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { EmailTemplateProps } from "@/interfaces/email-template";
-import { BenoitIntroCallUrl } from "@/app/constants/common";
+import { GoodHiveIntroCallUrl } from "@/app/constants/common";
 
 export const ProfileSubmissionTalentTemplate: React.FC<
   Readonly<EmailTemplateProps>
@@ -23,14 +23,14 @@ export const ProfileSubmissionTalentTemplate: React.FC<
       <p>
         In the meantime, please book your assessment interview here:{" "}
         <a
-          href={BenoitIntroCallUrl}
+          href={GoodHiveIntroCallUrl}
           style={{
             color: "#FFC905",
             textDecoration: "none",
             fontWeight: "bold",
           }}
         >
-          {BenoitIntroCallUrl}
+          {GoodHiveIntroCallUrl}
         </a>
       </p>
       <p>

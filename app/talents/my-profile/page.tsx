@@ -13,7 +13,7 @@ import {
   normalizeAvailabilityStatus,
 } from "@/app/constants/availability";
 import {
-  BenoitIntroCallUrl,
+  GoodHiveIntroCallUrl,
   createJobServices,
 } from "@/app/constants/common";
 import { countries } from "@/app/constants/countries";
@@ -438,7 +438,7 @@ function StatusBanner({ profileData }: { profileData: ProfileData }) {
                 </p>
               </div>
               <a
-                href={BenoitIntroCallUrl}
+                href={GoodHiveIntroCallUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex min-h-[42px] shrink-0 items-center justify-center gap-2 rounded-xl border border-[#f59e0b] bg-white px-4 text-sm font-semibold text-[#d97706] shadow-sm transition hover:-translate-y-0.5 hover:border-[#ea580c] hover:text-[#c2410c] hover:shadow-md"

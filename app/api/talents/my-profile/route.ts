@@ -11,7 +11,7 @@ import {
   serializeResumeArray,
 } from "@/lib/talent-profile/resume-data";
 import { expireStaleImmediateAvailability } from "@/lib/talents";
-import { BenoitIntroCallUrl, GoodHiveContractEmail } from "@constants/common";
+import { GoodHiveIntroCallUrl, GoodHiveContractEmail } from "@constants/common";
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -127,7 +127,7 @@ async function sendProfileSubmissionEmails(request: Request, userId: string) {
       postProfileSubmissionEmail(request, {
         email: talentEmail,
         message:
-          `Thank you for submitting your profile. Our GoodHive team will review it shortly. In the meantime, please book your assessment interview: ${BenoitIntroCallUrl}`,
+          `Thank you for submitting your profile. Our GoodHive team will review it shortly. In the meantime, please book your assessment interview: ${GoodHiveIntroCallUrl}`,
         name: firstName || displayName,
         subject: "Your GoodHive profile has been received",
         type: "profile-submission-talent",
