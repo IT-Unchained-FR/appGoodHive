@@ -256,9 +256,7 @@ export async function POST(request: NextRequest) {
         FROM goodhive.messenger_threads
         WHERE company_user_id = ${companyUserId}::uuid
           AND talent_user_id = ${talentUserId}::uuid
-          AND thread_type = ${effectiveThreadType}
-          AND COALESCE(job_id::text, '') = COALESCE(${jobId ?? null}::text, '')
-        ORDER BY created_at DESC
+        ORDER BY created_at ASC
         LIMIT 1
       `;
     }

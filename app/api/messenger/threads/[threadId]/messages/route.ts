@@ -3,10 +3,13 @@ import { Resend } from "resend";
 
 import sql from "@/lib/db";
 import { getSessionUser } from "@/lib/auth/sessionUtils";
+import { rateLimit } from "@/lib/rate-limit";
 import type {
   CreateMessengerMessageRequest,
   MessengerMessage,
 } from "@/interfaces/messenger";
+
+const EMAIL_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes between notification emails
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const GOODHIVE_BASE_URL =
@@ -25,11 +28,28 @@ function escapeHtml(input: string) {
 }
 
 async function notifyRecipientAboutNewMessage(
+  threadId: string,
   recipientUserId: string,
   senderUserId: string,
 ) {
   if (recipientUserId === senderUserId) {
     return;
+  }
+
+  // Email cooldown: skip if an email was sent to this recipient for this thread
+  // within the last 5 minutes to prevent inbox spam.
+  try {
+    const cooldownRows = await sql<{ last_sent_at: string }[]>`
+      SELECT last_sent_at FROM goodhive.messenger_email_cooldowns
+      WHERE thread_id = ${threadId}::uuid AND user_id = ${recipientUserId}::uuid
+      LIMIT 1
+    `;
+    const lastSent = cooldownRows[0]?.last_sent_at;
+    if (lastSent && Date.now() - new Date(lastSent).getTime() < EMAIL_COOLDOWN_MS) {
+      return;
+    }
+  } catch {
+    // If the table doesn't exist yet (migration pending), fall through and send
   }
 
   try {
@@ -103,6 +123,15 @@ async function notifyRecipientAboutNewMessage(
 
     if (error) {
       console.error("Failed to send message notification email:", error);
+    } else {
+      // Record the cooldown timestamp after a successful send
+      try {
+        await sql`
+          INSERT INTO goodhive.messenger_email_cooldowns (thread_id, user_id, last_sent_at)
+          VALUES (${threadId}::uuid, ${recipientUserId}::uuid, NOW())
+          ON CONFLICT (thread_id, user_id) DO UPDATE SET last_sent_at = NOW()
+        `;
+      } catch { /* non-critical */ }
     }
   } catch (error) {
     console.error("Failed to prepare message notification email:", error);
@@ -205,13 +234,24 @@ export async function POST(
       );
     }
 
-    const body = (await request.json()) as CreateMessengerMessageRequest;
-    const messageText = body.messageText?.trim();
-    const messageType = body.messageType ?? "text";
-
-    if (!messageText) {
+    // Rate limit: max 1 message per second per user
+    const rl = rateLimit(`msg:${senderUserId}`, { windowMs: 1000, max: 1 });
+    if (!rl.allowed) {
       return NextResponse.json(
-        { message: "messageText is required" },
+        { success: false, error: "Sending too fast. Please wait a moment." },
+        { status: 429, headers: { "Retry-After": "1" } },
+      );
+    }
+
+    const body = (await request.json()) as CreateMessengerMessageRequest;
+    const messageText = body.messageText?.trim() ?? "";
+    const messageType = body.messageType ?? "text";
+    const attachmentUrl = body.attachmentUrl ?? null;
+
+    // Require at least text or an attachment
+    if (!messageText && !attachmentUrl) {
+      return NextResponse.json(
+        { message: "messageText or attachmentUrl is required" },
         { status: 400 },
       );
     }
@@ -245,7 +285,7 @@ export async function POST(
         ${senderUserId}::uuid,
         ${messageType},
         ${messageText},
-        ${body.attachmentUrl ?? null},
+        ${attachmentUrl},
         NOW(),
         NOW()
       )
@@ -276,7 +316,7 @@ export async function POST(
         ? access.thread.talent_user_id
         : access.thread.company_user_id;
 
-    await notifyRecipientAboutNewMessage(recipientUserId, senderUserId);
+    await notifyRecipientAboutNewMessage(threadId, recipientUserId, senderUserId);
 
     return NextResponse.json({ message }, { status: 201 });
   } catch (error) {

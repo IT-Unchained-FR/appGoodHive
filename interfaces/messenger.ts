@@ -66,6 +66,8 @@ export interface MessengerMessage {
   updated_at: string;
 }
 
+export type UiMessengerMessage = MessengerMessage & { pending?: boolean };
+
 export interface CreateMessengerThreadRequest {
   companyUserId: string;
   talentUserId: string;
