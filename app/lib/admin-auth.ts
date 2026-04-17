@@ -25,7 +25,7 @@ export function getAdminJWTSecret(): string {
  */
 export function verifyAdminToken(request: NextRequest): any {
   try {
-    const token = request.headers.get("Authorization")?.split(" ")[1];
+    const token = request.cookies.get("admin_token")?.value;
 
     if (!token) {
       return null;

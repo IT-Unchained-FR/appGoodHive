@@ -9,4 +9,6 @@ export const generateFileKeyName = (fileType: string) => {
   if (fileType === "application/pdf") {
     return `pdf_${uuidv4()}.${fileExtension}`;
   }
+  // Fallback for all other file types (e.g. doc, xls, txt used in messenger attachments)
+  return `file_${uuidv4()}.${fileExtension || "bin"}`;
 }

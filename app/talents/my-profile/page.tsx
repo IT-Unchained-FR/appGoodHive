@@ -36,6 +36,7 @@ import {
   Send,
   Sparkles,
   UserRound,
+  MessageSquare,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -1337,6 +1338,14 @@ export default function ProfilePage() {
                 >
                   <Eye className="h-4 w-4" />
                   View Public Profile
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push("/connect-logs")}
+                  className="inline-flex min-h-[50px] items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Connect Logs
                 </button>
                 <button
                   type="button"

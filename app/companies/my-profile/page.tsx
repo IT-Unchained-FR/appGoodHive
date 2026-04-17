@@ -947,14 +947,24 @@ export default function MyProfile() {
               )}
             </div>
 
-            <button
-              type="button"
-              onClick={() => setShowVideoModal(true)}
-              className="flex-shrink-0 self-end sm:self-auto inline-flex items-center gap-2 px-4 py-2 rounded-full border-2 border-amber-400 text-amber-700 bg-white bg-opacity-70 hover:bg-amber-50 transition-all duration-200 text-sm font-semibold shadow-sm"
-            >
-              <span className="w-5 h-5 flex items-center justify-center rounded-full border-2 border-amber-500 text-amber-600 text-xs font-bold leading-none">i</span>
-              How it works
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3 self-end sm:self-auto mt-4 sm:mt-0">
+              <button
+                type="button"
+                onClick={() => router.push("/connect-logs")}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border-2 border-amber-400 text-amber-700 bg-white bg-opacity-70 hover:bg-amber-50 transition-all duration-200 text-sm font-semibold shadow-sm"
+              >
+                <span className="w-5 h-5 flex items-center justify-center rounded-full border-2 border-amber-500 text-amber-600 text-xs font-bold leading-none"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></span>
+                Connect Logs
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowVideoModal(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border-2 border-amber-400 text-amber-700 bg-white bg-opacity-70 hover:bg-amber-50 transition-all duration-200 text-sm font-semibold shadow-sm"
+              >
+                <span className="w-5 h-5 flex items-center justify-center rounded-full border-2 border-amber-500 text-amber-600 text-xs font-bold leading-none">i</span>
+                How it works
+              </button>
+            </div>
           </div>
 
           {/* Professional Header */}
