@@ -1,11 +1,9 @@
 if (!process.env.JWT_SECRET) {
-  console.error("JWT_SECRET environment variable is not set");
-  process.exit(1);
+  throw new Error("JWT_SECRET environment variable is not set");
 }
 
 if (!process.env.ADMIN_JWT_SECRET) {
-  console.error("ADMIN_JWT_SECRET environment variable is not set");
-  process.exit(1);
+  throw new Error("ADMIN_JWT_SECRET environment variable is not set");
 }
 
 export const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);

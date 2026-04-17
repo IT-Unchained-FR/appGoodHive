@@ -17,7 +17,7 @@ interface ProvidersProps {
 
 export function Providers({ children }: ProvidersProps) {
   return (
-    <ThirdwebProvider>
+    <ThirdwebProvider autoConnect={false}>
       <AuthProvider>{children}</AuthProvider>
     </ThirdwebProvider>
   );
