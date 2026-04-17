@@ -39,6 +39,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { useUnreadSSE } from "@/app/messages/_hooks/useUnreadSSE";
 import EmailVerificationModal from "./EmailVerificationModal";
 import { ProtectedLink } from "./ProtectedLink";
 import { OnboardingPopup } from "./onboarding-popup";
@@ -165,32 +166,23 @@ export const NavBar = () => {
     }
 
     try {
-      const response = await fetch(`/api/messenger/threads?userId=${loggedIn_user_id}&limit=1`, {
-        cache: "no-store",
-        headers: {
-          "x-user-id": loggedIn_user_id,
-        },
-      });
-
-      if (!response.ok) {
-        return;
-      }
-
-      const data = await response.json();
-      const nextCount =
-        typeof data.totalUnreadCount === "number"
-          ? data.totalUnreadCount
-          : Array.isArray(data.threads)
-            ? data.threads.reduce(
-                (sum: number, thread: any) => sum + Number(thread?.unread_count || 0),
-                0,
-              )
-            : 0;
-      setUnreadMessageCount(nextCount);
-    } catch (error) {
-      console.error("Failed to refresh unread message count:", error);
+      const response = await fetch("/api/messenger/unread-count", { cache: "no-store" });
+      if (!response.ok) return;
+      const data = (await response.json()) as {
+        success: boolean;
+        data?: { totalUnreadCount: number };
+      };
+      setUnreadMessageCount(data.data?.totalUnreadCount ?? 0);
+    } catch {
+      // Non-critical — badge will stay at last known value
     }
   }, [loggedIn_user_id]);
+
+  // Real-time unread badge via SSE — replaces the 30-second polling interval
+  useUnreadSSE({
+    userId: loggedIn_user_id ?? undefined,
+    onUnreadEvent: () => void refreshUnreadMessages(),
+  });
 
   const handlePostAuthRouting = useCallback(
     (redirectUrl: string | null, postAuthAction: any) => {
@@ -498,21 +490,13 @@ export const NavBar = () => {
     searchParams,
   ]);
 
+  // Load initial unread count on mount / user change
   useEffect(() => {
     if (!loggedIn_user_id) {
       setUnreadMessageCount(0);
       return;
     }
-
     void refreshUnreadMessages();
-
-    const intervalId = window.setInterval(() => {
-      void refreshUnreadMessages();
-    }, 30000);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
   }, [loggedIn_user_id, refreshUnreadMessages]);
 
   return (
