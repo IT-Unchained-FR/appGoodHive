@@ -1,4 +1,5 @@
 import TalentResult from "./talent-result";
+import JobMatchSelector from "./JobMatchSelector";
 import { Pagination } from "@/app/components/pagination";
 import { fetchTalents } from "@/lib/talents";
 import sql from "@/lib/db";
@@ -69,7 +70,6 @@ export default async function SearchTalentsPage({
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);
-  console.log("Search params received:", params);
 
   const currentPage = Number(params.page) || 1;
 
@@ -112,10 +112,18 @@ export default async function SearchTalentsPage({
         `
       : [];
   const isCompanyViewer = companyRows.length > 0;
+  const companyJobs =
+    isCompanyViewer && viewerUserId
+      ? await sql<{ id: string; title: string }[]>`
+          SELECT id, title
+          FROM goodhive.job_offers
+          WHERE user_id = ${viewerUserId}::uuid
+            AND published = true
+          ORDER BY posted_at DESC
+          LIMIT 20
+        `
+      : [];
   const matchJobId = isCompanyViewer && selectedJobId ? selectedJobId : null;
-
-  console.log("Talents found:", talents.length);
-  console.log("Total count:", count);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 relative overflow-hidden">
@@ -178,6 +186,15 @@ export default async function SearchTalentsPage({
             </div>
           </div>
         </div>
+
+        {isCompanyViewer && (
+          <div className="mx-auto mb-8 max-w-4xl">
+            <JobMatchSelector
+              companyJobs={companyJobs}
+              selectedJobId={matchJobId}
+            />
+          </div>
+        )}
 
         {/* Active Filters Display */}
         {Object.keys(params).some(

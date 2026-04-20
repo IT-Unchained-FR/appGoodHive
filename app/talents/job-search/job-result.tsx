@@ -88,7 +88,7 @@ export default function JobResult({ jobOffers }: { jobOffers: ApiJobOffer[] }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredJobs.map((jobOffer, index) => {
           return (
-            <div key={`job-${jobOffer.id}-${index}`} className="group relative">
+            <div key={`job-${jobOffer.id}-${index}`} className="group relative h-full">
               <Card
                 uniqueId={jobOffer?.user_id}
                 jobId={jobOffer.id || undefined}

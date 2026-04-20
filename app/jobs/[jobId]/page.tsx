@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import {
   ArrowLeft,
+  ArrowRight,
   Building2,
   CalendarDays,
   ExternalLink,
@@ -825,26 +826,26 @@ export default async function JobPage({
             </div>
 
             <div className="flex flex-col gap-4">
-              <div className="rounded-[28px] border border-white/80 bg-slate-950 p-6 text-white shadow-[0_18px_60px_rgba(15,23,42,0.18)]">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">
+              <div className="rounded-[28px] border border-amber-200/80 bg-[radial-gradient(circle_at_top_left,_rgba(255,201,5,0.18),_transparent_55%),linear-gradient(135deg,#fffdf8_0%,#fff8e6_60%,#fef3c7_100%)] p-6 shadow-[0_8px_32px_rgba(245,158,11,0.12)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-700">
                   Opportunity Budget
                 </p>
-                <p className="mt-3 text-3xl font-semibold sm:text-4xl">{budgetLabel}</p>
-                <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-200 shadow-inner shadow-emerald-950/20">
-                  <span className="h-2 w-2 rounded-full bg-emerald-300" />
+                <p className="mt-3 text-3xl font-semibold text-slate-950 sm:text-4xl">{budgetLabel}</p>
+                <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-300/60 bg-amber-100/80 px-3 py-2 text-sm font-medium text-amber-800 shadow-sm">
+                  <span className="h-2 w-2 rounded-full bg-amber-400" />
                   Budget benchmark
-                  <span className="font-semibold text-white/90">{budgetLabel}</span>
+                  <span className="font-semibold text-amber-900">{budgetLabel}</span>
                 </div>
 
                 {viewer.isAdmin || viewer.isCompanyOwner ? (
-                  <p className="mt-5 text-sm text-slate-300">
+                  <p className="mt-5 text-sm text-amber-700/80">
                     Review status:{" "}
-                    <span className="font-semibold capitalize text-white">
+                    <span className="font-semibold capitalize text-amber-900">
                       {job.reviewStatus.replace(/_/g, " ")}
                     </span>
                   </p>
                 ) : (
-                  <p className="mt-5 text-sm text-slate-300">
+                  <p className="mt-5 text-sm text-amber-700/80">
                     Live on GoodHive and ready for qualified candidates.
                   </p>
                 )}

@@ -1,10 +1,81 @@
 # Current Task
 
 ## Status
-`ADMIN PANEL OVERHAUL — Phases 2, 3, and 4 implemented; repo-wide lint/typecheck/build are green again, and the admin login redirect loop is fixed (April 3, 2026)`
+`SMART MATCH SCORE — Feature fully built; migration + cleanup needed before demo (April 20, 2026)`
 
 ## Last Updated
-2026-04-04
+2026-04-20
+
+---
+
+## 🎯 SMART MATCH SCORE — DEMO PREP (April 20, 2026 meeting)
+
+**Context:** The Smart Match Score feature is 100% implemented. API, Gemini AI, badge component, and both UI pages are wired. Dev and prod migrations, debug-log cleanup, and the company job selector are now complete.
+
+### What was built (all ✅ — no code changes needed)
+- `app/db/migrations/match_score_cache.sql` — DB migration (run on dev and prod)
+- `app/api/ai/match-score/route.ts` — POST endpoint with 1-hour Gemini cache
+- `app/lib/ai/match-score.ts` — Gemini 2.0 Flash prompt + JSON parser
+- `app/components/MatchScoreBadge.tsx` — green/yellow/red pill badge with hover tooltip
+- `app/components/job-page/YourMatchScoreCard.tsx` — full score card for talent on job detail page
+- `app/jobs/[jobId]/page.tsx` — wired: `YourMatchScoreCard` for approved talents, locked placeholder for others
+- `app/companies/search-talents/page.tsx` + `talent-result.tsx` — wired: passes `?jobId=` param → shows `MatchScoreBadge` per talent card, fetches scores in parallel batches of 5
+
+### How the demo flow works
+1. Company logs in → goes to `/companies/search-talents?jobId=<uuid>` (append a real job UUID from DB)
+2. Each talent card loads a `MatchScoreBadge` (animated pulse → green/yellow/red %)
+3. Hover the badge → tooltip shows "Why it matches" + "Gaps"
+4. Talent logs in → views any published job → sees "AI Match Analysis" section with score bar + pros/cons cards
+
+### P0 — Run DB migration on dev ← CODEX TASK
+- [x] Run: `psql "$DATABASE_URL" -f app/db/migrations/match_score_cache.sql`
+- [x] Verify table exists: `psql "$DATABASE_URL" -c "\dt goodhive.match_score_cache"`
+- **Why:** Without this migration, every match-score API call will 500 and the badges will never render.
+
+### P0 — Remove debug console.log statements ← CODEX TASK
+- [x] Removed leftover debug logs from `app/companies/search-talents/page.tsx` and `app/companies/search-talents/talent-result.tsx`
+
+Remove these leftover debug logs that will clutter Vercel output and shouldn't ship:
+
+**`app/companies/search-talents/talent-result.tsx`:**
+- Line 62: `console.log("Talents received:", talents.length);`
+- Line 63: `console.log("Sample talent:", talents[0]);`
+- Lines 234–237: the per-card `console.log("Talent", talent.userId || index, ":", {...})`
+
+**`app/companies/search-talents/page.tsx`:**
+- Line 72: `console.log("Search params received:", params);`
+- Line 117: `console.log("Talents found:", talents.length);`
+- Line 118: `console.log("Total count:", count);`
+
+After removal run:
+```bash
+pnpm lint && pnpm tsc --noEmit
+```
+
+### P1 — Add "Match by job" UI affordance ← CODEX TASK (nice to have before demo)
+Currently the company must manually add `?jobId=<uuid>` to the URL. Add a job selector dropdown to the search-talents filter bar so companies can pick one of their own jobs from a list, which then sets the `?jobId=` param and triggers match scoring.
+
+**Implementation:**
+1. `app/companies/search-talents/page.tsx` — fetch company's published jobs:
+   ```sql
+   SELECT id, title FROM goodhive.job_offers
+   WHERE user_id = $viewerUserId AND published = true
+   ORDER BY posted_at DESC LIMIT 20
+   ```
+   Pass `companyJobs` array + `selectedJobId` as props to a new client component.
+2. New client component (inline or separate): a `<select>` or styled dropdown labeled **"Match talents to job"** that updates `?jobId=` in the URL on change. Use `useRouter().push()` — keep all other existing query params.
+3. Place the dropdown in the filter bar, above or beside the existing search/filter controls.
+4. When a job is selected, the badge loading state will start immediately (existing behavior in `talent-result.tsx`).
+
+Acceptance: Company can pick a job from the dropdown → talent cards each show match scores without needing to hand-craft the URL.
+- [x] Added a company-only "Match talents to job" dropdown that preserves the existing search query params while updating `jobId`
+
+### P2 — Run DB migration on prod ← AFTER DEV VERIFIED
+- [x] Confirm dev migration works + match scores returning from Gemini
+- [x] Run: `psql "$PROD_DATABASE_URL" -f app/db/migrations/match_score_cache.sql`
+- [x] Update `docs/tasks/current-task.md` with prod migration status
+
+---
 
 ## 🔥 ADMIN PANEL OVERHAUL TASKS
 

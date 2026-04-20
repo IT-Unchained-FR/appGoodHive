@@ -6,6 +6,8 @@ interface MatchScoreBadgeProps {
   gaps?: string[];
   showTooltip?: boolean;
   loading?: boolean;
+  unavailable?: boolean;
+  unavailableMessage?: string;
 }
 
 export function MatchScoreBadge({
@@ -14,12 +16,36 @@ export function MatchScoreBadge({
   gaps = [],
   showTooltip = false,
   loading = false,
+  unavailable = false,
+  unavailableMessage = "AI match temporarily unavailable. Please try again shortly.",
 }: MatchScoreBadgeProps) {
   if (loading) {
     return (
       <span className="inline-flex animate-pulse items-center gap-1 rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
         --% match
       </span>
+    );
+  }
+
+  if (unavailable) {
+    const unavailableBadge = (
+      <span className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+        AI unavailable
+      </span>
+    );
+
+    if (!showTooltip) {
+      return unavailableBadge;
+    }
+
+    return (
+      <div className="group relative inline-block">
+        {unavailableBadge}
+        <div className="absolute bottom-full left-0 z-20 mb-2 hidden w-64 rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700 shadow-lg group-hover:block">
+          <p className="font-semibold text-slate-700">Match analysis unavailable</p>
+          <p className="mt-1 leading-5 text-slate-600">{unavailableMessage}</p>
+        </div>
+      </div>
     );
   }
 

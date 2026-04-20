@@ -37,6 +37,8 @@ interface MatchScoreState {
   score: number | null;
   reasons: string[];
   gaps: string[];
+  unavailable: boolean;
+  message?: string;
 }
 
 type MatchScoreMap = Record<string, MatchScoreState>;
@@ -47,6 +49,8 @@ type MatchScoreFetchResult =
       score: number | null;
       reasons: string[];
       gaps: string[];
+      unavailable: boolean;
+      message?: string;
       error: false;
     };
 
@@ -58,9 +62,6 @@ export default function TalentResult({
   matchJobId?: string | null;
 }) {
   const [matchScores, setMatchScores] = useState<MatchScoreMap>({});
-
-  console.log("Talents received:", talents.length);
-  console.log("Sample talent:", talents[0]);
 
   useEffect(() => {
     // Check for potential data issues and notify user
@@ -94,6 +95,7 @@ export default function TalentResult({
         score: null,
         reasons: [],
         gaps: [],
+        unavailable: false,
       };
     }
     setMatchScores(initialState);
@@ -122,7 +124,16 @@ export default function TalentResult({
               });
 
               if (!response.ok) {
-                return { talentId, error: true };
+                return {
+                  talentId,
+                  score: null,
+                  reasons: [],
+                  gaps: [],
+                  unavailable: true,
+                  message:
+                    "AI match analysis is temporarily unavailable. Please try again shortly.",
+                  error: false,
+                };
               }
 
               const payload = await response.json();
@@ -131,6 +142,8 @@ export default function TalentResult({
                     score?: number | null;
                     reasons?: string[];
                     gaps?: string[];
+                    unavailable?: boolean;
+                    message?: string;
                   }
                 | undefined;
               const reasons = data?.reasons;
@@ -145,10 +158,22 @@ export default function TalentResult({
                 gaps: Array.isArray(gaps)
                   ? gaps.filter((gap): gap is string => typeof gap === "string")
                   : [],
+                unavailable: data?.unavailable === true,
+                message:
+                  typeof data?.message === "string" ? data.message : undefined,
                 error: false,
               };
             } catch {
-              return { talentId, error: true };
+              return {
+                talentId,
+                score: null,
+                reasons: [],
+                gaps: [],
+                unavailable: true,
+                message:
+                  "AI match analysis is temporarily unavailable. Please try again shortly.",
+                error: false,
+              };
             }
           }),
         );
@@ -174,6 +199,8 @@ export default function TalentResult({
             score: value.score,
             reasons: value.reasons.slice(0, 3),
             gaps: value.gaps.slice(0, 3),
+            unavailable: value.unavailable,
+            message: value.message,
           };
         }
 
@@ -231,13 +258,6 @@ export default function TalentResult({
       {/* Talent Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {talents.map((talent, index) => {
-          console.log("Talent", talent.userId || index, ":", {
-            title: talent.title,
-            firstName: talent.firstName,
-            lastName: talent.lastName,
-            userId: talent.userId,
-          });
-
           try {
             const matchState = talent.userId ? matchScores[talent.userId] : undefined;
             return (
@@ -253,6 +273,8 @@ export default function TalentResult({
                       score={matchState.score}
                       reasons={matchState.reasons}
                       gaps={matchState.gaps}
+                      unavailable={matchState.unavailable}
+                      unavailableMessage={matchState.message}
                       showTooltip
                     />
                   </div>

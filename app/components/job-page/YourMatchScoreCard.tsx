@@ -12,6 +12,8 @@ interface MatchScoreData {
   score: number | null;
   reasons: string[];
   gaps: string[];
+  unavailable: boolean;
+  message?: string;
 }
 
 function getScoreTone(score: number) {
@@ -75,6 +77,8 @@ export function YourMatchScoreCard({ jobId, talentId }: YourMatchScoreCardProps)
               score?: number | null;
               reasons?: string[];
               gaps?: string[];
+              unavailable?: boolean;
+              message?: string;
             }
           | undefined;
 
@@ -99,10 +103,20 @@ export function YourMatchScoreCard({ jobId, talentId }: YourMatchScoreCardProps)
                 .filter(Boolean)
                 .slice(0, 3)
             : [],
+          unavailable: data?.unavailable === true,
+          message:
+            typeof data?.message === "string" ? data.message : undefined,
         });
       } catch {
         if (isActive) {
-          setMatchScore(null);
+          setMatchScore({
+            score: null,
+            reasons: [],
+            gaps: [],
+            unavailable: true,
+            message:
+              "AI match analysis is temporarily unavailable. Please try again in a few minutes.",
+          });
         }
       } finally {
         if (isActive) {
@@ -131,8 +145,37 @@ export function YourMatchScoreCard({ jobId, talentId }: YourMatchScoreCardProps)
     );
   }
 
-  if (!matchScore || matchScore.score === null) {
+  if (!matchScore) {
     return null;
+  }
+
+  if (matchScore.unavailable || matchScore.score === null) {
+    return (
+      <section className="rounded-[30px] border border-[#e6e0d5] bg-white/95 p-6 shadow-sm sm:p-7">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">
+              <Sparkles className="h-3.5 w-3.5" />
+              AI Match Analysis
+            </p>
+            <h2 className="mt-3 text-2xl font-semibold text-slate-950">
+              Match analysis temporarily unavailable
+            </h2>
+          </div>
+          <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-700">
+            <AlertCircle className="h-4 w-4" />
+            Please retry shortly
+          </span>
+        </div>
+
+        <div className="mt-5 rounded-[26px] bg-[linear-gradient(180deg,#fffdf8_0%,#f8f4ea_100%)] p-5 ring-1 ring-[#eee2cb]">
+          <p className="text-sm leading-6 text-slate-600">
+            {matchScore.message ??
+              "We could not reach a Google model for this analysis just now. Your job page is still working normally, and the match insights should return automatically once the AI service is reachable again."}
+          </p>
+        </div>
+      </section>
+    );
   }
 
   const score = Math.max(0, Math.min(100, matchScore.score));

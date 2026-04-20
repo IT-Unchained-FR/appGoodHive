@@ -172,7 +172,7 @@ export const Card: FC<Props> = ({
     (user.talent_status === "approved" || user.recruiter_status === "approved");
 
   return (
-    <div className="group relative bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/40 rounded-2xl border border-amber-100/60 shadow-sm hover:shadow-2xl hover:border-[#FFC905]/30 transition-all duration-300 ease-in-out cursor-pointer flex flex-col backdrop-blur-sm">
+    <div className="group relative bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/40 rounded-2xl border border-amber-100/60 shadow-sm hover:shadow-2xl hover:border-[#FFC905]/30 transition-all duration-300 ease-in-out cursor-pointer flex flex-col h-full backdrop-blur-sm">
       {/* Honey comb pattern background accent */}
       <div className="absolute top-0 right-0 w-20 h-20 opacity-20 pointer-events-none overflow-hidden rounded-2xl">
         <svg
@@ -348,6 +348,7 @@ export const Card: FC<Props> = ({
         </div>
 
         {/* Description - 2 lines max */}
+        <div className="flex-1 flex flex-col justify-start">
         <div className="mb-3">
           <p className="text-xs sm:text-sm text-gray-600 leading-relaxed line-clamp-2">
             {croppedDescription ||
@@ -395,6 +396,7 @@ export const Card: FC<Props> = ({
             </div>
           )}
         </div>
+        </div>{/* end flex-1 */}
 
         {/* Footer */}
         <div className="pt-3 border-t border-amber-200/50 mt-auto">
@@ -402,6 +404,12 @@ export const Card: FC<Props> = ({
             {type !== "talent" && (
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <span className="truncate">{postedOn}</span>
+                {type === "job" && budget > 0 && (
+                  <span className="flex items-center gap-1 font-semibold text-slate-600 shrink-0">
+                    <span className="text-[10px] font-medium uppercase tracking-tight text-slate-400">Budget</span>
+                    {budget.toLocaleString()}&nbsp;{currency.startsWith("0x") ? "USDC" : (currency || "USDC")}
+                  </span>
+                )}
               </div>
             )}
 

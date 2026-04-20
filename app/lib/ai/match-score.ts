@@ -4,6 +4,8 @@ export interface MatchScoreResult {
   score: number | null;
   reasons: string[];
   gaps: string[];
+  unavailable: boolean;
+  message?: string;
 }
 
 interface ComputeMatchScoreParams {
@@ -66,6 +68,56 @@ function getGeminiText(response: unknown) {
   return typeof candidate?.text === "string" ? candidate.text : "";
 }
 
+function describeModelError(error: unknown) {
+  const candidate = error as {
+    message?: string;
+    status?: number;
+    statusText?: string;
+  } | null;
+
+  const status = typeof candidate?.status === "number" ? candidate.status : null;
+  const statusText =
+    typeof candidate?.statusText === "string" ? candidate.statusText : null;
+  const message =
+    typeof candidate?.message === "string" ? candidate.message : "Unknown model error";
+
+  if (status && statusText) {
+    return `${status} ${statusText}: ${message}`;
+  }
+
+  if (status) {
+    return `${status}: ${message}`;
+  }
+
+  return message;
+}
+
+const DEFAULT_MATCH_SCORE_MODELS = [
+  "models/gemini-2.5-flash",
+  "models/gemini-flash-latest",
+  "models/gemini-2.5-flash-lite",
+  "models/gemini-pro-latest",
+  "models/gemini-2.0-flash",
+];
+
+function getMatchScoreModels() {
+  const configuredModel = process.env.GEMINI_FAST_MODEL?.trim();
+  const configuredFallbacks =
+    process.env.GEMINI_MATCH_SCORE_MODELS?.split(",")
+      .map((model) => model.trim())
+      .filter(Boolean) ?? [];
+  const candidates = [
+    configuredModel,
+    ...configuredFallbacks,
+    ...DEFAULT_MATCH_SCORE_MODELS,
+  ];
+
+  return candidates.filter(
+    (model, index, array): model is string =>
+      Boolean(model) && array.indexOf(model) === index,
+  );
+}
+
 export async function computeMatchScore(
   params: ComputeMatchScoreParams,
 ): Promise<MatchScoreResult> {
@@ -88,25 +140,41 @@ Return ONLY valid JSON (no markdown, no explanation):
   "gaps": [<max 3 short strings what is missing>]
 }`;
 
-  try {
-    const model = getGeminiModel(
-      process.env.GEMINI_FAST_MODEL ?? "models/gemini-2.0-flash",
-    );
-    const result = await model.generateContent(prompt);
-    const text = getGeminiText(result.response);
-    const parsed = tryParseModelJson(text);
+  const modelNames = getMatchScoreModels();
 
-    if (!parsed) {
-      return { score: null, reasons: [], gaps: [] };
+  for (const modelName of modelNames) {
+    try {
+      const model = getGeminiModel(modelName);
+      const result = await model.generateContent(prompt);
+      const text = getGeminiText(result.response);
+      const parsed = tryParseModelJson(text);
+
+      if (!parsed) {
+        console.error(
+          `Failed to parse match score response from ${modelName}; trying next fallback model.`,
+        );
+        continue;
+      }
+
+      return {
+        score: clampScore(parsed.score),
+        reasons: sanitizeList(parsed.reasons),
+        gaps: sanitizeList(parsed.gaps),
+        unavailable: false,
+      };
+    } catch (error) {
+      console.error(
+        `Failed to compute match score with ${modelName}; trying next fallback model. ${describeModelError(error)}`,
+      );
     }
-
-    return {
-      score: clampScore(parsed.score),
-      reasons: sanitizeList(parsed.reasons),
-      gaps: sanitizeList(parsed.gaps),
-    };
-  } catch (error) {
-    console.error("Failed to compute match score:", error);
-    return { score: null, reasons: [], gaps: [] };
   }
+
+  return {
+    score: null,
+    reasons: [],
+    gaps: [],
+    unavailable: true,
+    message:
+      "AI match analysis is temporarily unavailable. Please try again in a few minutes.",
+  };
 }

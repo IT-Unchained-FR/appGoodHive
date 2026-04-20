@@ -110,49 +110,26 @@ export const OptimizedJobBalance: React.FC<OptimizedJobBalanceProps> = ({
         dot: "bg-gray-400",
       };
 
+  if (isLoading || !hasOnChainBalance) return null;
+
   return (
     <div className={`inline-flex items-center gap-1.5 ${className}`}>
-      <div
-        className={`flex items-center gap-1.5 bg-gradient-to-r border rounded-lg px-2 py-0.5 shadow-sm backdrop-blur-sm ${badgeColors.container}`}
-      >
-        {isLoading ? (
-          <>
-            <div className={`w-1.5 h-1.5 ${badgeColors.dot} rounded-full animate-pulse`}></div>
-            <span className={`text-xs font-medium ${hasOnChainBalance ? "text-emerald-700" : "text-[#FFC905]"}`}>
-              Loading...
-            </span>
-          </>
-        ) : (
-          <>
-            <div
-              className={`flex items-center gap-1 ${hasOnChainBalance ? "text-emerald-700" : "text-[#d97706]"}`}
-              title={balanceTitle}
-            >
-              <svg
-                className="w-4 h-4 flex-shrink-0"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 3 5 6v5c0 4.5 3.1 8.6 7 10 3.9-1.4 7-5.5 7-10V6l-7-3z" />
-                <circle cx="12" cy="11" r="3" />
-                <path d="M12 9v2l1 1" />
-              </svg>
-              <span className="text-[10px] font-semibold uppercase tracking-tight">
-                {balanceLabel}
-              </span>
-            </div>
-            <span
-              className={`text-xs font-semibold ${hasOnChainBalance ? "text-emerald-700" : "text-[#FFC905]"}`}
-              title={balanceTitle}
-            >
-              {displayAmount} {displayCurrency}
-            </span>
-          </>
-        )}
+      <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 rounded-lg px-2 py-0.5 shadow-sm">
+        <svg
+          className="w-3.5 h-3.5 flex-shrink-0 text-emerald-600"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M12 3 5 6v5c0 4.5 3.1 8.6 7 10 3.9-1.4 7-5.5 7-10V6l-7-3z" />
+          <path d="m9 12 2 2 4-4" />
+        </svg>
+        <span className="text-[10px] font-semibold uppercase tracking-tight text-emerald-700">
+          Funded on-chain
+        </span>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 # Feature: Smart Job-Talent Match Score (AI)
 
 ## Status
-`PLANNED`
+`IMPLEMENTED — migration not yet run on dev/prod; console.log cleanup pending (April 20, 2026)`
 
 ## Business Goal
 Benoit's #1 innovation request: companies waste time reviewing bad-fit candidates; talents apply to jobs they'll never get. A real-time AI match score reduces friction on both sides and makes GoodHive feel intelligent — not just a job board.

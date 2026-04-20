@@ -53,6 +53,7 @@ function buildResponseData(row: CacheRow) {
     score: row.score === null ? null : Number(row.score),
     reasons,
     gaps,
+    unavailable: false,
   };
 }
 
@@ -215,8 +216,19 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Match score error:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to compute match score" },
-      { status: 500 },
+      {
+        success: true,
+        data: {
+          score: null,
+          reasons: [],
+          gaps: [],
+          unavailable: true,
+          message:
+            "AI match analysis is temporarily unavailable. Please try again in a few minutes.",
+          cached: false,
+        },
+      },
+      { status: 200 },
     );
   }
 }
