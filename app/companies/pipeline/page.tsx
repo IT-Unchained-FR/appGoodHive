@@ -8,7 +8,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Trash2, MessageSquare, ExternalLink, ChevronDown, ChevronRight, UserPlus } from "lucide-react";
 import toast from "react-hot-toast";
-import { useCurrentUserId } from "@/app/hooks/useCurrentUserId";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 type Stage = "shortlisted" | "contacted" | "interviewing" | "hired" | "rejected";
 
@@ -230,10 +230,11 @@ function KanbanColumn({
 }
 
 export default function TalentPipelinePage() {
-  const userId = useCurrentUserId();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
   const [pipeline, setPipeline] = useState<PipelineData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [errorState, setErrorState] = useState<"unauthorized" | "forbidden" | "failed" | null>(null);
   const [collapsed, setCollapsed] = useState<Record<Stage, boolean>>({
     shortlisted: false,
     contacted: false,
@@ -247,19 +248,49 @@ export default function TalentPipelinePage() {
   const fetchPipeline = useCallback(async () => {
     try {
       const res = await fetch("/api/pipeline", { cache: "no-store" });
+      if (res.status === 401) {
+        setPipeline(null);
+        setErrorState("unauthorized");
+        return;
+      }
+      if (res.status === 403) {
+        setPipeline(null);
+        setErrorState("forbidden");
+        return;
+      }
+      if (!res.ok) {
+        setPipeline(null);
+        setErrorState("failed");
+        return;
+      }
+
       const json = await res.json();
-      if (json.success) setPipeline(json.data);
+      if (json.success) {
+        setPipeline(json.data);
+        setErrorState(null);
+      } else {
+        setPipeline(null);
+        setErrorState("failed");
+      }
     } catch {
-      // silent
+      setPipeline(null);
+      setErrorState("failed");
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (!userId) return;
+    if (isAuthLoading) return;
+    if (!isAuthenticated) {
+      setLoading(false);
+      setPipeline(null);
+      setErrorState("unauthorized");
+      return;
+    }
+    setLoading(true);
     void fetchPipeline();
-  }, [userId, fetchPipeline]);
+  }, [fetchPipeline, isAuthenticated, isAuthLoading]);
 
   const handleMove = async (entryId: string, newStage: Stage) => {
     // Optimistic update
@@ -321,10 +352,28 @@ export default function TalentPipelinePage() {
     }
   };
 
-  if (!userId) {
+  if (isAuthLoading || loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 rounded-full border-2 border-amber-400 border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  if (errorState === "unauthorized") {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <p className="text-slate-500">Please log in as a company to view your pipeline.</p>
+      </div>
+    );
+  }
+
+  if (errorState === "forbidden") {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh] px-6">
+        <p className="text-center text-slate-500">
+          Company access is required to view the talent pipeline.
+        </p>
       </div>
     );
   }
@@ -350,11 +399,7 @@ export default function TalentPipelinePage() {
         </div>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="w-8 h-8 rounded-full border-2 border-amber-400 border-t-transparent animate-spin" />
-        </div>
-      ) : !pipeline ? (
+      {!pipeline ? (
         <div className="text-center py-20 text-slate-500">Failed to load pipeline</div>
       ) : (
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>

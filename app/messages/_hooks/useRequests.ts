@@ -17,11 +17,21 @@ export function useRequests(userId: string | undefined): UseRequestsReturn {
   const [requests, setRequests] = useState<JobRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const failureCountRef = useRef(0);
+  const authToastShownRef = useRef(false);
 
   const fetchRequests = useCallback(async () => {
     if (!userId) return;
     try {
       const res = await fetch(`/api/job-requests?role=both`, { cache: "no-store" });
+      if (res.status === 401) {
+        if (!authToastShownRef.current) {
+          toast.error("Please log in again to load your requests.");
+          authToastShownRef.current = true;
+        }
+        setRequests([]);
+        failureCountRef.current = 0;
+        return;
+      }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = (await res.json()) as {
         success: boolean;
@@ -34,6 +44,7 @@ export function useRequests(userId: string | undefined): UseRequestsReturn {
         [];
       setRequests(list);
       failureCountRef.current = 0;
+      authToastShownRef.current = false;
     } catch {
       failureCountRef.current += 1;
       if (failureCountRef.current >= 3) {

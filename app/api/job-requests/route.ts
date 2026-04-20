@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import sql from "@/lib/db";
+import { getSessionUser } from "@/lib/auth/sessionUtils";
 import type { CreateJobRequestBody, JobRequest } from "@/interfaces/messenger";
 
 function resolveActorUserId(request: NextRequest, fallback?: string | null) {
@@ -9,14 +10,18 @@ function resolveActorUserId(request: NextRequest, fallback?: string | null) {
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.nextUrl.searchParams.get("userId") ?? resolveActorUserId(request);
+    const sessionUser = await getSessionUser();
+    const userId =
+      sessionUser?.user_id ??
+      request.nextUrl.searchParams.get("userId") ??
+      resolveActorUserId(request);
     const role = request.nextUrl.searchParams.get("role") ?? "both";
     const status = request.nextUrl.searchParams.get("status");
 
     if (!userId) {
       return NextResponse.json(
-        { message: "userId is required" },
-        { status: 400 },
+        { message: "Unauthorized" },
+        { status: 401 },
       );
     }
 
@@ -75,6 +80,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const sessionUser = await getSessionUser();
     const body = (await request.json()) as CreateJobRequestBody;
     const {
       companyUserId,
@@ -85,7 +91,7 @@ export async function POST(request: NextRequest) {
       actorUserId,
     } = body;
 
-    const actorId = resolveActorUserId(request, actorUserId ?? null);
+    const actorId = sessionUser?.user_id ?? resolveActorUserId(request, actorUserId ?? null);
 
     if (!companyUserId || !talentUserId || !title?.trim()) {
       return NextResponse.json(
@@ -103,8 +109,8 @@ export async function POST(request: NextRequest) {
 
     if (!actorId) {
       return NextResponse.json(
-        { message: "actorUserId is required" },
-        { status: 400 },
+        { message: "Unauthorized" },
+        { status: 401 },
       );
     }
 

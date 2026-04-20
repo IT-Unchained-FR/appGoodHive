@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import sql from "@/lib/db";
+import { getSessionUser } from "@/lib/auth/sessionUtils";
 import type { JobRequestStatus } from "@/interfaces/messenger";
 
 const VALID_STATUSES: JobRequestStatus[] = [
@@ -75,12 +76,16 @@ export async function GET(
 ) {
   try {
     const { requestId } = await params;
-    const userId = request.nextUrl.searchParams.get("userId") ?? resolveActorUserId(request);
+    const sessionUser = await getSessionUser();
+    const userId =
+      sessionUser?.user_id ??
+      request.nextUrl.searchParams.get("userId") ??
+      resolveActorUserId(request);
 
     if (!userId) {
       return NextResponse.json(
-        { message: "userId is required" },
-        { status: 400 },
+        { message: "Unauthorized" },
+        { status: 401 },
       );
     }
 
@@ -123,14 +128,16 @@ export async function PATCH(
 ) {
   try {
     const { requestId } = await params;
+    const sessionUser = await getSessionUser();
     const body = await request.json();
-    const userId = resolveActorUserId(request, body.userId ?? null);
+    const userId =
+      sessionUser?.user_id ?? resolveActorUserId(request, body.userId ?? null);
     const status = body.status as JobRequestStatus | undefined;
 
     if (!userId) {
       return NextResponse.json(
-        { message: "userId is required" },
-        { status: 400 },
+        { message: "Unauthorized" },
+        { status: 401 },
       );
     }
 

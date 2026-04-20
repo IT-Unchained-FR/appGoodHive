@@ -13,6 +13,19 @@ export async function GET(request: NextRequest) {
     }
 
     const jobId = request.nextUrl.searchParams.get("jobId");
+    const companyRows = await sql<{ user_id: string }[]>`
+      SELECT user_id
+      FROM goodhive.companies
+      WHERE user_id = ${sessionUser.user_id}::uuid
+      LIMIT 1
+    `;
+
+    if (companyRows.length === 0) {
+      return NextResponse.json(
+        { success: false, error: "Company access required" },
+        { status: 403 },
+      );
+    }
 
     const rows = await sql`
       SELECT
@@ -53,6 +66,20 @@ export async function POST(request: NextRequest) {
     const sessionUser = await getSessionUser();
     if (!sessionUser?.user_id) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
+    const companyRows = await sql<{ user_id: string }[]>`
+      SELECT user_id
+      FROM goodhive.companies
+      WHERE user_id = ${sessionUser.user_id}::uuid
+      LIMIT 1
+    `;
+
+    if (companyRows.length === 0) {
+      return NextResponse.json(
+        { success: false, error: "Company access required" },
+        { status: 403 },
+      );
     }
 
     const body = (await request.json()) as { talentId?: unknown; jobId?: unknown; stage?: unknown; notes?: unknown };
