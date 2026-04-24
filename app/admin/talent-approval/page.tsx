@@ -2,12 +2,12 @@
 
 export const dynamic = "force-dynamic";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
-import { EnhancedTable, Column } from "@/app/components/admin/EnhancedTable";
+import { AdminDataGrid } from "@/app/components/admin/AdminDataGrid";
+import { Column } from "@/app/components/admin/EnhancedTable";
 import { AdminFilters } from "@/app/components/admin/AdminFilters";
-import { Spinner } from "@/app/components/admin/Spinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
@@ -17,13 +17,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Checkbox } from "@/components/ui/checkbox";
 import { MoreHorizontal, CheckSquare, Square } from "lucide-react";
 import { ProfileData } from "@/app/talents/my-profile/page";
 import ApprovalPopup from "./components/ApprovalPopup";
 import { BulkApproval } from "@/app/components/admin/BulkApproval";
 import toast from "react-hot-toast";
 import moment from "moment";
+import { GridRowSelectionModel } from "@mui/x-data-grid";
 
 type ProfileDataWithName = ProfileData & {
   name?: string;
@@ -40,6 +40,8 @@ export default function AdminTalentApproval() {
   const [selectedUser, setSelectedUser] = useState<ProfileDataWithName | null>(null);
   const [selectedItems, setSelectedItems] = useState<ProfileDataWithName[]>([]);
   const [showBulkApproval, setShowBulkApproval] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const getTalentStatus = (user: ProfileDataWithName) => {
     const status = user.talent_status;
@@ -177,18 +179,6 @@ export default function AdminTalentApproval() {
 
   const columns: Column<ProfileDataWithName>[] = [
     {
-      key: "select",
-      header: "",
-      width: "5%",
-      render: (_value: unknown, row: ProfileDataWithName) => (
-        <Checkbox
-          checked={selectedItems.some((item) => item.user_id === row.user_id)}
-          onCheckedChange={() => toggleItemSelection(row)}
-          onClick={(e) => e.stopPropagation()}
-        />
-      ),
-    },
-    {
       key: "name",
       header: "Name",
       width: "22%",
@@ -214,6 +204,7 @@ export default function AdminTalentApproval() {
       key: "status",
       header: "Status",
       width: "12%",
+      sortable: true,
       exportValue: (row: ProfileDataWithName) => {
         const status = getTalentStatus(row);
         if (status === "approved") return "Approved";
@@ -254,6 +245,7 @@ export default function AdminTalentApproval() {
       key: "applied_for",
       header: "Applied For",
       width: "12%",
+      sortable: true,
       exportValue: (row: ProfileDataWithName) => {
         const roles: string[] = [];
         if (row.talent) roles.push("Talent");
@@ -305,6 +297,7 @@ export default function AdminTalentApproval() {
       key: "referrer_name",
       header: "Referred By",
       width: "20%",
+      sortable: true,
       exportValue: (row: ProfileDataWithName) => {
         if (!row.referred_by) return "Direct signup";
         return row.referrer_name
@@ -458,6 +451,18 @@ export default function AdminTalentApproval() {
     );
   }, [users]);
 
+  const rowSelectionModel = useMemo<GridRowSelectionModel>(
+    () => ({
+      type: "include",
+      ids: new Set(
+        selectedItems
+          .map((item) => item.user_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    }),
+    [selectedItems],
+  );
+
   return (
     <AdminPageLayout
       title="Talents Join Requests"
@@ -502,12 +507,8 @@ export default function AdminTalentApproval() {
         {selectedItems.length > 0 && (
           <div className="bg-[#FFC905]/10 border border-[#FFC905] rounded-lg p-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Checkbox
-                checked={selectedItems.length === users.length}
-                onCheckedChange={toggleSelectAll}
-              />
               <span className="text-sm font-medium text-gray-900">
-                Select All ({users.length})
+                {selectedItems.length} selected
               </span>
             </div>
             <Button
@@ -520,28 +521,34 @@ export default function AdminTalentApproval() {
           </div>
         )}
 
-        <EnhancedTable
-          data={users}
+        <AdminDataGrid
+          rows={users}
           columns={columns}
-          searchable={true}
-          searchPlaceholder="Search by name or email..."
-          pagination={true}
-          itemsPerPage={10}
-          exportable={true}
+          getRowId={(row) => row.user_id || row.email || row.name || "talent"}
           loading={loading}
           emptyMessage="No talent requests found"
-          mobileCardView
-          renderMobileCard={(user) => (
-            <TalentApprovalCard
-              user={user}
-              selected={selectedItems.some((item) => item.user_id === user.user_id)}
-              onSelect={() => toggleItemSelection(user)}
-              onApprove={() => handleApproveClick(user)}
-              onReview={() => handleStatusUpdate(user, "in_review")}
-              onDefer={() => handleStatusUpdate(user, "deferred")}
-              onReject={() => handleStatusUpdate(user, "rejected")}
-            />
-          )}
+          showSearchInput={false}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+          pageSize={pageSize}
+          onPageSizeChange={(nextPageSize) => {
+            setPageSize(nextPageSize);
+            setCurrentPage(1);
+          }}
+          totalItems={users.length}
+          pageSizeOptions={[10, 25, 50]}
+          paginationMode="client"
+          sortingMode="client"
+          checkboxSelection
+          rowSelectionModel={rowSelectionModel}
+          onRowSelectionModelChange={(model) => {
+            const selectedIds = model.ids;
+            setSelectedItems(
+              users.filter((user) =>
+                user.user_id ? selectedIds.has(user.user_id) : false,
+              ),
+            );
+          }}
         />
       </div>
 
@@ -588,124 +595,5 @@ export default function AdminTalentApproval() {
         ]}
       />
     </AdminPageLayout>
-  );
-}
-
-function TalentApprovalCard({
-  user,
-  selected,
-  onSelect,
-  onApprove,
-  onReview,
-  onDefer,
-  onReject,
-}: {
-  user: ProfileData;
-  selected: boolean;
-  onSelect: () => void;
-  onApprove: () => void;
-  onReview: () => void;
-  onDefer: () => void;
-  onReject: () => void;
-}) {
-  const getStatusBadge = () => {
-    const status = user.talent_status;
-    if (status === "approved" || user.approved) {
-      return (
-        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-          Approved
-        </Badge>
-      );
-    } else if (status === "deferred") {
-      return (
-        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-          Deferred
-        </Badge>
-      );
-    } else if (status === "rejected") {
-      return (
-        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-          Rejected
-        </Badge>
-      );
-    } else if (status === "pending" || status === "in_review" || user.inreview) {
-      return (
-        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-          In Review
-        </Badge>
-      );
-    }
-    return (
-      <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-        In Review
-      </Badge>
-    );
-  };
-
-  return (
-    <div className="border border-gray-200 rounded-lg bg-white p-4 shadow-sm space-y-3 relative">
-      <div className="absolute top-3 right-3">
-        <Checkbox checked={selected} onCheckedChange={onSelect} />
-      </div>
-      <div className="space-y-1">
-        <div className="font-semibold text-gray-900">
-          {user.first_name} {user.last_name}
-        </div>
-        <div className="text-sm text-gray-600">{user.email}</div>
-        {user.referred_by && (
-          <div className="text-xs text-gray-500">
-            Referred by code: {user.referred_by}
-          </div>
-        )}
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          {getStatusBadge()}
-          <span>{moment(user.created_at || user.user_created_at).fromNow()}</span>
-        </div>
-      </div>
-      {(user.city || user.country) && (
-        <div className="text-sm text-gray-700">
-          {user.city}{user.city && user.country ? ', ' : ''}{user.country}
-        </div>
-      )}
-      <div className="flex flex-wrap gap-2">
-        {user.talent && (
-          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-            Talent
-          </Badge>
-        )}
-        {user.mentor && (
-          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-            Mentor
-          </Badge>
-        )}
-        {user.recruiter && (
-          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-            Recruiter
-          </Badge>
-        )}
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <Button size="sm" variant="outline" onClick={onApprove}>
-          Approve
-        </Button>
-        <Button size="sm" variant="outline" onClick={onReview}>
-          In Review
-        </Button>
-        <Button size="sm" variant="outline" onClick={onDefer}>
-          Defer
-        </Button>
-        <Button size="sm" variant="destructive" onClick={onReject}>
-          Reject
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="ml-auto"
-          onClick={() => window.open(`/admin/talent/${user.user_id}`, "_blank")}
-        >
-          View Profile
-        </Button>
-      </div>
-    </div>
   );
 }

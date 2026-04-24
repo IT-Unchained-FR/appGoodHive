@@ -118,6 +118,12 @@ const companiesLinks = [
     icon: Kanban,
   },
   {
+    href: "/companies/dashboard/hiring-coach",
+    label: "Hiring Coach",
+    protected: true,
+    icon: Sparkles,
+  },
+  {
     href: "/messages",
     label: "Messages",
     protected: true,

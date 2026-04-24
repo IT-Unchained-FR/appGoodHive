@@ -4,8 +4,9 @@ export const dynamic = "force-dynamic";
 
 import { DeleteConfirmDialog } from "@/app/components/admin/DeleteConfirmDialog";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
+import { AdminDataGrid } from "@/app/components/admin/AdminDataGrid";
 import { EditTalentModal } from "@/app/components/admin/EditTalentModal";
-import { Column, EnhancedTable } from "@/app/components/admin/EnhancedTable";
+import { Column } from "@/app/components/admin/EnhancedTable";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
 import { AdminFilters } from "@/app/components/admin/AdminFilters";
 import { StatusPill } from "@/app/components/admin/StatusPill";
@@ -17,7 +18,6 @@ import {
   renderMentorStatusPill,
 } from "@/app/components/admin/sharedTalentColumns";
 import { ProfileData } from "@/app/talents/my-profile/page";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -26,7 +26,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Switch } from "@/components/ui/switch";
 import {
   Copy,
   Download,
@@ -38,16 +37,18 @@ import {
   Trash2,
   UserCheck,
 } from "lucide-react";
-import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
+import {
+  ReadonlyURLSearchParams,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import ApprovalPopup from "../talent-approval/components/ApprovalPopup";
+import { GridFilterModel } from "@mui/x-data-grid";
 
 const EMPTY_CELL_LABEL = "N/A";
-const TALENT_VIEW_STORAGE_KEY = "admin-talents-view-mode";
-
-type TalentViewMode = "grid" | "table";
+type SortDirection = "asc" | "desc" | null;
 
 const TALENT_DETAIL_LABELS: Record<string, string> = {
   full_name: "Full Name",
@@ -319,6 +320,22 @@ const TALENT_URL_BUTTON_LABELS: Record<string, string> = {
   portfolio: "Open Portfolio",
 };
 
+const getTalentGridSortState = (
+  params: ReadonlyURLSearchParams,
+): { field: string | null; direction: SortDirection } => {
+  const sortBy = params.get("sortBy");
+  const sortDir = params.get("sortDir");
+
+  if (!sortBy || (sortDir !== "asc" && sortDir !== "desc")) {
+    return { field: null, direction: null };
+  }
+
+  return {
+    field: sortBy,
+    direction: sortDir,
+  };
+};
+
 export default function AdminManageTalents() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -329,6 +346,21 @@ export default function AdminManageTalents() {
     1,
     Number(searchParams.get("limit") || "25") || 25,
   );
+  const { field: sortField, direction: sortDirection } = useMemo(
+    () => getTalentGridSortState(searchParams),
+    [searchParams],
+  );
+  
+  const initialColumnFilters = useMemo<GridFilterModel>(() => {
+    try {
+      const filters = searchParams.get("columnFilters");
+      if (filters) {
+        return { items: JSON.parse(filters) };
+      }
+    } catch (e) {}
+    return { items: [] };
+  }, [searchParams]);
+
   const [talents, setTalents] = useState<ProfileData[]>([]);
   const [totalTalents, setTotalTalents] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -340,22 +372,10 @@ export default function AdminManageTalents() {
   const [showApprovePopup, setShowApprovePopup] = useState(false);
   const [editingTalent, setEditingTalent] = useState<ProfileData | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [viewMode, setViewMode] = useState<TalentViewMode>("grid");
   const [searchQuery, setSearchQuery] = useState(serverSearchQuery);
 
   const getSafeValue = (value?: string | null) =>
     value && value !== "null" ? value : undefined;
-
-  useEffect(() => {
-    const savedViewMode = window.localStorage.getItem(TALENT_VIEW_STORAGE_KEY);
-    if (savedViewMode === "grid" || savedViewMode === "table") {
-      setViewMode(savedViewMode);
-    }
-  }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem(TALENT_VIEW_STORAGE_KEY, viewMode);
-  }, [viewMode]);
 
   useEffect(() => {
     setSearchQuery(serverSearchQuery);
@@ -381,6 +401,11 @@ export default function AdminManageTalents() {
     [router, searchParamsString],
   );
 
+  const handleFilterModelChange = useCallback((model: GridFilterModel) => {
+    const json = JSON.stringify(model.items);
+    updateTalentQueryParams({ columnFilters: model.items.length > 0 ? json : null, page: "1" });
+  }, [updateTalentQueryParams]);
+
   useEffect(() => {
     const normalizedSearch = searchQuery.trim().replace(/\s+/g, " ");
     const normalizedServerSearch = serverSearchQuery
@@ -394,7 +419,6 @@ export default function AdminManageTalents() {
     const timer = window.setTimeout(() => {
       updateTalentQueryParams({
         search: normalizedSearch || null,
-        page: "1",
       });
     }, 250);
 
@@ -409,7 +433,7 @@ export default function AdminManageTalents() {
       const params = new URLSearchParams(searchParamsString);
       const url = `/api/admin/talents${params.toString() ? `?${params.toString()}` : ''}`;
 
-      const response = await fetch(url);
+      const response = await fetch(url, { cache: "no-store" });
 
       if (response.status === 401) {
         router.push("/admin/login");
@@ -429,6 +453,13 @@ export default function AdminManageTalents() {
           ? result.pagination.total
           : list.length,
       );
+
+      if (
+        typeof result?.pagination?.page === "number" &&
+        result.pagination.page !== currentPage
+      ) {
+        updateTalentQueryParams({ page: String(result.pagination.page) });
+      }
     } catch (error) {
       toast.error("Failed to fetch talents");
     } finally {
@@ -725,12 +756,34 @@ export default function AdminManageTalents() {
     ];
   }, [renderTalentActions, talents]);
 
-  const activeColumns = (viewMode === "grid" ? compactColumns : detailedColumns).map(
-    (column) => ({
-      ...column,
-      sortable: false,
-    }),
-  );
+  const sortableTalentFields = new Set([
+    "name",
+    "user_id",
+    "email",
+    "phone_number",
+    "location",
+    "linkedin",
+    "github",
+    "stackoverflow",
+    "twitter",
+    "portfolio",
+    "telegram",
+    "cv_url",
+    "availability_status",
+    "wallet_address",
+    "talent",
+    "talent_status",
+    "mentor",
+    "recruiter",
+    "approved",
+    "referred_by",
+    "created_at",
+  ]);
+
+  const activeColumns = compactColumns.map((column) => ({
+    ...column,
+    sortable: sortableTalentFields.has(column.key),
+  }));
 
   const talentActions = [
     {
@@ -843,173 +896,43 @@ export default function AdminManageTalents() {
                 {totalTalents || talents?.length || 0} talents • search, edit roles, or approve.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
-              <span
-                className={`text-sm font-medium ${
-                  viewMode === "grid" ? "text-gray-900" : "text-gray-500"
-                }`}
-              >
-                Grid view
-              </span>
-              <Switch
-                checked={viewMode === "table"}
-                onCheckedChange={(checked) =>
-                  setViewMode(checked ? "table" : "grid")
-                }
-                aria-label="Toggle talent view mode"
-              />
-              <span
-                className={`text-sm font-medium ${
-                  viewMode === "table" ? "text-gray-900" : "text-gray-500"
-                }`}
-              >
-                Row table view
-              </span>
-            </div>
           </div>
-          {viewMode === "table" ? (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              Detailed table mode shows the full talent payload returned by the admin API.
-              Empty values appear as {EMPTY_CELL_LABEL}, and you can scroll horizontally to inspect every column.
-            </div>
-          ) : null}
-          <EnhancedTable
-            key={viewMode}
-            data={talents}
+          <AdminDataGrid
+            rows={talents}
             columns={activeColumns}
-            searchable={true}
+            getRowId={(row) =>
+              row.user_id ||
+              row.email ||
+              `${row.first_name || "unknown"}-${row.last_name || "talent"}`
+            }
+            loading={loading}
+            emptyMessage="No talents found"
+            searchPlaceholder="Search by full name, email, referrer, user ID, wallet, location, or any visible field..."
             searchQuery={searchQuery}
             onSearchQueryChange={setSearchQuery}
-            disableClientSearch
             currentPage={currentPage}
             onPageChange={(page) => updateTalentQueryParams({ page: String(page) })}
             pageSize={currentPageSize}
             onPageSizeChange={(pageSize) =>
-              updateTalentQueryParams({ limit: String(pageSize), page: "1" })
+              updateTalentQueryParams({ limit: String(pageSize) })
             }
+            filterModel={initialColumnFilters}
+            onFilterModelChange={handleFilterModelChange}
             totalItems={totalTalents}
-            disableClientPagination
-            searchPlaceholder={
-              viewMode === "grid"
-                ? "Search by first name, last name, full name, email, user ID, or profile links..."
-                : "Search the full talent directory..."
-            }
-            pagination={true}
-            itemsPerPage={viewMode === "grid" ? 10 : 25}
-            exportable={true}
-            loading={loading}
-            emptyMessage="No talents found"
-            pageSizeOptions={viewMode === "grid" ? [10, 25, 50] : [10, 25, 50, 100]}
-            mobileCardView={viewMode === "grid"}
-            renderMobileCard={
-              viewMode === "grid"
-                ? (talent) => (
-                    <TalentCard
-                      talent={talent}
-                      onEdit={() => {
-                        setEditingTalent(talent);
-                        setShowEditModal(true);
-                      }}
-                      onApprove={() => {
-                        setSelectedUser(talent);
-                        setShowApprovePopup(true);
-                      }}
-                      onDelete={() => {
-                        setUserToDelete(talent.user_id || "");
-                        setSelectedTalent(talent);
-                        setShowDeleteConfirm(true);
-                      }}
-                    />
-                  )
-                : undefined
+            pageSizeOptions={[10, 25, 50, 100]}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSortChange={(field, direction) =>
+              updateTalentQueryParams({
+                sort: null,
+                sortBy: field,
+                sortDir: direction,
+              })
             }
           />
         </div>
       </div>
       <QuickActionFAB actions={talentActions} />
     </AdminPageLayout>
-  );
-}
-
-function TalentCard({
-  talent,
-  onEdit,
-  onApprove,
-  onDelete,
-}: {
-  talent: ProfileData;
-  onEdit: () => void;
-  onApprove: () => void;
-  onDelete: () => void;
-}) {
-  return (
-    <div className="border border-gray-200 rounded-lg bg-white p-4 shadow-sm space-y-3">
-      <div className="flex items-start gap-3">
-        <Avatar className="h-12 w-12">
-          {talent.image_url ? (
-            <Image
-              src={talent.image_url}
-              alt={`${talent.first_name} ${talent.last_name}`}
-              width={48}
-              height={48}
-              className="h-12 w-12 rounded-full"
-            />
-          ) : (
-            <AvatarFallback>
-              {talent.first_name?.[0]}
-              {talent.last_name?.[0]}
-            </AvatarFallback>
-          )}
-        </Avatar>
-        <div className="flex-1">
-          <div className="font-semibold text-gray-900">
-            {talent.first_name} {talent.last_name}
-          </div>
-          <div className="text-sm text-gray-600 break-words">
-            {talent.email}
-          </div>
-          <div className="mt-1 text-xs text-gray-500">
-            Referred by: {getReferredByLabel(talent) || "Direct signup"}
-          </div>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {renderBooleanStatusPill(Boolean(talent.talent), "Talent Yes", "Talent No")}
-            {renderTalentApprovalBadge(talent)}
-            {renderMentorStatusPill(talent)}
-            {renderBooleanStatusPill(Boolean(talent.recruiter), "Recruiter Yes", "Recruiter No")}
-          </div>
-        </div>
-      </div>
-      <div className="flex items-center justify-between text-sm text-gray-700">
-        <span>
-          Wallet:{" "}
-          {talent.wallet_address
-            ? `${talent.wallet_address.slice(0, 6)}...${talent.wallet_address.slice(-4)}`
-            : "N/A"}
-        </span>
-        {renderBooleanStatusPill(Boolean(talent.approved), "Approved", "Pending")}
-      </div>
-      <div className="text-xs text-gray-500">
-        Created: {talent.created_at ? new Date(talent.created_at).toLocaleDateString() : "N/A"}
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <Button variant="outline" size="sm" onClick={onEdit}>
-          Edit
-        </Button>
-        <Button variant="outline" size="sm" onClick={onApprove}>
-          Roles
-        </Button>
-        <Button variant="destructive" size="sm" onClick={onDelete}>
-          Delete
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="ml-auto"
-          onClick={() => window.open(`/admin/talent/${talent.user_id}`, "_blank")}
-        >
-          View
-        </Button>
-      </div>
-    </div>
   );
 }

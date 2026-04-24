@@ -16,6 +16,7 @@ import {
   MessageSquare,
   ChevronLeft,
   ChevronRight,
+  Sparkles,
 } from "lucide-react";
 import { AuthLayout } from "@/app/components/AuthLayout/AuthLayout";
 
@@ -39,6 +40,12 @@ const sidebarItems: Array<{
     href: "/companies/dashboard/jobs",
     label: "My Jobs",
     icon: Briefcase,
+    exact: false,
+  },
+  {
+    href: "/companies/dashboard/hiring-coach",
+    label: "Hiring Coach",
+    icon: Sparkles,
     exact: false,
   },
   {
@@ -203,6 +210,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   <h1 className="text-xl font-semibold text-gray-900">
                     {pathname === "/companies/dashboard" && "Dashboard"}
                     {pathname === "/companies/dashboard/jobs" && "My Jobs"}
+                    {pathname === "/companies/dashboard/hiring-coach" && "Hiring Coach"}
                     {pathname === "/companies/dashboard/analytics" && "Analytics"}
                     {pathname === "/companies/dashboard/settings" && "Settings"}
                     {pathname === "/companies/dashboard/messages" && "Messages"}
