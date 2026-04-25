@@ -19,6 +19,8 @@ The feature reuses the existing Gemini integration and does not persist generate
 - Jobs must belong to the logged-in company.
 - Applications must belong to the selected company-owned job.
 - Client-provided company IDs are not accepted by this feature.
+- The browser context endpoint only returns selector/display fields. Full job,
+  applicant, cover letter, and profile context is loaded server-side for prompts.
 
 ## Tools
 
@@ -58,3 +60,5 @@ Companies select a job and an application. The AI returns:
 - V1 intentionally does not save history or generated drafts.
 - AI responses are required to parse as JSON and are normalized before reaching the UI.
 - Invalid AI output returns a controlled error instead of rendering partial or malformed content.
+- Applicant detail shortcuts can deep-link into Candidate Summary with
+  `jobId` and `applicationId` query params.

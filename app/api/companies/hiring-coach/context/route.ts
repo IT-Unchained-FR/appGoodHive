@@ -20,7 +20,29 @@ export async function GET() {
       );
     }
 
-    return NextResponse.json({ success: true, data: context }, { status: 200 });
+    const clientContext = {
+      company: {
+        name: context.company.name,
+        headline: context.company.headline,
+        location: context.company.location,
+      },
+      jobs: context.jobs.map((job) => ({
+        id: job.id,
+        title: job.title,
+        applicationCount: job.applicationCount,
+        reviewStatus: job.reviewStatus,
+        published: job.published,
+      })),
+      applications: context.applications.map((application) => ({
+        id: application.id,
+        jobId: application.jobId,
+        applicantName: application.applicantName,
+        applicantHeadline: application.applicantHeadline,
+        status: application.status,
+      })),
+    };
+
+    return NextResponse.json({ success: true, data: clientContext }, { status: 200 });
   } catch (error) {
     console.error("Failed to load hiring coach context:", error);
     return NextResponse.json(

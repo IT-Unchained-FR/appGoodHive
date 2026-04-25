@@ -350,7 +350,7 @@ export default function AdminManageTalents() {
     () => getTalentGridSortState(searchParams),
     [searchParams],
   );
-  
+
   const initialColumnFilters = useMemo<GridFilterModel>(() => {
     try {
       const filters = searchParams.get("columnFilters");

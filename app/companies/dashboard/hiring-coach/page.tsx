@@ -181,9 +181,9 @@ export default function CompanyHiringCoachPage() {
   useEffect(() => {
     const jobId = searchParams.get("jobId") ?? "";
     const applicationId = searchParams.get("applicationId") ?? "";
-    if (jobId) setSelectedJobId(jobId);
+    setSelectedJobId(jobId);
+    setSelectedApplicationId(applicationId);
     if (applicationId) {
-      setSelectedApplicationId(applicationId);
       setActiveTab("summary");
     }
   }, [searchParams]);
@@ -217,13 +217,14 @@ export default function CompanyHiringCoachPage() {
   }, [context, selectedJobId]);
 
   useEffect(() => {
+    if (isLoadingContext || !context || !selectedApplicationId || !selectedJobId) return;
+
     if (
-      selectedApplicationId &&
       !applicationsForSelectedJob.some((application) => String(application.id) === selectedApplicationId)
     ) {
       setSelectedApplicationId("");
     }
-  }, [applicationsForSelectedJob, selectedApplicationId]);
+  }, [applicationsForSelectedJob, context, isLoadingContext, selectedApplicationId, selectedJobId]);
 
   const currentResult =
     activeTab === "job-post"

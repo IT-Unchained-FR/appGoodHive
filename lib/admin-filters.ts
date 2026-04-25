@@ -282,10 +282,10 @@ export function buildColumnFilters(
       }
 
       if (value === undefined || value === null || value === '') continue;
-      
+
       let condition = '';
       let conditionValue: any = value;
-      
+
       const isBoolean = typeof value === 'boolean' || value === 'true' || value === 'false';
       if (isBoolean && typeof value === 'string') {
         conditionValue = value === 'true';

@@ -303,6 +303,15 @@ No other files need changing.
 - [x] `app/companies/dashboard/hiring-coach/page.tsx` — tabbed company dashboard AI workspace
 - [x] Dashboard/nav entry and applicant detail shortcut added
 - [x] Feature doc: `docs/features/company-hiring-coach.md`
+- [x] Context endpoint now returns only client-safe selector/display fields; full AI context remains server-side
+- [x] Applicant detail deep links preserve `jobId` + `applicationId` until async context loads
+- [x] Branch whitespace cleanup completed; current worktree passes `git diff --check origin/main`
+- [x] Synced `pnpm-lock.yaml` with the branch's MUI DataGrid dependencies
+- [x] Validation passed: `pnpm lint` (warnings only; existing hook-deps and `<img>` warnings remain)
+- [x] Validation passed: `pnpm tsc --noEmit`
+- [x] Validation passed: `pnpm build` with local dummy env for required build-time secrets (`DATABASE_URL`, JWT, OpenAI, Resend, B2)
+- [ ] Manual smoke pending: generate job post, interview questions, and candidate summary as a company user
+- TBD: Manual AI smoke depends on valid local company session, owned job/application data, and Gemini env configuration
 
 ### Revenue Infrastructure (DB + APIs only — NO UI entry points yet)
 > **Benoit's direction (March 12):** No subscription charges from companies and no direct fees from talents for now. Only revenue model: 5% platform fee on mission payouts (already live). The DB tables and API routes below exist for future use.
