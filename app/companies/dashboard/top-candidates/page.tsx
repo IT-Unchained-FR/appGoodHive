@@ -76,9 +76,20 @@ function getScoreClasses(score: number | null) {
   return "bg-orange-50 text-orange-700 ring-orange-200";
 }
 
+function getScoreBarClass(score: number | null) {
+  if (score === null) return "from-slate-300 via-slate-200 to-slate-100";
+  if (score >= 80) return "from-emerald-500 via-teal-400 to-cyan-300";
+  if (score >= 60) return "from-amber-500 via-orange-400 to-yellow-300";
+  return "from-orange-500 via-amber-400 to-yellow-200";
+}
+
 function truncateText(value: string, maxLength: number) {
   const text = value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
   return text.length > maxLength ? `${text.slice(0, maxLength).trim()}...` : text;
+}
+
+function getLocationLabel(candidate: TopCandidate) {
+  return [candidate.city, candidate.country].filter(Boolean).join(", ") || "Remote-ready";
 }
 
 export default function TopCandidatesPage() {
@@ -314,64 +325,119 @@ export default function TopCandidatesPage() {
           message="Choose a published job and generate the top 5 candidates when you are ready."
         />
       ) : (
-        <div className="grid gap-5 xl:grid-cols-5 lg:grid-cols-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
           {candidates.map((candidate, index) => {
             const rateLabel = formatRateRange({
               minRate: candidate.minRate ?? undefined,
               maxRate: candidate.maxRate ?? undefined,
             });
+            const locationLabel = getLocationLabel(candidate);
+            const visibleSkills = candidate.skills.slice(0, 3);
+            const hiddenSkillsCount = Math.max(candidate.skills.length - visibleSkills.length, 0);
+            const description =
+              truncateText(candidate.description, 160) || "No profile summary available.";
 
             return (
               <button
                 key={candidate.userId}
                 type="button"
                 onClick={() => setSelectedCandidate(candidate)}
-                className="flex h-full flex-col rounded-2xl border border-amber-100 bg-white p-4 text-left shadow-sm transition hover:-translate-y-1 hover:border-amber-300 hover:shadow-lg"
+                className="group relative flex h-[344px] w-full min-w-0 flex-col overflow-hidden rounded-[28px] border border-amber-100/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(255,251,235,0.98)_100%)] p-5 text-left shadow-[0_20px_60px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:border-amber-300 hover:shadow-[0_28px_80px_rgba(245,158,11,0.16)]"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="relative h-12 w-12 overflow-hidden rounded-xl bg-amber-100">
-                      <Image
-                        src={candidate.imageUrl || "/img/client-bee.png"}
-                        alt={getDisplayName(candidate)}
-                        fill
-                        className="object-cover"
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.22),transparent_58%),radial-gradient(circle_at_top_right,rgba(249,115,22,0.14),transparent_46%)] opacity-90 transition duration-300 group-hover:opacity-100" />
+
+                <div className="relative flex h-full flex-col">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-white/80 bg-amber-100 shadow-[0_12px_30px_rgba(245,158,11,0.18)] ring-1 ring-amber-100/80">
+                        <Image
+                          src={candidate.imageUrl || "/img/client-bee.png"}
+                          alt={getDisplayName(candidate)}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-base font-semibold text-slate-950">
+                          {getDisplayName(candidate)}
+                        </p>
+                        <p className="line-clamp-2 break-words text-sm leading-5 text-slate-500">
+                          {candidate.title || "Talent"}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-200/70 bg-white/85 text-sm font-bold text-amber-700 shadow-sm backdrop-blur">
+                      {index + 1}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 rounded-[22px] border border-white/70 bg-white/80 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className={`inline-flex max-w-full items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ring-1 ${getScoreClasses(candidate.score)}`}>
+                        <Star className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">
+                          {candidate.score === null ? "No score yet" : `${candidate.score}% match`}
+                        </span>
+                      </span>
+                      <span className="max-w-[42%] truncate text-xs font-medium text-slate-500" title={locationLabel}>
+                        {locationLabel}
+                      </span>
+                    </div>
+
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200/80">
+                      <div
+                        className={`h-full rounded-full bg-gradient-to-r ${getScoreBarClass(candidate.score)}`}
+                        style={{ width: `${Math.min(Math.max(candidate.score ?? 18, 12), 100)}%` }}
                       />
                     </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-950">
-                        {getDisplayName(candidate)}
-                      </p>
-                      <p className="truncate text-xs text-slate-500">{candidate.title}</p>
+
+                    <div className="mt-3 flex min-w-0 flex-wrap items-center gap-2 overflow-hidden">
+                      <AvailabilityBadge status={candidate.availabilityStatus} />
+                      {selectedJob && (
+                        <span className="max-w-full truncate rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-500">
+                          For {selectedJob.title ?? "selected role"}
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-50 text-sm font-bold text-amber-700">
-                    {index + 1}
-                  </span>
-                </div>
 
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ring-1 ${getScoreClasses(candidate.score)}`}>
-                    <Star className="h-3.5 w-3.5" />
-                    {candidate.score === null ? "N/A" : `${candidate.score}%`}
-                  </span>
-                  <AvailabilityBadge status={candidate.availabilityStatus} />
-                </div>
+                  <p className="mt-4 min-h-[72px] flex-1 overflow-hidden break-words text-sm leading-6 text-slate-600 line-clamp-3">
+                    {description}
+                  </p>
 
-                <p className="mt-4 line-clamp-3 text-sm leading-6 text-slate-600">
-                  {truncateText(candidate.description, 180) || "No profile summary available."}
-                </p>
+                  <div className="mt-3 min-h-[52px]">
+                    <div className="flex flex-wrap gap-2 overflow-hidden">
+                      {visibleSkills.map((skill) => (
+                        <span
+                          key={skill}
+                          className="max-w-full truncate rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600"
+                          title={skill}
+                        >
+                          {skill}
+                        </span>
+                      ))}
+                      {hiddenSkillsCount > 0 && (
+                        <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                          +{hiddenSkillsCount} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
 
-                <div className="mt-4 flex flex-wrap gap-1.5">
-                  {candidate.skills.slice(0, 3).map((skill) => (
-                    <span key={skill} className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
-                      {skill}
+                  <div className="mt-auto flex items-end justify-between gap-3 border-t border-slate-200/80 pt-4">
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                        Rate
+                      </p>
+                      <p className="truncate text-sm font-semibold text-slate-800">
+                        {rateLabel ? `${candidate.currency} ${rateLabel}/hr` : locationLabel}
+                      </p>
+                    </div>
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition group-hover:bg-amber-600">
+                      Details
+                      <ArrowRight className="h-3.5 w-3.5" />
                     </span>
-                  ))}
-                </div>
-
-                <div className="mt-auto pt-4 text-xs text-slate-500">
-                  {rateLabel ? `${candidate.currency} ${rateLabel}/hr` : candidate.country || "Remote-ready"}
+                  </div>
                 </div>
               </button>
             );

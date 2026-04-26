@@ -4,7 +4,7 @@
 `AI TOP CANDIDATES + CONTACT LOG — Implemented; dev migration applied, prod migration pending (April 26, 2026)`
 
 ## Last Updated
-2026-04-26
+2026-04-27
 
 ---
 
@@ -14,6 +14,7 @@
 
 ### What was built
 - [x] Added `/companies/dashboard/top-candidates` with published job selector, Generate/Refresh action, top-5 candidate cards, AI explanation modal, and Contact Candidate flow.
+- [x] Hardened `/companies/dashboard/top-candidates` candidate cards so each card keeps a fixed footprint, clamps overflowing content, and uses the refreshed visual layout safely across viewport sizes.
 - [x] Added `/api/companies/top-candidates` to verify approved company access, score approved available talents, reuse `match_score_cache`, and return the top 5 candidates.
 - [x] Added `app/db/migrations/contact_logs.sql` for `goodhive.contact_logs`.
 - [x] Added `/api/contact-logs` and `lib/contact-logs.ts`.
