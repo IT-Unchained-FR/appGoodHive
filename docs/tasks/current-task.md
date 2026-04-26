@@ -1,10 +1,36 @@
 # Current Task
 
 ## Status
-`SMART MATCH SCORE — Feature fully built; migration + cleanup needed before demo (April 20, 2026)`
+`AI TOP CANDIDATES + CONTACT LOG — Implemented; dev migration applied, prod migration pending (April 26, 2026)`
 
 ## Last Updated
-2026-04-23
+2026-04-26
+
+---
+
+## 🎯 AI TOP CANDIDATES FOR COMPANIES — April 26, 2026
+
+**Context:** Companies need a dashboard page that ranks the top 5 available candidates for a selected published job using the existing AI match-score system. The broken `/connect-logs` page also needed to become a real user-based contact log for direct contacts and job requests.
+
+### What was built
+- [x] Added `/companies/dashboard/top-candidates` with published job selector, Generate/Refresh action, top-5 candidate cards, AI explanation modal, and Contact Candidate flow.
+- [x] Added `/api/companies/top-candidates` to verify approved company access, score approved available talents, reuse `match_score_cache`, and return the top 5 candidates.
+- [x] Added `app/db/migrations/contact_logs.sql` for `goodhive.contact_logs`.
+- [x] Added `/api/contact-logs` and `lib/contact-logs.ts`.
+- [x] Updated direct talent contact and job request creation to write contact log entries.
+- [x] Rebuilt `/connect-logs` to read unified contact logs and show viewer type (`company` or `talent`) plus contact type (`direct` or `job_request`).
+- [x] Added "Top Candidates" to the company dashboard sidebar.
+
+### Validation
+- [x] `pnpm tsc --noEmit`
+- [x] `pnpm lint` (passes with existing warnings)
+- [x] `pnpm build` with local dummy env for required build-time secrets (passes; existing dynamic server usage warnings still print during static generation)
+- [x] Dev DB migration applied from Codex shell after `.env` was added (April 26, 2026)
+
+### Migration
+- [x] Run on dev: `psql "$DATABASE_URL" -f app/db/migrations/contact_logs.sql`
+- [ ] Run on prod after verification: `psql "$PROD_DATABASE_URL" -f app/db/migrations/contact_logs.sql`
+- **Dev verification:** `\dt goodhive.contact_logs` confirms the table exists in the configured dev database.
 
 ---
 

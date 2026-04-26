@@ -182,6 +182,7 @@ GoodHive-Web/
 - `applications` — talent ↔ job applications (id, talent_id, job_id, status, etc.)
 - `users` — authentication (id, email, password_hash, role, etc.)
 - `messages` — messenger messages (id, sender_id, receiver_id, content, etc.)
+- `contact_logs` — unified company/talent contact history for direct contacts and job requests
 - `referrals` — referral tracking
 
 **Pattern for writing queries:**
@@ -344,6 +345,7 @@ TELEGRAM_BOT_TOKEN=...
 | PDF-to-profile (AI) | Live | `app/api/pdf-to-profile/` |
 | Superbot AI assistant | Live | `app/superbot/`, `app/api/superbot/` |
 | Real-time messenger | Live (polling) | `app/messages/`, `app/api/messenger/` |
+| AI top candidates | Live | `app/companies/dashboard/top-candidates/`, `app/api/companies/top-candidates/`, `app/api/contact-logs/` |
 | Referral system | Live | `app/api/referrals/` |
 | Blockchain credentials | Experimental | `app/api/blockchain/`, `contracts/` |
 | Blog (Sanity CMS) | Live | `app/blog/`, `app/lib/blog.ts` |

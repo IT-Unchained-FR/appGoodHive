@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  UserRoundCheck,
 } from "lucide-react";
 import { AuthLayout } from "@/app/components/AuthLayout/AuthLayout";
 
@@ -46,6 +47,12 @@ const sidebarItems: Array<{
     href: "/companies/dashboard/hiring-coach",
     label: "Hiring Coach",
     icon: Sparkles,
+    exact: false,
+  },
+  {
+    href: "/companies/dashboard/top-candidates",
+    label: "Top Candidates",
+    icon: UserRoundCheck,
     exact: false,
   },
   {
@@ -211,6 +218,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     {pathname === "/companies/dashboard" && "Dashboard"}
                     {pathname === "/companies/dashboard/jobs" && "My Jobs"}
                     {pathname === "/companies/dashboard/hiring-coach" && "Hiring Coach"}
+                    {pathname === "/companies/dashboard/top-candidates" && "Top Candidates"}
                     {pathname === "/companies/dashboard/analytics" && "Analytics"}
                     {pathname === "/companies/dashboard/settings" && "Settings"}
                     {pathname === "/companies/dashboard/messages" && "Messages"}

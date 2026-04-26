@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import sql from "@/lib/db";
+import { recordContactLog } from "@/lib/contact-logs";
 import { getSessionUser } from "@/lib/auth/sessionUtils";
 import type { CreateJobRequestBody, JobRequest } from "@/interfaces/messenger";
 
@@ -230,6 +231,18 @@ export async function POST(request: NextRequest) {
         `;
       }
     }
+
+    await recordContactLog({
+      companyUserId,
+      talentUserId,
+      actorUserId: actorId,
+      actorType: actorId === companyUserId ? "company" : "talent",
+      contactType: "job_request",
+      messagePreview: normalizedRequestMessage,
+      jobId: jobId ?? null,
+      threadId: thread.id,
+      jobRequestId: jobRequest.id,
+    });
 
     return NextResponse.json(
       {
