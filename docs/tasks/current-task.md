@@ -1,10 +1,37 @@
 # Current Task
 
 ## Status
-`SMART MATCH SCORE — Feature fully built; migration + cleanup needed before demo (April 20, 2026)`
+`AI TOP CANDIDATES + CONTACT LOG — Implemented; dev migration applied, prod migration pending (April 26, 2026)`
 
 ## Last Updated
-2026-04-20
+2026-04-27
+
+---
+
+## 🎯 AI TOP CANDIDATES FOR COMPANIES — April 26, 2026
+
+**Context:** Companies need a dashboard page that ranks the top 5 available candidates for a selected published job using the existing AI match-score system. The broken `/connect-logs` page also needed to become a real user-based contact log for direct contacts and job requests.
+
+### What was built
+- [x] Added `/companies/dashboard/top-candidates` with published job selector, Generate/Refresh action, top-5 candidate cards, AI explanation modal, and Contact Candidate flow.
+- [x] Hardened `/companies/dashboard/top-candidates` candidate cards so each card keeps a fixed footprint, clamps overflowing content, and uses the refreshed visual layout safely across viewport sizes.
+- [x] Added `/api/companies/top-candidates` to verify approved company access, score approved available talents, reuse `match_score_cache`, and return the top 5 candidates.
+- [x] Added `app/db/migrations/contact_logs.sql` for `goodhive.contact_logs`.
+- [x] Added `/api/contact-logs` and `lib/contact-logs.ts`.
+- [x] Updated direct talent contact and job request creation to write contact log entries.
+- [x] Rebuilt `/connect-logs` to read unified contact logs and show viewer type (`company` or `talent`) plus contact type (`direct` or `job_request`).
+- [x] Added "Top Candidates" to the company dashboard sidebar.
+
+### Validation
+- [x] `pnpm tsc --noEmit`
+- [x] `pnpm lint` (passes with existing warnings)
+- [x] `pnpm build` with local dummy env for required build-time secrets (passes; existing dynamic server usage warnings still print during static generation)
+- [x] Dev DB migration applied from Codex shell after `.env` was added (April 26, 2026)
+
+### Migration
+- [x] Run on dev: `psql "$DATABASE_URL" -f app/db/migrations/contact_logs.sql`
+- [ ] Run on prod after verification: `psql "$PROD_DATABASE_URL" -f app/db/migrations/contact_logs.sql`
+- **Dev verification:** `\dt goodhive.contact_logs` confirms the table exists in the configured dev database.
 
 ---
 
@@ -154,6 +181,11 @@ Codex pickup prompt per phase:
 - [x] Public wallet auth no longer forces an immediate `/api/auth/me` refresh after successful connect, preventing the repeated `Welcome back!` toast loop when the session cookie is still settling
 - [x] Company opportunity cards now use icon-led labeled metadata blocks, status-aware budget styling, and cleaner preview fallbacks so job attributes read clearly instead of as ambiguous pills
 - [x] Public job pages now show a locked AI match-analysis placeholder for non-approved or logged-out viewers, so preview deployments no longer make the feature appear missing
+- [x] `/admin/companies` now uses MUI DataGrid with server-backed pagination, column sorting, and full-directory search instead of the old client-sliced table
+- [x] `/admin/talents` now uses MUI DataGrid for the admin directory table, with sortable columns like email, referred by, and created backed by server-side sorting
+- [x] Admin directory search/filter changes now preserve the current page when possible, and the talents/companies APIs clamp out-of-range pages after filtering so pagination stays stable
+- [x] `/admin/talent-approval` and `/admin/company-approval` now use MUI DataGrid as well, including built-in row selection for bulk actions
+- [x] All MUI DataGrid-backed admin lists now expose DataGrid column filters, so admins can filter by text/value inside individual columns in addition to the existing top-level filters
 
 ### P2 — ADMIN-010: Implement real report generation ← CODEX TASK
 - [x] Create `app/api/admin/reports/route.ts` (talents/companies/jobs CSV export)
@@ -293,6 +325,22 @@ No other files need changing.
 - [x] `app/api/ai/generate-job-description/route.ts` — POST, Gemini-powered, returns structured sections
 - [x] `app/components/JobDescriptionAIBuilder.tsx` — collapsible panel with seniority/work type/budget/tone inputs
 - [x] `app/companies/create-job/JobForm.tsx` — AI builder inserted above `JobSectionsManager`
+
+### Company Hiring Coach MVP
+- [x] `lib/ai/company-hiring-coach.ts` — company/job/application context, prompt builders, JSON normalization
+- [x] `app/api/companies/hiring-coach/*` — context, job post, interview questions, candidate summary endpoints
+- [x] `app/companies/dashboard/hiring-coach/page.tsx` — tabbed company dashboard AI workspace
+- [x] Dashboard/nav entry and applicant detail shortcut added
+- [x] Feature doc: `docs/features/company-hiring-coach.md`
+- [x] Context endpoint now returns only client-safe selector/display fields; full AI context remains server-side
+- [x] Applicant detail deep links preserve `jobId` + `applicationId` until async context loads
+- [x] Branch whitespace cleanup completed; current worktree passes `git diff --check origin/main`
+- [x] Synced `pnpm-lock.yaml` with the branch's MUI DataGrid dependencies
+- [x] Validation passed: `pnpm lint` (warnings only; existing hook-deps and `<img>` warnings remain)
+- [x] Validation passed: `pnpm tsc --noEmit`
+- [x] Validation passed: `pnpm build` with local dummy env for required build-time secrets (`DATABASE_URL`, JWT, OpenAI, Resend, B2)
+- [ ] Manual smoke pending: generate job post, interview questions, and candidate summary as a company user
+- TBD: Manual AI smoke depends on valid local company session, owned job/application data, and Gemini env configuration
 
 ### Revenue Infrastructure (DB + APIs only — NO UI entry points yet)
 > **Benoit's direction (March 12):** No subscription charges from companies and no direct fees from talents for now. Only revenue model: 5% platform fee on mission payouts (already live). The DB tables and API routes below exist for future use.

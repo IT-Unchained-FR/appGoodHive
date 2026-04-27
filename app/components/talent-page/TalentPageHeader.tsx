@@ -238,6 +238,23 @@ export const TalentPageHeader = ({
         if (!messageResponse.ok) {
           throw new Error("Failed to send direct message");
         }
+
+        await fetch("/api/contact-logs", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            companyUserId: currentUserId,
+            talentUserId: talent_user_id,
+            threadId,
+            actorType: "company",
+            contactType: "direct",
+            messagePreview: message,
+          }),
+        }).catch((logError) => {
+          console.error("Contact log creation failed:", logError);
+        });
       }
 
       if (email) {

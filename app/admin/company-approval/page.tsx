@@ -2,14 +2,14 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
-import { EnhancedTable, Column } from "@/app/components/admin/EnhancedTable";
+import { AdminDataGrid } from "@/app/components/admin/AdminDataGrid";
+import { Column } from "@/app/components/admin/EnhancedTable";
 import { AdminFilters } from "@/app/components/admin/AdminFilters";
 import { BulkApproval } from "@/app/components/admin/BulkApproval";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
 import { StatusPill } from "@/app/components/admin/StatusPill";
 import {
@@ -21,6 +21,7 @@ import {
 import { CheckSquare, MoreHorizontal, Square } from "lucide-react";
 import toast from "react-hot-toast";
 import ApprovalPopup from "./components/ApprovalPopup";
+import { GridRowSelectionModel } from "@mui/x-data-grid";
 
 interface Company {
   user_id: string;
@@ -42,6 +43,8 @@ export default function AdminCompanyApproval() {
   const [selectedUser, setSelectedUser] = useState<Company | null>(null);
   const [selectedItems, setSelectedItems] = useState<Company[]>([]);
   const [showBulkApproval, setShowBulkApproval] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const handleApproveClick = (user: Company) => {
     setSelectedUser(user);
@@ -138,18 +141,6 @@ export default function AdminCompanyApproval() {
 
   const columns: Column<Company>[] = [
     {
-      key: "select",
-      header: "",
-      width: "5%",
-      render: (_value: unknown, row: Company) => (
-        <Checkbox
-          checked={selectedItems.some((item) => item.user_id === row.user_id)}
-          onCheckedChange={() => toggleItemSelection(row)}
-          onClick={(e) => e.stopPropagation()}
-        />
-      ),
-    },
-    {
       key: "headline",
       header: "Headline",
       width: "27%",
@@ -174,6 +165,7 @@ export default function AdminCompanyApproval() {
       key: "status",
       header: "Status",
       width: "10%",
+      sortable: true,
       exportValue: (row: Company) => {
         if (row.approved) return "Approved";
         if (row.inReview) return "Pending";
@@ -199,6 +191,7 @@ export default function AdminCompanyApproval() {
       key: "location",
       header: "Location",
       width: "18%",
+      sortable: true,
       exportValue: (row: Company) => {
         const parts = [row.city, row.country].filter(Boolean);
         return parts.join(", ") || "";
@@ -297,6 +290,14 @@ export default function AdminCompanyApproval() {
     );
   }, [users]);
 
+  const rowSelectionModel = useMemo<GridRowSelectionModel>(
+    () => ({
+      type: "include",
+      ids: new Set(selectedItems.map((item) => item.user_id)),
+    }),
+    [selectedItems],
+  );
+
   return (
     <AdminPageLayout
       title="Company Join Requests"
@@ -337,12 +338,8 @@ export default function AdminCompanyApproval() {
         {selectedItems.length > 0 && (
           <div className="flex flex-col gap-3 rounded-lg border border-[#FFC905] bg-[#FFC905]/10 p-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
-              <Checkbox
-                checked={selectedItems.length === users.length}
-                onCheckedChange={toggleSelectAll}
-              />
               <span className="text-sm font-medium text-gray-900">
-                Select All ({users.length})
+                {selectedItems.length} selected
               </span>
             </div>
             <Button
@@ -356,26 +353,32 @@ export default function AdminCompanyApproval() {
           </div>
         )}
 
-        <EnhancedTable
-          data={users}
+        <AdminDataGrid
+          rows={users}
           columns={columns}
-          searchable={true}
-          searchPlaceholder="Search by headline, email, or location..."
-          pagination={true}
-          itemsPerPage={10}
-          exportable={true}
+          getRowId={(row) => row.user_id}
           loading={loading}
           emptyMessage="No company requests found"
-          mobileCardView
-          renderMobileCard={(company) => (
-            <CompanyApprovalCard
-              company={company}
-              selected={selectedItems.some((item) => item.user_id === company.user_id)}
-              onSelect={() => toggleItemSelection(company)}
-              onApprove={() => handleApproveClick(company)}
-              onReject={() => handleBulkReject([company.user_id])}
-            />
-          )}
+          showSearchInput={false}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+          pageSize={pageSize}
+          onPageSizeChange={(nextPageSize) => {
+            setPageSize(nextPageSize);
+            setCurrentPage(1);
+          }}
+          totalItems={users.length}
+          pageSizeOptions={[10, 25, 50]}
+          paginationMode="client"
+          sortingMode="client"
+          checkboxSelection
+          rowSelectionModel={rowSelectionModel}
+          onRowSelectionModelChange={(model) => {
+            const selectedIds = model.ids;
+            setSelectedItems(
+              users.filter((user) => selectedIds.has(user.user_id)),
+            );
+          }}
         />
       </div>
 
@@ -422,78 +425,5 @@ export default function AdminCompanyApproval() {
         ]}
       />
     </AdminPageLayout>
-  );
-}
-
-function CompanyApprovalCard({
-  company,
-  selected,
-  onSelect,
-  onApprove,
-  onReject,
-}: {
-  company: Company;
-  selected: boolean;
-  onSelect: () => void;
-  onApprove: () => void;
-  onReject: () => void;
-}) {
-  const cleanHeadline = company.headline?.replace(/<[^>]*>?/gm, "") || "";
-
-  const getStatusBadge = () => {
-    if (company.approved) {
-      return <StatusPill status="approved" label="Approved" />;
-    } else if (company.inReview) {
-      return <StatusPill status="pending" label="Pending" />;
-    } else {
-      return <StatusPill status="rejected" label="Rejected" />;
-    }
-  };
-
-  return (
-    <div className="border border-gray-200 rounded-lg bg-white p-4 shadow-sm space-y-3 relative">
-      <div className="absolute top-3 right-3">
-        <Checkbox checked={selected} onCheckedChange={onSelect} />
-      </div>
-      <div className="space-y-1">
-        <div className="font-semibold text-gray-900">
-          {company.designation || "Company"}
-        </div>
-        {cleanHeadline && (
-          <div className="text-sm text-gray-600" title={cleanHeadline}>
-            {cleanHeadline.length > 60
-              ? `${cleanHeadline.substring(0, 60)}...`
-              : cleanHeadline}
-          </div>
-        )}
-        <div className="text-sm text-gray-600">{company.email}</div>
-        <div className="flex items-center gap-2">
-          {getStatusBadge()}
-        </div>
-      </div>
-      {(company.city || company.country) && (
-        <div className="text-sm text-gray-700">
-          {company.city}{company.city && company.country ? ', ' : ''}{company.country}
-        </div>
-      )}
-      <div className="flex flex-wrap gap-2">
-        <Button size="sm" variant="outline" onClick={onApprove}>
-          Approve
-        </Button>
-        <Button size="sm" variant="destructive" onClick={onReject}>
-          Reject
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="ml-auto"
-          onClick={() =>
-            window.open(`/admin/company/${company.user_id}`, "_blank")
-          }
-        >
-          View Profile
-        </Button>
-      </div>
-    </div>
   );
 }

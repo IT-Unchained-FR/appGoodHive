@@ -245,3 +245,85 @@ export function buildTextSearchFilter(
     values,
   };
 }
+
+/**
+ * Build column filters based on GridFilterModel
+ * @param filtersJson - JSON string of filter items from DataGrid
+ * @param columnMap - Map of DataGrid field names to SQL expressions
+ * @returns Array of filter conditions
+ */
+export function buildColumnFilters(
+  filtersJson: string | undefined | null,
+  columnMap: Record<string, string>
+): Array<{ condition: string; values: any[] }> {
+  if (!filtersJson) return [];
+
+  try {
+    const filters = JSON.parse(filtersJson);
+    if (!Array.isArray(filters)) return [];
+
+    const result: Array<{ condition: string; values: any[] }> = [];
+
+    for (const filter of filters) {
+      const { field, operator, value } = filter;
+      if (!field || !operator) continue;
+
+      const sqlColumn = columnMap[field];
+      if (!sqlColumn) continue;
+
+      // Handle null checks which don't need a value
+      if (operator === 'isEmpty') {
+        result.push({ condition: `${sqlColumn} IS NULL OR ${sqlColumn} = ''`, values: [] });
+        continue;
+      }
+      if (operator === 'isNotEmpty') {
+        result.push({ condition: `${sqlColumn} IS NOT NULL AND ${sqlColumn} != ''`, values: [] });
+        continue;
+      }
+
+      if (value === undefined || value === null || value === '') continue;
+
+      let condition = '';
+      let conditionValue: any = value;
+
+      const isBoolean = typeof value === 'boolean' || value === 'true' || value === 'false';
+      if (isBoolean && typeof value === 'string') {
+        conditionValue = value === 'true';
+      }
+
+      if (operator === 'contains') {
+        condition = `LOWER(${sqlColumn}::text) LIKE $`;
+        conditionValue = `%${String(value).toLowerCase()}%`;
+      } else if (operator === 'equals') {
+        if (isBoolean) {
+          condition = `${sqlColumn} = $`;
+        } else {
+          condition = `LOWER(${sqlColumn}::text) = $`;
+          conditionValue = String(value).toLowerCase();
+        }
+      } else if (operator === 'startsWith') {
+        condition = `LOWER(${sqlColumn}::text) LIKE $`;
+        conditionValue = `${String(value).toLowerCase()}%`;
+      } else if (operator === 'endsWith') {
+        condition = `LOWER(${sqlColumn}::text) LIKE $`;
+        conditionValue = `%${String(value).toLowerCase()}`;
+      } else if (operator === 'isAnyOf') {
+         if (Array.isArray(value) && value.length > 0) {
+            const placeholders = value.map(() => '$').join(', ');
+            condition = `LOWER(${sqlColumn}::text) IN (${placeholders})`;
+            result.push({ condition, values: value.map(v => String(v).toLowerCase()) });
+            continue;
+         }
+      } else {
+         continue;
+      }
+
+      result.push({ condition, values: [conditionValue] });
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Error parsing column filters:', error);
+    return [];
+  }
+}

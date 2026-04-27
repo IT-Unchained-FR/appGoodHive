@@ -2,22 +2,27 @@
 
 export const dynamic = "force-dynamic";
 
+import { AdminDataGrid } from "@/app/components/admin/AdminDataGrid";
+import { AdminFilters } from "@/app/components/admin/AdminFilters";
+import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { DeleteConfirmDialog } from "@/app/components/admin/DeleteConfirmDialog";
 import { EditCompanyModal } from "@/app/components/admin/EditCompanyModal";
-import { Column, EnhancedTable } from "@/app/components/admin/EnhancedTable";
-import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
+import { Column } from "@/app/components/admin/EnhancedTable";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
-import { AdminFilters } from "@/app/components/admin/AdminFilters";
 import { generateCountryFlag } from "@/app/utils/generate-country-flag";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import Cookies from "js-cookie";
 import { Building2, Download, Filter, Pencil, Trash2 } from "lucide-react";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import {
+  ReadonlyURLSearchParams,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { GridFilterModel } from "@mui/x-data-grid";
 
 interface Company {
   address: string;
@@ -44,9 +49,49 @@ interface Company {
   created_at?: string;
 }
 
+type SortDirection = "asc" | "desc" | null;
+
+const getCompanyGridSortState = (
+  params: ReadonlyURLSearchParams,
+): { field: string | null; direction: SortDirection } => {
+  const sortBy = params.get("sortBy");
+  const sortDir = params.get("sortDir");
+
+  if (!sortBy || (sortDir !== "asc" && sortDir !== "desc")) {
+    return { field: null, direction: null };
+  }
+
+  return {
+    field: sortBy,
+    direction: sortDir,
+  };
+};
+
 export default function AdminManageCompanies() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const searchParamsString = searchParams.toString();
+  const serverSearchQuery = searchParams.get("search") || "";
+  const currentPage = Math.max(1, Number(searchParams.get("page") || "1") || 1);
+  const currentPageSize = Math.max(
+    1,
+    Number(searchParams.get("limit") || "25") || 25,
+  );
+  const { field: sortField, direction: sortDirection } = useMemo(
+    () => getCompanyGridSortState(searchParams),
+    [searchParams],
+  );
+
+  const initialColumnFilters = useMemo<GridFilterModel>(() => {
+    try {
+      const filters = searchParams.get("columnFilters");
+      if (filters) {
+        return { items: JSON.parse(filters) };
+      }
+    } catch (e) {}
+    return { items: [] };
+  }, [searchParams]);
+
   const [companies, setCompanies] = useState<Company[]>([]);
   const [totalCompanies, setTotalCompanies] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -56,33 +101,67 @@ export default function AdminManageCompanies() {
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(serverSearchQuery);
 
   const getSafeValue = (value?: string | null) =>
     value && value !== "null" ? value : undefined;
 
-  const getAuthHeaders = () => {
-    const token = Cookies.get("admin_token");
-    if (!token) {
-      router.push("/admin/login");
-      return null;
-    }
-    return {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-  };
+  useEffect(() => {
+    setSearchQuery(serverSearchQuery);
+  }, [serverSearchQuery]);
 
-  const fetchAllCompanies = async () => {
+  const updateCompanyQueryParams = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParamsString);
+
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value === null || value === "") {
+          params.delete(key);
+        } else {
+          params.set(key, value);
+        }
+      });
+
+      const nextQuery = params.toString();
+      router.replace(
+        nextQuery ? `/admin/companies?${nextQuery}` : "/admin/companies",
+        { scroll: false },
+      );
+    },
+    [router, searchParamsString],
+  );
+
+  const handleFilterModelChange = useCallback((model: GridFilterModel) => {
+    const json = JSON.stringify(model.items);
+    updateCompanyQueryParams({ columnFilters: model.items.length > 0 ? json : null, page: "1" });
+  }, [updateCompanyQueryParams]);
+
+  useEffect(() => {
+    const normalizedSearch = searchQuery.trim().replace(/\s+/g, " ");
+    const normalizedServerSearch = serverSearchQuery
+      .trim()
+      .replace(/\s+/g, " ");
+
+    if (normalizedSearch === normalizedServerSearch) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      updateCompanyQueryParams({
+        search: normalizedSearch || null,
+      });
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [searchQuery, serverSearchQuery, updateCompanyQueryParams]);
+
+  const fetchAllCompanies = useCallback(async () => {
     try {
       setLoading(true);
-      const headers = getAuthHeaders();
-      if (!headers) return;
 
-      // Build URL with filter params
-      const params = new URLSearchParams(searchParams.toString());
+      const params = new URLSearchParams(searchParamsString);
       const url = `/api/admin/companies${params.toString() ? `?${params.toString()}` : ""}`;
-
-      const response = await fetch(url, { headers });
+      const response = await fetch(url, { cache: "no-store" });
 
       if (response.status === 401) {
         router.push("/admin/login");
@@ -102,29 +181,38 @@ export default function AdminManageCompanies() {
           ? result.pagination.total
           : list.length,
       );
+
+      if (
+        typeof result?.pagination?.page === "number" &&
+        result.pagination.page !== currentPage
+      ) {
+        updateCompanyQueryParams({ page: String(result.pagination.page) });
+      }
     } catch (error) {
       toast.error("Failed to fetch companies");
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, router, searchParamsString, updateCompanyQueryParams]);
 
   useEffect(() => {
     fetchAllCompanies();
-  }, [searchParams]);
+  }, [fetchAllCompanies]);
 
   const handleDeleteCompany = async () => {
     if (!userToDelete) return;
 
     try {
       setDeleteLoading(true);
-      const headers = getAuthHeaders();
-      if (!headers) return;
 
       const response = await fetch(`/api/admin/companies/${userToDelete}`, {
         method: "DELETE",
-        headers,
       });
+
+      if (response.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
 
       if (!response.ok) {
         const error = await response.json();
@@ -149,6 +237,7 @@ export default function AdminManageCompanies() {
   const handleSaveCompany = async (updatedCompany: Company) => {
     try {
       setLoading(true);
+
       const response = await fetch(
         `/api/admin/companies/${updatedCompany.user_id}`,
         {
@@ -159,6 +248,11 @@ export default function AdminManageCompanies() {
           body: JSON.stringify(updatedCompany),
         },
       );
+
+      if (response.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
 
       if (!response.ok) {
         throw new Error("Failed to update company");
@@ -179,10 +273,9 @@ export default function AdminManageCompanies() {
     {
       key: "designation",
       header: "Company Info",
-      width: "20%",
       sortable: true,
-      render: (value, row) => (
-        <div className="flex items-center gap-2">
+      render: (_value, row) => (
+        <div className="flex items-center gap-3">
           <Avatar className="h-12 w-12">
             {row.image_url ? (
               <Image
@@ -196,85 +289,107 @@ export default function AdminManageCompanies() {
               <AvatarFallback>{row.designation?.[0]}</AvatarFallback>
             )}
           </Avatar>
-          <div className="flex flex-col">
-            <span className="font-medium">{row.designation}</span>
+          <div className="min-w-0">
+            <span className="block truncate font-medium text-slate-900">
+              {row.designation || "Unnamed company"}
+            </span>
+            <span className="block truncate text-sm text-slate-500">
+              {row.headline || row.wallet_address || "No headline"}
+            </span>
           </div>
         </div>
       ),
+      exportValue: (row) => row.designation || "",
     },
     {
       key: "email",
       header: "Email",
-      width: "15%",
       sortable: true,
+      render: (value) => (
+        <span className="truncate text-sm text-slate-700">{String(value || "N/A")}</span>
+      ),
     },
     {
       key: "phone",
       header: "Phone",
-      width: "15%",
-      render: (value, row) => `+${row.phone_country_code} ${row.phone_number}`,
+      sortable: true,
+      render: (_value, row) => {
+        const phone = row.phone_number?.trim();
+        if (!phone) return "N/A";
+        return `+${row.phone_country_code} ${phone}`;
+      },
+      exportValue: (row) =>
+        row.phone_number ? `+${row.phone_country_code} ${row.phone_number}` : "",
     },
     {
       key: "address",
       header: "Address",
-      width: "15%",
-      render: (value, row) => (
-        <div className="flex flex-col">
-          <span>{row.city}</span>
-          <img
-            src={generateCountryFlag(row.country ?? undefined)}
-            alt={row.country}
-            height={20}
-            width={20}
-            className="mt-1"
-          />
-        </div>
-      ),
+      sortable: true,
+      render: (_value, row) => {
+        const countryFlag = row.country
+          ? generateCountryFlag(row.country)
+          : undefined;
+
+        return (
+          <div className="flex min-w-0 flex-col">
+            <span className="truncate">
+              {[row.city, row.country].filter(Boolean).join(", ") || "N/A"}
+            </span>
+            {countryFlag ? (
+              <img
+                src={countryFlag}
+                alt={row.country}
+                height={20}
+                width={20}
+                className="mt-1 h-5 w-5"
+              />
+            ) : null}
+          </div>
+        );
+      },
+      exportValue: (row) =>
+        [row.city, row.country, row.address].filter(Boolean).join(", "),
     },
     {
       key: "approved",
       header: "Status",
-      width: "15%",
       sortable: true,
-      render: (value, row) => (
+      render: (_value, row) => (
         <div className="flex flex-col gap-1">
-          <Badge
-            className={`${
-              row.approved ? "bg-green-500" : "bg-orange-500"
-            } text-white`}
-          >
+          <Badge className={row.approved ? "bg-green-500 text-white" : "bg-orange-500 text-white"}>
             {row.approved ? "Approved" : "Pending"}
           </Badge>
-          <Badge
-            className={`${
-              row.published ? "bg-blue-500" : "bg-gray-400"
-            } text-white text-xs`}
-          >
+          <Badge className={row.published ? "bg-blue-500 text-white" : "bg-gray-400 text-white"}>
             {row.published ? "Published" : "Unpublished"}
           </Badge>
         </div>
       ),
+      exportValue: (row) =>
+        row.approved
+          ? row.published
+            ? "Approved, Published"
+            : "Approved, Unpublished"
+          : "Pending",
     },
     {
       key: "created_at",
       header: "Created",
-      width: "12%",
       sortable: true,
       render: (value) => {
         if (!value) return "N/A";
-        return new Date(value).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric'
+        return new Date(String(value)).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
         });
       },
-      exportValue: (row) => row.created_at ? new Date(row.created_at).toISOString() : '',
+      exportValue: (row) =>
+        row.created_at ? new Date(row.created_at).toISOString() : "",
     },
     {
       key: "actions",
       header: "Actions",
-      width: "20%",
-      render: (value, row) => (
+      render: (_value, row) => (
         <div className="flex items-center justify-end gap-2">
           <Button
             variant="ghost"
@@ -308,13 +423,14 @@ export default function AdminManageCompanies() {
             size="sm"
             className="whitespace-nowrap"
             onClick={() => {
-              window.open(`/admin/company/${row.user_id}`, "_blank");
+              window.open(`/admin/company/${row.user_id}`, "_blank", "noopener,noreferrer");
             }}
           >
             View Profile
           </Button>
         </div>
       ),
+      exportValue: () => "",
     },
   ];
 
@@ -360,7 +476,6 @@ export default function AdminManageCompanies() {
         company={editingCompany}
         onSave={handleSaveCompany}
       />
-      {/* Admin Filters */}
       <AdminFilters
         config={{
           dateFilter: true,
@@ -386,9 +501,9 @@ export default function AdminManageCompanies() {
         }}
         basePath="/admin/companies"
       />
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 sm:p-6">
+      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
         <div className="flex flex-col gap-4 sm:gap-5">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h2 className="text-lg font-semibold text-gray-900">
                 Company Directory
@@ -398,103 +513,38 @@ export default function AdminManageCompanies() {
               </p>
             </div>
           </div>
-          <EnhancedTable
-            data={companies}
+          <AdminDataGrid
+            rows={companies}
             columns={columns}
-            searchable={true}
-            searchPlaceholder="Search by email, designation, user ID, or wallet address..."
-            pagination={true}
-            itemsPerPage={10}
-            exportable={true}
+            getRowId={(row) => row.user_id}
             loading={loading}
             emptyMessage="No companies found"
+            searchPlaceholder="Search by company, email, location, wallet, phone, or any visible field..."
+            searchQuery={searchQuery}
+            onSearchQueryChange={setSearchQuery}
+            currentPage={currentPage}
+            pageSize={currentPageSize}
             pageSizeOptions={[10, 25, 50]}
-            mobileCardView
-            renderMobileCard={(company) => (
-              <CompanyCard
-                company={company}
-                onEdit={() => {
-                  setEditingCompany(company);
-                  setShowEditModal(true);
-                }}
-                onDelete={() => {
-                  setUserToDelete(company.user_id);
-                  setSelectedCompany(company);
-                  setShowDeleteConfirm(true);
-                }}
-              />
-            )}
+            totalItems={totalCompanies}
+            onPageChange={(page) => updateCompanyQueryParams({ page: String(page) })}
+            onPageSizeChange={(pageSize) =>
+              updateCompanyQueryParams({ limit: String(pageSize) })
+            }
+            filterModel={initialColumnFilters}
+            onFilterModelChange={handleFilterModelChange}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSortChange={(field, direction) =>
+              updateCompanyQueryParams({
+                sort: null,
+                sortBy: field,
+                sortDir: direction,
+              })
+            }
           />
         </div>
       </div>
       <QuickActionFAB actions={companyActions} />
     </AdminPageLayout>
-  );
-}
-
-function CompanyCard({
-  company,
-  onEdit,
-  onDelete,
-}: {
-  company: Company;
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
-  return (
-    <div className="border border-gray-200 rounded-lg bg-white p-4 shadow-sm space-y-3">
-      <div className="flex items-start gap-3">
-        <Avatar className="h-12 w-12">
-          {company.image_url ? (
-            <Image
-              src={company.image_url}
-              alt={company.designation}
-              width={48}
-              height={48}
-              className="h-12 w-12 rounded-full"
-            />
-          ) : (
-            <AvatarFallback>{company.designation?.[0]}</AvatarFallback>
-          )}
-        </Avatar>
-        <div className="flex-1">
-          <div className="font-semibold text-gray-900">{company.designation}</div>
-          <div className="text-sm text-gray-600 break-words">{company.email}</div>
-          <div className="flex flex-wrap gap-2 mt-2">
-            <Badge className={company.approved ? "bg-green-500 text-white" : "bg-orange-500 text-white"}>
-              {company.approved ? "Approved" : "Pending"}
-            </Badge>
-            <Badge variant="secondary">{company.status || "Active"}</Badge>
-          </div>
-        </div>
-      </div>
-      <div className="flex items-center justify-between text-sm text-gray-700">
-        <span>
-          {company.city}, {company.country}
-        </span>
-        <span>
-          +{company.phone_country_code} {company.phone_number}
-        </span>
-      </div>
-      <div className="text-xs text-gray-500">
-        Created: {company.created_at ? new Date(company.created_at).toLocaleDateString() : "N/A"}
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <Button variant="outline" size="sm" onClick={onEdit}>
-          Edit
-        </Button>
-        <Button variant="destructive" size="sm" onClick={onDelete}>
-          Delete
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="ml-auto"
-          onClick={() => window.open(`/admin/company/${company.user_id}`, "_blank")}
-        >
-          View
-        </Button>
-      </div>
-    </div>
   );
 }

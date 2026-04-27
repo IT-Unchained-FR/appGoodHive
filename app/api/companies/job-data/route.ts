@@ -2,6 +2,48 @@ import sql from "@/lib/db";
 
 import type { NextRequest } from "next/server";
 
+type JobOfferRow = {
+  id: string;
+  user_id: string;
+  title: string;
+  company_name: string;
+  type_engagement: string;
+  description: string;
+  duration: string;
+  rate_per_hour: string | number;
+  budget: string | number;
+  skills: string;
+  country: string;
+  city: string;
+  chain: string;
+  currency: string;
+  job_type: string;
+  image_url: string | null;
+  project_type: string;
+  talent: boolean | string;
+  recruiter: boolean | string;
+  mentor: boolean | string;
+  escrow_amount: string | number | null;
+  wallet_address: string | null;
+  posted_at: string;
+  job_id: string | null;
+  block_id: string | null;
+  payment_token_address: string | null;
+  blockchain_job_id: string | null;
+  published: boolean;
+  review_status?: string | null;
+  admin_feedback?: string | null;
+};
+
+type JobSectionRow = {
+  id: string | number;
+  heading: string;
+  content: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
 export async function GET(request: NextRequest) {
   const searchParamsEntries = request.nextUrl.searchParams.entries();
   const searchParams = Object.fromEntries(searchParamsEntries);
@@ -15,7 +57,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    let jobsQuery;
+    let jobsQuery: JobOfferRow[] = [];
     console.log(`Looking for job with id: ${id}`);
 
     // First priority: Try database id (most common case)
@@ -61,7 +103,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch job sections
-    let sectionsQuery: Awaited<ReturnType<typeof sql>> = [];
+    let sectionsQuery: JobSectionRow[] = [];
     try {
       sectionsQuery = await sql`
         SELECT id, heading, content, sort_order, created_at, updated_at

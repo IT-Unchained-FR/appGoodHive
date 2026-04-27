@@ -102,7 +102,8 @@ export function AdminFilters({ config, basePath }: AdminFiltersProps) {
       'location',
       'type',
       'sort',
-      'page',
+      'sortBy',
+      'sortDir',
       ...(config.customFilters?.map((filter) => filter.key) || []),
     ];
 
@@ -177,7 +178,8 @@ export function AdminFilters({ config, basePath }: AdminFiltersProps) {
       'location',
       'type',
       'sort',
-      'page',
+      'sortBy',
+      'sortDir',
       ...(config.customFilters?.map((filter) => filter.key) || []),
     ];
 

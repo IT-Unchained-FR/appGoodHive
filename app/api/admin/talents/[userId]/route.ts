@@ -43,7 +43,7 @@ const nullIfBlank = (value: string | null | undefined) => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
-const normalizeRateValue = (value: number | undefined) =>
+const normalizeRateValue = (value: unknown) =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
 
 export async function PUT(

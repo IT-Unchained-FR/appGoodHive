@@ -33,6 +33,7 @@ import LabelOption from "@interfaces/label-option";
 import { uploadFileToBucket } from "@utils/upload-file-bucket";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import "react-quill/dist/quill.snow.css";
 import { SelectInput } from "../../components/select-input";
 import { countries } from "../../constants/countries";
@@ -52,6 +53,7 @@ const quillModules = {
 };
 
 export default function MyProfile() {
+  const router = useRouter();
   const userId = useCurrentUserId();
   const activeAccount = useActiveAccount();
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
