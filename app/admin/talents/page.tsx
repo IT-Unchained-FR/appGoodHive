@@ -352,13 +352,18 @@ export default function AdminManageTalents() {
   );
 
   const initialColumnFilters = useMemo<GridFilterModel>(() => {
+    let items = [];
     try {
       const filters = searchParams.get("columnFilters");
       if (filters) {
-        return { items: JSON.parse(filters) };
+        items = JSON.parse(filters);
       }
     } catch (e) {}
-    return { items: [] };
+
+    const search = searchParams.get("search");
+    const quickFilterValues = search ? search.split(" ") : [];
+
+    return { items, quickFilterValues };
   }, [searchParams]);
 
   const [talents, setTalents] = useState<ProfileData[]>([]);
@@ -372,14 +377,10 @@ export default function AdminManageTalents() {
   const [showApprovePopup, setShowApprovePopup] = useState(false);
   const [editingTalent, setEditingTalent] = useState<ProfileData | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(serverSearchQuery);
 
   const getSafeValue = (value?: string | null) =>
     value && value !== "null" ? value : undefined;
 
-  useEffect(() => {
-    setSearchQuery(serverSearchQuery);
-  }, [serverSearchQuery]);
 
   const updateTalentQueryParams = useCallback(
     (updates: Record<string, string | null>) => {
@@ -402,28 +403,28 @@ export default function AdminManageTalents() {
   );
 
   const handleFilterModelChange = useCallback((model: GridFilterModel) => {
-    const json = JSON.stringify(model.items);
-    updateTalentQueryParams({ columnFilters: model.items.length > 0 ? json : null, page: "1" });
-  }, [updateTalentQueryParams]);
+    const currentFiltersStr = searchParams.get("columnFilters");
+    const currentFilters = currentFiltersStr ? JSON.parse(currentFiltersStr) : [];
+    
+    const currentSearch = searchParams.get("search") || "";
+    const nextSearch = (model.quickFilterValues || []).join(" ");
 
-  useEffect(() => {
-    const normalizedSearch = searchQuery.trim().replace(/\s+/g, " ");
-    const normalizedServerSearch = serverSearchQuery
-      .trim()
-      .replace(/\s+/g, " ");
+    const updates: Record<string, string | null> = {};
 
-    if (normalizedSearch === normalizedServerSearch) {
-      return;
+    if (JSON.stringify(model.items) !== JSON.stringify(currentFilters)) {
+      updates.columnFilters = model.items.length > 0 ? JSON.stringify(model.items) : null;
     }
 
-    const timer = window.setTimeout(() => {
-      updateTalentQueryParams({
-        search: normalizedSearch || null,
-      });
-    }, 250);
+    if (nextSearch !== currentSearch) {
+      updates.search = nextSearch || null;
+    }
 
-    return () => window.clearTimeout(timer);
-  }, [searchQuery, serverSearchQuery, updateTalentQueryParams]);
+    if (Object.keys(updates).length > 0) {
+      updates.page = "1";
+      updateTalentQueryParams(updates);
+    }
+  }, [searchParams, updateTalentQueryParams]);
+
 
   const fetchAllTalents = async () => {
     try {
@@ -447,11 +448,19 @@ export default function AdminManageTalents() {
           ? result.data
           : [];
 
-      setTalents(list);
+      // Inject a computed `name` field so MUI DataGrid's internal filtering and
+      // sorting can resolve the "name" column (which maps field: "name") from
+      // the raw DB rows that only carry first_name / last_name.
+      const normalizedList = list.map((t: ProfileData) => ({
+        ...t,
+        name: `${t.first_name || ""} ${t.last_name || ""}`.trim(),
+      }));
+
+      setTalents(normalizedList);
       setTotalTalents(
         typeof result?.pagination?.total === "number"
           ? result.pagination.total
-          : list.length,
+          : normalizedList.length,
       );
 
       if (
@@ -908,14 +917,13 @@ export default function AdminManageTalents() {
             loading={loading}
             emptyMessage="No talents found"
             searchPlaceholder="Search by full name, email, referrer, user ID, wallet, location, or any visible field..."
-            searchQuery={searchQuery}
-            onSearchQueryChange={setSearchQuery}
             currentPage={currentPage}
             onPageChange={(page) => updateTalentQueryParams({ page: String(page) })}
             pageSize={currentPageSize}
             onPageSizeChange={(pageSize) =>
               updateTalentQueryParams({ limit: String(pageSize) })
             }
+            filterMode="server"
             filterModel={initialColumnFilters}
             onFilterModelChange={handleFilterModelChange}
             totalItems={totalTalents}

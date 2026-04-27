@@ -42,6 +42,8 @@ export interface Column<T> {
   render?: (value: any, row: T) => React.ReactNode;
   exportValue?: (row: T) => string | number | null | undefined; // Function to get exportable value
   searchValue?: (row: T) => string | number | null | undefined;
+  /** Used by AdminDataGrid to supply MUI DataGrid's valueGetter when the column key does not directly match a field on the row object (e.g. computed fields like "name"). */
+  valueGetter?: (row: T) => string | number | boolean | null | undefined;
   filterable?: boolean;
   visible?: boolean; // For column visibility
 }

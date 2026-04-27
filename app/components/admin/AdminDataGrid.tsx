@@ -71,7 +71,7 @@ export function AdminDataGrid<T extends GridValidRowModel>({
   getRowId,
   loading = false,
   emptyMessage = "No rows found",
-  showSearchInput = true,
+  showSearchInput = false,
   searchPlaceholder = "Search...",
   searchQuery = "",
   onSearchQueryChange,
@@ -102,6 +102,15 @@ export function AdminDataGrid<T extends GridValidRowModel>({
         sortable: Boolean(column.sortable),
         minWidth: getColumnMinWidth(column),
         flex: column.key === "actions" ? 0 : 1,
+        // When the column key does not directly match a field on the row (e.g. "name"
+        // is computed from first_name + last_name), supply a valueGetter so MUI can
+        // use it for built-in quick-filter, sorting, and export without breaking renderCell.
+        ...(column.valueGetter
+          ? {
+              valueGetter: (_value: unknown, row: T) =>
+                column.valueGetter!(row),
+            }
+          : {}),
         renderCell: (params: GridRenderCellParams<T>) => {
           if (column.render) {
             return (

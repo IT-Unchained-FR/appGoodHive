@@ -218,6 +218,7 @@ export async function POST(request: NextRequest) {
       FROM goodhive.talents
       WHERE approved = true
         AND (availability = true OR LOWER(CAST(availability AS TEXT)) = 'available')
+        AND user_id != ${sessionUser.user_id}::uuid
       ORDER BY last_active DESC NULLS LAST
     `;
 

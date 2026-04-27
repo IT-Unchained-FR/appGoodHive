@@ -359,7 +359,6 @@ export default function AdminCompanyApproval() {
           getRowId={(row) => row.user_id}
           loading={loading}
           emptyMessage="No company requests found"
-          showSearchInput={false}
           currentPage={currentPage}
           onPageChange={setCurrentPage}
           pageSize={pageSize}

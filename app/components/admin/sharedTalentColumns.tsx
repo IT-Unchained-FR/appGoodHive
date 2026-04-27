@@ -14,6 +14,7 @@ import { ProfileData } from "@/app/talents/my-profile/page";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Copy, Globe, Linkedin, Send } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import toast from "react-hot-toast";
 
 // ─── Empty cell badge ────────────────────────────────────────────────────────
@@ -137,6 +138,11 @@ export function getSharedTalentColumns(): Column<ProfileData>[] {
       header: "Talent Name",
       width: "15%",
       sortable: true,
+      // valueGetter lets MUI DataGrid resolve "name" from first_name + last_name
+      // when the raw DB row has no top-level "name" field. This fixes the quick-filter
+      // and client-side sorting seeing undefined for this column.
+      valueGetter: (row) =>
+        `${row.first_name || ""} ${row.last_name || ""}`.trim(),
       exportValue: (row) => `${row.first_name || ""} ${row.last_name || ""}`.trim(),
       render: (_value, row) => {
         const fullName = `${row.first_name || ""} ${row.last_name || ""}`.trim();
@@ -424,7 +430,17 @@ export function getSharedTalentColumns(): Column<ProfileData>[] {
         if (!row.referred_by) return renderEmpty("Direct signup");
         return (
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-slate-900">{row.referrer_name || "Referral source"}</p>
+            {row.referrer_user_id ? (
+              <Link href={`/admin/talent/${row.referrer_user_id}`}>
+                <p className="truncate text-sm font-medium text-slate-900 hover:text-blue-600 hover:underline cursor-pointer">
+                  {row.referrer_name || "Referral source"}
+                </p>
+              </Link>
+            ) : (
+              <p className="truncate text-sm font-medium text-slate-900">
+                {row.referrer_name || "Referral source"}
+              </p>
+            )}
             <p className="truncate text-xs text-slate-500">Code: {row.referred_by}</p>
           </div>
         );

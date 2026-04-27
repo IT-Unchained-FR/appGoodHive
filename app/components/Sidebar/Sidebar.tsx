@@ -15,6 +15,7 @@ import {
   Settings,
   Shield,
   UserCheck,
+  UserPlus,
   Users,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -85,6 +86,12 @@ const managementNav: NavDef[] = [
     icon: CreditCard,
     label: "Payouts",
     dataE2e: "payouts-menu",
+  },
+  {
+    href: "/admin/referrals",
+    icon: UserPlus,
+    label: "Referrals",
+    dataE2e: "referrals-menu",
   },
 ];
 

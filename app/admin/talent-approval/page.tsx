@@ -527,7 +527,6 @@ export default function AdminTalentApproval() {
           getRowId={(row) => row.user_id || row.email || row.name || "talent"}
           loading={loading}
           emptyMessage="No talent requests found"
-          showSearchInput={false}
           currentPage={currentPage}
           onPageChange={setCurrentPage}
           pageSize={pageSize}

@@ -1,10 +1,26 @@
 # Current Task
 
 ## Status
-`AI TOP CANDIDATES + CONTACT LOG — Implemented; dev migration applied, prod migration pending (April 26, 2026)`
+`ADMIN REFERRALS + MESSENGER FIXES — Implemented (April 27, 2026)`
 
 ## Last Updated
 2026-04-27
+
+---
+
+## 🎯 ADMIN REFERRALS & MESSENGER FIXES — April 27, 2026
+
+**Context:** Improved the admin's ability to track referrals and resolved critical bugs in messaging and data visibility.
+
+### What was built
+- [x] **Admin Referrals:** Added a new referral tracking system with backend APIs and a dedicated admin view.
+- [x] **DataGrid Refinement:** Updated `sharedTalentColumns.tsx` and `AdminDataGrid.tsx` to handle referral data, improved row design for better readability, and fixed talent visibility issues.
+- [x] **Top Candidates Logic:** Updated `/api/companies/top-candidates` to exclude the company's own talent profile from AI match results.
+- [x] **Messenger Fix:** Resolved a 403 Forbidden error in `/api/messenger/threads` that was incorrectly blocking approved talents.
+
+### Validation
+- [x] `pnpm tsc --noEmit` passes
+- [x] `pnpm lint` passes
 
 ---
 

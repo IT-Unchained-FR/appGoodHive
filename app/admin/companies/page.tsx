@@ -83,13 +83,18 @@ export default function AdminManageCompanies() {
   );
 
   const initialColumnFilters = useMemo<GridFilterModel>(() => {
+    let items = [];
     try {
       const filters = searchParams.get("columnFilters");
       if (filters) {
-        return { items: JSON.parse(filters) };
+        items = JSON.parse(filters);
       }
     } catch (e) {}
-    return { items: [] };
+
+    const search = searchParams.get("search");
+    const quickFilterValues = search ? search.split(" ") : [];
+
+    return { items, quickFilterValues };
   }, [searchParams]);
 
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -101,14 +106,10 @@ export default function AdminManageCompanies() {
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(serverSearchQuery);
 
   const getSafeValue = (value?: string | null) =>
     value && value !== "null" ? value : undefined;
 
-  useEffect(() => {
-    setSearchQuery(serverSearchQuery);
-  }, [serverSearchQuery]);
 
   const updateCompanyQueryParams = useCallback(
     (updates: Record<string, string | null>) => {
@@ -132,28 +133,28 @@ export default function AdminManageCompanies() {
   );
 
   const handleFilterModelChange = useCallback((model: GridFilterModel) => {
-    const json = JSON.stringify(model.items);
-    updateCompanyQueryParams({ columnFilters: model.items.length > 0 ? json : null, page: "1" });
-  }, [updateCompanyQueryParams]);
+    const currentFiltersStr = searchParams.get("columnFilters");
+    const currentFilters = currentFiltersStr ? JSON.parse(currentFiltersStr) : [];
+    
+    const currentSearch = searchParams.get("search") || "";
+    const nextSearch = (model.quickFilterValues || []).join(" ");
 
-  useEffect(() => {
-    const normalizedSearch = searchQuery.trim().replace(/\s+/g, " ");
-    const normalizedServerSearch = serverSearchQuery
-      .trim()
-      .replace(/\s+/g, " ");
+    const updates: Record<string, string | null> = {};
 
-    if (normalizedSearch === normalizedServerSearch) {
-      return;
+    if (JSON.stringify(model.items) !== JSON.stringify(currentFilters)) {
+      updates.columnFilters = model.items.length > 0 ? JSON.stringify(model.items) : null;
     }
 
-    const timer = window.setTimeout(() => {
-      updateCompanyQueryParams({
-        search: normalizedSearch || null,
-      });
-    }, 250);
+    if (nextSearch !== currentSearch) {
+      updates.search = nextSearch || null;
+    }
 
-    return () => window.clearTimeout(timer);
-  }, [searchQuery, serverSearchQuery, updateCompanyQueryParams]);
+    if (Object.keys(updates).length > 0) {
+      updates.page = "1";
+      updateCompanyQueryParams(updates);
+    }
+  }, [searchParams, updateCompanyQueryParams]);
+
 
   const fetchAllCompanies = useCallback(async () => {
     try {
@@ -520,8 +521,6 @@ export default function AdminManageCompanies() {
             loading={loading}
             emptyMessage="No companies found"
             searchPlaceholder="Search by company, email, location, wallet, phone, or any visible field..."
-            searchQuery={searchQuery}
-            onSearchQueryChange={setSearchQuery}
             currentPage={currentPage}
             pageSize={currentPageSize}
             pageSizeOptions={[10, 25, 50]}

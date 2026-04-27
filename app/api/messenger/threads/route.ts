@@ -193,8 +193,8 @@ export async function POST(request: NextRequest) {
         WHERE user_id = ${companyUserId}::uuid
         LIMIT 1
       `,
-      sql<{ user_id: string; talent_status: string | null }[]>`
-        SELECT t.user_id, u.talent_status
+      sql<{ user_id: string; talent_status: string | null; approved: boolean }[]>`
+        SELECT t.user_id, u.talent_status, COALESCE(t.approved, false) AS approved
         FROM goodhive.talents t
         LEFT JOIN goodhive.users u ON u.userid = t.user_id
         WHERE t.user_id = ${talentUserId}::uuid
@@ -223,7 +223,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (talentRows[0].talent_status !== "approved") {
+    if (talentRows[0].talent_status !== "approved" && !talentRows[0].approved) {
       return NextResponse.json(
         { message: "Talent profile is not yet approved" },
         { status: 403 },
