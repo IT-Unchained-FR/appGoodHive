@@ -8,7 +8,7 @@
     "dev:fast": "NODE_OPTIONS='--max-old-space-size=4096 --experimental-worker --enable-source-maps' next dev --turbo",
     "dev:proxy": "bash scripts/dev-with-proxy.sh",
     "build": "NODE_OPTIONS='--max-old-space-size=4096' next build --no-lint",
-    "start": "next start",
+    "start": "bash scripts/start-with-proxy.sh",
     "build-no-check": "NODE_OPTIONS='--max-old-space-size=4096' next build --no-lint",
     "vercel-build": "NODE_OPTIONS='--max-old-space-size=4096' NEXT_TELEMETRY_DISABLED=1 next build",
     "lint": "next lint",

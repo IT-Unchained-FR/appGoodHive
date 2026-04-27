@@ -200,6 +200,8 @@ See full meeting notes: `docs/meetings/2026-03-12-juhan-benoit.md`
 ---
 
 ### P0 — DB connection stability
+- [x] Hardened `scripts/start-with-proxy.sh` and `scripts/dev-with-proxy.sh` so local startup now verifies a real Postgres handshake through the Cloud SQL proxy and auto-falls back to a free app port when `3000` is already occupied
+- [x] Updated local Cloud SQL startup to prefer the repo service-account key (`github-actions-key.json`) over flaky local `gcloud` token refresh, and granted that service account `roles/cloudsql.client`
 - [ ] Audit all concurrent connections across environments (localhost:3000, localhost:3001, preview, prod)
 - [ ] Ensure dev environments use dev DB only; preview uses its own pool
 - [ ] Verify `pg` pool settings (`max`) are respected per environment

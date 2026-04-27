@@ -110,6 +110,21 @@ find_available_port() {
   return 1
 }
 
+copy_dir_contents() {
+  local src="$1"
+  local dest="$2"
+
+  mkdir -p "${dest}"
+
+  if has_cmd rsync; then
+    rsync -a --delete "${src}/" "${dest}/"
+  else
+    rm -rf "${dest}"
+    mkdir -p "${dest}"
+    cp -R "${src}/." "${dest}/"
+  fi
+}
+
 resolve_proxy_credential_file() {
   local credential_file="${CLOUD_SQL_PROXY_CREDENTIAL_FILE:-${GOOGLE_APPLICATION_CREDENTIALS:-}}"
 
@@ -202,7 +217,7 @@ else
     echo "   Stop the stale listener and run the command again."
     exit 1
   fi
-  echo "🚀 Starting Cloud SQL proxy..."
+  echo "🚀 Starting Cloud SQL proxy for the production build..."
   if [ -n "${PROXY_CREDENTIAL_FILE}" ]; then
     "${PROXY_BIN}" -credential_file="${PROXY_CREDENTIAL_FILE}" -instances="${INSTANCES_ARG}" &
   else
@@ -257,6 +272,23 @@ if [ -z "${DATABASE_URL_RAG_CHATBOT}" ]; then
   DATABASE_URL_RAG_CHATBOT="${DATABASE_URL}"
 fi
 
+if [ ! -f ".next/standalone/server.js" ]; then
+  echo "❌ Missing .next/standalone/server.js. Run pnpm build first."
+  exit 1
+fi
+
+if [ ! -d ".next/static" ]; then
+  echo "❌ Missing .next/static. Run pnpm build first."
+  exit 1
+fi
+
+echo "📦 Syncing standalone static assets..."
+copy_dir_contents ".next/static" ".next/standalone/.next/static"
+
+if [ -d "public" ]; then
+  copy_dir_contents "public" ".next/standalone/public"
+fi
+
 APP_PORT="${DEFAULT_APP_PORT}"
 if is_listening "${APP_PORT}"; then
   if [ -n "${PORT:-}" ]; then
@@ -273,7 +305,7 @@ if is_listening "${APP_PORT}"; then
     exit 1
   }
   APP_PORT="${AVAILABLE_PORT}"
-  echo "ℹ️ Port 3000 is already in use; starting Next dev server on ${APP_PORT} instead."
+  echo "ℹ️ Port 3000 is already in use; starting Next standalone server on ${APP_PORT} instead."
 fi
 
 RUNTIME_BASE_URL="${GOODHIVE_BASE_URL:-http://localhost:3000}"
@@ -281,5 +313,5 @@ if [ "${APP_PORT}" != "3000" ] && [ "${RUNTIME_BASE_URL}" = "http://localhost:30
   RUNTIME_BASE_URL="http://localhost:${APP_PORT}"
 fi
 
-echo "🚀 Starting Next dev server on port ${APP_PORT}..."
-PORT="${APP_PORT}" GOODHIVE_BASE_URL="${RUNTIME_BASE_URL}" DATABASE_URL="${DATABASE_URL}" DATABASE_URL_RAG_CHATBOT="${DATABASE_URL_RAG_CHATBOT}" pnpm dev
+echo "🚀 Starting Next standalone server on port ${APP_PORT}..."
+PORT="${APP_PORT}" GOODHIVE_BASE_URL="${RUNTIME_BASE_URL}" DATABASE_URL="${DATABASE_URL}" DATABASE_URL_RAG_CHATBOT="${DATABASE_URL_RAG_CHATBOT}" node .next/standalone/server.js
