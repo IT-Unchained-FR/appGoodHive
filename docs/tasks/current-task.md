@@ -8,6 +8,21 @@
 
 ---
 
+## 🎯 AI COVER LETTER DRAFTER — April 27, 2026
+
+**Context:** Added a new standout AI feature to help talents generate highly personalized cover letters when applying for jobs. This addresses the "blank page syndrome" and boosts application quality.
+
+### What was built
+- [x] Added `app/api/ai/draft-cover-letter/route.ts` which securely fetches the talent's profile, fetches the job details, and calls Gemini to draft a 3-4 sentence professional pitch.
+- [x] Updated `app/components/job-application-popup/job-application-popup.tsx` to add a `✨ Auto-Draft with AI` button next to the Cover Letter field.
+- [x] Automatically injects the generated text into the `react-hook-form` and validates it.
+
+### Validation
+- [x] `pnpm tsc --noEmit` passes
+- [x] `pnpm lint` passes
+
+---
+
 ## 🎯 AI TOP CANDIDATES FOR COMPANIES — April 26, 2026
 
 **Context:** Companies need a dashboard page that ranks the top 5 available candidates for a selected published job using the existing AI match-score system. The broken `/connect-logs` page also needed to become a real user-based contact log for direct contacts and job requests.

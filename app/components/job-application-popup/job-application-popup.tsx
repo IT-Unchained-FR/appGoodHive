@@ -326,6 +326,7 @@ export const JobApplicationPopup: React.FC<JobApplicationPopupProps> = ({
   const [mounted, setMounted] = useState(false);
   const [isEligibilityChecking, setIsEligibilityChecking] = useState(false);
   const [eligibility, setEligibility] = useState<EligibilityState | null>(null);
+  const [isDrafting, setIsDrafting] = useState(false);
   const router = useRouter();
   const loggedInUserId = Cookies.get("user_id");
 
@@ -439,6 +440,43 @@ export const JobApplicationPopup: React.FC<JobApplicationPopupProps> = ({
 
     void checkEligibility();
   }, [isOpen, loggedInUserId, setValue, allowedRoles]);
+
+  const handleDraftAI = async () => {
+    setIsDrafting(true);
+    try {
+      const response = await fetch("/api/ai/draft-cover-letter", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          jobTitle,
+          companyName,
+          jobId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to draft cover letter");
+      }
+
+      const payload = await response.json();
+      if (payload.success && payload.data?.coverLetter) {
+        setValue("coverLetter", payload.data.coverLetter, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+        toast.success("AI drafted your cover letter!");
+      } else {
+        toast.error("AI couldn't generate a cover letter right now.");
+      }
+    } catch (error) {
+      console.error("Draft AI Error:", error);
+      toast.error("An error occurred while drafting the cover letter.");
+    } finally {
+      setIsDrafting(false);
+    }
+  };
 
   const onSubmit = async (data: FormData) => {
     if (!loggedInUserId) {
@@ -837,10 +875,29 @@ export const JobApplicationPopup: React.FC<JobApplicationPopupProps> = ({
                 </div>
 
                 <div>
-                  <label className="mb-2 flex items-center text-sm font-semibold text-gray-800">
-                    <span className="mr-2 h-2 w-2 rounded-full bg-emerald-500" />
-                    Cover Letter
-                  </label>
+                  <div className="mb-2 flex items-center justify-between">
+                    <label className="flex items-center text-sm font-semibold text-gray-800">
+                      <span className="mr-2 h-2 w-2 rounded-full bg-emerald-500" />
+                      Cover Letter
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleDraftAI}
+                      disabled={isDrafting || isSubmitting}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-50"
+                    >
+                      {isDrafting ? (
+                        <>
+                          <div className="h-3 w-3 animate-spin rounded-full border-2 border-amber-600 border-t-transparent" />
+                          Drafting...
+                        </>
+                      ) : (
+                        <>
+                          ✨ Auto-Draft with AI
+                        </>
+                      )}
+                    </button>
+                  </div>
                   <textarea
                     {...register("coverLetter")}
                     rows={8}
