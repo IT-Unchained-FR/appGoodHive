@@ -10,7 +10,7 @@ echo "🚀 Starting Cloud SQL Auth Proxy for GoodHive..."
 pkill -f cloud_sql_proxy
 
 # Start the proxy in background on port 5433 to avoid conflicts
-./cloud_sql_proxy -instances=goodhive-1706112296263:europe-west9:goodhive-prod-db=tcp:5433 &
+./cloud_sql_proxy -instances=goodhive-1706112296263:europe-west9:goodhive-dev-db=tcp:5433 &
 
 PROXY_PID=$!
 echo "✅ Cloud SQL Auth Proxy started (PID: $PROXY_PID)"
