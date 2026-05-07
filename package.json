@@ -9,6 +9,7 @@
     "dev:proxy": "bash scripts/dev-with-proxy.sh",
     "build": "NODE_OPTIONS='--max-old-space-size=4096' next build --no-lint",
     "start": "bash scripts/start-with-proxy.sh",
+    "start:dev": "bash scripts/start-dev.sh",
     "build-no-check": "NODE_OPTIONS='--max-old-space-size=4096' next build --no-lint",
     "vercel-build": "NODE_OPTIONS='--max-old-space-size=4096' NEXT_TELEMETRY_DISABLED=1 next build",
     "lint": "next lint",
