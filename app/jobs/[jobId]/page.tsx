@@ -27,6 +27,7 @@ import { CompanyInfoGuard } from "@/app/components/CompanyInfoGuard";
 import SafeHTML from "@/app/components/SafeHTML";
 import { JobPageAnalytics } from "@/app/components/job-page/JobPageAnalytics";
 import { RelatedJobsSection } from "@/app/components/job-page/RelatedJobsSection";
+import { TrackedCompanyLinks } from "@/app/components/job-page/TrackedCompanyLinks";
 import { YourMatchScoreCard } from "@/app/components/job-page/YourMatchScoreCard";
 import JobActionPanel from "@/app/jobs/[jobId]/JobActionPanel";
 import {
@@ -1140,18 +1141,19 @@ export default async function JobPage({
                   ) : null}
 
                   <div className="mt-5 space-y-3 text-sm text-slate-600">
-                    {companyLinks.map((item) => (
-                      <a
-                        key={`${item.label}-${item.href}`}
-                        className="flex items-center gap-2 transition hover:text-slate-900"
-                        href={item.href!}
-                        rel="noreferrer"
-                        target="_blank"
-                      >
-                        <item.icon className="h-4 w-4 text-amber-600" />
-                        {item.label}
-                      </a>
-                    ))}
+                    <TrackedCompanyLinks
+                      links={companyLinks.map((l) => ({ ...l, href: l.href! }))}
+                      shouldTrack={
+                        !viewer.isCompanyOwner &&
+                        !viewer.isAdmin &&
+                        viewer.isAuthenticated &&
+                        !!viewer.userId
+                      }
+                      companyUserId={job.company.id}
+                      talentUserId={viewer.userId ?? ""}
+                      sourcePage={`/jobs/${job.id}`}
+                      jobId={job.id}
+                    />
 
                     <Link
                       className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
