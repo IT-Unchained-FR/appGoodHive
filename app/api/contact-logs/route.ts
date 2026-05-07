@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth/sessionUtils";
-import { recordContactLog, type ContactActorType, type ContactLogType } from "@/lib/contact-logs";
+import { recordContactLog, type ContactActorType, type ContactLogType, type LinkClickType } from "@/lib/contact-logs";
 import sql from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,21 @@ function isActorType(value: unknown): value is ContactActorType {
 }
 
 function isContactType(value: unknown): value is ContactLogType {
-  return value === "direct" || value === "job_request";
+  return value === "direct" || value === "job_request" || value === "link_click";
+}
+
+function isLinkClickType(value: unknown): value is LinkClickType {
+  return (
+    value === "github" ||
+    value === "linkedin" ||
+    value === "twitter" ||
+    value === "portfolio" ||
+    value === "website"
+  );
+}
+
+function normalizeOptionalString(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 function normalizeOptionalUuid(value: unknown) {
@@ -122,10 +136,21 @@ export async function POST(request: NextRequest) {
     const actorType = body.actorType;
     const contactType = body.contactType;
     const messagePreview = typeof body.messagePreview === "string" ? body.messagePreview : null;
+    const rawLinkType = body.linkType;
+    const linkType = isLinkClickType(rawLinkType) ? rawLinkType : null;
+    const linkUrl = normalizeOptionalString(body.linkUrl);
+    const sourcePage = normalizeOptionalString(body.sourcePage);
 
     if (!companyUserId || !talentUserId || !isActorType(actorType) || !isContactType(contactType)) {
       return NextResponse.json(
         { success: false, error: "companyUserId, talentUserId, actorType, and contactType are required" },
+        { status: 400 },
+      );
+    }
+
+    if (contactType === "link_click" && (!linkType || !linkUrl)) {
+      return NextResponse.json(
+        { success: false, error: "linkType and linkUrl are required for link clicks" },
         { status: 400 },
       );
     }
@@ -148,6 +173,9 @@ export async function POST(request: NextRequest) {
       jobId: normalizeOptionalUuid(body.jobId),
       threadId: normalizeOptionalUuid(body.threadId),
       jobRequestId: normalizeOptionalUuid(body.jobRequestId),
+      linkType,
+      linkUrl,
+      sourcePage,
     });
 
     return NextResponse.json({ success: true }, { status: 201 });

@@ -11,6 +11,7 @@ import {
   HelpCircle,
   Home,
   LogOut,
+  MessageSquare,
   Network,
   Settings,
   Shield,
@@ -92,6 +93,12 @@ const managementNav: NavDef[] = [
     icon: UserPlus,
     label: "Referrals",
     dataE2e: "referrals-menu",
+  },
+  {
+    href: "/admin/contact-logs",
+    icon: MessageSquare,
+    label: "Contact Logs",
+    dataE2e: "contact-logs-menu",
   },
 ];
 

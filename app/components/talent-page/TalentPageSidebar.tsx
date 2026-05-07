@@ -2,6 +2,7 @@
 
 import { DollarSign, CheckCircle, XCircle, Linkedin, Github, Twitter, Globe, ExternalLink, Link2, Lock } from "lucide-react";
 import type { ResumeLanguage } from "@/lib/talent-profile/resume-data";
+import type { LinkClickType } from "@/lib/contact-logs";
 import { TalentStatsCard } from "./TalentStatsCard";
 import { WorkPreferencesCard } from "./WorkPreferencesCard";
 import { useAuth } from "@/app/contexts/AuthContext";
@@ -11,6 +12,7 @@ import { formatRateRange } from "@/app/utils/format-rate-range";
 import ApprovalPromptModal from "./ApprovalPromptModal";
 import { useState } from "react";
 import { useAuthCheck } from "@/app/hooks/useAuthCheck";
+import { TrackedExternalLink } from "@/components/TrackedExternalLink";
 
 interface TalentPageSidebarProps {
   // Stats
@@ -35,6 +37,12 @@ interface TalentPageSidebarProps {
   portfolio?: string;
   stackoverflow?: string;
   canViewSensitive?: boolean;
+  // Link click tracking
+  shouldTrack?: boolean;
+  actorType?: "company" | "talent";
+  companyUserId?: string;
+  talentUserId?: string;
+  sourcePage?: string;
 }
 
 export const TalentPageSidebar = ({
@@ -56,6 +64,11 @@ export const TalentPageSidebar = ({
   portfolio,
   stackoverflow,
   canViewSensitive: canViewSensitiveProp,
+  shouldTrack = false,
+  actorType = "company",
+  companyUserId = "",
+  talentUserId = "",
+  sourcePage = "",
 }: TalentPageSidebarProps) => {
   const { user, isAuthenticated } = useAuth();
   const { openConnectModal } = useAuthCheck();
@@ -94,11 +107,11 @@ export const TalentPageSidebar = ({
 
   // Social links array
   const socialLinks = [
-    { name: "LinkedIn", url: linkedin, icon: Linkedin },
-    { name: "GitHub", url: github, icon: Github },
-    { name: "Twitter", url: twitter, icon: Twitter },
-    { name: "Portfolio", url: portfolio, icon: Globe },
-    { name: "Stack Overflow", url: stackoverflow, icon: Link2 },
+    { name: "LinkedIn", url: linkedin, icon: Linkedin, trackType: "linkedin" as LinkClickType },
+    { name: "GitHub", url: github, icon: Github, trackType: "github" as LinkClickType },
+    { name: "Twitter", url: twitter, icon: Twitter, trackType: "twitter" as LinkClickType },
+    { name: "Portfolio", url: portfolio, icon: Globe, trackType: "portfolio" as LinkClickType },
+    { name: "Stack Overflow", url: stackoverflow, icon: Link2, trackType: null },
   ].filter((link) => link.url);
 
   const hasSocialLinks = socialLinks.length > 0;
@@ -164,19 +177,37 @@ export const TalentPageSidebar = ({
         {canViewSensitive ? (
           hasSocialLinks ? (
             <div className={styles.socialLinks}>
-              {socialLinks.map((link, index) => (
-                <a
-                  key={index}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.socialLink}
-                >
-                  <link.icon className={styles.socialIcon} />
-                  <span className={styles.socialName}>{link.name}</span>
-                  <ExternalLink className={styles.externalIcon} />
-                </a>
-              ))}
+              {socialLinks.map((link, index) =>
+                link.trackType ? (
+                  <TrackedExternalLink
+                    key={index}
+                    href={link.url!}
+                    className={styles.socialLink}
+                    shouldTrack={shouldTrack}
+                    actorType={actorType}
+                    companyUserId={companyUserId}
+                    talentUserId={talentUserId}
+                    linkType={link.trackType}
+                    sourcePage={sourcePage}
+                  >
+                    <link.icon className={styles.socialIcon} />
+                    <span className={styles.socialName}>{link.name}</span>
+                    <ExternalLink className={styles.externalIcon} />
+                  </TrackedExternalLink>
+                ) : (
+                  <a
+                    key={index}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.socialLink}
+                  >
+                    <link.icon className={styles.socialIcon} />
+                    <span className={styles.socialName}>{link.name}</span>
+                    <ExternalLink className={styles.externalIcon} />
+                  </a>
+                )
+              )}
             </div>
           ) : (
             <div className={styles.emptyState}>

@@ -118,6 +118,12 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
     (!!user &&
       (user.talent_status === "approved" ||
         user.recruiter_status === "approved"));
+
+  // Track only company-side interest in a talent profile. Dual-role users still count
+  // as company viewers when their recruiter/company role is approved.
+  const isApprovedCompanyViewer =
+    !!user && !isOwner && user.recruiter_status === "approved";
+  const shouldTrackLinks = isApprovedCompanyViewer && canViewSensitive;
   const normalizedAvailabilityStatus = normalizeAvailabilityStatus(
     availability_status,
     availability,
@@ -250,6 +256,11 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
             portfolio={portfolio ?? undefined}
             stackoverflow={stackoverflow ?? undefined}
             canViewSensitive={canViewSensitive}
+            shouldTrack={shouldTrackLinks}
+            actorType="company"
+            companyUserId={user?.user_id ?? ""}
+            talentUserId={talentUserId}
+            sourcePage={`/talents/${params.user_id}`}
           />
           {talentUserId && (
             <div className="mt-4">

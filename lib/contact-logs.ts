@@ -1,7 +1,8 @@
 import sql from "@/lib/db";
 
 export type ContactActorType = "company" | "talent";
-export type ContactLogType = "direct" | "job_request";
+export type ContactLogType = "direct" | "job_request" | "link_click";
+export type LinkClickType = "github" | "linkedin" | "twitter" | "portfolio" | "website";
 
 interface RecordContactLogParams {
   companyUserId: string;
@@ -13,6 +14,9 @@ interface RecordContactLogParams {
   jobId?: string | null;
   threadId?: string | null;
   jobRequestId?: string | null;
+  linkType?: LinkClickType | null;
+  linkUrl?: string | null;
+  sourcePage?: string | null;
 }
 
 function trimPreview(value: string | null | undefined) {
@@ -30,6 +34,9 @@ export async function recordContactLog({
   jobId = null,
   threadId = null,
   jobRequestId = null,
+  linkType = null,
+  linkUrl = null,
+  sourcePage = null,
 }: RecordContactLogParams) {
   await sql`
     INSERT INTO goodhive.contact_logs (
@@ -42,6 +49,9 @@ export async function recordContactLog({
       actor_type,
       contact_type,
       message_preview,
+      link_type,
+      link_url,
+      source_page,
       created_at,
       updated_at
     ) VALUES (
@@ -54,6 +64,9 @@ export async function recordContactLog({
       ${actorType},
       ${contactType},
       ${trimPreview(messagePreview)},
+      ${linkType},
+      ${linkUrl},
+      ${sourcePage},
       NOW(),
       NOW()
     )

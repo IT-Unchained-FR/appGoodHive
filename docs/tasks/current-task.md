@@ -4,7 +4,36 @@
 `ADMIN REFERRALS + MESSENGER FIXES — Implemented (April 27, 2026)`
 
 ## Last Updated
-2026-04-27
+2026-05-07
+
+---
+
+## 🎯 TALENT LINK CLICK TRACKING FIX — May 7, 2026
+
+**Context:** Clicking a talent LinkedIn/social link from a dual-role talent + company account did not appear in admin contact logs.
+
+### What was fixed
+- [x] Updated `/talents/[user_id]` social-link tracking so approved recruiter/company viewers are tracked even when they are also approved talents.
+- [x] Hardened tracked external link POSTs with included credentials, keepalive delivery, and dev-only failure warnings.
+- [x] Added server-side validation requiring `linkType` and `linkUrl` for `link_click` contact logs.
+
+### Validation
+- [x] `pnpm tsc --noEmit`
+- [x] `pnpm lint` (passes with existing warnings)
+
+---
+
+## 🎯 ADMIN CONTACT LOGS ACCESS FIX — May 7, 2026
+
+**Context:** `/admin/contact-logs` existed but redirected admins back to `/admin/login`.
+
+### What was fixed
+- [x] Removed the client-side `Cookies.get("admin_token")` gate from `app/admin/contact-logs/page.tsx`.
+- [x] Updated the contact logs page to let `/api/admin/contact-logs` validate the httpOnly admin cookie and redirect only on a real `401`.
+
+### Validation
+- [x] `pnpm tsc --noEmit`
+- [x] `pnpm lint` (passes with existing warnings)
 
 ---
 
