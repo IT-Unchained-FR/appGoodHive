@@ -1,12 +1,14 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
+import { Globe, Linkedin, Twitter } from "lucide-react";
 import type { LinkClickType } from "@/lib/contact-logs";
 import { TrackedExternalLink } from "@/components/TrackedExternalLink";
 
+type CompanyLinkIcon = "website" | "linkedin" | "twitter";
+
 interface CompanyLink {
   href: string;
-  icon: LucideIcon;
+  icon: CompanyLinkIcon;
   label: string;
 }
 
@@ -19,10 +21,16 @@ interface TrackedCompanyLinksProps {
   jobId: string;
 }
 
-const LABEL_TO_LINK_TYPE: Record<string, LinkClickType> = {
-  LinkedIn: "linkedin",
-  Twitter: "twitter",
-  Website: "website",
+const ICON_TO_LINK_TYPE: Record<CompanyLinkIcon, LinkClickType> = {
+  linkedin: "linkedin",
+  twitter: "twitter",
+  website: "website",
+};
+
+const ICONS = {
+  linkedin: Linkedin,
+  twitter: Twitter,
+  website: Globe,
 };
 
 export function TrackedCompanyLinks({
@@ -36,7 +44,8 @@ export function TrackedCompanyLinks({
   return (
     <>
       {links.map((item) => {
-        const linkType = LABEL_TO_LINK_TYPE[item.label];
+        const linkType = ICON_TO_LINK_TYPE[item.icon];
+        const Icon = ICONS[item.icon];
 
         if (linkType) {
           return (
@@ -52,7 +61,7 @@ export function TrackedCompanyLinks({
               sourcePage={sourcePage}
               jobId={jobId}
             >
-              <item.icon className="h-4 w-4 text-amber-600" />
+              <Icon className="h-4 w-4 text-amber-600" />
               {item.label}
             </TrackedExternalLink>
           );
@@ -66,7 +75,7 @@ export function TrackedCompanyLinks({
             rel="noreferrer"
             target="_blank"
           >
-            <item.icon className="h-4 w-4 text-amber-600" />
+            <Icon className="h-4 w-4 text-amber-600" />
             {item.label}
           </a>
         );

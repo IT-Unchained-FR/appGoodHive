@@ -9,8 +9,6 @@ import {
   Building2,
   CalendarDays,
   ExternalLink,
-  Globe,
-  Linkedin,
   Lock,
   MapPin,
   Shield,
@@ -18,7 +16,6 @@ import {
   Sparkles,
   Tag,
   Users,
-  Twitter,
   Users2,
 } from "lucide-react";
 import jwt from "jsonwebtoken";
@@ -688,17 +685,17 @@ export default async function JobPage({
   const companyLinks = [
     {
       href: job.company.website,
-      icon: Globe,
+      icon: "website" as const,
       label: job.company.website?.replace(/^https?:\/\//, "") || "Website",
     },
     {
       href: job.company.linkedin,
-      icon: Linkedin,
+      icon: "linkedin" as const,
       label: "LinkedIn",
     },
     {
       href: job.company.twitter,
-      icon: Twitter,
+      icon: "twitter" as const,
       label: "Twitter",
     },
   ].filter((item) => Boolean(item.href));
