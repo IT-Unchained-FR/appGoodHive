@@ -32,9 +32,6 @@ importers:
       '@formspree/react':
         specifier: ^2.5.1
         version: 2.5.5(react-dom@18.2.0(react@18.3.1))(react@18.3.1)
-      '@google-cloud/vertexai':
-        specifier: ^1.10.0
-        version: 1.10.0(encoding@0.1.13)
       '@google/generative-ai':
         specifier: ^0.24.1
         version: 0.24.1
@@ -1867,10 +1864,6 @@ packages:
     resolution: {integrity: sha512-Z4aHi3ECFf5oWYWM3F1rW83GJfB9OvhBYPTmb5q+VyK3uvzvS48lwo+jwh2eOoCRWEuT/crpb9Vwp2QaS5JqgQ==}
     peerDependencies:
       viem: '>=2.0.0'
-
-  '@google-cloud/vertexai@1.10.0':
-    resolution: {integrity: sha512-HqYqoivNtkq59po8m7KI0n+lWKdz4kabENncYQXZCX/hBWJfXtKAfR/2nUQsP+TwSfHKoA7zDL2RrJYIv/j3VQ==}
-    engines: {node: '>=18.0.0'}
 
   '@google/generative-ai@0.24.1':
     resolution: {integrity: sha512-MqO+MLfM6kjxcKoy0p1wRzG3b4ZZXtPI+z2IE26UogS2Cm/XHO+7gGRBh6gcJsOiIVoH93UwKvW4HdgiOZCy9Q==}
@@ -14476,13 +14469,6 @@ snapshots:
       eventemitter3: 5.0.1
       viem: 2.38.6(bufferutil@4.0.9)(typescript@5.0.4)(utf-8-validate@6.0.5)(zod@3.25.76)
     transitivePeerDependencies:
-      - supports-color
-
-  '@google-cloud/vertexai@1.10.0(encoding@0.1.13)':
-    dependencies:
-      google-auth-library: 9.15.1(encoding@0.1.13)
-    transitivePeerDependencies:
-      - encoding
       - supports-color
 
   '@google/generative-ai@0.24.1': {}

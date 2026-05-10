@@ -58,6 +58,32 @@ fi
 PORT="${PORT:-3000}"
 GOODHIVE_BASE_URL="${GOODHIVE_BASE_URL:-http://localhost:${PORT}}"
 
+export_runtime_env_var() {
+  local target="$1"
+  if [ -n "${!target:-}" ]; then
+    return 0
+  fi
+
+  local value
+  value="$(load_var "${target}")" || return 0
+  export "${target}=${value}"
+}
+
+for key in \
+  ADMIN_JWT_SECRET \
+  JWT_SECRET \
+  GEMINI_API_KEY \
+  GEMINI_CHAT_MODEL \
+  GEMINI_FAST_MODEL \
+  GOOGLE_CLOUD_PROJECT \
+  RAG_PROJECT_ID \
+  RAG_LOCATION \
+  RAG_CORPUS_RESOURCE \
+  GOOGLE_APPLICATION_CREDENTIALS_JSON
+do
+  export_runtime_env_var "${key}"
+done
+
 echo "🚀 Starting Next standalone server on port ${PORT} → dev DB"
 echo "   DATABASE_URL=${DATABASE_URL}"
 

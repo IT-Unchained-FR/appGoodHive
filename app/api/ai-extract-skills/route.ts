@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import { getGeminiModel } from "@/lib/gemini";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+function getGeminiText(response: unknown) {
+  const candidate = response as { text?: (() => string) | string } | null;
+
+  if (typeof candidate?.text === "function") {
+    return candidate.text();
+  }
+
+  return typeof candidate?.text === "string" ? candidate.text : "";
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,13 +69,17 @@ export async function POST(request: NextRequest) {
     Return ONLY a valid JSON array like: ["React", "JavaScript", "Node.js", "Project Management"]
     `;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [{ role: "user", content: skillsPrompt }],
-      temperature: 0.3,
+    const modelName =
+      process.env.GEMINI_CHAT_MODEL ??
+      process.env.GEMINI_FAST_MODEL ??
+      "gemini-2.0-flash";
+    const model = getGeminiModel(modelName);
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: skillsPrompt }] }],
+      generationConfig: { temperature: 0.3 },
     });
 
-    const content = response.choices[0]?.message?.content || "";
+    const content = getGeminiText(result.response);
 
     // Parse the JSON response
     let extractedSkills: string[] = [];

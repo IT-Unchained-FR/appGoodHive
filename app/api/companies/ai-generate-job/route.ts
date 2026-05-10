@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import { getGeminiModel } from "@/lib/gemini";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+function getGeminiText(response: unknown) {
+  const candidate = response as { text?: (() => string) | string } | null;
+
+  if (typeof candidate?.text === "function") {
+    return candidate.text();
+  }
+
+  return typeof candidate?.text === "string" ? candidate.text : "";
+}
 
 // Skills database for validation and suggestions
 const COMMON_SKILLS = [
@@ -154,24 +160,20 @@ Return a JSON object with this exact structure:
 **Important:** Only return the JSON object, no additional text or markdown formatting.
 `;
 
-    // Generate job data using OpenAI
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        {
-          role: "system",
-          content: "You are an expert HR professional who creates exceptional job postings. Always respond with valid JSON only."
-        },
-        {
-          role: "user",
-          content: jobGenerationPrompt
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 3000,
+    // Generate job data using Google AI Studio / Gemini.
+    const modelName =
+      process.env.GEMINI_CHAT_MODEL ??
+      process.env.GEMINI_FAST_MODEL ??
+      "gemini-2.0-flash";
+    const model = getGeminiModel(modelName);
+    const result = await model.generateContent({
+      systemInstruction:
+        "You are an expert HR professional who creates exceptional job postings. Always respond with valid JSON only.",
+      contents: [{ role: "user", parts: [{ text: jobGenerationPrompt }] }],
+      generationConfig: { temperature: 0.7, maxOutputTokens: 3000 },
     });
 
-    const aiResponse = completion.choices[0]?.message?.content;
+    const aiResponse = getGeminiText(result.response);
     if (!aiResponse) {
       throw new Error("No response from AI service");
     }

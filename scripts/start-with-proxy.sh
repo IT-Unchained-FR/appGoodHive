@@ -110,6 +110,38 @@ find_available_port() {
   return 1
 }
 
+load_env_var() {
+  local target="$1"
+  for path in ".env.local" ".env"; do
+    [ -f "${path}" ] || continue
+    while IFS= read -r line || [ -n "${line}" ]; do
+      line="${line#"${line%%[![:space:]]*}"}"
+      [[ -z "${line}" || "${line}" == \#* ]] && continue
+      if [[ "${line}" == "${target}="* ]]; then
+        local val="${line#*=}"
+        val="${val%\"}"
+        val="${val#\"}"
+        val="${val%\'}"
+        val="${val#\'}"
+        printf '%s' "${val}"
+        return 0
+      fi
+    done < "${path}"
+  done
+  return 1
+}
+
+export_runtime_env_var() {
+  local target="$1"
+  if [ -n "${!target:-}" ]; then
+    return 0
+  fi
+
+  local value
+  value="$(load_env_var "${target}")" || return 0
+  export "${target}=${value}"
+}
+
 copy_dir_contents() {
   local src="$1"
   local dest="$2"
@@ -312,6 +344,21 @@ RUNTIME_BASE_URL="${GOODHIVE_BASE_URL:-http://localhost:3000}"
 if [ "${APP_PORT}" != "3000" ] && [ "${RUNTIME_BASE_URL}" = "http://localhost:3000" ]; then
   RUNTIME_BASE_URL="http://localhost:${APP_PORT}"
 fi
+
+for key in \
+  ADMIN_JWT_SECRET \
+  JWT_SECRET \
+  GEMINI_API_KEY \
+  GEMINI_CHAT_MODEL \
+  GEMINI_FAST_MODEL \
+  GOOGLE_CLOUD_PROJECT \
+  RAG_PROJECT_ID \
+  RAG_LOCATION \
+  RAG_CORPUS_RESOURCE \
+  GOOGLE_APPLICATION_CREDENTIALS_JSON
+do
+  export_runtime_env_var "${key}"
+done
 
 echo "🚀 Starting Next standalone server on port ${APP_PORT}..."
 PORT="${APP_PORT}" GOODHIVE_BASE_URL="${RUNTIME_BASE_URL}" DATABASE_URL="${DATABASE_URL}" DATABASE_URL_RAG_CHATBOT="${DATABASE_URL_RAG_CHATBOT}" node .next/standalone/server.js

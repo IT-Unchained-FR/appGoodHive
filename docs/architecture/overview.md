@@ -31,7 +31,7 @@ Key differentiators:
 | Styling | Tailwind CSS + Framer Motion + Radix UI | Custom tokens in `app/globals.css`; animations in `app/globals-animations.css` |
 | Database | PostgreSQL via `pg` (raw SQL) | No ORM — see `app/lib/db.ts` |
 | Auth | Iron Session + JWT (`jose`/`jsonwebtoken`) + bcryptjs | HTTP-only cookies; admin has separate auth |
-| AI | Google Gemini (`@google/generative-ai`), Google Vertex AI, OpenAI | Gemini primary; OpenAI secondary |
+| AI | Google Gemini via Google AI Studio (`@google/generative-ai`), Google Vertex RAG retrieval | OpenAI may remain configured but is dormant |
 | File Storage | AWS S3 (`@aws-sdk/client-s3`) | Profile photos, CVs, attachments |
 | Email | Resend | Transactional emails via templates in `app/lib/email/` |
 | CMS | Sanity | Blog, marketing content; separate Sanity Studio |
@@ -308,8 +308,8 @@ JWT_SECRET=...
 
 # AI
 GEMINI_API_KEY=...
-OPENAI_API_KEY=...
-GOOGLE_APPLICATION_CREDENTIALS=...  (Vertex AI)
+OPENAI_API_KEY=...  (optional dormant fallback; not used by active app routes)
+GOOGLE_APPLICATION_CREDENTIALS=...  (Vertex RAG retrieval)
 
 # Storage
 AWS_ACCESS_KEY_ID=...

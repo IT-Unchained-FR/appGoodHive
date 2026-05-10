@@ -4,7 +4,34 @@
 `ADMIN REFERRALS + MESSENGER FIXES — Implemented (April 27, 2026)`
 
 ## Last Updated
-2026-05-07
+2026-05-08
+
+---
+
+## 🎯 GEMINI PROVIDER MIGRATION — May 8, 2026
+
+**Context:** Generative AI calls should use Google AI Studio via `@google/generative-ai` only. Vertex AI generative model fallback/selection has been removed; Vertex RAG retrieval remains untouched in `lib/ragEngine.ts`.
+
+### What was changed
+- [x] Rewrote `lib/gemini.ts` to require `GEMINI_API_KEY`, default chat calls to `gemini-2.0-flash`, and use `gemini-embedding-001` through Google AI Studio.
+- [x] Removed `@google-cloud/vertexai` from `package.json`.
+- [x] Added `GEMINI_API_KEY` and `gemini-2.0-flash` model overrides to `.env.local` and `.env`.
+- [x] Documented Google AI Studio setup in `.env.example`.
+- [x] Updated standalone start scripts to export auth/Gemini runtime env vars from `.env.local`/`.env` before launching the built server.
+- [x] Migrated remaining active OpenAI route handlers to Gemini while leaving OpenAI dependency/env configuration dormant.
+
+### Validation
+- [x] `pnpm install`
+- [x] `pnpm tsc --noEmit`
+- [x] `pnpm lint` (passes with existing warnings)
+- [x] Confirm no `@google-cloud/vertexai` TypeScript imports remain
+- [x] Confirm no active `app/` or `lib/` OpenAI imports/calls remain
+- [x] Confirm `google-auth-library` remains available for RAG
+- [x] Direct Google AI Studio SDK smoke test with project `goodhive-1706112296263`
+
+### Known risks / TBD
+- [ ] Endpoint smoke test with `/api/ai/generate-job-description` still needs a logged-in session; unauthenticated curl returns `401` by design.
+- [ ] Confirm billing/quota for the configured Google AI Studio key in project `goodhive-1706112296263` before production use.
 
 ---
 

@@ -26,7 +26,6 @@
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.14.1",
     "@formspree/react": "^2.5.1",
-    "@google-cloud/vertexai": "^1.10.0",
     "@google/generative-ai": "^0.24.1",
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",

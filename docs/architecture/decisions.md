@@ -26,16 +26,16 @@
 
 ---
 
-## ADR-003: Multi-AI Strategy
+## ADR-003: Google AI Studio as Active Generative Provider
 
-**Date:** 2025
+**Date:** 2026-05-10
 **Status:** Active
 
-**Decision:** Use multiple AI providers — Google Gemini/Vertex AI for profile enhancement and skill extraction, OpenAI for supplementary tasks, and custom Superbot.
+**Decision:** Use Google AI Studio via `@google/generative-ai` for active generative AI features. Keep OpenAI configuration/dependency available but dormant for now; runtime app routes should not call OpenAI unless this ADR is revised.
 
-**Rationale:** Different models have different strengths; redundancy reduces single-vendor risk.
+**Rationale:** Consolidating active AI calls behind Gemini reduces operational variance and avoids relying on the currently quota-limited OpenAI account while preserving a future fallback option.
 
-**Consequences:** Multiple API keys to manage, cost monitoring across providers required, inconsistent response formats need normalization.
+**Consequences:** Gemini quota/billing is now the primary AI availability risk. OpenAI keys may remain configured, but they are not part of the active request path.
 
 ---
 

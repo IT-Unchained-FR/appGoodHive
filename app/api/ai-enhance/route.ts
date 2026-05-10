@@ -1,9 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import { getGeminiModel } from "@/lib/gemini";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+function getGeminiText(response: unknown) {
+  const candidate = response as { text?: (() => string) | string } | null;
+
+  if (typeof candidate?.text === "function") {
+    return candidate.text();
+  }
+
+  return typeof candidate?.text === "string" ? candidate.text : "";
+}
+
+async function generateGeminiText(prompt: string, temperature = 0.7) {
+  const modelName =
+    process.env.GEMINI_CHAT_MODEL ??
+    process.env.GEMINI_FAST_MODEL ??
+    "gemini-2.0-flash";
+  const model = getGeminiModel(modelName);
+  const result = await model.generateContent({
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: { temperature },
+  });
+
+  return getGeminiText(result.response);
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -121,31 +141,18 @@ export async function POST(request: NextRequest) {
     `;
 
     // Generate all content in parallel
-    const [titleResponse, descriptionResponse, aboutWorkResponse] =
-      await Promise.all([
-        openai.chat.completions.create({
-          model: "gpt-4",
-          messages: [{ role: "user", content: titlePrompt }],
-          temperature: 0.7,
-        }),
-        openai.chat.completions.create({
-          model: "gpt-4",
-          messages: [{ role: "user", content: descriptionPrompt }],
-          temperature: 0.7,
-        }),
-        openai.chat.completions.create({
-          model: "gpt-4",
-          messages: [{ role: "user", content: aboutWorkPrompt }],
-          temperature: 0.7,
-        }),
-      ]);
+    const [title, description, aboutWork] = await Promise.all([
+      generateGeminiText(titlePrompt),
+      generateGeminiText(descriptionPrompt),
+      generateGeminiText(aboutWorkPrompt),
+    ]);
 
     return NextResponse.json({
       status: "completed",
       data: {
-        title: titleResponse.choices[0]?.message?.content || "",
-        description: descriptionResponse.choices[0]?.message?.content || "",
-        aboutWork: aboutWorkResponse.choices[0]?.message?.content || "",
+        title,
+        description,
+        aboutWork,
       },
     });
   } catch (error) {
