@@ -30,6 +30,7 @@ import {
   Sparkles,
   type LucideIcon,
   UserRound,
+  UserRoundCheck,
 } from "lucide-react";
 import { ProfileDropdown } from "./ProfileDropdown";
 import { NotificationBell } from "./NotificationBell";
@@ -83,6 +84,21 @@ const talentsLinks = [
     label: "Career Coach",
     protected: true,
     icon: Sparkles,
+  },
+  {
+    href: "/messages",
+    label: "Messages",
+    protected: true,
+    icon: MessageSquare,
+  },
+];
+
+const recruiterLinks = [
+  {
+    href: "/recruiter/dashboard/find-talents",
+    label: "Find Talents",
+    protected: true,
+    icon: UserRoundCheck,
   },
   {
     href: "/messages",
@@ -154,11 +170,27 @@ export const NavBar = () => {
   const { setManualConnection } = useAuthCheck();
   const loggedIn_user_id = useCurrentUserId();
 
-  const links = pathname.startsWith("/talents")
-    ? talentsLinks
-    : pathname.startsWith("/companies")
-      ? companiesLinks
-      : commonLinks;
+  const isApprovedRecruiter = user?.recruiter_status === "approved";
+
+  const baseTalentsLinks = isApprovedRecruiter
+    ? [
+        ...talentsLinks,
+        {
+          href: "/recruiter/dashboard/find-talents",
+          label: "Recruiter Dashboard",
+          protected: true,
+          icon: UserRoundCheck,
+        },
+      ]
+    : talentsLinks;
+
+  const links = pathname.startsWith("/recruiter")
+    ? recruiterLinks
+    : pathname.startsWith("/talents")
+      ? baseTalentsLinks
+      : pathname.startsWith("/companies")
+        ? companiesLinks
+        : commonLinks;
 
   const syncAfterAuth = useCallback(async () => {
     dispatchAuthChanged();
