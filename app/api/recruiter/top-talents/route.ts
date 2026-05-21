@@ -221,6 +221,21 @@ export async function POST(request: NextRequest) {
       .sort((left, right) => (right.score ?? -1) - (left.score ?? -1))
       .slice(0, 5);
 
+    try {
+      await sql`
+        INSERT INTO goodhive.recruiter_search_history
+          (recruiter_id, job_description, candidates, scored_count)
+        VALUES (
+          ${sessionUser.user_id}::uuid,
+          ${jobDescription},
+          ${sql.json(candidates)},
+          ${results.length}
+        )
+      `;
+    } catch (historyError) {
+      console.error("Failed to save search history:", historyError);
+    }
+
     return NextResponse.json(
       { success: true, data: { candidates, scoredCount: results.length } },
       { status: 200 },

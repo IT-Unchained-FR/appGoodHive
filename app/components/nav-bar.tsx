@@ -172,17 +172,20 @@ export const NavBar = () => {
 
   const isApprovedRecruiter = user?.recruiter_status === "approved";
 
+  const recruiterLink = {
+    href: "/recruiter/dashboard/find-talents",
+    label: "Recruiter Dashboard",
+    protected: true,
+    icon: UserRoundCheck,
+  };
+
   const baseTalentsLinks = isApprovedRecruiter
-    ? [
-        ...talentsLinks,
-        {
-          href: "/recruiter/dashboard/find-talents",
-          label: "Recruiter Dashboard",
-          protected: true,
-          icon: UserRoundCheck,
-        },
-      ]
+    ? [...talentsLinks, recruiterLink]
     : talentsLinks;
+
+  const baseCommonLinks = isApprovedRecruiter
+    ? [...commonLinks, recruiterLink]
+    : commonLinks;
 
   const links = pathname.startsWith("/recruiter")
     ? recruiterLinks
@@ -190,7 +193,7 @@ export const NavBar = () => {
       ? baseTalentsLinks
       : pathname.startsWith("/companies")
         ? companiesLinks
-        : commonLinks;
+        : baseCommonLinks;
 
   const syncAfterAuth = useCallback(async () => {
     dispatchAuthChanged();

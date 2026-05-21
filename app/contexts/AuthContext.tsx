@@ -124,6 +124,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
           recruiter_status: userData.recruiter_status,
         };
 
+        // Keep cookie fresh so next page load reflects latest statuses.
+        Cookies.set("loggedIn_user", JSON.stringify(user), {
+          expires: 7,
+          sameSite: "strict",
+          secure: window.location.protocol === "https:",
+        });
+
         login(user);
       } else {
         logout();
@@ -152,6 +159,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
             walletConnected: !!account?.address,
             authMethod: user.auth_method || (user.wallet_address ? "wallet" : "email"),
           });
+          // Refresh from DB to pick up any status changes (e.g. admin approvals)
+          // made after the cookie was written at login time.
+          void refreshUser();
         } else {
           setAuthState(prev => ({
             ...prev,

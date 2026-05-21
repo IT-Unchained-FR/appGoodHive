@@ -7,12 +7,18 @@ import toast from "react-hot-toast";
 import {
   ArrowRight,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   ClipboardCopy,
+  Clock,
   FileText,
+  History,
   Loader2,
   Mail,
+  RefreshCw,
   Sparkles,
   Star,
+  Trash2,
   Trophy,
   UserRoundCheck,
   X,
@@ -49,6 +55,14 @@ interface TalentsResponse {
   error?: string;
 }
 
+interface SearchHistoryItem {
+  id: string;
+  job_description: string;
+  candidates: TopTalent[];
+  scored_count: number;
+  created_at: string;
+}
+
 function getDisplayName(talent: TopTalent) {
   return [talent.firstName, talent.lastName].filter(Boolean).join(" ").trim() || "GoodHive Talent";
 }
@@ -74,6 +88,22 @@ function truncateText(value: string, maxLength: number) {
 
 function getLocationLabel(talent: TopTalent) {
   return [talent.city, talent.country].filter(Boolean).join(", ") || "Remote-ready";
+}
+
+function formatRelativeTime(isoString: string): string {
+  const diff = Date.now() - new Date(isoString).getTime();
+  const minutes = Math.floor(diff / 60_000);
+  const hours = Math.floor(diff / 3_600_000);
+  const days = Math.floor(diff / 86_400_000);
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days < 7) return `${days}d ago`;
+  return new Date(isoString).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 const MIN_DESC_LENGTH = 50;
@@ -234,11 +264,86 @@ export default function FindTalentsPage() {
   const [isDraftingEmail, setIsDraftingEmail] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const [history, setHistory] = useState<SearchHistoryItem[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [historySource, setHistorySource] = useState<SearchHistoryItem | null>(null);
+
   useEffect(() => {
     setOutreachEmail(null);
     setIsDraftingEmail(false);
     setCopied(false);
   }, [selectedTalent]);
+
+  useEffect(() => {
+    void fetchHistory();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchHistory = async () => {
+    setIsLoadingHistory(true);
+    try {
+      const response = await fetch("/api/recruiter/search-history");
+      const payload = (await response.json()) as { success: boolean; data?: SearchHistoryItem[] };
+      if (payload.success && payload.data) {
+        setHistory(payload.data);
+      }
+    } catch {
+      // History failure is non-fatal
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
+  const loadFromHistory = (item: SearchHistoryItem) => {
+    setJobDescription(item.job_description);
+    setTalents(item.candidates);
+    setLastScoredCount(item.scored_count);
+    setHistorySource(item);
+    setSelectedTalent(null);
+    setOutreachEmail(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const rerunSearch = async (jobDesc: string) => {
+    setHistorySource(null);
+    setJobDescription(jobDesc);
+    setIsSearching(true);
+    setTalents([]);
+    setLastScoredCount(null);
+    setSelectedTalent(null);
+    try {
+      const response = await fetch("/api/recruiter/top-talents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobDescription: jobDesc }),
+      });
+      const payload = (await response.json()) as TalentsResponse;
+      if (!response.ok || !payload.success || !payload.data) {
+        throw new Error(payload.error ?? "Failed to find top talents");
+      }
+      setTalents(payload.data.candidates);
+      setLastScoredCount(payload.data.scoredCount);
+      toast.success("Top talents found");
+      await fetchHistory();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to find top talents");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const deleteHistoryItem = async (id: string) => {
+    try {
+      const response = await fetch(`/api/recruiter/search-history/${id}`, { method: "DELETE" });
+      if (response.ok) {
+        setHistory((prev) => prev.filter((item) => item.id !== id));
+        if (historySource?.id === id) setHistorySource(null);
+        toast.success("History item removed");
+      }
+    } catch {
+      toast.error("Failed to delete history item");
+    }
+  };
 
   const charCount = jobDescription.length;
   const canSubmit = charCount >= MIN_DESC_LENGTH && charCount <= MAX_DESC_LENGTH && !isSearching;
@@ -249,6 +354,7 @@ export default function FindTalentsPage() {
     setIsSearching(true);
     setTalents([]);
     setLastScoredCount(null);
+    setHistorySource(null);
 
     try {
       const response = await fetch("/api/recruiter/top-talents", {
@@ -265,6 +371,7 @@ export default function FindTalentsPage() {
       setTalents(payload.data.candidates);
       setLastScoredCount(payload.data.scoredCount);
       toast.success("Top talents found");
+      await fetchHistory();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to find top talents");
     } finally {
@@ -380,6 +487,34 @@ export default function FindTalentsPage() {
         </div>
       </div>
 
+      {/* Historical Results Banner */}
+      {historySource && !isSearching && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-3">
+          <div className="flex items-center gap-2 text-sm text-amber-800">
+            <Clock className="h-4 w-4 shrink-0 text-amber-600" />
+            <span>
+              Showing results from{" "}
+              <span
+                className="font-semibold"
+                title={new Date(historySource.created_at).toLocaleString()}
+              >
+                {formatRelativeTime(historySource.created_at)}
+              </span>
+              {" "}— these are cached results. New talents may have joined since.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => void rerunSearch(historySource.job_description)}
+            disabled={isSearching}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-400 to-orange-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:from-amber-500 hover:to-orange-600 disabled:opacity-60"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            View Current Top 5
+          </button>
+        </div>
+      )}
+
       {/* Results */}
       {isSearching ? (
         <div className="rounded-2xl border border-amber-200 bg-white p-10 text-center shadow-sm">
@@ -447,6 +582,115 @@ export default function FindTalentsPage() {
           )}
         </div>
       )}
+
+      {/* Search History Panel */}
+      <div className="rounded-2xl border border-amber-100 bg-white shadow-sm">
+        <button
+          type="button"
+          onClick={() => setIsHistoryOpen((prev) => !prev)}
+          className="flex w-full items-center justify-between gap-4 rounded-2xl px-6 py-4 text-left transition hover:bg-amber-50/40"
+        >
+          <div className="flex items-center gap-2">
+            <History className="h-4 w-4 text-amber-600" />
+            <span className="text-sm font-semibold text-slate-800">Search History</span>
+            {history.length > 0 && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                {history.length}
+              </span>
+            )}
+          </div>
+          {isHistoryOpen ? (
+            <ChevronUp className="h-4 w-4 text-slate-400" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-slate-400" />
+          )}
+        </button>
+
+        {isHistoryOpen && (
+          <div className="border-t border-amber-100 px-6 pb-6 pt-4">
+            {isLoadingHistory ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-5 w-5 animate-spin text-amber-500" />
+              </div>
+            ) : history.length === 0 ? (
+              <div className="flex flex-col items-center gap-3 py-10 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50">
+                  <History className="h-6 w-6 text-amber-400" />
+                </div>
+                <p className="text-sm font-semibold text-slate-700">No search history yet</p>
+                <p className="max-w-xs text-xs leading-5 text-slate-400">
+                  Your past searches will appear here. Load them instantly without spending AI tokens.
+                </p>
+              </div>
+            ) : (
+              <ul className="space-y-3">
+                {history.map((item) => (
+                  <li
+                    key={item.id}
+                    className="group relative rounded-xl border border-slate-100 bg-slate-50/60 p-4 transition hover:border-amber-200 hover:bg-amber-50/40"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start gap-2">
+                          <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                          <p
+                            className="text-sm font-medium text-slate-700"
+                            title={item.job_description}
+                          >
+                            {item.job_description.length > 90
+                              ? `${item.job_description.slice(0, 90).trim()}…`
+                              : item.job_description}
+                          </p>
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
+                            Top {item.candidates.length} from {item.scored_count} scored
+                          </span>
+                          <span
+                            className="text-xs text-slate-400"
+                            title={new Date(item.created_at).toLocaleString()}
+                          >
+                            {formatRelativeTime(item.created_at)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => loadFromHistory(item)}
+                          disabled={isSearching}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-white px-3 py-1.5 text-xs font-semibold text-amber-700 shadow-sm transition hover:bg-amber-50 disabled:opacity-60"
+                        >
+                          <History className="h-3.5 w-3.5" />
+                          Load
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void rerunSearch(item.job_description)}
+                          disabled={isSearching}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-400 to-orange-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:from-amber-500 hover:to-orange-600 disabled:opacity-60"
+                        >
+                          <RefreshCw className="h-3.5 w-3.5" />
+                          Re-run
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void deleteHistoryItem(item.id)}
+                          className="rounded-lg p-1.5 text-slate-300 transition hover:bg-red-50 hover:text-red-400"
+                          aria-label="Delete this history item"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Detail modal */}
       {selectedTalent && (
