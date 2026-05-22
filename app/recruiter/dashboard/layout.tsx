@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   UserRoundCheck,
+  Kanban,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -32,10 +33,17 @@ const sidebarItems: Array<{
     icon: UserRoundCheck,
     exact: false,
   },
+  {
+    href: "/recruiter/dashboard/pipeline",
+    label: "Talent Pipeline",
+    icon: Kanban,
+    exact: false,
+  },
 ];
 
 const pageTitles: Record<string, string> = {
   "/recruiter/dashboard/find-talents": "Find Talents",
+  "/recruiter/dashboard/pipeline": "Talent Pipeline",
 };
 
 export default function RecruiterDashboardLayout({ children }: DashboardLayoutProps) {

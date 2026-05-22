@@ -58,6 +58,9 @@ const formatWebReply = (text: string, actions?: EngineMessage["actions"]) => {
   return body.trim();
 };
 
+const CHAT_UNAVAILABLE_MESSAGE =
+  "I'm having trouble reaching the chat engine right now. Please try again in a moment, or book a quick call if you need help urgently.";
+
 export async function POST(req: Request) {
   let body: WebChatRequest;
 
@@ -75,37 +78,50 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Message is required" }, { status: 400 });
   }
 
-  const session = await getOrCreateSession({
-    channel: "web",
-    sessionId: body.sessionId ?? null,
-  });
+  try {
+    const session = await getOrCreateSession({
+      channel: "web",
+      sessionId: body.sessionId ?? null,
+    });
 
-  const messages: EngineMessage[] = [];
-  const send = async (payload: EngineMessage) => {
-    const formatted: EngineMessage = {
-      ...payload,
-      text: formatWebReply(payload.text, payload.actions),
+    const messages: EngineMessage[] = [];
+    const send = async (payload: EngineMessage) => {
+      const formatted: EngineMessage = {
+        ...payload,
+        text: formatWebReply(payload.text, payload.actions),
+      };
+      messages.push(formatted);
+
+      try {
+        await logChatMessage(session.id, "assistant", formatted.text, { actions: formatted.actions });
+      } catch (error) {
+        console.error("Failed to log web chat assistant message", error);
+      }
     };
-    messages.push(formatted);
-    await logChatMessage(session.id, "assistant", formatted.text, { actions: formatted.actions });
-  };
 
-  await handleIncomingMessage({
-    channel: "web",
-    session,
-    text: message || null,
-    payload: action === "start" ? (body.payload ?? null) : undefined,
-    userMeta: {
-      userAgent: req.headers.get("user-agent") ?? undefined,
-      referrer: req.headers.get("referer") ?? undefined,
-    },
-    send,
-  });
+    await handleIncomingMessage({
+      channel: "web",
+      session,
+      text: message || null,
+      payload: action === "start" ? (body.payload ?? null) : undefined,
+      userMeta: {
+        userAgent: req.headers.get("user-agent") ?? undefined,
+        referrer: req.headers.get("referer") ?? undefined,
+      },
+      send,
+    });
 
-  const response: WebChatResponse = {
-    sessionId: session.id,
-    messages,
-  };
+    const response: WebChatResponse = {
+      sessionId: session.id,
+      messages,
+    };
 
-  return NextResponse.json(response);
+    return NextResponse.json(response);
+  } catch (error) {
+    console.error("Web chat request failed", error);
+    return NextResponse.json(
+      { error: "Chat service unavailable", message: CHAT_UNAVAILABLE_MESSAGE },
+      { status: 503 },
+    );
+  }
 }

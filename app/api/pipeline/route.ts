@@ -5,6 +5,13 @@ import { getSessionUser } from "@/lib/auth/sessionUtils";
 const VALID_STAGES = ["shortlisted", "contacted", "interviewing", "hired", "rejected"] as const;
 type Stage = (typeof VALID_STAGES)[number];
 
+async function isPipelineAuthorized(userId: string): Promise<boolean> {
+  const companyRows = await sql`SELECT user_id FROM goodhive.companies WHERE user_id = ${userId}::uuid LIMIT 1`;
+  if (companyRows.length > 0) return true;
+  const recruiterRows = await sql`SELECT user_id FROM goodhive.talents WHERE user_id = ${userId}::uuid AND recruiter_status = 'approved' LIMIT 1`;
+  return recruiterRows.length > 0;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const sessionUser = await getSessionUser();
@@ -13,16 +20,10 @@ export async function GET(request: NextRequest) {
     }
 
     const jobId = request.nextUrl.searchParams.get("jobId");
-    const companyRows = await sql<{ user_id: string }[]>`
-      SELECT user_id
-      FROM goodhive.companies
-      WHERE user_id = ${sessionUser.user_id}::uuid
-      LIMIT 1
-    `;
-
-    if (companyRows.length === 0) {
+    const authorized = await isPipelineAuthorized(sessionUser.user_id);
+    if (!authorized) {
       return NextResponse.json(
-        { success: false, error: "Company access required" },
+        { success: false, error: "Company or recruiter access required" },
         { status: 403 },
       );
     }
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
         p.job_id,
         p.created_at,
         p.updated_at,
-        t.name AS talent_name,
+        (t.first_name || ' ' || t.last_name) AS talent_name,
         t.image_url AS talent_image,
         t.skills AS talent_skills,
         t.title AS talent_title,
@@ -68,16 +69,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const companyRows = await sql<{ user_id: string }[]>`
-      SELECT user_id
-      FROM goodhive.companies
-      WHERE user_id = ${sessionUser.user_id}::uuid
-      LIMIT 1
-    `;
-
-    if (companyRows.length === 0) {
+    const authorized = await isPipelineAuthorized(sessionUser.user_id);
+    if (!authorized) {
       return NextResponse.json(
-        { success: false, error: "Company access required" },
+        { success: false, error: "Company or recruiter access required" },
         { status: 403 },
       );
     }
@@ -99,7 +94,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Talent not found" }, { status: 404 });
     }
 
-    // Upsert pipeline entry
+    // Upsert pipeline entry — use partial-index column expression, not constraint name,
+    // because the unique indexes were created via CREATE UNIQUE INDEX (not ADD CONSTRAINT).
     const result = await sql<{ id: string; stage: string }[]>`
       INSERT INTO goodhive.company_talent_pipeline (company_id, talent_id, stage, notes, job_id)
       VALUES (
@@ -109,7 +105,7 @@ export async function POST(request: NextRequest) {
         ${notes},
         ${jobId ? sql`${jobId}::uuid` : sql`NULL`}
       )
-      ON CONFLICT ON CONSTRAINT pipeline_unique_no_job DO UPDATE
+      ON CONFLICT (company_id, talent_id) WHERE job_id IS NULL DO UPDATE
         SET stage = EXCLUDED.stage, notes = COALESCE(EXCLUDED.notes, goodhive.company_talent_pipeline.notes), updated_at = NOW()
       RETURNING id, stage
     `;

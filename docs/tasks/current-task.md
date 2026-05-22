@@ -1,10 +1,32 @@
 # Current Task
 
 ## Status
-`ADMIN REFERRALS + MESSENGER FIXES — Implemented (April 27, 2026)`
+`TALENT PIPELINE POLISH — Implemented (May 21, 2026)`
 
 ## Last Updated
-2026-05-08
+2026-05-21
+
+---
+
+## 🎯 TALENT PIPELINE — POLISH & BUG FIXES — May 21, 2026
+
+### What was fixed
+- [x] Fix drag-and-drop to empty columns — added `useDroppable` to each `KanbanColumn` so empty columns are valid drop targets; drop zone highlights amber on hover
+- [x] Fix `SaveToPipelineButton` visibility guard — button now only renders for `isApprovedCompanyViewer`, not for all authenticated users (talents were seeing and getting silent 403s)
+- [x] Add `SaveToPipelineButton` to search-results talent cards — `isCompanyViewer` prop passed from server component; compact bookmark icon in top-right of each card
+- [x] Show already-saved state on talent profile — new `GET /api/pipeline/check` route; `SaveToPipelineButton` accepts `checkOnMount` prop that queries on mount and sets saved state
+- [x] Add Talent Pipeline to company dashboard sidebar — `Kanban` icon entry after Top Candidates
+- [x] Update feature doc status to `LIVE` in `docs/features/company-talent-pipeline.md`
+
+### Validation
+- [x] `pnpm lint`
+- [x] `pnpm tsc --noEmit`
+
+### Prod DB migration
+- [x] Run: `psql "$PROD_DATABASE_URL" -f app/db/migrations/company_talent_pipeline.sql`
+- [x] Verify: `psql "$PROD_DATABASE_URL" -c "\dt goodhive.company_talent_pipeline"` — table confirmed, 0 rows
+
+---
 
 ---
 
@@ -474,6 +496,8 @@ No other files need changing.
 - [x] Redesigned the job-page company sidebar card so the logo and company summary stack cleanly instead of compressing the text beside the profile image
 - [x] Refined company opportunities with active/inactive tabs for owner/admin views, explicit job-status signals, cooler slate budget badges, and human-friendly job metadata labels
 - [x] Added Gemini-powered job section cleanup so messy pasted job text is auto-formatted on save and the public job page now renders sanitized rich content instead of escaped raw section HTML
+- [x] Hardened GoodHive Navigator chat error handling after intermittent DB timeouts: `/api/superbot/chat` now returns a structured service-unavailable payload, the widget surfaces that message, and Superbot CTA URLs are normalized against whitespace in `GOODHIVE_BASE_URL`
+- [x] Removed mandatory Telegram connection from the web GoodHive Navigator flow: no automatic Telegram popup, no consent link prompt, and no header Telegram handoff button
 
 ---
 

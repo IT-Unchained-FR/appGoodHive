@@ -6,7 +6,7 @@ import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors, useDrop
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Trash2, MessageSquare, ExternalLink, ChevronDown, ChevronRight, UserPlus } from "lucide-react";
+import { GripVertical, Trash2, ExternalLink, ChevronDown, ChevronRight, UserPlus } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "@/app/contexts/AuthContext";
 
@@ -35,6 +35,8 @@ const STAGES: { key: Stage; label: string; color: string; dot: string }[] = [
   { key: "hired", label: "Hired", color: "border-t-emerald-400", dot: "bg-emerald-400" },
   { key: "rejected", label: "Rejected", color: "border-t-rose-300", dot: "bg-rose-300" },
 ];
+
+const VALID_STAGES: Stage[] = ["shortlisted", "contacted", "interviewing", "hired", "rejected"];
 
 function TalentCard({
   entry,
@@ -234,7 +236,7 @@ function KanbanColumn({
   );
 }
 
-export default function TalentPipelinePage() {
+export default function RecruiterTalentPipelinePage() {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
   const [pipeline, setPipeline] = useState<PipelineData | null>(null);
@@ -253,21 +255,9 @@ export default function TalentPipelinePage() {
   const fetchPipeline = useCallback(async () => {
     try {
       const res = await fetch("/api/pipeline", { cache: "no-store" });
-      if (res.status === 401) {
-        setPipeline(null);
-        setErrorState("unauthorized");
-        return;
-      }
-      if (res.status === 403) {
-        setPipeline(null);
-        setErrorState("forbidden");
-        return;
-      }
-      if (!res.ok) {
-        setPipeline(null);
-        setErrorState("failed");
-        return;
-      }
+      if (res.status === 401) { setPipeline(null); setErrorState("unauthorized"); return; }
+      if (res.status === 403) { setPipeline(null); setErrorState("forbidden"); return; }
+      if (!res.ok) { setPipeline(null); setErrorState("failed"); return; }
 
       const json = await res.json();
       if (json.success) {
@@ -298,7 +288,6 @@ export default function TalentPipelinePage() {
   }, [fetchPipeline, isAuthenticated, isAuthLoading]);
 
   const handleMove = async (entryId: string, newStage: Stage) => {
-    // Optimistic update
     setPipeline((prev) => {
       if (!prev) return prev;
       const allEntries = Object.values(prev).flat();
@@ -328,7 +317,6 @@ export default function TalentPipelinePage() {
     const { active, over } = event;
     if (!over || !pipeline) return;
 
-    // Find which stage the item was dropped into
     const overId = String(over.id);
     const targetStage = STAGES.find((s) => s.key === overId)?.key
       ?? Object.entries(pipeline).find(([, entries]) =>
@@ -368,7 +356,7 @@ export default function TalentPipelinePage() {
   if (errorState === "unauthorized") {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <p className="text-slate-500">Please log in as a company to view your pipeline.</p>
+        <p className="text-slate-500">Please log in as a recruiter to view your pipeline.</p>
       </div>
     );
   }
@@ -377,7 +365,7 @@ export default function TalentPipelinePage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh] px-6">
         <p className="text-center text-slate-500">
-          Company access is required to view the talent pipeline.
+          Approved recruiter access is required to view the talent pipeline.
         </p>
       </div>
     );
@@ -385,17 +373,16 @@ export default function TalentPipelinePage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
       <div className="bg-white border-b border-slate-200 px-6 py-4">
         <div className="flex items-center justify-between max-w-full">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-amber-700">Company Dashboard</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-amber-700">Recruiter Dashboard</p>
             <h1 className="text-2xl font-semibold text-slate-900 mt-0.5">Talent Pipeline</h1>
-            <p className="text-sm text-slate-500 mt-0.5">Manage and track your candidates through the hiring process.</p>
+            <p className="text-sm text-slate-500 mt-0.5">Track and manage your candidates through the hiring process.</p>
           </div>
           <button
             type="button"
-            onClick={() => router.push("/companies/search-talents")}
+            onClick={() => router.push("/recruiter/dashboard/find-talents")}
             className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-600 transition"
           >
             <UserPlus className="w-4 h-4" />
@@ -428,5 +415,3 @@ export default function TalentPipelinePage() {
     </div>
   );
 }
-
-const VALID_STAGES: Stage[] = ["shortlisted", "contacted", "interviewing", "hired", "rejected"];

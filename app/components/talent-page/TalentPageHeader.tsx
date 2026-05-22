@@ -14,6 +14,7 @@ import { ReturnUrlManager } from "@/app/utils/returnUrlManager";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { SaveToPipelineButton } from "@/app/components/SaveToPipelineButton";
 import styles from "./TalentPageHeader.module.scss";
 
 interface TalentPageHeaderProps {
@@ -34,6 +35,7 @@ interface TalentPageHeaderProps {
   talent_user_id?: string;
   availability?: boolean | string;
   availability_status?: string | null;
+  showSaveButton?: boolean;
 }
 
 export const TalentPageHeader = ({
@@ -54,6 +56,7 @@ export const TalentPageHeader = ({
   availability_status,
   canViewSensitive: canViewSensitiveProp,
   canViewBasic: canViewBasicProp,
+  showSaveButton = false,
 }: TalentPageHeaderProps) => {
   const router = useRouter();
   const [imageError, setImageError] = useState(false);
@@ -503,6 +506,10 @@ export const TalentPageHeader = ({
               <Lock size={18} />
               Checking company access...
             </button>
+          )}
+
+          {showSaveButton && talent_user_id && (
+            <SaveToPipelineButton talentId={talent_user_id} checkOnMount />
           )}
         </div>
 

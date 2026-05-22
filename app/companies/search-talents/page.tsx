@@ -281,7 +281,7 @@ export default async function SearchTalentsPage({
         {/* Talents Section */}
         <div className="p-8">
           {talents.length > 0 ? (
-            <TalentResult talents={talents} matchJobId={matchJobId} />
+            <TalentResult talents={talents} matchJobId={matchJobId} isCompanyViewer={isCompanyViewer} />
           ) : (
             <div className="text-center py-20">
               <div className="max-w-md mx-auto">

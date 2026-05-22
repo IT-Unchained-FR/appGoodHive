@@ -3,7 +3,7 @@
 import type { ChangeEvent, ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ChevronRight, MessageCircle, Send, X } from "lucide-react";
+import { ChevronRight, MessageCircle, X } from "lucide-react";
 import { SUPERBOT_NAME } from "@/lib/superbot/constants";
 import styles from "./SuperbotWidget.module.css";
 
@@ -44,14 +44,8 @@ const FALLBACK_SUGGESTED_QUESTIONS = [
 
 const linkPattern = /https?:\/\/[^\s<]+/g;
 
-const TELEGRAM_BOT_USERNAME =
-  process.env.NEXT_PUBLIC_SUPERBOT_TELEGRAM_BOT_USERNAME ?? "goodhive_bot";
-
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-const isTelegramConnectedNotice = (message: ChatMessage) =>
-  message.role === "assistant" && /^Telegram connected for /i.test(message.text.trim());
 
 const renderTextWithLinks = (text: string, keyPrefix: string) => {
   const matches = text.match(linkPattern) ?? [];
@@ -275,213 +269,35 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
   );
   const [showSuggestionsHint, setShowSuggestionsHint] = useState(false);
   const startedRef = useRef(false);
-  const consentNoticeShownRef = useRef(false);
-  const telegramLinkedNoticeShownRef = useRef(false);
-  const linkPollingRef = useRef<number | null>(null);
-  const linkPollingBusyRef = useRef(false);
-  const notificationPermissionRequestedRef = useRef(false);
-  const audioContextRef = useRef<AudioContext | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const suggestionsRef = useRef<HTMLDivElement | null>(null);
   const hasStartedChatting = messages.length > 0 || input.trim().length > 0;
 
   const parseChatResponse = useCallback(async (response: Response) => {
-    if (!response.ok) {
-      const body = await response.text();
-      throw new Error(`Chat request failed (${response.status}): ${body || "empty response"}`);
-    }
     const body = await response.text();
     if (!body) {
       throw new Error("Chat request returned an empty response.");
     }
+
+    if (!response.ok) {
+      try {
+        const parsed = JSON.parse(body) as { message?: string; error?: string };
+        throw new Error(
+          parsed.message ??
+            parsed.error ??
+            `Chat request failed (${response.status}).`,
+        );
+      } catch (error) {
+        if (error instanceof Error && error.name !== "SyntaxError" && error.message) {
+          throw error;
+        }
+        throw new Error(`Chat request failed (${response.status}): ${body}`);
+      }
+    }
+
     return JSON.parse(body) as ChatResponse;
   }, []);
-
-  const buildTelegramUrl = useCallback((targetSessionId: string) => {
-    return `https://t.me/${TELEGRAM_BOT_USERNAME}?start=web_${targetSessionId}`;
-  }, []);
-
-  const getTelegramPromptStorageKey = useCallback((targetSessionId: string) => {
-    return `superbot_telegram_prompted_${targetSessionId}`;
-  }, []);
-
-  const hasPromptedTelegramForSession = useCallback((targetSessionId: string) => {
-    return window.localStorage.getItem(getTelegramPromptStorageKey(targetSessionId)) === "1";
-  }, [getTelegramPromptStorageKey]);
-
-  const markTelegramPromptedForSession = useCallback((targetSessionId: string) => {
-    window.localStorage.setItem(getTelegramPromptStorageKey(targetSessionId), "1");
-  }, [getTelegramPromptStorageKey]);
-
-  const stopLinkPolling = useCallback(() => {
-    if (linkPollingRef.current !== null) {
-      window.clearInterval(linkPollingRef.current);
-      linkPollingRef.current = null;
-    }
-  }, []);
-
-  const requestNotificationPermissionIfNeeded = useCallback(() => {
-    if (typeof window === "undefined") return;
-    if (!("Notification" in window)) return;
-    if (window.Notification.permission !== "default") return;
-    if (notificationPermissionRequestedRef.current) return;
-
-    notificationPermissionRequestedRef.current = true;
-    void window.Notification.requestPermission().catch((error) => {
-      console.warn("Notification permission request failed", error);
-    });
-  }, []);
-
-  const playTelegramLinkedSound = useCallback(() => {
-    if (typeof window === "undefined") return;
-    const AudioContextCtor =
-      window.AudioContext ||
-      (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AudioContextCtor) return;
-
-    try {
-      const context = audioContextRef.current ?? new AudioContextCtor();
-      audioContextRef.current = context;
-      if (context.state === "suspended") {
-        void context.resume();
-      }
-
-      const oscillator = context.createOscillator();
-      const gainNode = context.createGain();
-
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(880, context.currentTime);
-      gainNode.gain.setValueAtTime(0.0001, context.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.08, context.currentTime + 0.02);
-      gainNode.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.22);
-
-      oscillator.connect(gainNode);
-      gainNode.connect(context.destination);
-      oscillator.start();
-      oscillator.stop(context.currentTime + 0.24);
-    } catch (error) {
-      console.warn("Failed to play Telegram linked sound", error);
-    }
-  }, []);
-
-  const showTelegramLinkedNotification = useCallback((handle: string) => {
-    if (typeof window === "undefined") return;
-    if (!("Notification" in window)) return;
-    if (window.Notification.permission !== "granted") return;
-
-    try {
-      const body = `Connected for ${handle}. You can continue in the GoodHive tab.`;
-      const notification = new window.Notification("GoodHive chat connected", { body });
-      window.setTimeout(() => notification.close(), 7000);
-    } catch (error) {
-      console.warn("Failed to show Telegram linked notification", error);
-    }
-  }, []);
-
-  const sendConsentNoticeOnce = useCallback((targetSessionId: string) => {
-    if (consentNoticeShownRef.current) return;
-    consentNoticeShownRef.current = true;
-
-    const telegramUrl = buildTelegramUrl(targetSessionId);
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `${Date.now()}-telegram-consent`,
-        role: "assistant",
-        text:
-          `To continue with Telegram consent, open this link and tap Start once:\n${telegramUrl}\n\n` +
-          "Your current browser tab stays active, so you can come back here immediately.",
-      },
-    ]);
-  }, [buildTelegramUrl]);
-
-  const startLinkPolling = useCallback((targetSessionId: string) => {
-    stopLinkPolling();
-
-    const startedAt = Date.now();
-    linkPollingRef.current = window.setInterval(async () => {
-      if (linkPollingBusyRef.current) return;
-      if (Date.now() - startedAt > 2 * 60 * 1000) {
-        stopLinkPolling();
-        return;
-      }
-
-      linkPollingBusyRef.current = true;
-      try {
-        const response = await fetch(`/api/superbot/link-status?sessionId=${targetSessionId}`);
-        if (!response.ok) return;
-
-        const data = (await response.json()) as {
-          linked?: boolean;
-          telegram?: { username?: string | null };
-        };
-
-        if (!data.linked) return;
-
-        stopLinkPolling();
-        if (telegramLinkedNoticeShownRef.current) return;
-        telegramLinkedNoticeShownRef.current = true;
-
-        const username = data.telegram?.username?.trim();
-        const handle = username ? `@${username.replace(/^@+/, "")}` : "your Telegram account";
-        playTelegramLinkedSound();
-        showTelegramLinkedNotification(handle);
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `${Date.now()}-telegram-linked`,
-            role: "assistant",
-            text: `Telegram connected for ${handle}`,
-          },
-        ]);
-      } catch (error) {
-        console.warn("Failed to poll Telegram link status", error);
-      } finally {
-        linkPollingBusyRef.current = false;
-      }
-    }, 3500);
-  }, [playTelegramLinkedSound, showTelegramLinkedNotification, stopLinkPolling]);
-
-  const openTelegramConsentFlow = useCallback((
-    targetSessionId: string,
-    options?: { force?: boolean },
-  ) => {
-    if (!targetSessionId) return;
-    if (!options?.force && hasPromptedTelegramForSession(targetSessionId)) return;
-
-    const telegramUrl = buildTelegramUrl(targetSessionId);
-    const popup = window.open(telegramUrl, "_blank", "noopener,noreferrer");
-    markTelegramPromptedForSession(targetSessionId);
-    startLinkPolling(targetSessionId);
-
-    if (sessionId) {
-      void fetch("/api/superbot/events", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          sessionId,
-          type: "cta_click",
-          metadata: {
-            label: "telegram_consent_handoff",
-            url: telegramUrl,
-            source: "auto_first_message",
-          },
-        }),
-      });
-    }
-
-    if (!popup) {
-      sendConsentNoticeOnce(targetSessionId);
-    }
-  }, [
-    buildTelegramUrl,
-    hasPromptedTelegramForSession,
-    markTelegramPromptedForSession,
-    sendConsentNoticeOnce,
-    sessionId,
-    startLinkPolling,
-  ]);
 
   const startConversation = useCallback(async (existingSession?: string, payload?: string) => {
     setLoading(true);
@@ -540,8 +356,7 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
     const querySession = UUID_PATTERN.test(sessionFromQuery) ? sessionFromQuery : "";
     const payload = params.get("payload") ?? params.get("start");
 
-    // Prefer explicit `sessionId` from query (used by Telegram "Continue in browser" link),
-    // otherwise fall back to localStorage.
+    // Prefer explicit `sessionId` from query, otherwise fall back to localStorage.
     const existing = querySession || storedSession || undefined;
     startConversation(existing, payload ?? undefined);
   }, [params, startConversation]);
@@ -581,22 +396,6 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
     if (!endRef.current) return;
     endRef.current.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
-
-  useEffect(() => {
-    if (!sessionId) return;
-    if (!hasPromptedTelegramForSession(sessionId)) return;
-    if (telegramLinkedNoticeShownRef.current) return;
-    startLinkPolling(sessionId);
-  }, [hasPromptedTelegramForSession, sessionId, startLinkPolling]);
-
-  useEffect(() => {
-    return () => {
-      stopLinkPolling();
-      if (audioContextRef.current) {
-        void audioContextRef.current.close().catch(() => {});
-      }
-    };
-  }, [stopLinkPolling]);
 
   useEffect(() => {
     if (!hasStartedChatting) {
@@ -646,18 +445,6 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
   const sendMessage = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed) return;
-    requestNotificationPermissionIfNeeded();
-    const isFirstUserMessage = !messages.some((message) => message.role === "user");
-    const sessionAtSend = sessionId;
-
-    if (isFirstUserMessage && sessionAtSend) {
-      // Try to open a new tab once, but always show a clickable link in-chat.
-      // This makes the flow resilient to popup blockers and stale localStorage flags.
-      if (!hasPromptedTelegramForSession(sessionAtSend)) {
-        openTelegramConsentFlow(sessionAtSend);
-      }
-      sendConsentNoticeOnce(sessionAtSend);
-    }
 
     const userMessage: ChatMessage = {
       id: `${Date.now()}-user`,
@@ -687,13 +474,6 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
       setSessionId(data.sessionId);
       window.localStorage.setItem("superbot_session_id", data.sessionId);
 
-      if (isFirstUserMessage) {
-        if (!hasPromptedTelegramForSession(data.sessionId)) {
-          openTelegramConsentFlow(data.sessionId);
-        }
-        sendConsentNoticeOnce(data.sessionId);
-      }
-
       if (data.messages?.length) {
         const botMessages: ChatMessage[] = data.messages.map((message, index) => ({
           id: `${Date.now()}-bot-${index}`,
@@ -705,13 +485,16 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
       }
     } catch (error) {
       console.error("Failed to send message", error);
+      const fallbackText =
+        error instanceof Error && error.message
+          ? error.message
+          : "I couldn't reach the chat service. Please refresh and try again.";
       setMessages((prev) => [
         ...prev,
         {
           id: `${Date.now()}-superbot-send-error`,
           role: "assistant",
-          text:
-            "I couldn't reach the chat service. Please refresh and try again.",
+          text: fallbackText,
         },
       ]);
     } finally {
@@ -768,20 +551,6 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
             <button
               type="button"
               className={styles.headerButton}
-              aria-label="Open Telegram handoff"
-              title={sessionId ? "Continue this chat in Telegram" : "Telegram handoff not ready yet"}
-              onClick={() => {
-                if (!sessionId) return;
-                openTelegramConsentFlow(sessionId, { force: true });
-                sendConsentNoticeOnce(sessionId);
-              }}
-              disabled={!sessionId || loading}
-            >
-              <Send size={16} />
-            </button>
-            <button
-              type="button"
-              className={styles.headerButton}
               aria-label="Close chat"
               onClick={() => setIsOpen(false)}
             >
@@ -792,16 +561,6 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
 
         <div className={styles.messages}>
           {messages.map((message) => {
-            if (isTelegramConnectedNotice(message)) {
-              return (
-                <div key={message.id} className={styles.connectionNotice}>
-                  <span className={styles.connectionNoticeLine} aria-hidden="true" />
-                  <span className={styles.connectionNoticeText}>{message.text}</span>
-                  <span className={styles.connectionNoticeLine} aria-hidden="true" />
-                </div>
-              );
-            }
-
             return (
               <div
                 key={message.id}

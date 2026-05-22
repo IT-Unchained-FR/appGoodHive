@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Sparkles,
   UserRoundCheck,
+  Kanban,
 } from "lucide-react";
 import { AuthLayout } from "@/app/components/AuthLayout/AuthLayout";
 
@@ -53,6 +54,12 @@ const sidebarItems: Array<{
     href: "/companies/dashboard/top-candidates",
     label: "Top Candidates",
     icon: UserRoundCheck,
+    exact: false,
+  },
+  {
+    href: "/companies/pipeline",
+    label: "Talent Pipeline",
+    icon: Kanban,
     exact: false,
   },
   {

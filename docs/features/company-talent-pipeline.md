@@ -1,7 +1,7 @@
 # Feature: Company Talent Shortlisting & Pipeline Board
 
 ## Status
-`PLANNED`
+`LIVE`
 
 ## Business Goal
 Companies using GoodHive have no way to organize the talents they're interested in. They browse, like someone, then lose track. A lightweight Kanban pipeline (Shortlisted → Contacted → Interview → Hired) makes GoodHive a full recruitment tool, not just a directory — increasing company stickiness and subscription value.

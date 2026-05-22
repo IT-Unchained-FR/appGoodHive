@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bookmark, BookmarkCheck } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -8,11 +8,25 @@ interface SaveToPipelineButtonProps {
   talentId: string;
   jobId?: string;
   compact?: boolean;
+  checkOnMount?: boolean;
 }
 
-export function SaveToPipelineButton({ talentId, jobId, compact = false }: SaveToPipelineButtonProps) {
+export function SaveToPipelineButton({ talentId, jobId, compact = false, checkOnMount = false }: SaveToPipelineButtonProps) {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!checkOnMount) return;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/pipeline/check?talentId=${talentId}`);
+        const json = await res.json();
+        if (json.success && json.data?.inPipeline) setSaved(true);
+      } catch {
+        // silently ignore — button defaults to unsaved state
+      }
+    })();
+  }, [checkOnMount, talentId]);
 
   const handleSave = async () => {
     if (saved || loading) return;

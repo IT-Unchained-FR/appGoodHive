@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { useEffect, useState } from "react";
 import { Card } from "../../components/card";
 import { MatchScoreBadge } from "@/app/components/MatchScoreBadge";
+import { SaveToPipelineButton } from "@/app/components/SaveToPipelineButton";
 
 // TypeScript interface for the talent data
 export interface TalentData {
@@ -57,9 +58,11 @@ type MatchScoreFetchResult =
 export default function TalentResult({
   talents,
   matchJobId,
+  isCompanyViewer,
 }: {
   talents: TalentData[];
   matchJobId?: string | null;
+  isCompanyViewer?: boolean;
 }) {
   const [matchScores, setMatchScores] = useState<MatchScoreMap>({});
 
@@ -310,6 +313,13 @@ export default function TalentResult({
                   }
                   uniqueId={talent.userId}
                 />
+
+                {/* Save to Pipeline button — company viewers only */}
+                {isCompanyViewer && talent.userId && (
+                  <div className="absolute top-2 right-2 z-10 bg-white/80 backdrop-blur-sm rounded-full shadow-sm">
+                    <SaveToPipelineButton talentId={talent.userId} compact />
+                  </div>
+                )}
 
                 {/* Hover Effect Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl pointer-events-none"></div>

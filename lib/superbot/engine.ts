@@ -3,7 +3,19 @@ import { generateChatResponse } from "@/lib/rag";
 import { evaluateGuardrails } from "./guardrails";
 import { logSuperbotEvent } from "./events";
 
-const BASE_URL = process.env.GOODHIVE_BASE_URL ?? "https://goodhive.io";
+const DEFAULT_BASE_URL = "https://goodhive.io";
+
+function normalizeBaseUrl(value?: string) {
+  const cleaned = (value ?? DEFAULT_BASE_URL).replace(/\s+/g, "").replace(/\/+$/, "");
+
+  try {
+    return new URL(cleaned).origin;
+  } catch {
+    return DEFAULT_BASE_URL;
+  }
+}
+
+const BASE_URL = normalizeBaseUrl(process.env.GOODHIVE_BASE_URL);
 const TALENT_PROFILE_URL = `${BASE_URL}/talents/my-profile`;
 const COMPANY_PROFILE_URL = `${BASE_URL}/companies/my-profile`;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
