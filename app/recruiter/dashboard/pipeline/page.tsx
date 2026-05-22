@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors, useDroppable } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, PointerSensor, useSensor, useSensors, useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -249,6 +249,7 @@ export default function RecruiterTalentPipelinePage() {
     hired: true,
     rejected: true,
   });
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -313,7 +314,12 @@ export default function RecruiterTalentPipelinePage() {
     }
   };
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(String(event.active.id));
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
+    setActiveId(null);
     const { active, over } = event;
     if (!over || !pipeline) return;
 
@@ -394,7 +400,7 @@ export default function RecruiterTalentPipelinePage() {
       {!pipeline ? (
         <div className="text-center py-20 text-slate-500">Failed to load pipeline</div>
       ) : (
-        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="flex gap-4 p-6 overflow-x-auto min-h-[calc(100vh-120px)]">
             {STAGES.map((stage) => (
               <KanbanColumn
@@ -410,6 +416,14 @@ export default function RecruiterTalentPipelinePage() {
               />
             ))}
           </div>
+          <DragOverlay>
+            {activeId && (() => {
+              const entry = Object.values(pipeline).flat().find((e) => e.id === activeId);
+              return entry ? (
+                <TalentCard entry={entry} onDelete={() => {}} onMove={() => {}} />
+              ) : null;
+            })()}
+          </DragOverlay>
         </DndContext>
       )}
     </div>
