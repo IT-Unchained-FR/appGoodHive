@@ -1,10 +1,285 @@
 # Current Task
 
 ## Status
-`TALENT PIPELINE POLISH — Implemented (May 21, 2026)`
+`RECRUITER DASHBOARD — API WIRING & REAL DATA (May 24, 2026)`
 
 ## Last Updated
-2026-05-21
+2026-05-24
+
+## Active Feature Plan
+See full battle plan → [`docs/features/recruiter-dashboard-features.md`](../features/recruiter-dashboard-features.md)
+
+---
+
+## 🎯 RECRUITER DASHBOARD — API CONNECTION PLAN
+
+> Goal: every number and piece of text visible in `/recruiter/dashboard` must come from real DB data. No hardcoded deltas, no misleading labels, no silent failures.
+
+---
+
+### 🔴 BUG-1 — Pipeline API returns 403 for recruiters
+**File:** `app/api/pipeline/route.ts:11`
+
+**Root cause:** `isPipelineAuthorized` checks:
+```sql
+SELECT user_id FROM goodhive.talents
+WHERE user_id = $userId AND recruiter_status = 'approved'
+```
+But `recruiter_status` lives on `goodhive.users`, **not** `goodhive.talents`. Recruiters always get 403 → pipeline stat card and health bar show 0/empty forever.
+
+**Fix:**
+```sql
+SELECT userid FROM goodhive.users
+WHERE userid = $userId::uuid AND recruiter_status = 'approved'
+LIMIT 1
+```
+
+**Files changed:** `app/api/pipeline/route.ts`
+
+---
+
+### 🔴 BUG-2 — Display name fetch uses wrong response path
+**File:** `app/recruiter/dashboard/page.tsx:605`
+
+**Root cause:** Code reads:
+```ts
+const fn = data?.talent?.first_name ?? data?.first_name ?? "";
+```
+`/api/talents/my-profile` returns `first_name` at the **top level** of the JSON response (line 604 of the route). `data.talent` is `effectiveTalent` (a different sub-object used for role flags, not the flat profile). So `data?.talent?.first_name` is always `undefined`, and `data?.first_name` is the correct fallback — but only by accident.
+
+**Fix:** Drop the wrong primary path, keep only the correct one:
+```ts
+const fn = data?.first_name ?? "";
+```
+
+**Files changed:** `app/recruiter/dashboard/page.tsx`
+
+---
+
+### 🟡 FAKE-DATA-1 — All stat card deltas are hardcoded strings
+
+**File:** `app/recruiter/dashboard/page.tsx` — stat card `delta` props
+
+| Card | Current (fake) | Should be |
+|------|---------------|-----------|
+| Total Searches | `"18%"` | `"X% vs last week"` computed from search history |
+| Talents in Pipeline | `"5"` | `"+N this week"` from pipeline `created_at` |
+| Interviewing | `"2 vs last week"` | Real count diff vs 7 days ago |
+| Hired This Month | `"33%"` | Real % change hired this month vs last month |
+
+**Fix:** Add a new API endpoint `GET /api/recruiter/stats` that returns pre-computed deltas server-side. The client computes what it can from already-loaded data; the endpoint provides week/month aggregates.
+
+**New file:** `app/api/recruiter/stats/route.ts`
+
+Response shape:
+```ts
+{
+  success: true,
+  data: {
+    searches: {
+      total: number,           // all time
+      thisWeek: number,        // last 7 days
+      lastWeek: number,        // 7–14 days ago
+      sparkline: number[],     // 12 daily counts, oldest→newest
+    },
+    pipeline: {
+      addedThisWeek: number,
+      addedLastWeek: number,
+      sparkline: number[],
+    },
+    interviewing: {
+      current: number,
+      lastWeek: number,
+    },
+    hired: {
+      thisMonth: number,
+      lastMonth: number,
+    },
+  }
+}
+```
+
+SQL for each bucket (all scoped to `recruiter_id = sessionUser.user_id`):
+- **searches.thisWeek:** `COUNT(*) FROM recruiter_search_history WHERE created_at > NOW() - INTERVAL '7 days'`
+- **searches.lastWeek:** `COUNT(*) WHERE created_at BETWEEN NOW()-'14 days' AND NOW()-'7 days'`
+- **searches.sparkline:** `COUNT(*) GROUP BY DATE_TRUNC('day', created_at) ORDER BY day DESC LIMIT 12`
+- **pipeline.addedThisWeek / lastWeek:** `COUNT(*) FROM company_talent_pipeline WHERE company_id = $id AND created_at > ...`
+- **interviewing.current:** `COUNT(*) FROM company_talent_pipeline WHERE stage = 'interviewing'`
+- **interviewing.lastWeek:** same but snapshot `updated_at < 7 days ago AND stage was 'interviewing'` — approximate with current count (good enough)
+- **hired.thisMonth / lastMonth:** `COUNT(*) WHERE stage = 'hired' AND DATE_TRUNC('month', updated_at) = ...`
+
+**Files changed:** `app/api/recruiter/stats/route.ts` (new), `app/recruiter/dashboard/page.tsx`
+
+---
+
+### 🟡 FAKE-DATA-2 — Sparklines are static hardcoded points
+**File:** `app/recruiter/dashboard/page.tsx:108–114`
+
+```ts
+const SPARKS = {
+  searches: "0,18 10,14 20,16 ...",   // ← completely fake
+  ...
+}
+```
+
+**Fix:** Use `stats.searches.sparkline` (12-element `number[]` from the new `/api/recruiter/stats`) to build SVG polyline points dynamically. Normalize to a 0–20 y-axis:
+```ts
+function toPolyline(values: number[]): string {
+  const max = Math.max(...values, 1);
+  return values
+    .map((v, i) => `${(i / (values.length - 1)) * 120},${20 - (v / max) * 18}`)
+    .join(" ");
+}
+```
+
+**Files changed:** `app/recruiter/dashboard/page.tsx`
+
+---
+
+### 🟡 FAKE-DATA-3 — ActivityTabs state is wired to UI but never filters anything
+**File:** `app/recruiter/dashboard/page.tsx:558–695`
+
+`activeTab` is set when the user clicks a tab, but no section reads it. The tabs are purely cosmetic.
+
+**Fix:** Wire the tabs to filter the **bottom section** of the dashboard:
+- `"all"` → show `TopTalentsSection` + `RecentSearchesSection` (current default)
+- `"shortlisted"` → show a `PipelineStageSection` filtered to `stage === 'shortlisted'`
+- `"interviews"` → show `PipelineStageSection` filtered to `stage === 'interviewing'`
+- `"offers"` → show `PipelineStageSection` filtered to `stage === 'contacted'`
+- `"hired"` → show `PipelineStageSection` filtered to `stage === 'hired'`
+
+The `PipelineStageSection` is a new local component (50 lines) that renders the filtered `pipeline[stage]` entries using the rich talent data already returned by the pipeline API.
+
+**Files changed:** `app/recruiter/dashboard/page.tsx`
+
+---
+
+### 🟡 FAKE-DATA-4 — PipelineEntry type discards available rich data
+**File:** `app/recruiter/dashboard/page.tsx:46–50`
+
+Current type:
+```ts
+interface PipelineEntry {
+  id: string;
+  stage: string;
+}
+```
+
+The pipeline `GET /api/pipeline` actually returns (see route.ts lines 31–50):
+```ts
+id, talent_id, stage, notes, job_id, created_at, updated_at,
+talent_name, talent_image, talent_skills, talent_title, talent_bio
+```
+
+This rich data is thrown away at the type boundary, so `PipelineHealthBar` can only count entries, not show talent names/avatars.
+
+**Fix:** Expand the type:
+```ts
+interface PipelineEntry {
+  id: string;
+  talent_id: string;
+  stage: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  talent_name: string | null;
+  talent_image: string | null;
+  talent_title: string | null;
+  talent_skills: string | null;
+}
+```
+
+Use `talent_name` and `talent_title` in the new `PipelineStageSection` component.
+
+**Files changed:** `app/recruiter/dashboard/page.tsx`
+
+---
+
+### 🟡 MISLEADING-1 — Section title "Top talents this week" shows last search only
+**File:** `app/recruiter/dashboard/page.tsx:379`
+
+The section reads `searchHistory[0]?.candidates?.slice(0, 4)` — always the most recent search, regardless of when it was made. If last search was 3 weeks ago, title is wrong.
+
+**Fix (Option A — rename):** Change the section label to `"Latest AI Search Results"` and sub-label to the search timestamp. No logic change needed.
+
+**Fix (Option B — real aggregation):** Gather all searches from last 7 days, deduplicate by `userId`, sort by `score DESC`, show top 4. Slightly more logic but honest.
+
+→ **Recommended: Option A** (rename). Option B can be done later for the Analytics page.
+
+**Files changed:** `app/recruiter/dashboard/page.tsx:379`
+
+---
+
+### 🟢 ENHANCEMENT-1 — Pipeline count badge in sidebar
+**File:** `app/recruiter/dashboard/layout.tsx`
+
+The feature doc (`docs/features/recruiter-dashboard-features.md:33`) specifies showing a live count badge next to "Talent Pipeline" in the sidebar. Already planned.
+
+**Fix:** Add a `pipelineCount` prop to the layout (or fetch in the layout itself). The layout already has access to the session. A small `GET /api/pipeline` call (or a lightweight count-only endpoint `GET /api/pipeline/count`) returns total entries.
+
+Option: pass `pipelineCount` down from a parent server component. Or: fetch inside the layout with a small `useEffect` on mount (client component already).
+
+**Files changed:** `app/recruiter/dashboard/layout.tsx`, optionally `app/api/pipeline/count/route.ts` (new lightweight endpoint)
+
+---
+
+### 🟢 ENHANCEMENT-2 — Per-section error states + retry
+**File:** `app/recruiter/dashboard/page.tsx`
+
+Currently if a fetch fails, a toast appears and the section shows nothing (loading skeleton stays or shows 0). There is no retry affordance.
+
+**Fix:** Add `errorHistory` and `errorPipeline` booleans. When `true`, render an inline error card per section with a "Retry" button that re-runs the fetch.
+
+**Files changed:** `app/recruiter/dashboard/page.tsx`
+
+---
+
+## 📋 Implementation Order (for Codex)
+
+| Priority | Task | File(s) | Effort |
+|----------|------|---------|--------|
+| 🔴 P0 | Fix pipeline 403 (BUG-1) | `app/api/pipeline/route.ts` | 2 lines |
+| 🔴 P0 | Fix display name path (BUG-2) | `app/recruiter/dashboard/page.tsx` | 1 line |
+| 🟡 P1 | New `/api/recruiter/stats` endpoint | `app/api/recruiter/stats/route.ts` | ~60 lines SQL |
+| 🟡 P1 | Wire stats to stat cards + sparklines | `app/recruiter/dashboard/page.tsx` | ~40 lines |
+| 🟡 P1 | Expand PipelineEntry type (FAKE-DATA-4) | `app/recruiter/dashboard/page.tsx` | 8 lines |
+| 🟡 P1 | Wire ActivityTabs to filter content (FAKE-DATA-3) | `app/recruiter/dashboard/page.tsx` | ~60 lines |
+| 🟡 P2 | Rename misleading section title (MISLEADING-1) | `app/recruiter/dashboard/page.tsx` | 1 line |
+| 🟢 P2 | Pipeline count badge in sidebar | `app/recruiter/dashboard/layout.tsx` | ~25 lines |
+| 🟢 P3 | Per-section error states + retry | `app/recruiter/dashboard/page.tsx` | ~30 lines |
+
+---
+
+## ✅ Acceptance Criteria
+
+- [ ] Opening `/recruiter/dashboard` shows **zero** hardcoded numbers
+- [ ] Stat card deltas reflect real DB data (may show "—" if no history yet)
+- [ ] Sparklines trace real activity over the last 12 days
+- [ ] Clicking "Shortlisted" tab shows actual shortlisted pipeline entries with talent names
+- [ ] Pipeline health bar renders correctly for recruiter users (not always 0)
+- [ ] Greeting shows recruiter's real first name
+- [ ] Section label says "Latest AI Search Results" (not "this week" if data is older)
+- [ ] Each section shows an error card with Retry button on fetch failure
+
+---
+
+## 🔧 Validation Commands
+```bash
+npx tsc --noEmit --skipLibCheck
+npm run build
+```
+
+---
+
+### Previous Focus
+- [x] **#1 Recruiter Home Dashboard** — dashboard page built (UI done, API wiring in progress above)
+- [ ] **#2 Pipeline Count Badges** — live counts on sidebar (see ENHANCEMENT-1 above)
+- [ ] **#3 Export Pipeline to CSV** — one-click download
+
+### Up Next (Medium)
+- [ ] **#4 Analytics Page** — pipeline funnel + search activity charts
+- [ ] **#5 Candidate Comparison View** — side-by-side modal
+- [ ] **#6 Send to Client Summary** — AI-generated talent blurb
 
 ---
 

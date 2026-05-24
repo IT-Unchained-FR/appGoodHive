@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { computeMatchScore } from "@/app/lib/ai/match-score";
 import { getSessionUser } from "@/lib/auth/sessionUtils";
+import { isApprovedRecruiterOrCompany } from "@/app/lib/recruiting-auth";
 import sql from "@/lib/db";
 import { expireStaleImmediateAvailability, safeBase64Decode } from "@/lib/talents";
 
@@ -83,17 +84,6 @@ function normalizeAvailability(status: string | null, legacy: boolean | string |
   return "not_looking";
 }
 
-async function getApprovedRecruiter(userId: string) {
-  const rows = await sql<{ recruiter_status: string | null }[]>`
-    SELECT recruiter_status
-    FROM goodhive.users
-    WHERE userid = ${userId}::uuid
-    LIMIT 1
-  `;
-  const row = rows[0];
-  return row?.recruiter_status === "approved" ? row : null;
-}
-
 export async function POST(request: NextRequest) {
   try {
     await expireStaleImmediateAvailability();
@@ -103,10 +93,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const recruiter = await getApprovedRecruiter(sessionUser.user_id);
-    if (!recruiter) {
+    const authorized = await isApprovedRecruiterOrCompany(sessionUser.user_id);
+    if (!authorized) {
       return NextResponse.json(
-        { success: false, error: "Approved recruiter profile required" },
+        { success: false, error: "Recruiter or company access required" },
         { status: 403 },
       );
     }

@@ -1,20 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth/sessionUtils";
+import { isApprovedRecruiterOrCompany } from "@/app/lib/recruiting-auth";
 import sql from "@/lib/db";
 
 export const dynamic = "force-dynamic";
-
-async function getApprovedRecruiter(userId: string) {
-  const rows = await sql<{ recruiter_status: string | null }[]>`
-    SELECT recruiter_status
-    FROM goodhive.users
-    WHERE userid = ${userId}::uuid
-    LIMIT 1
-  `;
-  const row = rows[0];
-  return row?.recruiter_status === "approved" ? row : null;
-}
 
 export async function GET(_request: NextRequest) {
   try {
@@ -23,10 +13,10 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const recruiter = await getApprovedRecruiter(sessionUser.user_id);
-    if (!recruiter) {
+    const authorized = await isApprovedRecruiterOrCompany(sessionUser.user_id);
+    if (!authorized) {
       return NextResponse.json(
-        { success: false, error: "Approved recruiter profile required" },
+        { success: false, error: "Recruiter or company access required" },
         { status: 403 },
       );
     }

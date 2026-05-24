@@ -24,6 +24,9 @@ export function ClientLayout({ children }: ClientLayoutProps) {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   const isAdminSection = pathname?.startsWith("/admin");
+  const isDashboardSection =
+    pathname?.startsWith("/recruiter/dashboard") ||
+    pathname?.startsWith("/companies/dashboard");
   const showSuperbot = !isAdminSection;
 
   useEffect(() => {
@@ -78,6 +81,8 @@ export function ClientLayout({ children }: ClientLayoutProps) {
       />
       <div className="flex flex-col min-h-screen">
         {!isAdminSection && <NavBar />}
+        {/* Spacer so page content starts below the fixed navbar */}
+        {!isAdminSection && <div className="h-16 shrink-0" />}
         <Toaster />
 
         <Suspense>
@@ -88,7 +93,8 @@ export function ClientLayout({ children }: ClientLayoutProps) {
             {children}
           </div>
         </Suspense>
-        {!isAdminSection && <Footer />}
+        {/* Hide site footer inside dashboard app views */}
+        {!isAdminSection && !isDashboardSection && <Footer />}
         {showSuperbot ? <SuperbotWidget /> : null}
       </div>
     </Providers>

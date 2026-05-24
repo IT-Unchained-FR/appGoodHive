@@ -8,7 +8,8 @@ type Stage = (typeof VALID_STAGES)[number];
 async function isPipelineAuthorized(userId: string): Promise<boolean> {
   const companyRows = await sql`SELECT user_id FROM goodhive.companies WHERE user_id = ${userId}::uuid LIMIT 1`;
   if (companyRows.length > 0) return true;
-  const recruiterRows = await sql`SELECT user_id FROM goodhive.talents WHERE user_id = ${userId}::uuid AND recruiter_status = 'approved' LIMIT 1`;
+  // recruiter_status lives on goodhive.users, not goodhive.talents
+  const recruiterRows = await sql`SELECT userid FROM goodhive.users WHERE userid = ${userId}::uuid AND recruiter_status = 'approved' LIMIT 1`;
   return recruiterRows.length > 0;
 }
 

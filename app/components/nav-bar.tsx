@@ -161,6 +161,7 @@ export const NavBar = () => {
   const [walletAddressToVerify, setWalletAddressToVerify] = useState("");
   const [showOnboardingPopup, setShowOnboardingPopup] = useState(false);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+  const [isAtTop, setIsAtTop] = useState(true);
   const autoAuthAddressRef = useRef<string | null>(null);
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -173,7 +174,7 @@ export const NavBar = () => {
   const isApprovedRecruiter = user?.recruiter_status === "approved";
 
   const recruiterLink = {
-    href: "/recruiter/dashboard/find-talents",
+    href: "/recruiter/dashboard",
     label: "Recruiter Dashboard",
     protected: true,
     icon: UserRoundCheck,
@@ -540,6 +541,13 @@ export const NavBar = () => {
     void refreshUnreadMessages();
   }, [loggedIn_user_id, refreshUnreadMessages]);
 
+  // Auto-hide navbar: visible only when scrolled to the very top
+  useEffect(() => {
+    const onScroll = () => setIsAtTop(window.scrollY < 8);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
     <>
       <EmailVerificationModal
@@ -560,7 +568,9 @@ export const NavBar = () => {
 
       <header
         aria-label="Site Header"
-        className="sticky top-0 z-40 bg-gradient-to-r from-amber-100 via-amber-50 to-yellow-100 shadow-lg border-b border-amber-200 backdrop-blur-sm"
+        className={`fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-amber-100 via-amber-50 to-yellow-100 shadow-lg border-b border-amber-200 backdrop-blur-md transition-transform duration-300 ease-in-out ${
+          isAtTop ? "translate-y-0" : "-translate-y-full"
+        }`}
       >
         <div className="flex items-center h-16 gap-8 px-8 mx-auto sm:px-6">
           <Link className="block group" href="/">
