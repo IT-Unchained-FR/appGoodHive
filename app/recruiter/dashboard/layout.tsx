@@ -13,6 +13,7 @@ import {
   Kanban,
   LayoutDashboard,
   Hexagon,
+  BarChart2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -47,12 +48,19 @@ const sidebarItems: Array<{
     icon: Kanban,
     exact: false,
   },
+  {
+    href: "/recruiter/dashboard/analytics",
+    label: "Analytics",
+    icon: BarChart2,
+    exact: false,
+  },
 ];
 
 const pageTitles: Record<string, string> = {
   "/recruiter/dashboard": "Dashboard",
   "/recruiter/dashboard/find-talents": "Find Talents",
   "/recruiter/dashboard/pipeline": "Talent Pipeline",
+  "/recruiter/dashboard/analytics": "Analytics",
 };
 
 export default function RecruiterDashboardLayout({ children }: DashboardLayoutProps) {
