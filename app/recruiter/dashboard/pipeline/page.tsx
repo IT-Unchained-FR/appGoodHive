@@ -6,7 +6,7 @@ import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, PointerSensor, u
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Trash2, ExternalLink, ChevronDown, ChevronRight, UserPlus } from "lucide-react";
+import { GripVertical, Trash2, ExternalLink, ChevronDown, ChevronRight, UserPlus, Download } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "@/app/contexts/AuthContext";
 
@@ -386,14 +386,44 @@ export default function RecruiterTalentPipelinePage() {
             <h1 className="text-2xl font-semibold text-slate-900 mt-0.5">Talent Pipeline</h1>
             <p className="text-sm text-slate-500 mt-0.5">Track and manage your candidates through the hiring process.</p>
           </div>
-          <button
-            type="button"
-            onClick={() => router.push("/recruiter/dashboard/find-talents")}
-            className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-600 transition"
-          >
-            <UserPlus className="w-4 h-4" />
-            Find Talents
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                if (!pipeline) return;
+                const rows = STAGES.flatMap(({ key, label }) =>
+                  (pipeline[key] ?? []).map((e) => [
+                    e.talent_name ?? "",
+                    e.talent_title ?? "",
+                    e.talent_skills ?? "",
+                    label,
+                    e.notes ?? "",
+                    e.created_at ? new Date(e.created_at).toLocaleDateString() : "",
+                  ])
+                );
+                const header = ["Name", "Title", "Skills", "Stage", "Notes", "Added"];
+                const csv = [header, ...rows]
+                  .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
+                  .join("\n");
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+                a.download = `pipeline-${new Date().toISOString().slice(0, 10)}.csv`;
+                a.click();
+              }}
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"
+            >
+              <Download className="w-4 h-4" />
+              Export CSV
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/recruiter/dashboard/find-talents")}
+              className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-600 transition"
+            >
+              <UserPlus className="w-4 h-4" />
+              Find Talents
+            </button>
+          </div>
         </div>
       </div>
 
