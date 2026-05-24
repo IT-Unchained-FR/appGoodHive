@@ -20,18 +20,15 @@ const vercelEnv = process.env.VERCEL_ENV; // "production" | "preview" | undefine
 // Use a PgBouncer/Neon pooler URL in DATABASE_URL for proper connection management.
 const maxConnections = vercelEnv === "production" ? 2 : 1;
 
-const options = isLocalConnection
-  ? {}
-  : {
-      ssl: {
-        rejectUnauthorized: false,
-      },
-      max: maxConnections,
-      // Release idle connections quickly so they don't accumulate across warm lambdas.
-      idle_timeout: 5, // seconds before an idle connection is closed
-      max_lifetime: 60 * 10, // recycle connections every 10 min
-      connect_timeout: 10, // fail fast instead of piling up waiting connections
-    };
+// Apply pool limits universally — local uses Cloud SQL proxy (127.0.0.1) which also
+// has a finite connection budget. Only skip SSL for local.
+const options = {
+  ...(isLocalConnection ? {} : { ssl: { rejectUnauthorized: false } }),
+  max: maxConnections,
+  idle_timeout: 5,       // close idle connections fast
+  max_lifetime: 60 * 10, // recycle every 10 min
+  connect_timeout: 10,   // fail fast, don't pile up waiting connections
+};
 
 type SqlClient = ReturnType<typeof postgres>;
 

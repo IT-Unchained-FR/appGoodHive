@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth/sessionUtils";
 import { isApprovedRecruiterOrCompany } from "@/app/lib/recruiting-auth";
-import { sql } from "@/lib/db";
+import sql from "@/lib/db";
 
 export async function GET() {
   try {
