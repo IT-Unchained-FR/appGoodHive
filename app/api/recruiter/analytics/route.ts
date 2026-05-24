@@ -24,7 +24,7 @@ export async function GET() {
         TO_CHAR(DATE_TRUNC('week', created_at), 'Mon DD') AS week,
         COUNT(*)::int AS searches
       FROM goodhive.recruiter_search_history
-      WHERE user_id = ${uid}::uuid
+      WHERE recruiter_id = ${uid}::uuid
         AND created_at > NOW() - INTERVAL '8 weeks'
       GROUP BY DATE_TRUNC('week', created_at)
       ORDER BY DATE_TRUNC('week', created_at)
@@ -41,7 +41,7 @@ export async function GET() {
           CASE WHEN c ? 'skills' AND jsonb_typeof(c->'skills') = 'array'
                THEN c->'skills' ELSE '[]'::jsonb END
         ) AS skill
-      WHERE user_id = ${uid}::uuid
+      WHERE recruiter_id = ${uid}::uuid
       GROUP BY skill
       ORDER BY count DESC
       LIMIT 8
