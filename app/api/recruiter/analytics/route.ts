@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth/sessionUtils";
+import { isApprovedRecruiterOrCompany } from "@/app/lib/recruiting-auth";
 import { sql } from "@/lib/db";
 
 export async function GET() {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-  if (user.recruiter_status !== "approved")
+  const authorized = await isApprovedRecruiterOrCompany(user.user_id);
+  if (!authorized)
     return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
 
   const uid = user.user_id;
