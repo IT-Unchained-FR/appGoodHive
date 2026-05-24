@@ -4,24 +4,24 @@ import { isApprovedRecruiterOrCompany } from "@/app/lib/recruiting-auth";
 import { sql } from "@/lib/db";
 
 export async function GET() {
-  const user = await getSessionUser();
-  if (!user) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-  const authorized = await isApprovedRecruiterOrCompany(user.user_id);
-  if (!authorized)
-    return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+  try {
+    const user = await getSessionUser();
+    if (!user) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    const authorized = await isApprovedRecruiterOrCompany(user.user_id);
+    if (!authorized)
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
 
-  const uid = user.user_id;
+    const uid = user.user_id;
 
-  const [funnelRows, weeklyRows, topSkillsRows] = await Promise.all([
-    // Pipeline funnel by stage
-    sql`
+    // Run queries independently so one failure doesn't kill everything
+    const funnelRows = await sql`
       SELECT stage, COUNT(*)::int AS count
       FROM goodhive.company_talent_pipeline
       WHERE company_id = ${uid}::uuid
       GROUP BY stage
-    `,
-    // Searches per week (last 8 weeks)
-    sql`
+    `.catch(() => []);
+
+    const weeklyRows = await sql`
       SELECT
         TO_CHAR(DATE_TRUNC('week', created_at), 'Mon DD') AS week,
         COUNT(*)::int AS searches
@@ -30,44 +30,65 @@ export async function GET() {
         AND created_at > NOW() - INTERVAL '8 weeks'
       GROUP BY DATE_TRUNC('week', created_at)
       ORDER BY DATE_TRUNC('week', created_at)
-    `,
-    // Top skills across all searches (from candidates JSON)
-    sql`
-      SELECT skill, COUNT(*)::int AS count
-      FROM goodhive.recruiter_search_history,
-        LATERAL jsonb_array_elements(
-          CASE WHEN candidates IS NOT NULL AND jsonb_typeof(candidates) = 'array'
-               THEN candidates ELSE '[]'::jsonb END
-        ) AS c,
-        LATERAL jsonb_array_elements_text(
-          CASE WHEN c ? 'skills' AND jsonb_typeof(c->'skills') = 'array'
-               THEN c->'skills' ELSE '[]'::jsonb END
-        ) AS skill
+    `.catch(() => []);
+
+    // Simplified skills query — pull raw candidates and parse in JS
+    const skillRows = await sql`
+      SELECT candidates
+      FROM goodhive.recruiter_search_history
       WHERE recruiter_id = ${uid}::uuid
-      GROUP BY skill
-      ORDER BY count DESC
-      LIMIT 8
-    `,
-  ]);
+        AND candidates IS NOT NULL
+      ORDER BY created_at DESC
+      LIMIT 20
+    `.catch(() => []);
 
-  const STAGE_ORDER = ["shortlisted", "contacted", "interviewing", "hired", "rejected"];
-  const stageMap = Object.fromEntries(funnelRows.map((r: { stage: string; count: number }) => [r.stage, r.count]));
-  const funnel = STAGE_ORDER.map((s) => ({
-    stage: s.charAt(0).toUpperCase() + s.slice(1),
-    count: stageMap[s] ?? 0,
-  }));
+    // Parse skills from candidates JSON in JS
+    const skillCount: Record<string, number> = {};
+    for (const row of skillRows) {
+      try {
+        const candidates = typeof row.candidates === "string"
+          ? JSON.parse(row.candidates)
+          : row.candidates;
+        if (Array.isArray(candidates)) {
+          for (const c of candidates) {
+            const skills = Array.isArray(c.skills) ? c.skills : [];
+            for (const s of skills) {
+              if (typeof s === "string" && s.trim()) {
+                skillCount[s.trim()] = (skillCount[s.trim()] ?? 0) + 1;
+              }
+            }
+          }
+        }
+      } catch {
+        // skip malformed rows
+      }
+    }
+    const topSkills = Object.entries(skillCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([skill, count]) => ({ skill, count }));
 
-  const hired = stageMap["hired"] ?? 0;
-  const rejected = stageMap["rejected"] ?? 0;
+    const STAGE_ORDER = ["shortlisted", "contacted", "interviewing", "hired", "rejected"];
+    const stageMap = Object.fromEntries(
+      (funnelRows as { stage: string; count: number }[]).map((r) => [r.stage, r.count])
+    );
+    const funnel = STAGE_ORDER.map((s) => ({
+      stage: s.charAt(0).toUpperCase() + s.slice(1),
+      count: stageMap[s] ?? 0,
+    }));
 
-  return NextResponse.json({
-    success: true,
-    data: {
-      funnel,
-      weeklySearches: weeklyRows,
-      topSkills: topSkillsRows,
-      hired,
-      rejected,
-    },
-  });
+    return NextResponse.json({
+      success: true,
+      data: {
+        funnel,
+        weeklySearches: weeklyRows,
+        topSkills,
+        hired: stageMap["hired"] ?? 0,
+        rejected: stageMap["rejected"] ?? 0,
+      },
+    });
+  } catch (err) {
+    console.error("[analytics] error:", err);
+    return NextResponse.json({ success: false, error: "Internal error" }, { status: 500 });
+  }
 }
