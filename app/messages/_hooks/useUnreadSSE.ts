@@ -7,50 +7,18 @@ interface UseUnreadSSEOptions {
   onUnreadEvent: () => void;
 }
 
-// Opens a per-user SSE connection for unread badge updates.
-// Replaces the 30-second navbar polling interval.
-// Any new message to any of the user's threads fires the callback.
+// Polls the unread count every 30 s instead of a long-lived SSE/pg LISTEN
+// connection. The SSE approach opened one raw pg.Client per connected user,
+// exhausting Postgres max_connections in serverless (error 53300).
 export function useUnreadSSE({ userId, onUnreadEvent }: UseUnreadSSEOptions): void {
   const callbackRef = useRef(onUnreadEvent);
   callbackRef.current = onUnreadEvent;
 
   useEffect(() => {
     if (!userId) return;
-
-    let es: EventSource | null = null;
-    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-    let attempts = 0;
-    let destroyed = false;
-
-    const connect = () => {
-      if (destroyed) return;
-      es = new EventSource("/api/messenger/unread-stream");
-
-      es.addEventListener("unread", () => {
-        attempts = 0;
-        callbackRef.current();
-      });
-
-      es.addEventListener("keepalive", () => {
-        attempts = 0;
-      });
-
-      es.onerror = () => {
-        es?.close();
-        es = null;
-        if (destroyed) return;
-        attempts++;
-        const delay = Math.min(1_000 * 2 ** (attempts - 1), 30_000);
-        reconnectTimer = setTimeout(connect, delay);
-      };
-    };
-
-    connect();
-
-    return () => {
-      destroyed = true;
-      if (reconnectTimer) clearTimeout(reconnectTimer);
-      es?.close();
-    };
+    // Fire once immediately so the badge is fresh on mount
+    callbackRef.current();
+    const interval = setInterval(() => callbackRef.current(), 30_000);
+    return () => clearInterval(interval);
   }, [userId]);
 }

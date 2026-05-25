@@ -12,9 +12,17 @@ interface UseMessengerSSEOptions {
   onConnectionChange?: (state: SSEConnectionState) => void;
 }
 
-// Replaces the 4-second message polling loop.
-// Opens one long-lived EventSource per active thread.
-// Reconnects with exponential backoff (1s → 2s → 4s → max 30s) on error.
+const POLL_INTERVAL_MS = 4_000;
+
+// Polls for new messages every 4 s instead of a long-lived SSE/pg LISTEN
+// connection. The SSE approach opened one raw pg.Client per open chat tab,
+// exhausting Postgres max_connections in serverless (error 53300).
+//
+// On mount we seed the set of known message IDs so we don't re-fire
+// onMessage for messages already in the UI. After that, every tick we fetch
+// the 20 most-recent messages and call onMessage only for new ones sent by
+// the other party (our own sends are already optimistically rendered and
+// appendSSEMessage deduplicates by ID regardless).
 export function useMessengerSSE({
   threadId,
   userId,
@@ -29,55 +37,56 @@ export function useMessengerSSE({
   useEffect(() => {
     if (!threadId || !userId) return;
 
-    let es: EventSource | null = null;
-    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-    let attempts = 0;
-    let destroyed = false;
+    const seenIds = new Set<string>();
+    let active = true;
 
-    const connect = () => {
-      if (destroyed) return;
-      onConnectionChangeRef.current?.("connecting");
-
-      es = new EventSource(`/api/messenger/threads/${threadId}/stream`);
-
-      es.addEventListener("message", (event) => {
-        attempts = 0;
-        onConnectionChangeRef.current?.("open");
-        try {
-          const msg = JSON.parse(event.data) as MessengerMessage;
-          onMessageRef.current(msg);
-        } catch {
-          /* malformed payload — ignore */
-        }
-      });
-
-      es.addEventListener("keepalive", () => {
-        attempts = 0;
-        onConnectionChangeRef.current?.("open");
-      });
-
-      es.onerror = () => {
-        es?.close();
-        es = null;
-        if (destroyed) return;
-        onConnectionChangeRef.current?.("error");
-        attempts++;
-        const delay = Math.min(1_000 * 2 ** (attempts - 1), 30_000);
-        reconnectTimer = setTimeout(connect, delay);
-      };
-
-      es.onopen = () => {
-        attempts = 0;
-        onConnectionChangeRef.current?.("open");
-      };
+    const fetchRecent = async (): Promise<MessengerMessage[]> => {
+      const res = await fetch(
+        `/api/messenger/threads/${threadId}/messages?limit=20`,
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as { messages?: MessengerMessage[] };
+      return data.messages ?? [];
     };
 
-    connect();
+    // Seed known IDs from the current message list without triggering onMessage
+    const seed = async () => {
+      try {
+        onConnectionChangeRef.current?.("connecting");
+        const messages = await fetchRecent();
+        for (const msg of messages) seenIds.add(msg.id);
+        onConnectionChangeRef.current?.("open");
+      } catch {
+        onConnectionChangeRef.current?.("error");
+      }
+    };
+
+    // Poll: call onMessage only for messages we haven't seen yet from the other party
+    const poll = async () => {
+      try {
+        const messages = await fetchRecent();
+        onConnectionChangeRef.current?.("open");
+        for (const msg of messages) {
+          if (!seenIds.has(msg.id)) {
+            seenIds.add(msg.id);
+            if (msg.sender_user_id !== userId) {
+              onMessageRef.current(msg);
+            }
+          }
+        }
+      } catch {
+        onConnectionChangeRef.current?.("error");
+      }
+    };
+
+    void seed();
+    const interval = setInterval(() => {
+      if (active) void poll();
+    }, POLL_INTERVAL_MS);
 
     return () => {
-      destroyed = true;
-      if (reconnectTimer) clearTimeout(reconnectTimer);
-      es?.close();
+      active = false;
+      clearInterval(interval);
       onConnectionChangeRef.current?.("closed");
     };
   }, [threadId, userId]);
