@@ -888,16 +888,24 @@ function WatchlistCard({
           {/* Actions */}
           <div className="flex items-center gap-2 shrink-0">
             {watchlist && (
-              <button
-                onClick={() => triggerRun(watchlist.description, false)}
-                disabled={running}
-                className="h-8 w-8 rounded-xl text-slate-400 hover:text-amber-600 hover:bg-amber-50 disabled:opacity-40 inline-flex items-center justify-center transition-colors"
-                title="Refresh now"
-              >
-                {running
-                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  : <RefreshCw className="w-3.5 h-3.5" />}
-              </button>
+              <>
+                <button
+                  onClick={() => triggerRun(watchlist.description, false)}
+                  disabled={running}
+                  className="h-8 w-8 rounded-xl text-slate-400 hover:text-amber-600 hover:bg-amber-50 disabled:opacity-40 inline-flex items-center justify-center transition-colors"
+                  title="Refresh now"
+                >
+                  {running
+                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    : <RefreshCw className="w-3.5 h-3.5" />}
+                </button>
+                <Link
+                  href="/recruiter/dashboard/watchlist"
+                  className="h-8 px-3.5 rounded-xl text-[12.5px] font-semibold inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all"
+                >
+                  View feed →
+                </Link>
+              </>
             )}
             <button
               onClick={openModal}
