@@ -15,6 +15,7 @@ import {
   Hexagon,
   BarChart2,
   Target,
+  MessageSquare,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -56,6 +57,12 @@ const sidebarItems: Array<{
     exact: false,
   },
   {
+    href: "/recruiter/dashboard/messages",
+    label: "Messages",
+    icon: MessageSquare,
+    exact: false,
+  },
+  {
     href: "/recruiter/dashboard/analytics",
     label: "Analytics",
     icon: BarChart2,
@@ -68,6 +75,7 @@ const pageTitles: Record<string, string> = {
   "/recruiter/dashboard/find-talents": "Find Talents",
   "/recruiter/dashboard/pipeline": "Talent Pipeline",
   "/recruiter/dashboard/watchlist": "Daily Feed",
+  "/recruiter/dashboard/messages": "Messages",
   "/recruiter/dashboard/analytics": "Analytics",
 };
 
@@ -75,6 +83,7 @@ export default function RecruiterDashboardLayout({ children }: DashboardLayoutPr
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [pipelineCount, setPipelineCount] = useState<number | null>(null);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
   const pathname = usePathname();
   const router = useRouter();
   const { user, isLoading } = useAuth();
@@ -99,6 +108,24 @@ export default function RecruiterDashboardLayout({ children }: DashboardLayoutPr
         }
       })
       .catch(() => {});
+  }, []);
+
+  // Live unread message count for sidebar badge
+  useEffect(() => {
+    const fetchUnread = () => {
+      fetch("/api/messenger/unread-count")
+        .then((r) => r.json())
+        .then((res) => {
+          if (res.success && res.data) {
+            setUnreadCount(res.data.totalUnreadCount ?? 0);
+          }
+        })
+        .catch(() => {});
+    };
+    fetchUnread();
+    // Poll every 30s to stay fresh
+    const interval = setInterval(fetchUnread, 30_000);
+    return () => clearInterval(interval);
   }, []);
 
   const isActiveRoute = (href: string, exact: boolean) => {
@@ -221,6 +248,15 @@ export default function RecruiterDashboardLayout({ children }: DashboardLayoutPr
                         isActive ? "bg-amber-400/30 text-amber-800" : "bg-amber-100 text-amber-700"
                       }`}>
                         {pipelineCount}
+                      </span>
+                    )}
+
+                    {/* Unread messages badge */}
+                    {!isCollapsed && item.label === "Messages" && unreadCount > 0 && (
+                      <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full tabular-nums ${
+                        isActive ? "bg-rose-400/30 text-rose-800" : "bg-rose-100 text-rose-600"
+                      }`}>
+                        {unreadCount > 99 ? "99+" : unreadCount}
                       </span>
                     )}
 

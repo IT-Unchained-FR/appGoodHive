@@ -31,7 +31,7 @@ export function PipelineBoard({
   findTalentsHref,
   findTalentsLabel = "Find Talents",
 }: PipelineBoardProps) {
-  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading, user } = useAuth();
   const router = useRouter();
 
   const [pipeline, setPipeline] = useState<PipelineData | null>(null);
@@ -161,6 +161,34 @@ export function PipelineBoard({
     a.click();
   };
 
+  // Open or create a direct message thread with a pipeline talent
+  const handleMessage = useCallback(async (entry: PipelineEntry) => {
+    if (!user?.user_id) {
+      toast.error("Please log in to message talents.");
+      return;
+    }
+    const toastId = toast.loading("Opening conversation…");
+    try {
+      const res = await fetch("/api/messenger/threads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          companyUserId: user.user_id,
+          talentUserId: entry.talent_id,
+        }),
+      });
+      const json = await res.json() as { thread?: { id: string }; message?: string };
+      if (!res.ok) {
+        toast.error(json.message ?? "Could not open conversation", { id: toastId });
+        return;
+      }
+      toast.success("Opening conversation…", { id: toastId });
+      router.push(`/messages?thread=${json.thread?.id ?? ""}`);
+    } catch {
+      toast.error("Failed to open conversation", { id: toastId });
+    }
+  }, [user, router]);
+
   const selectedEntries = pipeline
     ? Object.values(pipeline).flat().filter((e) => selectedIds.has(e.id))
     : [];
@@ -241,6 +269,7 @@ export function PipelineBoard({
                 selectedIds={selectedIds}
                 onToggleSelect={toggleSelect}
                 onSendToClient={setClientSummaryEntry}
+                onMessage={handleMessage}
               />
             ))}
           </div>

@@ -186,11 +186,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const [companyRows, talentRows] = await Promise.all([
+    const [companyRows, recruiterRows, talentRows] = await Promise.all([
       sql<{ user_id: string; published: boolean }[]>`
         SELECT user_id, published
         FROM goodhive.companies
         WHERE user_id = ${companyUserId}::uuid
+        LIMIT 1
+      `,
+      sql<{ userid: string }[]>`
+        SELECT userid
+        FROM goodhive.users
+        WHERE userid = ${companyUserId}::uuid
+          AND recruiter_status = 'approved'
         LIMIT 1
       `,
       sql<{ user_id: string; talent_status: string | null; approved: boolean }[]>`
@@ -202,9 +209,12 @@ export async function POST(request: NextRequest) {
       `,
     ]);
 
-    if (companyRows.length === 0) {
+    const isCompany = companyRows.length > 0;
+    const isRecruiter = !isCompany && recruiterRows.length > 0;
+
+    if (!isCompany && !isRecruiter) {
       return NextResponse.json(
-        { message: "companyUserId must belong to a company profile" },
+        { message: "companyUserId must belong to a published company or an approved recruiter" },
         { status: 400 },
       );
     }
@@ -216,7 +226,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!companyRows[0].published) {
+    // Companies must have a published profile; recruiters are pre-validated via recruiter_status
+    if (isCompany && !companyRows[0].published) {
       return NextResponse.json(
         { message: "Company profile is not yet approved" },
         { status: 403 },

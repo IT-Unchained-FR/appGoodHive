@@ -16,6 +16,7 @@ interface KanbanColumnProps {
   selectedIds: Set<string>;
   onToggleSelect: (id: string) => void;
   onSendToClient: (entry: PipelineEntry) => void;
+  onMessage?: (entry: PipelineEntry) => void;
 }
 
 export function KanbanColumn({
@@ -28,6 +29,7 @@ export function KanbanColumn({
   selectedIds,
   onToggleSelect,
   onSendToClient,
+  onMessage,
 }: KanbanColumnProps) {
   const { setNodeRef: setDropRef, isOver } = useDroppable({ id: stage.key });
 
@@ -80,6 +82,7 @@ export function KanbanColumn({
                   selected={selectedIds.has(entry.id)}
                   onToggleSelect={onToggleSelect}
                   onSendToClient={onSendToClient}
+                  onMessage={onMessage}
                 />
               ))
             )}

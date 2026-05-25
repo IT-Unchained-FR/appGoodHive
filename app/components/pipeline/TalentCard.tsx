@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
-  GripVertical, Trash2, ExternalLink, CheckCircle2, Circle, Send,
+  GripVertical, Trash2, ExternalLink, CheckCircle2, Circle, Send, MessageSquare,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { PipelineAvatar } from "./PipelineAvatar";
@@ -17,6 +17,7 @@ interface TalentCardProps {
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
   onSendToClient?: (entry: PipelineEntry) => void;
+  onMessage?: (entry: PipelineEntry) => void;
 }
 
 export function TalentCard({
@@ -26,6 +27,7 @@ export function TalentCard({
   selected,
   onToggleSelect,
   onSendToClient,
+  onMessage,
 }: TalentCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: entry.id });
@@ -168,6 +170,17 @@ export function TalentCard({
                 className="p-1 text-slate-400 hover:text-amber-500 transition-colors"
               >
                 <Send className="w-3.5 h-3.5" />
+              </button>
+            )}
+
+            {onMessage && (
+              <button
+                type="button"
+                title="Message talent"
+                onClick={() => onMessage(entry)}
+                className="p-1 text-slate-400 hover:text-blue-500 transition-colors"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
               </button>
             )}
 
