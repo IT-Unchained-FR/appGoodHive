@@ -39,10 +39,14 @@ export async function GET(request: NextRequest) {
         p.created_at,
         p.updated_at,
         (t.first_name || ' ' || t.last_name) AS talent_name,
-        t.image_url AS talent_image,
+        NULLIF(TRIM(t.image_url), '') AS talent_image,
         t.skills AS talent_skills,
         t.title AS talent_title,
-        t.about_work AS talent_bio
+        NULLIF(TRIM(COALESCE(t.about_work, '')), '') AS talent_bio,
+        t.experience AS talent_experience,
+        t.min_rate AS talent_min_rate,
+        t.max_rate AS talent_max_rate,
+        t.availability AS talent_availability
       FROM goodhive.company_talent_pipeline p
       LEFT JOIN goodhive.talents t ON t.user_id = p.talent_id
       WHERE p.company_id = ${sessionUser.user_id}::uuid

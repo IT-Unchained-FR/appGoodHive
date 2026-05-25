@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   DndContext, DragEndEvent, DragStartEvent, DragOverlay,
@@ -12,6 +12,7 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   GripVertical, Trash2, ExternalLink, ChevronDown, ChevronRight,
   UserPlus, Download, GitCompare, X, CheckCircle2, Circle,
+  Sparkles, Loader2, DollarSign, Clock, AlertCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "@/app/contexts/AuthContext";
@@ -30,6 +31,11 @@ interface PipelineEntry {
   talent_image: string | null;
   talent_skills: string | null;
   talent_title: string | null;
+  talent_bio: string | null;
+  talent_experience: string | null;
+  talent_min_rate: number | null;
+  talent_max_rate: number | null;
+  talent_availability: string | null;
 }
 
 type PipelineData = Record<Stage, PipelineEntry[]>;
@@ -44,6 +50,93 @@ const STAGES: { key: Stage; label: string; color: string; dot: string; bg: strin
 
 const VALID_STAGES: Stage[] = ["shortlisted", "contacted", "interviewing", "hired", "rejected"];
 
+/* ─────────────────────────────────────────────
+   Avatar helper — shows image or initials with onError fallback
+───────────────────────────────────────────── */
+function Avatar({
+  src, name, size = "sm",
+}: { src: string | null; name: string | null; size?: "sm" | "md" | "lg" }) {
+  const [imgError, setImgError] = useState(false);
+  const initial = name?.[0]?.toUpperCase() ?? "T";
+
+  const sizeClass = size === "sm"
+    ? "w-8 h-8 text-xs"
+    : size === "md"
+      ? "w-10 h-10 text-sm"
+      : "w-16 h-16 text-2xl";
+
+  if (src && !imgError) {
+    return (
+      <div className={`${sizeClass} rounded-full overflow-hidden flex-shrink-0`}>
+        <img
+          src={src}
+          alt={name ?? ""}
+          className="w-full h-full object-cover"
+          onError={() => setImgError(true)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${sizeClass} rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-semibold flex-shrink-0`}>
+      {initial}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   Markdown-like renderer for AI analysis text
+───────────────────────────────────────────── */
+function AnalysisText({ text }: { text: string }) {
+  const lines = text.split("\n");
+  return (
+    <div className="space-y-1 text-sm text-slate-700 leading-relaxed">
+      {lines.map((line, i) => {
+        const trimmed = line.trim();
+        if (!trimmed) return <div key={i} className="h-2" />;
+
+        // H2 heading: ## Foo
+        if (trimmed.startsWith("## ")) {
+          return (
+            <p key={i} className="font-bold text-slate-900 text-sm mt-3 first:mt-0">
+              {trimmed.slice(3)}
+            </p>
+          );
+        }
+        // H3 heading: ### Foo — or bold header like **Foo**
+        if (trimmed.startsWith("### ")) {
+          return (
+            <p key={i} className="font-semibold text-slate-800 text-[13px] mt-2 first:mt-0">
+              {trimmed.slice(4)}
+            </p>
+          );
+        }
+        // Bullet: - or *
+        if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+          const content = trimmed.slice(2);
+          return (
+            <div key={i} className="flex gap-2 items-start">
+              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+              <span dangerouslySetInnerHTML={{ __html: boldify(content) }} />
+            </div>
+          );
+        }
+        // Bold **...**
+        return (
+          <p key={i} dangerouslySetInnerHTML={{ __html: boldify(trimmed) }} />
+        );
+      })}
+    </div>
+  );
+}
+
+function boldify(text: string): string {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>");
+}
+
 /* ═══════════════════════════════════════════════
    COMPARE MODAL
 ═══════════════════════════════════════════════ */
@@ -54,6 +147,12 @@ function CompareModal({
   entries: PipelineEntry[];
   onClose: () => void;
 }) {
+  const [jobContext, setJobContext] = useState("");
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const analysisRef = useRef<HTMLDivElement>(null);
+
   // Find shared skills
   const skillSets = entries.map((e) =>
     new Set((e.talent_skills ?? "").split(",").map((s) => s.trim()).filter(Boolean))
@@ -64,58 +163,118 @@ function CompareModal({
 
   const stageMeta = (stage: Stage) => STAGES.find((s) => s.key === stage);
 
+  const runAiCompare = async () => {
+    setAiLoading(true);
+    setAiError(null);
+    setAiAnalysis(null);
+    try {
+      const candidates = entries.map((e) => ({
+        name: e.talent_name ?? "Unknown",
+        title: e.talent_title,
+        skills: e.talent_skills,
+        bio: e.talent_bio,
+        stage: e.stage,
+        experience: e.talent_experience,
+        minRate: e.talent_min_rate,
+        maxRate: e.talent_max_rate,
+        availability: e.talent_availability,
+        notes: e.notes,
+      }));
+      const res = await fetch("/api/pipeline/compare", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ candidates, jobContext: jobContext.trim() || undefined }),
+      });
+      const json = await res.json() as { success: boolean; analysis?: string; error?: string };
+      if (!json.success) throw new Error(json.error ?? "AI comparison failed");
+      setAiAnalysis(json.analysis ?? "");
+      // Scroll to analysis
+      setTimeout(() => analysisRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const formatRate = (min: number | null, max: number | null) => {
+    if (min && max) return `$${min}–$${max}/hr`;
+    if (min) return `from $${min}/hr`;
+    if (max) return `up to $${max}/hr`;
+    return null;
+  };
+
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-      style={{ backdropFilter: "blur(8px)", background: "rgba(15,23,42,0.7)" }}
+      style={{ backdropFilter: "blur(8px)", background: "rgba(15,23,42,0.75)" }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300">
 
-        {/* Modal header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+        {/* ── Modal header ── */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center">
-              <GitCompare className="w-4.5 h-4.5 text-amber-500" />
+              <GitCompare className="w-4 h-4 text-amber-500" />
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-900">Candidate Comparison</h2>
-              <p className="text-xs text-slate-400">Side-by-side evaluation</p>
+              <p className="text-xs text-slate-400">Side-by-side evaluation · {entries.length} candidates</p>
             </div>
           </div>
-          {sharedSkills.length > 0 && (
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 rounded-full border border-amber-200">
-              <CheckCircle2 className="w-3.5 h-3.5 text-amber-500" />
-              <span className="text-xs font-semibold text-amber-700">{sharedSkills.length} shared skill{sharedSkills.length > 1 ? "s" : ""}</span>
-            </div>
-          )}
-          <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition">
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {sharedSkills.length > 0 && (
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 rounded-full border border-amber-200">
+                <CheckCircle2 className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-xs font-semibold text-amber-700">{sharedSkills.length} shared skill{sharedSkills.length > 1 ? "s" : ""}</span>
+              </div>
+            )}
+            <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
-        {/* Columns */}
+        {/* ── Scrollable body ── */}
         <div className="overflow-y-auto flex-1">
-          <div className={`grid divide-x divide-slate-100 h-full`} style={{ gridTemplateColumns: `repeat(${entries.length}, 1fr)` }}>
+
+          {/* Candidate columns */}
+          <div
+            className="grid divide-x divide-slate-100"
+            style={{ gridTemplateColumns: `repeat(${entries.length}, 1fr)` }}
+          >
             {entries.map((entry) => {
               const skills = (entry.talent_skills ?? "").split(",").map((s) => s.trim()).filter(Boolean);
               const stage = stageMeta(entry.stage);
-              const initial = entry.talent_name?.[0]?.toUpperCase() ?? "T";
+              const rate = formatRate(entry.talent_min_rate, entry.talent_max_rate);
 
               return (
-                <div key={entry.id} className="p-6 space-y-5 min-w-0">
+                <div key={entry.id} className="p-5 space-y-4 min-w-0">
 
-                  {/* Avatar + name */}
-                  <div className="flex flex-col items-center text-center gap-3">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white text-2xl font-bold shadow-md overflow-hidden">
+                  {/* Avatar + name + stage */}
+                  <div className="flex flex-col items-center text-center gap-2">
+                    <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 bg-amber-100 flex items-center justify-center text-amber-700 text-2xl font-bold shadow-md">
                       {entry.talent_image
-                        ? <img src={entry.talent_image} alt={entry.talent_name ?? ""} className="w-full h-full object-cover" />
-                        : initial}
+                        ? (
+                          <img
+                            src={entry.talent_image}
+                            alt={entry.talent_name ?? ""}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const el = e.currentTarget;
+                              el.style.display = "none";
+                              const parent = el.parentElement;
+                              if (parent) parent.textContent = entry.talent_name?.[0]?.toUpperCase() ?? "T";
+                            }}
+                          />
+                        )
+                        : (entry.talent_name?.[0]?.toUpperCase() ?? "T")}
                     </div>
                     <div>
-                      <p className="text-base font-bold text-slate-900 leading-tight">{entry.talent_name ?? "Unknown"}</p>
+                      <p className="text-sm font-bold text-slate-900 leading-tight">{entry.talent_name ?? "Unknown"}</p>
                       {entry.talent_title && (
-                        <p className="text-sm text-slate-500 mt-0.5">{entry.talent_title}</p>
+                        <p className="text-xs text-slate-500 mt-0.5 leading-snug">{entry.talent_title}</p>
                       )}
                     </div>
                     <span className={`text-[11px] font-bold px-3 py-1 rounded-full ${stage?.bg ?? "bg-slate-100 text-slate-600"}`}>
@@ -124,6 +283,27 @@ function CompareModal({
                   </div>
 
                   <div className="h-px bg-slate-100" />
+
+                  {/* Meta: rate + availability */}
+                  {(rate || entry.talent_availability) && (
+                    <>
+                      <div className="space-y-1.5">
+                        {rate && (
+                          <div className="flex items-center gap-2 text-xs text-slate-600">
+                            <DollarSign className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                            <span className="font-medium">{rate}</span>
+                          </div>
+                        )}
+                        {entry.talent_availability && (
+                          <div className="flex items-center gap-2 text-xs text-slate-600">
+                            <Clock className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+                            <span className="capitalize">{entry.talent_availability}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="h-px bg-slate-100" />
+                    </>
+                  )}
 
                   {/* Skills */}
                   <div>
@@ -150,32 +330,42 @@ function CompareModal({
 
                   <div className="h-px bg-slate-100" />
 
+                  {/* Bio */}
+                  {entry.talent_bio && (
+                    <>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">About</p>
+                        <p className="text-xs text-slate-600 leading-relaxed line-clamp-4 bg-slate-50 rounded-xl px-3 py-2.5">
+                          {entry.talent_bio}
+                        </p>
+                      </div>
+                      <div className="h-px bg-slate-100" />
+                    </>
+                  )}
+
                   {/* Notes */}
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Notes</p>
-                    <p className="text-sm text-slate-600 leading-relaxed bg-slate-50 rounded-xl px-3 py-2.5 min-h-[60px]">
-                      {entry.notes ?? <span className="text-slate-300 italic">No notes added</span>}
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Recruiter Notes</p>
+                    <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 rounded-xl px-3 py-2.5 min-h-[48px]">
+                      {entry.notes ? entry.notes : <span className="text-slate-300 italic">No notes added</span>}
                     </p>
                   </div>
 
                   <div className="h-px bg-slate-100" />
 
-                  {/* Meta */}
-                  <div className="space-y-2">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Details</p>
-                    <div className="space-y-1.5 text-xs text-slate-500">
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-400">Added</span>
-                        <span className="font-medium text-slate-700">
-                          {entry.created_at ? new Date(entry.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-400">Last updated</span>
-                        <span className="font-medium text-slate-700">
-                          {entry.updated_at ? new Date(entry.updated_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—"}
-                        </span>
-                      </div>
+                  {/* Timeline */}
+                  <div className="space-y-1.5 text-xs text-slate-500">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">Added</span>
+                      <span className="font-medium text-slate-700">
+                        {entry.created_at ? new Date(entry.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">Updated</span>
+                      <span className="font-medium text-slate-700">
+                        {entry.updated_at ? new Date(entry.updated_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—"}
+                      </span>
                     </div>
                   </div>
 
@@ -193,19 +383,72 @@ function CompareModal({
               );
             })}
           </div>
-        </div>
 
-        {/* Shared skills footer */}
-        {sharedSkills.length > 0 && (
-          <div className="border-t border-slate-100 px-6 py-3 bg-amber-50 flex items-center gap-2 flex-wrap">
-            <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider">Shared skills:</span>
-            {sharedSkills.map((s) => (
-              <span key={s} className="text-[11px] font-semibold bg-white border border-amber-200 text-amber-700 px-2.5 py-0.5 rounded-full">
-                {s}
-              </span>
-            ))}
+          {/* ── Shared skills footer ── */}
+          {sharedSkills.length > 0 && (
+            <div className="border-t border-slate-100 px-6 py-3 bg-amber-50 flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider">Shared skills:</span>
+              {sharedSkills.map((s) => (
+                <span key={s} className="text-[11px] font-semibold bg-white border border-amber-200 text-amber-700 px-2.5 py-0.5 rounded-full">
+                  {s}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* ── AI Compare section ── */}
+          <div className="border-t border-slate-100 px-6 py-5 space-y-4">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              <p className="text-sm font-bold text-slate-900">AI Analysis</p>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-600 uppercase tracking-wide">Powered by Gemini</span>
+            </div>
+
+            {/* Optional job context */}
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1.5">
+                Job context (optional)
+              </label>
+              <input
+                type="text"
+                value={jobContext}
+                onChange={(e) => setJobContext(e.target.value)}
+                placeholder="e.g. Senior React developer for a fintech startup…"
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-amber-400 focus:outline-none placeholder:text-slate-300"
+              />
+            </div>
+
+            <button
+              onClick={() => void runAiCompare()}
+              disabled={aiLoading}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-600 hover:to-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold px-5 py-2.5 transition-all shadow-sm"
+            >
+              {aiLoading
+                ? <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing…</>
+                : <><Sparkles className="w-4 h-4" /> {aiAnalysis ? "Re-analyze" : "Compare with AI"}</>
+              }
+            </button>
+
+            {/* AI error */}
+            {aiError && (
+              <div className="flex items-start gap-2 rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 text-sm text-rose-700">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                {aiError}
+              </div>
+            )}
+
+            {/* AI result */}
+            {aiAnalysis && (
+              <div ref={analysisRef} className="rounded-2xl border border-amber-100 bg-amber-50 px-5 py-4 space-y-1">
+                <div className="flex items-center gap-1.5 mb-3">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider">AI Recommendation</span>
+                </div>
+                <AnalysisText text={aiAnalysis} />
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
@@ -286,11 +529,7 @@ function TalentCard({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-semibold text-xs flex-shrink-0 overflow-hidden">
-              {entry.talent_image
-                ? <img src={entry.talent_image} alt={entry.talent_name ?? ""} className="w-full h-full object-cover" />
-                : (entry.talent_name?.[0]?.toUpperCase() ?? "T")}
-            </div>
+            <Avatar src={entry.talent_image} name={entry.talent_name} size="sm" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-slate-900 truncate">{entry.talent_name ?? "Talent"}</p>
               {entry.talent_title && <p className="text-xs text-slate-500 truncate">{entry.talent_title}</p>}
@@ -606,10 +845,8 @@ export default function RecruiterTalentPipelinePage() {
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-700 animate-in slide-in-from-bottom-4 duration-200">
           <div className="flex -space-x-2">
             {selectedEntries.map((e) => (
-              <div key={e.id} className="w-7 h-7 rounded-full bg-amber-500 border-2 border-slate-900 flex items-center justify-center text-[10px] font-bold overflow-hidden">
-                {e.talent_image
-                  ? <img src={e.talent_image} alt="" className="w-full h-full object-cover" />
-                  : e.talent_name?.[0]?.toUpperCase() ?? "?"}
+              <div key={e.id} className="w-7 h-7 rounded-full border-2 border-slate-900 overflow-hidden">
+                <Avatar src={e.talent_image} name={e.talent_name} size="sm" />
               </div>
             ))}
           </div>
