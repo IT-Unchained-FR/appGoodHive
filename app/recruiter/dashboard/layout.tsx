@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   Hexagon,
   BarChart2,
+  Target,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -49,6 +50,12 @@ const sidebarItems: Array<{
     exact: false,
   },
   {
+    href: "/recruiter/dashboard/watchlist",
+    label: "Daily Feed",
+    icon: Target,
+    exact: false,
+  },
+  {
     href: "/recruiter/dashboard/analytics",
     label: "Analytics",
     icon: BarChart2,
@@ -60,6 +67,7 @@ const pageTitles: Record<string, string> = {
   "/recruiter/dashboard": "Dashboard",
   "/recruiter/dashboard/find-talents": "Find Talents",
   "/recruiter/dashboard/pipeline": "Talent Pipeline",
+  "/recruiter/dashboard/watchlist": "Daily Feed",
   "/recruiter/dashboard/analytics": "Analytics",
 };
 
