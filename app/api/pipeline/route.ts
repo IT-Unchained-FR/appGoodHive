@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
         t.skills AS talent_skills,
         t.title AS talent_title,
         NULLIF(TRIM(COALESCE(t.about_work, '')), '') AS talent_bio,
-        t.experience AS talent_experience,
+        NULL AS talent_experience,
         t.min_rate AS talent_min_rate,
         t.max_rate AS talent_max_rate,
         t.availability AS talent_availability

@@ -337,7 +337,7 @@ export default function RecruiterDashboardLayout({ children }: DashboardLayoutPr
 
           {/* ── Page content ── */}
           <main className="flex-1 bg-slate-50/80">
-            <div className="mx-auto max-w-screen-xl px-4 py-6 lg:px-6">
+            <div className="w-full px-4 py-6 lg:px-8">
               {children}
             </div>
           </main>
