@@ -15,11 +15,22 @@ import {
   RefreshCw,
   Database,
   Cpu,
-  AlertTriangle
+  AlertTriangle,
+  Kanban,
+  ArrowRight,
 } from "lucide-react";
 import { Loader } from "@components/loader";
 import { useBlockchainAnalyticsWithRefresh } from "@/hooks/useBlockchainAnalytics";
 import { useCurrentUserId } from "@/app/hooks/useCurrentUserId";
+import { STAGES, VALID_STAGES, type PipelineData } from "@/app/components/pipeline/pipeline-types";
+
+interface PipelineFunnel {
+  stage: string;
+  label: string;
+  count: number;
+  color: string;
+  bar: string;
+}
 
 interface AnalyticsData {
   overview: {
@@ -51,7 +62,27 @@ export default function AnalyticsPage() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [databaseJobs, setDatabaseJobs] = useState<Array<{ id: string; budget: number; block_id?: string }>>([]);
+  const [pipelineFunnel, setPipelineFunnel] = useState<PipelineFunnel[] | null>(null);
   const userId = useCurrentUserId();
+
+  // Fetch pipeline funnel data
+  useEffect(() => {
+    fetch("/api/pipeline", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((json: { success: boolean; data?: PipelineData }) => {
+        if (!json.success || !json.data) return;
+        const barColors = ["bg-amber-400", "bg-blue-400", "bg-purple-400", "bg-emerald-400", "bg-rose-300"];
+        const funnel = STAGES.map((s, i) => ({
+          stage: s.key,
+          label: s.label,
+          count: (json.data![s.key] ?? []).length,
+          color: s.bg,
+          bar: barColors[i] ?? "bg-slate-300",
+        }));
+        setPipelineFunnel(funnel);
+      })
+      .catch(() => {});
+  }, []);
 
   // Fetch database analytics
   useEffect(() => {
@@ -131,6 +162,65 @@ export default function AnalyticsPage() {
           <BarChart3 className="h-12 w-12 opacity-80" />
         </div>
       </div>
+
+      {/* ── Talent Pipeline Funnel ── */}
+      {pipelineFunnel && (
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2">
+              <Kanban className="w-5 h-5 text-amber-500" />
+              <h3 className="text-base font-semibold text-gray-900">Talent Pipeline Funnel</h3>
+            </div>
+            <a
+              href="/companies/pipeline"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 hover:text-amber-700"
+            >
+              Open Pipeline <ArrowRight className="w-3 h-3" />
+            </a>
+          </div>
+
+          {pipelineFunnel.every((s) => s.count === 0) ? (
+            <p className="text-sm text-gray-400 text-center py-4">
+              No candidates in pipeline yet.{" "}
+              <a href="/companies/dashboard/top-candidates" className="text-amber-600 hover:underline">
+                Find candidates →
+              </a>
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {(() => {
+                const max = Math.max(...pipelineFunnel.map((s) => s.count), 1);
+                return pipelineFunnel.map((stage) => (
+                  <div key={stage.stage} className="flex items-center gap-3">
+                    <span className="w-24 text-xs font-medium text-gray-500 text-right flex-shrink-0">
+                      {stage.label}
+                    </span>
+                    <div className="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${stage.bar}`}
+                        style={{ width: `${(stage.count / max) * 100}%`, minWidth: stage.count > 0 ? "2rem" : "0" }}
+                      />
+                    </div>
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${stage.color}`}>
+                      {stage.count}
+                    </span>
+                  </div>
+                ));
+              })()}
+              <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+                <span>Total candidates: <strong className="text-gray-800">{pipelineFunnel.reduce((s, r) => s + r.count, 0)}</strong></span>
+                {(() => {
+                  const total = pipelineFunnel.reduce((s, r) => s + r.count, 0);
+                  const hired = pipelineFunnel.find((s) => s.stage === "hired")?.count ?? 0;
+                  return total > 0
+                    ? <span>Hire rate: <strong className="text-emerald-600">{((hired / total) * 100).toFixed(0)}%</strong></span>
+                    : null;
+                })()}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">

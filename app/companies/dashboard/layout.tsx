@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -21,6 +21,7 @@ import {
   Kanban,
 } from "lucide-react";
 import { AuthLayout } from "@/app/components/AuthLayout/AuthLayout";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -97,8 +98,24 @@ const sidebarItems: Array<{
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [pipelineCount, setPipelineCount] = useState<number | null>(null);
   const pathname = usePathname();
   const isMessagesPage = pathname === "/companies/dashboard/messages";
+  const { isAuthenticated } = useAuth();
+
+  // Live pipeline count for sidebar badge
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    fetch("/api/pipeline", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((json: { success: boolean; data?: Record<string, unknown[]> }) => {
+        if (json.success && json.data) {
+          const total = Object.values(json.data).reduce((sum, arr) => sum + arr.length, 0);
+          setPipelineCount(total);
+        }
+      })
+      .catch(() => {});
+  }, [isAuthenticated]);
 
   const isActiveRoute = (href: string, exact: boolean) => {
     if (exact) return pathname === href;
@@ -188,7 +205,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         `}
                       />
                       {!isCollapsed && (
-                        <span className="truncate">{item.label}</span>
+                        <span className="truncate flex-1">{item.label}</span>
+                      )}
+                      {!isCollapsed && item.label === "Talent Pipeline" && pipelineCount !== null && pipelineCount > 0 && (
+                        <span className="ml-auto text-[10px] font-bold bg-amber-500 text-white rounded-full px-1.5 py-0.5 leading-none">
+                          {pipelineCount}
+                        </span>
                       )}
                     </Link>
 

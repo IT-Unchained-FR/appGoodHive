@@ -10,10 +10,21 @@ import {
   TrendingUp,
   Clock,
   Plus,
-  ArrowRight
+  ArrowRight,
+  Kanban,
+  UserCheck,
+  Trophy,
 } from "lucide-react";
 import { Loader } from "@components/loader";
 import { useCurrentUserId } from "@/app/hooks/useCurrentUserId";
+import { VALID_STAGES, type PipelineData } from "@/app/components/pipeline/pipeline-types";
+
+interface PipelineStats {
+  total: number;
+  interviewing: number;
+  hiredThisMonth: number;
+  recent: { talent_name: string | null; stage: string; updated_at: string }[];
+}
 
 interface DashboardStats {
   totalJobs: number;
@@ -26,7 +37,33 @@ interface DashboardStats {
 export default function CompanyDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [pipelineStats, setPipelineStats] = useState<PipelineStats | null>(null);
   const userId = useCurrentUserId();
+
+  // Fetch pipeline stats separately (auth-based, no userId param needed)
+  useEffect(() => {
+    fetch("/api/pipeline", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((json: { success: boolean; data?: PipelineData }) => {
+        if (!json.success || !json.data) return;
+        const data = json.data;
+        const allEntries = VALID_STAGES.flatMap((s) => data[s] ?? []);
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        setPipelineStats({
+          total: allEntries.length,
+          interviewing: (data.interviewing ?? []).length,
+          hiredThisMonth: (data.hired ?? []).filter(
+            (e) => e.updated_at && new Date(e.updated_at) >= startOfMonth
+          ).length,
+          recent: allEntries
+            .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+            .slice(0, 3)
+            .map((e) => ({ talent_name: e.talent_name, stage: e.stage, updated_at: e.updated_at })),
+        });
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const fetchDashboardStats = async () => {
@@ -156,6 +193,78 @@ export default function CompanyDashboard() {
           );
         })}
       </div>
+
+      {/* Pipeline Stats */}
+      {pipelineStats !== null && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+              <Kanban className="w-4 h-4 text-amber-500" />
+              Talent Pipeline
+            </h3>
+            <Link href="/companies/pipeline" className="text-xs font-semibold text-amber-600 hover:text-amber-700">
+              Open Pipeline →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-amber-50 rounded-xl">
+                  <Users className="w-5 h-5 text-amber-500" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 font-medium">In Pipeline</p>
+                  <p className="text-2xl font-bold text-gray-900">{pipelineStats.total}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-purple-50 rounded-xl">
+                  <UserCheck className="w-5 h-5 text-purple-500" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 font-medium">Interviewing</p>
+                  <p className="text-2xl font-bold text-gray-900">{pipelineStats.interviewing}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-emerald-50 rounded-xl">
+                  <Trophy className="w-5 h-5 text-emerald-500" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 font-medium">Hired This Month</p>
+                  <p className="text-2xl font-bold text-gray-900">{pipelineStats.hiredThisMonth}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* Recent pipeline activity */}
+          {pipelineStats.recent.length > 0 && (
+            <div className="mt-3 bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+              {pipelineStats.recent.map((item, i) => (
+                <div key={i} className="flex items-center justify-between px-4 py-3">
+                  <p className="text-sm font-medium text-gray-800 truncate">{item.talent_name ?? "Unknown"}</p>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full capitalize ${
+                      item.stage === "hired" ? "bg-emerald-100 text-emerald-700"
+                      : item.stage === "interviewing" ? "bg-purple-100 text-purple-700"
+                      : item.stage === "rejected" ? "bg-rose-100 text-rose-600"
+                      : item.stage === "contacted" ? "bg-blue-100 text-blue-700"
+                      : "bg-amber-100 text-amber-700"
+                    }`}>{item.stage}</span>
+                    <span className="text-xs text-gray-400">
+                      {new Date(item.updated_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Quick Actions & Recent Jobs */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
