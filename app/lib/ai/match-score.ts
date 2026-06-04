@@ -92,22 +92,29 @@ function describeModelError(error: unknown) {
   return message;
 }
 
-const DEFAULT_MATCH_SCORE_MODELS = [
+// Each model has its own independent rate limit bucket on Groq's free tier.
+// Round-robin across all of them to multiply effective throughput by 4x.
+const MODEL_POOL = [
   "llama-3.3-70b-versatile",
   "llama-3.1-8b-instant",
+  "mixtral-8x7b-32768",
+  "gemma2-9b-it",
 ];
 
-function getMatchScoreModels() {
-  const configuredModel = process.env.GEMINI_FAST_MODEL?.trim();
-  const candidates = [
-    configuredModel,
-    ...DEFAULT_MATCH_SCORE_MODELS,
-  ];
+let poolIndex = 0;
 
-  return candidates.filter(
-    (model, index, array): model is string =>
-      Boolean(model) && array.indexOf(model) === index,
-  );
+function getOrderedModels(): string[] {
+  const start = poolIndex++ % MODEL_POOL.length;
+  return [
+    ...MODEL_POOL.slice(start),
+    ...MODEL_POOL.slice(0, start),
+  ];
+}
+
+function isRateLimitError(error: unknown) {
+  const status = (error as { status?: number })?.status;
+  const message = (error as { message?: string })?.message ?? "";
+  return status === 429 || message.includes("429");
 }
 
 export async function computeMatchScore(
@@ -132,7 +139,7 @@ Return ONLY valid JSON (no markdown, no explanation):
   "gaps": [<max 3 short strings what is missing>]
 }`;
 
-  const modelNames = getMatchScoreModels();
+  const modelNames = getOrderedModels();
 
   for (const modelName of modelNames) {
     try {
@@ -142,9 +149,7 @@ Return ONLY valid JSON (no markdown, no explanation):
       const parsed = tryParseModelJson(text);
 
       if (!parsed) {
-        console.error(
-          `Failed to parse match score response from ${modelName}; trying next fallback model.`,
-        );
+        console.error(`match-score: bad JSON from ${modelName}, trying next`);
         continue;
       }
 
@@ -155,9 +160,11 @@ Return ONLY valid JSON (no markdown, no explanation):
         unavailable: false,
       };
     } catch (error) {
-      console.error(
-        `Failed to compute match score with ${modelName}; trying next fallback model. ${describeModelError(error)}`,
-      );
+      if (isRateLimitError(error)) {
+        console.warn(`match-score: rate limited on ${modelName}, rotating to next model`);
+      } else {
+        console.error(`match-score: error on ${modelName}: ${describeModelError(error)}`);
+      }
     }
   }
 
@@ -166,7 +173,6 @@ Return ONLY valid JSON (no markdown, no explanation):
     reasons: [],
     gaps: [],
     unavailable: true,
-    message:
-      "AI match analysis is temporarily unavailable. Please try again in a few minutes.",
+    message: "AI match analysis is temporarily unavailable. Please try again in a few minutes.",
   };
 }
