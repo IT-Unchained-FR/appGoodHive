@@ -116,137 +116,151 @@ interface TalentCardProps {
   onClick: () => void;
 }
 
+function ScoreRing({ score, size = 52 }: { score: number | null; size?: number }) {
+  const r = 18;
+  const circ = 2 * Math.PI * r;
+  const pct = Math.min(Math.max(score ?? 0, 0), 100);
+  const dash = (pct / 100) * circ;
+  const color = score === null ? "#cbd5e1" : score >= 80 ? "#10b981" : score >= 60 ? "#f59e0b" : "#f97316";
+  return (
+    <svg width={size} height={size} viewBox="0 0 44 44" className="shrink-0 -rotate-90">
+      <circle cx="22" cy="22" r={r} fill="none" stroke="#e2e8f0" strokeWidth="4" />
+      <circle
+        cx="22" cy="22" r={r} fill="none"
+        stroke={color} strokeWidth="4"
+        strokeDasharray={`${dash} ${circ}`}
+        strokeLinecap="round"
+        style={{ transition: "stroke-dasharray 0.6s ease" }}
+      />
+      <text
+        x="22" y="22"
+        textAnchor="middle" dominantBaseline="central"
+        className="rotate-90"
+        style={{ transform: "rotate(90deg)", transformOrigin: "22px 22px", fontSize: "9px", fontWeight: 700, fill: color }}
+      >
+        {score === null ? "–" : `${score}%`}
+      </text>
+    </svg>
+  );
+}
+
 function TalentCard({ talent, rank, isHero = false, onClick }: TalentCardProps) {
   const rateLabel = formatRateRange({
     minRate: talent.minRate ?? undefined,
     maxRate: talent.maxRate ?? undefined,
   });
   const locationLabel = getLocationLabel(talent);
-  const visibleSkills = talent.skills.slice(0, isHero ? 4 : 3);
+  const visibleSkills = talent.skills.slice(0, 4);
   const hiddenSkillsCount = Math.max(talent.skills.length - visibleSkills.length, 0);
-  const description = truncateText(talent.description, isHero ? 200 : 160) || "No profile summary available.";
+  const description = truncateText(talent.description, isHero ? 180 : 140) || "No profile summary available.";
+  const name = getDisplayName(talent);
+  const initials = name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`group relative flex w-full min-w-0 flex-col overflow-hidden text-left shadow-[0_20px_60px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 ${
+      className={`group relative flex w-full flex-col overflow-hidden text-left transition-all duration-300 hover:-translate-y-1 ${
         isHero
-          ? "rounded-[32px] border-2 border-amber-300 bg-[linear-gradient(180deg,rgba(255,255,255,0.99)_0%,rgba(255,247,215,0.99)_100%)] p-6 ring-4 ring-amber-100 hover:border-amber-400 hover:shadow-[0_32px_90px_rgba(245,158,11,0.24)] h-[420px]"
-          : "rounded-[28px] border border-amber-100/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(255,251,235,0.98)_100%)] p-5 hover:border-amber-300 hover:shadow-[0_28px_80px_rgba(245,158,11,0.16)] h-[360px]"
+          ? "rounded-3xl border-2 border-amber-300 bg-white shadow-[0_8px_40px_rgba(245,158,11,0.18)] hover:shadow-[0_16px_60px_rgba(245,158,11,0.28)]"
+          : "rounded-2xl border border-slate-100 bg-white shadow-[0_2px_16px_rgba(15,23,42,0.06)] hover:border-amber-200 hover:shadow-[0_8px_32px_rgba(245,158,11,0.12)]"
       }`}
     >
-      <div
-        className={`pointer-events-none absolute inset-x-0 top-0 bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.22),transparent_58%),radial-gradient(circle_at_top_right,rgba(249,115,22,0.14),transparent_46%)] opacity-90 transition duration-300 group-hover:opacity-100 ${isHero ? "h-36" : "h-28"}`}
-      />
+      {/* Top accent bar */}
+      <div className={`h-1.5 w-full ${isHero ? "bg-gradient-to-r from-amber-400 via-orange-400 to-yellow-400" : "bg-gradient-to-r from-slate-100 to-slate-200 group-hover:from-amber-300 group-hover:to-orange-300 transition-all duration-300"}`} />
 
-      {isHero && (
-        <div className="relative mb-3 flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-3 py-1 text-xs font-bold text-white shadow-sm">
-            <Trophy className="h-3.5 w-3.5" />
-            Best Match
-          </span>
-        </div>
-      )}
-
-      <div className="relative flex h-full flex-col">
+      <div className="flex flex-col gap-4 p-5">
+        {/* Header */}
         <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <div
-              className={`relative shrink-0 overflow-hidden border border-white/80 bg-amber-100 shadow-[0_12px_30px_rgba(245,158,11,0.18)] ring-1 ring-amber-100/80 ${isHero ? "h-16 w-16 rounded-[20px]" : "h-14 w-14 rounded-2xl"}`}
-            >
-              <Image
-                src={talent.imageUrl || "/img/client-bee.png"}
-                alt={getDisplayName(talent)}
-                fill
-                className="object-cover"
-              />
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Avatar */}
+            <div className={`relative shrink-0 overflow-hidden rounded-2xl ${isHero ? "h-14 w-14" : "h-12 w-12"}`}>
+              {talent.imageUrl ? (
+                <Image src={talent.imageUrl} alt={name} fill className="object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-amber-100 to-orange-100 text-sm font-bold text-amber-700">
+                  {initials}
+                </div>
+              )}
             </div>
-            <div className="min-w-0 flex-1">
-              <p className={`truncate font-semibold text-slate-950 ${isHero ? "text-lg" : "text-base"}`}>
-                {getDisplayName(talent)}
-              </p>
-              <p className="line-clamp-2 break-words text-sm leading-5 text-slate-500">
-                {talent.title || "Talent"}
-              </p>
+            {/* Name + title */}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                {isHero && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                    <Trophy className="h-3 w-3" /> Best Match
+                  </span>
+                )}
+              </div>
+              <p className={`truncate font-semibold text-slate-900 ${isHero ? "text-base" : "text-sm"}`}>{name}</p>
+              <p className="truncate text-xs text-slate-500 mt-0.5">{talent.title || "Talent"}</p>
             </div>
           </div>
-          {!isHero && (
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-200/70 bg-white/85 text-sm font-bold text-amber-700 shadow-sm backdrop-blur">
-              {rank}
-            </span>
-          )}
-        </div>
-
-        <div className="mt-4 rounded-[22px] border border-white/70 bg-white/80 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-sm">
-          <div className="flex items-center justify-between gap-3">
-            <span
-              className={`inline-flex max-w-full items-center gap-1 rounded-full px-3 py-1 font-bold ring-1 ${getScoreClasses(talent.score)} ${isHero ? "text-sm" : "text-xs"}`}
-            >
-              <Star className={`shrink-0 ${isHero ? "h-4 w-4" : "h-3.5 w-3.5"}`} />
-              <span className="truncate">
-                {talent.score === null ? "No score yet" : `${talent.score}% match`}
-              </span>
-            </span>
-            <span
-              className="max-w-[42%] truncate text-xs font-medium text-slate-500"
-              title={locationLabel}
-            >
-              {locationLabel}
-            </span>
-          </div>
-
-          <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200/80">
-            <div
-              className={`h-full rounded-full bg-gradient-to-r ${getScoreBarClass(talent.score)}`}
-              style={{ width: `${Math.min(Math.max(talent.score ?? 18, 12), 100)}%` }}
-            />
-          </div>
-
-          <div className="mt-3 flex min-w-0 flex-wrap items-center gap-2 overflow-hidden">
-            <AvailabilityBadge status={talent.availabilityStatus} />
-          </div>
-        </div>
-
-        <p
-          className={`mt-4 flex-1 overflow-hidden break-words text-sm leading-6 text-slate-600 ${isHero ? "line-clamp-4 min-h-[96px]" : "line-clamp-3 min-h-[72px]"}`}
-        >
-          {description}
-        </p>
-
-        <div className={`${isHero ? "mt-4 min-h-[60px]" : "mt-3 min-h-[52px]"}`}>
-          <div className="flex flex-wrap gap-2 overflow-hidden">
-            {visibleSkills.map((skill) => (
-              <span
-                key={skill}
-                className="max-w-full truncate rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600"
-                title={skill}
-              >
-                {skill}
-              </span>
-            ))}
-            {hiddenSkillsCount > 0 && (
-              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-                +{hiddenSkillsCount} more
-              </span>
+          {/* Score ring or rank */}
+          <div className="shrink-0 flex flex-col items-center gap-0.5">
+            <ScoreRing score={talent.score} size={isHero ? 52 : 46} />
+            {!isHero && (
+              <span className="text-[10px] font-semibold text-slate-400">#{rank}</span>
             )}
           </div>
         </div>
 
-        <div className="mt-auto flex items-end justify-between gap-3 border-t border-slate-200/80 pt-4">
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-              Rate
-            </p>
-            <p className="truncate text-sm font-semibold text-slate-800">
-              {rateLabel ? `${talent.currency} ${rateLabel}/hr` : locationLabel}
-            </p>
-          </div>
-          <span
-            className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold text-white transition ${isHero ? "bg-gradient-to-r from-amber-400 to-orange-500 group-hover:from-amber-500 group-hover:to-orange-600" : "bg-slate-950 group-hover:bg-amber-600"}`}
-          >
-            Details
-            <ArrowRight className="h-3.5 w-3.5" />
+        {/* Info row */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <AvailabilityBadge status={talent.availabilityStatus} />
+          {locationLabel && (
+            <span className="flex items-center gap-1 text-xs text-slate-500">
+              <span className="text-slate-300">•</span>
+              {locationLabel}
+            </span>
+          )}
+          {rateLabel && (
+            <span className="flex items-center gap-1 text-xs font-medium text-slate-600">
+              <span className="text-slate-300">•</span>
+              {talent.currency} {rateLabel}/hr
+            </span>
+          )}
+        </div>
+
+        {/* Score bar */}
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+          <div
+            className={`h-full rounded-full bg-gradient-to-r transition-all duration-700 ${getScoreBarClass(talent.score)}`}
+            style={{ width: `${Math.min(Math.max(talent.score ?? 10, 10), 100)}%` }}
+          />
+        </div>
+
+        {/* Bio */}
+        <p className="text-xs leading-5 text-slate-500 line-clamp-3 min-h-[60px]">
+          {description}
+        </p>
+
+        {/* Skills */}
+        <div className="flex flex-wrap gap-1.5">
+          {visibleSkills.map((skill) => (
+            <span
+              key={skill}
+              className="rounded-full bg-slate-50 border border-slate-200 px-2.5 py-0.5 text-[11px] font-medium text-slate-600"
+            >
+              {skill}
+            </span>
+          ))}
+          {hiddenSkillsCount > 0 && (
+            <span className="rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700">
+              +{hiddenSkillsCount}
+            </span>
+          )}
+        </div>
+
+        {/* Footer CTA */}
+        <div className="flex items-center justify-end pt-1 border-t border-slate-100">
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-200 ${
+            isHero
+              ? "bg-amber-500 text-white group-hover:bg-amber-600"
+              : "bg-slate-900 text-white group-hover:bg-amber-500"
+          }`}>
+            View Profile
+            <ArrowRight className="h-3 w-3" />
           </span>
         </div>
       </div>

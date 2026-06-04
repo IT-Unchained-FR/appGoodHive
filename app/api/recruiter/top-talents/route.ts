@@ -154,8 +154,8 @@ export async function POST(request: NextRequest) {
 
     const results: CandidateResult[] = [];
 
-    for (let index = 0; index < talents.length; index += 5) {
-      const chunk = talents.slice(index, index + 5);
+    for (let index = 0; index < talents.length; index += 3) {
+      const chunk = talents.slice(index, index + 3);
       const chunkResults = await Promise.all(
         chunk.map(async (talent): Promise<CandidateResult> => {
           const talentSkills = normalizeSkills(talent.skills);
@@ -205,6 +205,7 @@ export async function POST(request: NextRequest) {
       );
 
       results.push(...chunkResults);
+      if (index + 3 < talents.length) await new Promise((r) => setTimeout(r, 1000));
     }
 
     const candidates = results
