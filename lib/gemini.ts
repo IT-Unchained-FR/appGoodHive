@@ -18,7 +18,10 @@ const resolveGroqModel = (modelName: string): string => {
 const getGroqClient = () => {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) throw new Error("GROQ_API_KEY is not set");
-  return new Groq({ apiKey });
+  // Disable built-in retries — we handle retries ourselves via model rotation.
+  // groq-sdk's retry logic can produce a negative setTimeout value when the
+  // Retry-After header contains a past date, triggering a Node.js warning.
+  return new Groq({ apiKey, maxRetries: 0 });
 };
 
 type GenerateContentResult = {
