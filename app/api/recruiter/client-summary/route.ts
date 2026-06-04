@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getGeminiModel } from "@/lib/gemini";
+import { generateWithFallback } from "@/lib/ai/groq";
 import { getSessionUser } from "@/lib/auth/sessionUtils";
 
 interface ClientSummaryInput {
@@ -88,19 +88,7 @@ Requirements:
 
 Output the summary text only. No preamble, no explanation.`;
 
-    const modelName =
-      process.env.GEMINI_CHAT_MODEL ?? process.env.GEMINI_FAST_MODEL ?? "llama-3.3-70b-versatile";
-    const model = getGeminiModel(modelName);
-
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.6, maxOutputTokens: 400 },
-    });
-
-    const text =
-      typeof result.response.text === "function"
-        ? result.response.text()
-        : (result.response.text as string) ?? "";
+    const text = await generateWithFallback(prompt, { temperature: 0.6, maxTokens: 400 });
 
     return NextResponse.json({ success: true, summary: text.trim() });
   } catch (error) {

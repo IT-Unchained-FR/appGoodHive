@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getGeminiModel } from "@/lib/gemini";
+import { generateWithFallback } from "@/lib/ai/groq";
 import { getSessionUser } from "@/lib/auth/sessionUtils";
 
 interface CandidateInput {
@@ -72,19 +72,7 @@ Provide a concise, structured comparison covering:
 
 Be direct, practical, and concise. Format using markdown headings and bullets. Do not repeat candidate names unnecessarily. Keep the total response under 400 words.`;
 
-    const modelName =
-      process.env.GEMINI_CHAT_MODEL ?? process.env.GEMINI_FAST_MODEL ?? "llama-3.3-70b-versatile";
-    const model = getGeminiModel(modelName);
-
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.5, maxOutputTokens: 600 },
-    });
-
-    const text =
-      typeof result.response.text === "function"
-        ? result.response.text()
-        : (result.response.text as string) ?? "";
+    const text = await generateWithFallback(prompt, { temperature: 0.5, maxTokens: 600 });
 
     return NextResponse.json({ success: true, analysis: text });
   } catch (error) {

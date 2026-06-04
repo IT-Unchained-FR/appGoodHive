@@ -1,17 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getGeminiModel } from "@/lib/gemini";
+import { generateWithFallback } from "@/lib/ai/groq";
 
-function getGeminiText(response: unknown) {
-  const candidate = response as { text?: (() => string) | string } | null;
-
-  if (typeof candidate?.text === "function") {
-    return candidate.text();
-  }
-
-  return typeof candidate?.text === "string" ? candidate.text : "";
-}
-
-// Skills database for validation and suggestions
 const COMMON_SKILLS = [
   "JavaScript", "TypeScript", "React", "Node.js", "Python", "Java", "C++", "C#",
   "PHP", "Ruby", "Go", "Rust", "Swift", "Kotlin", "HTML", "CSS", "SASS", "SCSS",
@@ -70,7 +59,6 @@ export async function POST(request: NextRequest) {
       remote = true
     }: JobGenerationRequest = await request.json();
 
-    // Validation
     if (!jobTitle || !briefDescription) {
       return NextResponse.json(
         { message: "Job title and brief description are required" },
@@ -92,7 +80,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Construct comprehensive prompt
     const jobGenerationPrompt = `
 You are an expert HR professional and job posting specialist. Create a comprehensive, professional job posting based on the following requirements:
 
@@ -160,62 +147,43 @@ Return a JSON object with this exact structure:
 **Important:** Only return the JSON object, no additional text or markdown formatting.
 `;
 
-    // Generate job data using Google AI Studio / Gemini.
-    const modelName =
-      process.env.GEMINI_CHAT_MODEL ??
-      process.env.GEMINI_FAST_MODEL ??
-      "llama-3.3-70b-versatile";
-    const model = getGeminiModel(modelName);
-    const result = await model.generateContent({
-      systemInstruction:
-        "You are an expert HR professional who creates exceptional job postings. Always respond with valid JSON only.",
-      contents: [{ role: "user", parts: [{ text: jobGenerationPrompt }] }],
-      generationConfig: { temperature: 0.7, maxOutputTokens: 3000 },
+    const aiResponse = await generateWithFallback(jobGenerationPrompt, {
+      systemPrompt: "You are an expert HR professional who creates exceptional job postings. Always respond with valid JSON only.",
+      temperature: 0.7,
+      maxTokens: 3000,
     });
 
-    const aiResponse = getGeminiText(result.response);
     if (!aiResponse) {
       throw new Error("No response from AI service");
     }
 
-    // Parse AI response
     let generatedData: GeneratedJobData;
     try {
-      // Clean the response to ensure it's valid JSON
       const cleanedResponse = aiResponse.replace(/```json\n?|\n?```/g, '').trim();
       generatedData = JSON.parse(cleanedResponse);
     } catch (parseError) {
       console.error("AI response parsing error:", parseError);
-      console.error("AI response:", aiResponse);
       throw new Error("Failed to parse AI response");
     }
 
-    // Validate and sanitize the generated data
     if (!generatedData.title || !generatedData.sections || !Array.isArray(generatedData.sections)) {
       throw new Error("Invalid AI response structure");
     }
 
-    // Validate skills against our database and clean them
     const validatedSkills = generatedData.skills
       ?.filter(skill => typeof skill === 'string' && skill.length > 0)
-      .slice(0, 15) // Limit to 15 skills max
+      .slice(0, 15)
       .map(skill => {
-        // Try to find exact matches in our skill database
         const exactMatch = COMMON_SKILLS.find(s => s.toLowerCase() === skill.toLowerCase());
         return exactMatch || skill.trim();
       })
       .filter(skill => skill.length > 1)
       || [];
 
-    // Ensure sections have proper sort_order
     const validatedSections = generatedData.sections
       .filter(section => section.heading && section.content)
-      .map((section, index) => ({
-        ...section,
-        sort_order: index
-      }));
+      .map((section, index) => ({ ...section, sort_order: index }));
 
-    // Set reasonable defaults for budget if not provided
     let estimatedBudget = generatedData.estimatedBudget;
     if (!estimatedBudget || !estimatedBudget.min || !estimatedBudget.max) {
       const budgetRanges = {
@@ -224,14 +192,11 @@ Return a JSON object with this exact structure:
         senior: { min: 3000, max: 10000 },
         lead: { min: 5000, max: 15000 }
       };
-      estimatedBudget = {
-        ...budgetRanges[experienceLevel],
-        currency: "USD"
-      };
+      estimatedBudget = { ...budgetRanges[experienceLevel], currency: "USD" };
     }
 
     const responseData: GeneratedJobData = {
-      title: generatedData.title.substring(0, 100), // Ensure title length limit
+      title: generatedData.title.substring(0, 100),
       sections: validatedSections,
       skills: validatedSkills,
       projectType: generatedData.projectType === 'hourly' ? 'hourly' : 'fixed',
@@ -248,23 +213,19 @@ Return a JSON object with this exact structure:
         : 'remote'
     };
 
-    return NextResponse.json({
-      status: "success",
-      data: responseData
-    });
+    return NextResponse.json({ status: "success", data: responseData });
 
   } catch (error) {
     console.error("Error generating job with AI:", error);
 
-    // Return more specific error messages
     if (error instanceof Error) {
-      if (error.message.includes("API key")) {
+      if (error.message.includes("API key") || error.message.includes("not configured")) {
         return NextResponse.json(
           { status: "error", message: "AI service configuration error" },
           { status: 500 }
         );
       }
-      if (error.message.includes("rate limit") || error.message.includes("quota")) {
+      if (error.message.toLowerCase().includes("rate limit")) {
         return NextResponse.json(
           { status: "error", message: "AI service temporarily unavailable. Please try again in a few minutes." },
           { status: 429 }
@@ -273,10 +234,7 @@ Return a JSON object with this exact structure:
     }
 
     return NextResponse.json(
-      {
-        status: "error",
-        message: "Failed to generate job posting. Please try again or create manually."
-      },
+      { status: "error", message: "Failed to generate job posting. Please try again or create manually." },
       { status: 500 }
     );
   }

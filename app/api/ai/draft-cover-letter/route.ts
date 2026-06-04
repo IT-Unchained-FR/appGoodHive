@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth/sessionUtils";
-import { getGeminiModel } from "@/lib/gemini";
+import { generateWithFallback } from "@/lib/ai/groq";
 import sql from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +30,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 1. Fetch the talent's profile details
     const talentRows = await sql<{
       first_name: string | null;
       last_name: string | null;
@@ -55,9 +54,7 @@ export async function POST(request: NextRequest) {
     const talentName = [talent.first_name, talent.last_name].filter(Boolean).join(" ");
     const talentTitle = talent.title || "Web3 Professional";
     const talentSkills = talent.skills || "various skills";
-    
-    // Decode base64 about_work if needed, or just use as is if it's plain text.
-    // In GoodHive, about_work is often base64 encoded.
+
     let decodedAboutWork = "";
     if (talent.about_work) {
       try {
@@ -67,15 +64,13 @@ export async function POST(request: NextRequest) {
         } else {
           decodedAboutWork = talent.about_work;
         }
-      } catch (e) {
+      } catch {
         decodedAboutWork = talent.about_work;
       }
     }
 
-    // Strip HTML from about work
     decodedAboutWork = decodedAboutWork.replace(/<[^>]*>?/gm, " ").substring(0, 500);
 
-    // 2. (Optional) Fetch the job sections for context
     let jobContext = "";
     if (jobId) {
       const sections = await sql<{ heading: string; content: string }[]>`
@@ -89,11 +84,10 @@ export async function POST(request: NextRequest) {
         jobContext = sections
           .map((s) => `${s.heading}:\n${s.content.replace(/<[^>]*>?/gm, " ")}`)
           .join("\n\n")
-          .substring(0, 1000); // Limit context size
+          .substring(0, 1000);
       }
     }
 
-    // 3. Build Prompt
     const prompt = `You are an expert career coach writing a highly personalized, concise cover letter for a Web3 talent applying for a job on GoodHive.
 
 Candidate Information:
@@ -109,7 +103,7 @@ Job Details:
 ${jobContext}
 
 Task:
-Write a concise, professional, and friendly 3-4 sentence cover letter for this application. 
+Write a concise, professional, and friendly 3-4 sentence cover letter for this application.
 - Do NOT use formal headers (e.g. no "Dear Hiring Manager," or "Sincerely, [Name]"). Just write the body paragraphs.
 - Focus on how the candidate's skills directly align with the job title.
 - Keep the tone enthusiastic but professional (Web3 startup vibe).
@@ -118,32 +112,12 @@ Write a concise, professional, and friendly 3-4 sentence cover letter for this a
 
 Return ONLY the raw text of the cover letter.`;
 
-    const modelName =
-      process.env.GEMINI_CHAT_MODEL ??
-      process.env.GEMINI_FAST_MODEL ??
-      "llama-3.3-70b-versatile";
-    const model = getGeminiModel(modelName);
-    
-    const result = await model.generateContent(prompt);
-    
-    const rawResponse = result.response as unknown as {
-      text?: () => string;
-      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-    };
-
-    let generatedText =
-      typeof rawResponse?.text === "function"
-        ? rawResponse.text()
-        : rawResponse?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-
-    // Clean up any potential markdown quotes
+    let generatedText = await generateWithFallback(prompt);
     generatedText = generatedText.trim().replace(/^"/, "").replace(/"$/, "").trim();
 
     return NextResponse.json({
       success: true,
-      data: {
-        coverLetter: generatedText,
-      },
+      data: { coverLetter: generatedText },
     });
   } catch (error) {
     console.error("Cover letter generation error:", error);

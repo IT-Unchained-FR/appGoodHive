@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth/sessionUtils";
-import { getGeminiModel } from "@/lib/gemini";
+import { generateWithFallback } from "@/lib/ai/groq";
 
 export const dynamic = "force-dynamic";
 
@@ -84,22 +84,7 @@ export async function POST(request: NextRequest) {
     const companyBio = typeof body.companyBio === "string" ? body.companyBio : "";
 
     const prompt = buildPrompt({ title, seniority, skills, workType, budget, tone, companyName, companyBio });
-
-    const modelName = process.env.GEMINI_CHAT_MODEL ?? process.env.GEMINI_FAST_MODEL ?? "llama-3.3-70b-versatile";
-    const model = getGeminiModel(modelName);
-    const result = await model.generateContent(prompt);
-
-    const rawResponse = result.response as unknown as {
-      text?: () => string;
-      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-    };
-
-    const rawText =
-      typeof rawResponse?.text === "function"
-        ? rawResponse.text()
-        : rawResponse?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-
-    // Strip markdown code fences if any
+    const rawText = await generateWithFallback(prompt);
     const cleaned = rawText.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
     let jd: GeneratedJD;
@@ -109,7 +94,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "AI returned invalid format. Please try again." }, { status: 422 });
     }
 
-    // Convert to IJobSection format
     const sections = [
       { heading: "Overview", content: jd.overview ?? "", sort_order: 0 },
       { heading: "Responsibilities", content: toSectionContent(jd.responsibilities ?? []), sort_order: 1 },
@@ -124,10 +108,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: {
-        title: jd.title || title,
-        sections,
-      },
+      data: { title: jd.title || title, sections },
     });
   } catch (error) {
     console.error("Job description generation error:", error);

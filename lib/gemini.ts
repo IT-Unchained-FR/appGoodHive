@@ -12,7 +12,7 @@ const resolveGroqModel = (modelName: string): string => {
     "gemini-1.5-pro": GROQ_DEFAULT_MODEL,
     "gemini-2.0-flash-lite": GROQ_FAST_MODEL,
   };
-  return map[cleaned] ?? map[modelName] ?? GROQ_DEFAULT_MODEL;
+  return map[cleaned] ?? map[modelName] ?? cleaned;
 };
 
 const getGroqClient = () => {

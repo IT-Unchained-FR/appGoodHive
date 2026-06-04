@@ -1,10 +1,5 @@
 import { IJobSection } from "@/interfaces/job-offer";
-import { getGeminiModel } from "@/lib/gemini";
-
-const MODEL_NAME =
-  process.env.GEMINI_CHAT_MODEL ??
-  process.env.GEMINI_FAST_MODEL ??
-  "llama-3.3-70b-versatile";
+import { generateWithFallback } from "@/lib/ai/groq";
 
 const STRUCTURED_HTML_PATTERN = /<(p|ul|ol|li|h2|h3|h4|blockquote|br)\b/i;
 const URL_PATTERN = /(https?:\/\/[^\s<]+)/gi;
@@ -95,21 +90,6 @@ export function plainTextToStructuredHtml(value: string | null | undefined) {
   return htmlBlocks.join("");
 }
 
-function extractGeminiText(result: unknown) {
-  const response = result as {
-    response?: {
-      text?: () => string;
-      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-    };
-  };
-
-  if (typeof response?.response?.text === "function") {
-    return response.response.text();
-  }
-
-  return response?.response?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-}
-
 async function formatSectionsWithGemini(
   sections: IJobSection[],
   jobTitle?: string,
@@ -150,9 +130,7 @@ Return ONLY valid JSON:
   ]
 }`;
 
-  const model = getGeminiModel(MODEL_NAME);
-  const result = await model.generateContent(prompt);
-  const rawText = extractGeminiText(result)
+  const rawText = (await generateWithFallback(prompt))
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/\s*```$/i, "")
     .trim();

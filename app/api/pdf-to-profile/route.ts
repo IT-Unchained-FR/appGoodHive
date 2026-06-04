@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 // which crashes in Next.js serverless / edge environments.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require("pdf-parse/lib/pdf-parse.js");
-import { getGeminiModel } from "@/lib/gemini";
+import { generateWithFallback } from "@/lib/ai/groq";
 import {
   chunkTextForAI,
   extractJsonObject,
@@ -12,7 +12,6 @@ import {
   normalizeExtractedResumeFacts,
 } from "./pdf-import-utils";
 
-const GEMINI_MODEL = process.env.GEMINI_CHAT_MODEL ?? process.env.GEMINI_FAST_MODEL ?? "llama-3.3-70b-versatile";
 const PDF_TEXT_EXTRACTOR_URL =
   process.env.PDF_TEXT_EXTRACTOR_URL ??
   "https://pdf-text-extractor-ki7lh2h1i-jubayer-juhans-projects-85b1bbdc.vercel.app/upload-pdf";
@@ -111,15 +110,6 @@ Do not remove facts from the provided data.
 Keep the HTML compatible with React Quill.
 `;
 
-function getGeminiText(response: unknown) {
-  const candidate = response as { text?: (() => string) | string } | null;
-
-  if (typeof candidate?.text === "function") {
-    return candidate.text();
-  }
-  return typeof candidate?.text === "string" ? candidate.text : "";
-}
-
 const createNarrativePrompt = (facts: ExtractedResumeFacts) => `
 Use this structured resume data to produce polished profile copy.
 Return JSON with this exact shape:
@@ -144,19 +134,9 @@ const callGeminiForJson = async <T,>(
   systemPrompt: string,
   userPrompt: string,
 ) => {
-  const model = getGeminiModel(GEMINI_MODEL);
-  const result = await model.generateContent({
-    systemInstruction: systemPrompt,
-    contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-    generationConfig: { temperature: 0.2 },
-  });
-
-  const generatedText = getGeminiText(result.response);
-  if (!generatedText) {
-    throw new Error("No response from Gemini");
-  }
-
-  return extractJsonObject<T>(generatedText);
+  const text = await generateWithFallback(userPrompt, { systemPrompt, temperature: 0.2 });
+  if (!text) throw new Error("No response from AI");
+  return extractJsonObject<T>(text);
 };
 
 const extractTextLocally = async (buffer: Buffer) => {

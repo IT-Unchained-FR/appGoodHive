@@ -1,29 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getGeminiModel } from "@/lib/gemini";
-
-function getGeminiText(response: unknown) {
-  const candidate = response as { text?: (() => string) | string } | null;
-
-  if (typeof candidate?.text === "function") {
-    return candidate.text();
-  }
-
-  return typeof candidate?.text === "string" ? candidate.text : "";
-}
-
-async function generateGeminiText(prompt: string, temperature = 0.7) {
-  const modelName =
-    process.env.GEMINI_CHAT_MODEL ??
-    process.env.GEMINI_FAST_MODEL ??
-    "llama-3.3-70b-versatile";
-  const model = getGeminiModel(modelName);
-  const result = await model.generateContent({
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    generationConfig: { temperature },
-  });
-
-  return getGeminiText(result.response);
-}
+import { generateWithFallback } from "@/lib/ai/groq";
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,19 +12,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Extract relevant information from LinkedIn data
     const {
       firstName,
       lastName,
-      headline, // not used in your data, but keep for fallback
+      headline,
       summary,
       skills = [],
       experience = [],
       educations = [],
-      position, // this is the string headline/title
+      position,
     } = linkedinData;
 
-    // Extract skills names
     const skillNames = skills
       .map((skill: any) => skill.name || skill || "")
       .join(", ");
@@ -69,18 +43,16 @@ export async function POST(request: NextRequest) {
       })
       .join("; ");
 
-    // Use position (string) as headline, fallback to headline or empty string
     const headlineText = position || headline || "";
 
-    // Construct the prompts
     const titlePrompt = `
-    You are an expert professional profile writer. 
+    You are an expert professional profile writer.
     Create a compelling and professional profile headline for a talent in the tech industry.
     Use the following information:
     - Current headline: "${headlineText}"
     - Skills: ${skillNames}
     - Experience: ${formattedExperiences}
-    
+
     Keep it concise (under 50-60 characters), professional, and impactful.
     Include their primary expertise and what makes them stand out.
     Format: Just return the headline text with no quotation marks or additional formatting.
@@ -94,7 +66,7 @@ export async function POST(request: NextRequest) {
     - Current summary: "${summary || linkedinData.about || "N/A"}"
     - Skills: ${skillNames}
     - Experience: ${formattedExperiences}
-    
+
     Write a captivating description (200-300 words) highlighting their expertise, achievements, and unique value proposition.
     And also make sure it's been written in the language of the user (in the language of the user like user is talking to the audience).
     Use professional, confident language. Format in HTML paragraphs (<p>...</p>).
@@ -104,7 +76,7 @@ export async function POST(request: NextRequest) {
 
     const aboutWorkPrompt = `
     You are an expert professional profile writer.
-    
+
     Create a compelling "About My Work" section for a talent profile using the following information:
     - Name: ${firstName || linkedinData.first_name || ""} ${lastName || linkedinData.last_name || ""}
     - Current headline: "${headlineText}"
@@ -112,24 +84,24 @@ export async function POST(request: NextRequest) {
     - Skills: ${skillNames}
     - Experience: ${formattedExperiences}
     - Education: ${formattedEducations || "N/A"}
-    
+
     Your task is to write a professional, well-structured "About My Work" section (300–400 words) that includes the following clearly separated parts, formatted using <p> tags for paragraphs and <strong> or <h4> tags for section headings:
-    
+
     1. <h2>Work Philosophy & Approach</h2>
        - Describe their work ethics, how they approach tasks, commitment to quality, client collaboration style, and what makes them dependable.
-    
+
     2. <h2>Key Skills</h2>
        - Highlight their core competencies and technical or creative strengths. Include soft skills if applicable.
-    
+
     3. <h2>Professional Experience</h2>
        - Summarize major roles, industries worked in, and achievements or results they've delivered.
-    
+
     4. <h2>Education & Continuous Learning</h2>
        - Mention their academic background and any certifications or ongoing learning habits that support their expertise.
-    
+
     5. <h2>What Clients Can Expect</h2>
        - Communicate what clients will experience when working with this person: clarity, responsiveness, innovation, delivery, etc.
-    
+
     Guidelines:
     - To Mention My Name Please Use me so that it's easy to understand and user can understand that it's about me and I wrote it.
     - Please make it rich text so I can enter this on the rich text editor.
@@ -140,20 +112,15 @@ export async function POST(request: NextRequest) {
     - Do NOT use any markdown or code blocks in the response. Use HTML formatting only as directed above.
     `;
 
-    // Generate all content in parallel
     const [title, description, aboutWork] = await Promise.all([
-      generateGeminiText(titlePrompt),
-      generateGeminiText(descriptionPrompt),
-      generateGeminiText(aboutWorkPrompt),
+      generateWithFallback(titlePrompt, { temperature: 0.7 }),
+      generateWithFallback(descriptionPrompt, { temperature: 0.7 }),
+      generateWithFallback(aboutWorkPrompt, { temperature: 0.7 }),
     ]);
 
     return NextResponse.json({
       status: "completed",
-      data: {
-        title,
-        description,
-        aboutWork,
-      },
+      data: { title, description, aboutWork },
     });
   } catch (error) {
     console.error("Error enhancing content with AI:", error);

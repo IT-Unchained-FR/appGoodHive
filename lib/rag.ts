@@ -1,12 +1,7 @@
-import { getGeminiModel } from "./gemini";
+import { generateWithFallback } from "./ai/groq";
 import { retrieveRagContexts, type RagContext } from "./ragEngine";
 import { GoodHiveQuickCallUrl } from "@/app/constants/common";
 
-const CHAT_MODEL =
-  process.env.GEMINI_CHAT_MODEL ?? "llama-3.3-70b-versatile";
-const FAST_MODEL =
-  process.env.GEMINI_FAST_MODEL ?? "llama-3.1-8b-instant";
-let resolvedChatModelName: string | null = null;
 
 const getRagSourceLabel = (context: RagContext) => {
   if (context.sourceDisplayName) return context.sourceDisplayName;
@@ -33,48 +28,6 @@ const buildRagKnowledgeBase = (contexts: RagContext[]) => {
     .join("\n\n");
 };
 
-const isModelNotFoundError = (error: unknown) => {
-  const status = (error as { status?: number })?.status;
-  if (status === 404) return true;
-  const message = (error as { message?: string })?.message ?? "";
-  return (
-    message.toLowerCase().includes("not found") ||
-    message.toLowerCase().includes("not supported for generatecontent")
-  );
-};
-
-const createGeminiContentGenerator = (
-  primaryModelName: string,
-  fallbackModelName?: string,
-  onFallback?: (resolvedModelName: string) => void
-) => {
-  let activeModelName = primaryModelName;
-  let fallbackUsed = false;
-
-  return async (prompt: string) => {
-    try {
-      const model = getGeminiModel(activeModelName);
-      return await model.generateContent(prompt);
-    } catch (error) {
-      if (
-        fallbackModelName &&
-        !fallbackUsed &&
-        activeModelName !== fallbackModelName &&
-        isModelNotFoundError(error)
-      ) {
-        fallbackUsed = true;
-        activeModelName = fallbackModelName;
-        onFallback?.(activeModelName);
-        console.warn(
-          `Gemini model ${primaryModelName} unavailable; falling back to ${fallbackModelName}`
-        );
-        const fallbackModel = getGeminiModel(activeModelName);
-        return await fallbackModel.generateContent(prompt);
-      }
-      throw error;
-    }
-  };
-};
 
 export type ChatChannel = "telegram" | "web";
 
@@ -147,27 +100,6 @@ const formatReply = (reply: string) => {
 const stripSources = (reply: string) =>
   reply.replace(/\n?Sources?:[^\n]*$/i, "").trim();
 
-const extractModelText = (result: unknown) => {
-  const response = (result as { response?: unknown })?.response ?? result;
-  if (!response) return "";
-
-  const responseWithText = response as { text?: () => string | string };
-  if (typeof responseWithText.text === "function") {
-    return responseWithText.text();
-  }
-  if (typeof responseWithText.text === "string") {
-    return responseWithText.text;
-  }
-
-  const candidates = (response as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> })
-    ?.candidates;
-  if (candidates?.length) {
-    const parts = candidates[0]?.content?.parts ?? [];
-    return parts.map((part) => part.text ?? "").join("");
-  }
-
-  return "";
-};
 
 const safeParseJson = <T>(text: string): T | null => {
   const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
@@ -190,13 +122,6 @@ export async function generateChatResponse(
   channel: ChatChannel = "telegram"
 ): Promise<ChatResponse> {
   try {
-    const generateChatContent = createGeminiContentGenerator(
-      resolvedChatModelName ?? CHAT_MODEL,
-      FAST_MODEL,
-      (resolvedModelName) => {
-        resolvedChatModelName = resolvedModelName;
-      }
-    );
     let ragContexts: RagContext[] = [];
     try {
       const ragResult = await retrieveRagContexts(userMessage);
@@ -220,8 +145,7 @@ export async function generateChatResponse(
       : "";
 
     const ragKnowledgeBase = buildRagKnowledgeBase(ragContexts);
-    const prompt = `${buildSystemPrompt(ragKnowledgeBase, channel)}${historyContext}
-
+    const userPrompt = `${historyContext}
 USER MESSAGE: "${userMessage}"
 
 Analyze the user's message and respond with a JSON object (no markdown, just pure JSON):
@@ -231,8 +155,9 @@ Analyze the user's message and respond with a JSON object (no markdown, just pur
   "ctaType": "talent" | "company" | "both" (only if showProfileCta is true - "talent" if they're a developer/job seeker, "company" if they're hiring, "both" if unclear)
 }`;
 
-    const result = await generateChatContent(prompt);
-    const text = extractModelText(result);
+    const text = await generateWithFallback(userPrompt, {
+      systemPrompt: buildSystemPrompt(ragKnowledgeBase, channel),
+    });
 
     const parsed = safeParseJson<DraftChatResponse>(text);
     if (!parsed) {
@@ -271,13 +196,8 @@ export async function classifyIntent(userText: string) {
   try {
     const prompt = `Classify the user's intent into one category.\nUser said: "${userText}"\n\nCategories:\n- "hiring": They want to hire talent, build a team, or have a project\n- "applying": They are a developer/talent looking for work or to join\n- "question": They are asking about GoodHive, pricing, features, tokenomics\n- "general": Greetings, vague statements, or unclear intent\n\nReturn only JSON (no markdown): {"intent": "hiring" | "applying" | "question" | "general"}`;
 
-    const model = getGeminiModel(FAST_MODEL);
-    const result = await model.generateContent(prompt);
-    const text = extractModelText(result);
-    const jsonStr = text
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .trim();
+    const text = await generateWithFallback(prompt);
+    const jsonStr = text.replace(/```json/g, "").replace(/```/g, "").trim();
     return JSON.parse(jsonStr);
   } catch (error) {
     console.error("Intent classification failed:", error);
@@ -289,13 +209,8 @@ export async function analyzeInput(userText: string, fieldName: string) {
   try {
     const prompt = `You are a form validator. The user was asked for: "${fieldName}".\nUser replied: "${userText}".\n\nIs this a valid, direct answer? Return only JSON (no markdown):\n{"type": "answer" | "question" | "invalid", "valid": boolean}`;
 
-    const model = getGeminiModel(FAST_MODEL);
-    const result = await model.generateContent(prompt);
-    const text = extractModelText(result);
-    const jsonStr = text
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .trim();
+    const text = await generateWithFallback(prompt);
+    const jsonStr = text.replace(/```json/g, "").replace(/```/g, "").trim();
     return JSON.parse(jsonStr);
   } catch (error) {
     console.error("Input analysis failed:", error);

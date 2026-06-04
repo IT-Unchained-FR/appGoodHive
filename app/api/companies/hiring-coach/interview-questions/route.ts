@@ -9,22 +9,9 @@ import {
   parseHiringCoachJson,
 } from "@/lib/ai/company-hiring-coach";
 import { getSessionUser } from "@/lib/auth/sessionUtils";
-import { getGeminiModel } from "@/lib/gemini";
+import { generateWithFallback } from "@/lib/ai/groq";
 
 export const dynamic = "force-dynamic";
-
-function readGeminiText(response: unknown) {
-  const rawResponse = response as {
-    text?: () => string;
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-  };
-
-  return (
-    typeof rawResponse?.text === "function"
-      ? rawResponse.text()
-      : rawResponse?.candidates?.[0]?.content?.parts?.[0]?.text ?? ""
-  ).trim();
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -76,13 +63,8 @@ export async function POST(request: NextRequest) {
     }
 
     const prompt = buildInterviewQuestionsPrompt(context, { job, application });
-    const modelName = process.env.GEMINI_CHAT_MODEL ?? process.env.GEMINI_FAST_MODEL ?? "llama-3.3-70b-versatile";
-    const model = getGeminiModel(modelName);
-    const result = await model.generateContent(prompt);
-    const parsed = parseHiringCoachJson(
-      readGeminiText(result.response),
-      normalizeInterviewQuestionsResult,
-    );
+    const text = await generateWithFallback(prompt);
+    const parsed = parseHiringCoachJson(text, normalizeInterviewQuestionsResult);
 
     if (!parsed) {
       return NextResponse.json(

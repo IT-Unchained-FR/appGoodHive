@@ -3,14 +3,13 @@ import sql from "@/lib/db";
 import { getSessionUser } from "@/lib/auth/sessionUtils";
 import { buildTalentContext } from "@/lib/ai/superbot-context";
 import { buildCareerCoachSystemPrompt } from "@/lib/ai/superbot-prompt";
-import { getGeminiModel } from "@/lib/gemini";
+import { generateWithFallback } from "@/lib/ai/groq";
 
 export const dynamic = "force-dynamic";
 
-const MAX_HISTORY = 10; // last N messages to include in context
+const MAX_HISTORY = 10;
 
 export async function GET() {
-  // Returns conversation history for the logged-in user
   try {
     const sessionUser = await getSessionUser();
     if (!sessionUser?.user_id) {
@@ -52,7 +51,6 @@ export async function POST(request: NextRequest) {
 
     const userId = sessionUser.user_id;
 
-    // Fetch last N messages for context
     const historyRows = await sql<{ role: string; content: string }[]>`
       SELECT role, content
       FROM goodhive.superbot_coach_messages
@@ -60,42 +58,27 @@ export async function POST(request: NextRequest) {
       ORDER BY created_at DESC
       LIMIT ${MAX_HISTORY}
     `;
-    // Reverse to chronological order
     const history = historyRows.reverse();
 
-    // Build talent context + system prompt
     const context = await buildTalentContext(userId);
     const systemPrompt = buildCareerCoachSystemPrompt(context);
 
-    // Save user message
     await sql`
       INSERT INTO goodhive.superbot_coach_messages (user_id, role, content)
       VALUES (${userId}::uuid, 'user', ${userMessage})
     `;
 
-    // Build chat history for Gemini
-    const chatHistory = history.map((msg) => ({
-      role: msg.role === "assistant" ? "model" : "user",
-      parts: [{ text: msg.content }],
-    }));
+    // Build conversation as a single prompt with history inlined
+    const historyText = history
+      .map((msg) => `${msg.role === "assistant" ? "Assistant" : "User"}: ${msg.content}`)
+      .join("\n");
 
-    // Call Gemini — use env var model name if available
-    const modelName = process.env.GEMINI_CHAT_MODEL ?? process.env.GEMINI_FAST_MODEL ?? "llama-3.3-70b-versatile";
-    const model = getGeminiModel(modelName);
-    const chat = model.startChat({
-      systemInstruction: { role: "user", parts: [{ text: systemPrompt }] },
-      history: chatHistory,
-    });
+    const prompt = historyText
+      ? `${historyText}\nUser: ${userMessage}`
+      : userMessage;
 
-    const result = await chat.sendMessage(userMessage);
-    const rawResponse = result.response as unknown as { text?: () => string; candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
-    const reply = (
-      typeof rawResponse?.text === "function"
-        ? rawResponse.text()
-        : rawResponse?.candidates?.[0]?.content?.parts?.[0]?.text ?? ""
-    ).trim();
+    const reply = (await generateWithFallback(prompt, { systemPrompt })).trim();
 
-    // Save assistant reply
     await sql`
       INSERT INTO goodhive.superbot_coach_messages (user_id, role, content)
       VALUES (${userId}::uuid, 'assistant', ${reply})
@@ -110,7 +93,6 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE() {
-  // Clears conversation history for the current user
   try {
     const sessionUser = await getSessionUser();
     if (!sessionUser?.user_id) {

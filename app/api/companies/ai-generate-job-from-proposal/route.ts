@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getGeminiModel } from "@/lib/gemini";
+import { generateWithFallback } from "@/lib/ai/groq";
 
 export const dynamic = "force-dynamic";
 
@@ -75,28 +75,14 @@ Return ONLY valid JSON (no markdown, no code blocks):
   "jobType": "remote"
 }`;
 
-    const modelName = process.env.GEMINI_CHAT_MODEL ?? process.env.GEMINI_FAST_MODEL ?? "llama-3.3-70b-versatile";
-    const model = getGeminiModel(modelName);
-    const result = await model.generateContent(prompt);
-
-    const rawResponse = result.response as unknown as {
-      text?: () => string;
-      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-    };
-
-    const rawText =
-      typeof rawResponse?.text === "function"
-        ? rawResponse.text()
-        : rawResponse?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-
-    // Strip markdown fences if present
+    const rawText = await generateWithFallback(prompt);
     const cleaned = rawText.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
     let generatedData: GeneratedJobData;
     try {
       generatedData = JSON.parse(cleaned);
     } catch {
-      console.error("Gemini response parsing error. Raw:", rawText);
+      console.error("AI response parsing error. Raw:", rawText);
       return NextResponse.json(
         { status: "error", message: "AI returned an invalid format. Please try again." },
         { status: 422 }
@@ -110,12 +96,10 @@ Return ONLY valid JSON (no markdown, no code blocks):
       );
     }
 
-    // Sanitize sections
     const validatedSections = generatedData.sections
       .filter((s) => s.heading && s.content)
       .map((s, i) => ({ ...s, sort_order: i }));
 
-    // Sanitize budget
     const budget =
       generatedData.estimatedBudget?.min && generatedData.estimatedBudget?.max
         ? generatedData.estimatedBudget

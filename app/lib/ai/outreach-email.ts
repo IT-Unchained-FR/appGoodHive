@@ -1,23 +1,10 @@
-import { getGeminiModel } from "@/lib/gemini";
+import { generateWithFallback } from "@/lib/ai/groq";
 
 export interface OutreachEmailParams {
   talentName: string;
   talentTitle: string;
   talentSkills: string[];
   jobDescription: string;
-}
-
-function getOutreachModels() {
-  const configured = [
-    process.env.GEMINI_CHAT_MODEL?.trim(),
-    process.env.GEMINI_FAST_MODEL?.trim(),
-  ];
-  const defaults = [
-    "llama-3.3-70b-versatile",
-    "llama-3.1-8b-instant",
-  ];
-  const all = [...configured, ...defaults];
-  return all.filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);
 }
 
 export async function generateOutreachEmail(params: OutreachEmailParams): Promise<string> {
@@ -42,32 +29,12 @@ Instructions:
 - Do NOT invent specific company names, salaries, or experiences.
 - Return ONLY the raw email body text.`;
 
-  const modelNames = getOutreachModels();
+  const text = await generateWithFallback(prompt);
+  const cleaned = text.trim().replace(/^"+|"+$/g, "").trim();
 
-  for (const modelName of modelNames) {
-    try {
-      const model = getGeminiModel(modelName);
-      const result = await model.generateContent(prompt);
-      const response = result.response as unknown as {
-        text?: (() => string) | string;
-        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-      };
-      const text =
-        typeof response?.text === "function"
-          ? response.text()
-          : typeof response?.text === "string"
-            ? response.text
-            : (response?.candidates?.[0]?.content?.parts?.[0]?.text ?? "");
-
-      const cleaned = text.trim().replace(/^"+|"+$/g, "").trim();
-      if (cleaned.length > 20) {
-        return cleaned;
-      }
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      console.error(`generateOutreachEmail failed with ${modelName}: ${msg}`);
-    }
+  if (!cleaned || cleaned.length < 20) {
+    throw new Error("AI outreach generation is temporarily unavailable. Please try again.");
   }
 
-  throw new Error("AI outreach generation is temporarily unavailable. Please try again.");
+  return cleaned;
 }
