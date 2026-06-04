@@ -113,9 +113,9 @@ export async function POST(request: NextRequest) {
     `;
 
     const [title, description, aboutWork] = await Promise.all([
-      generateWithFallback(titlePrompt, { temperature: 0.7 }),
-      generateWithFallback(descriptionPrompt, { temperature: 0.7 }),
-      generateWithFallback(aboutWorkPrompt, { temperature: 0.7 }),
+      generateWithFallback(titlePrompt, { temperature: 0.7, feature: "ai-enhance" }),
+      generateWithFallback(descriptionPrompt, { temperature: 0.7, feature: "ai-enhance" }),
+      generateWithFallback(aboutWorkPrompt, { temperature: 0.7, feature: "ai-enhance" }),
     ]);
 
     return NextResponse.json({

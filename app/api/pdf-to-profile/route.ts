@@ -134,7 +134,7 @@ const callGeminiForJson = async <T,>(
   systemPrompt: string,
   userPrompt: string,
 ) => {
-  const text = await generateWithFallback(userPrompt, { systemPrompt, temperature: 0.2 });
+  const text = await generateWithFallback(userPrompt, { systemPrompt, temperature: 0.2, feature: "pdf-to-profile" });
   if (!text) throw new Error("No response from AI");
   return extractJsonObject<T>(text);
 };

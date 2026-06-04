@@ -75,7 +75,7 @@ Return ONLY valid JSON (no markdown, no code blocks):
   "jobType": "remote"
 }`;
 
-    const rawText = await generateWithFallback(prompt);
+    const rawText = await generateWithFallback(prompt, { feature: "generate-job-from-proposal" });
     const cleaned = rawText.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
     let generatedData: GeneratedJobData;

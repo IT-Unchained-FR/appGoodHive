@@ -1,4 +1,5 @@
 import Groq from "groq-sdk";
+import sql from "@/lib/db";
 
 export const GROQ_MODELS = {
   LLAMA_70B: "llama-3.3-70b-versatile",
@@ -21,6 +22,14 @@ export interface GenerateOptions {
   systemPrompt?: string;
   temperature?: number;
   maxTokens?: number;
+  feature?: string;
+}
+
+function logUsage(model: string, feature: string, usage: Groq.CompletionUsage): void {
+  sql`
+    INSERT INTO goodhive.groq_usage (model, feature, prompt_tokens, completion_tokens, total_tokens)
+    VALUES (${model}, ${feature}, ${usage.prompt_tokens}, ${usage.completion_tokens}, ${usage.total_tokens})
+  `.catch((err) => console.error("groq: failed to log usage:", err));
 }
 
 let roundRobinIndex = 0;
@@ -53,7 +62,7 @@ export async function generateWithFallback(
   prompt: string,
   options: GenerateOptions = {},
 ): Promise<string> {
-  const { models = DEFAULT_MODEL_POOL, systemPrompt, temperature, maxTokens } = options;
+  const { models = DEFAULT_MODEL_POOL, systemPrompt, temperature, maxTokens, feature = "unknown" } = options;
 
   const client = getGroqClient();
   const messages: Groq.Chat.ChatCompletionMessageParam[] = [
@@ -74,7 +83,10 @@ export async function generateWithFallback(
       });
 
       const text = completion.choices[0]?.message?.content ?? "";
-      if (text) return text;
+      if (text) {
+        if (completion.usage) logUsage(model, feature, completion.usage);
+        return text;
+      }
 
       errors.push(`${model}: empty response`);
     } catch (error) {

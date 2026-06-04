@@ -151,6 +151,7 @@ Return a JSON object with this exact structure:
       systemPrompt: "You are an expert HR professional who creates exceptional job postings. Always respond with valid JSON only.",
       temperature: 0.7,
       maxTokens: 3000,
+      feature: "generate-job",
     });
 
     if (!aiResponse) {

@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     const companyBio = typeof body.companyBio === "string" ? body.companyBio : "";
 
     const prompt = buildPrompt({ title, seniority, skills, workType, budget, tone, companyName, companyBio });
-    const rawText = await generateWithFallback(prompt);
+    const rawText = await generateWithFallback(prompt, { feature: "generate-job-description" });
     const cleaned = rawText.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
     let jd: GeneratedJD;

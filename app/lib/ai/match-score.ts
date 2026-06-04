@@ -75,7 +75,7 @@ Return ONLY valid JSON (no markdown, no explanation):
 }`;
 
   try {
-    const text = await generateWithFallback(prompt);
+    const text = await generateWithFallback(prompt, { feature: "match-score" });
     const parsed = tryParseModelJson(text);
 
     if (!parsed) {

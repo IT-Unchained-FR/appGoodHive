@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     const prompt = buildJobPostCoachPrompt(context, { job, draftText });
-    const text = await generateWithFallback(prompt);
+    const text = await generateWithFallback(prompt, { feature: "hiring-coach-job-post" });
     const parsed = parseHiringCoachJson(text, normalizeJobPostResult);
 
     if (!parsed) {

@@ -112,7 +112,7 @@ Write a concise, professional, and friendly 3-4 sentence cover letter for this a
 
 Return ONLY the raw text of the cover letter.`;
 
-    let generatedText = await generateWithFallback(prompt);
+    let generatedText = await generateWithFallback(prompt, { feature: "cover-letter" });
     generatedText = generatedText.trim().replace(/^"/, "").replace(/"$/, "").trim();
 
     return NextResponse.json({

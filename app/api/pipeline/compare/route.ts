@@ -72,7 +72,7 @@ Provide a concise, structured comparison covering:
 
 Be direct, practical, and concise. Format using markdown headings and bullets. Do not repeat candidate names unnecessarily. Keep the total response under 400 words.`;
 
-    const text = await generateWithFallback(prompt, { temperature: 0.5, maxTokens: 600 });
+    const text = await generateWithFallback(prompt, { temperature: 0.5, maxTokens: 600, feature: "pipeline-compare" });
 
     return NextResponse.json({ success: true, analysis: text });
   } catch (error) {

@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     Return ONLY a valid JSON array like: ["React", "JavaScript", "Node.js", "Project Management"]
     `;
 
-    const content = await generateWithFallback(skillsPrompt, { temperature: 0.3 });
+    const content = await generateWithFallback(skillsPrompt, { temperature: 0.3, feature: "extract-skills" });
 
     let extractedSkills: string[] = [];
     try {

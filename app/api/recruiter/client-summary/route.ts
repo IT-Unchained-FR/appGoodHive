@@ -88,7 +88,7 @@ Requirements:
 
 Output the summary text only. No preamble, no explanation.`;
 
-    const text = await generateWithFallback(prompt, { temperature: 0.6, maxTokens: 400 });
+    const text = await generateWithFallback(prompt, { temperature: 0.6, maxTokens: 400, feature: "client-summary" });
 
     return NextResponse.json({ success: true, summary: text.trim() });
   } catch (error) {

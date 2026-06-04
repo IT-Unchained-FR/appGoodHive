@@ -7,6 +7,7 @@ import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
 import { UserGrowthChart } from "@/app/components/admin/UserGrowthChart";
 import { JobTrendsChart } from "@/app/components/admin/JobTrendsChart";
+import { GroqUsageSection } from "@/app/components/admin/GroqUsageSection";
 import { ReportGenerator, type ReportParams } from "@/app/components/admin/ReportGenerator";
 import { StatCard } from "@/app/components/admin/StatCard";
 import { Button } from "@/components/ui/button";
@@ -293,6 +294,11 @@ export default function AnalyticsPage() {
           </div>
         </div>
       </div>
+
+        {/* AI Usage */}
+        {getAuthHeaders() && (
+          <GroqUsageSection authHeaders={getAuthHeaders()!} />
+        )}
 
       <ReportGenerator
         open={showReportGenerator}

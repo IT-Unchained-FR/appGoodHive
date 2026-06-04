@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     }
 
     const prompt = buildCandidateSummaryPrompt(context, { job, application });
-    const text = await generateWithFallback(prompt);
+    const text = await generateWithFallback(prompt, { feature: "hiring-coach-candidate-summary" });
     const parsed = parseHiringCoachJson(text, normalizeCandidateSummaryResult);
 
     if (!parsed) {

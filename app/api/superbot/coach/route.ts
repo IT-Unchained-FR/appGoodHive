@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       ? `${historyText}\nUser: ${userMessage}`
       : userMessage;
 
-    const reply = (await generateWithFallback(prompt, { systemPrompt })).trim();
+    const reply = (await generateWithFallback(prompt, { systemPrompt, feature: "superbot-coach" })).trim();
 
     await sql`
       INSERT INTO goodhive.superbot_coach_messages (user_id, role, content)

@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     }
 
     const prompt = buildInterviewQuestionsPrompt(context, { job, application });
-    const text = await generateWithFallback(prompt);
+    const text = await generateWithFallback(prompt, { feature: "hiring-coach-interview-questions" });
     const parsed = parseHiringCoachJson(text, normalizeInterviewQuestionsResult);
 
     if (!parsed) {

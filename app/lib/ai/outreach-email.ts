@@ -29,7 +29,7 @@ Instructions:
 - Do NOT invent specific company names, salaries, or experiences.
 - Return ONLY the raw email body text.`;
 
-  const text = await generateWithFallback(prompt);
+  const text = await generateWithFallback(prompt, { feature: "outreach-email" });
   const cleaned = text.trim().replace(/^"+|"+$/g, "").trim();
 
   if (!cleaned || cleaned.length < 20) {
