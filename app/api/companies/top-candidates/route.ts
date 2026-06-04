@@ -329,6 +329,7 @@ export async function POST(request: NextRequest) {
       );
 
       results.push(...chunkResults);
+      if (index + 5 < talents.length) await new Promise((r) => setTimeout(r, 2000));
     }
 
     const candidates = results
