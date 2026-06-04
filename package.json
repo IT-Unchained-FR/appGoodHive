@@ -8,7 +8,7 @@
     "dev:fast": "NODE_OPTIONS='--max-old-space-size=4096 --experimental-worker --enable-source-maps' next dev --turbo",
     "dev:proxy": "bash scripts/dev-with-proxy.sh",
     "build": "NODE_OPTIONS='--max-old-space-size=4096' next build --no-lint",
-    "start": "cp -R .next/static .next/standalone/.next/static && cp -R public .next/standalone/public && node .next/standalone/server.js",
+    "start": "cp -R .next/static .next/standalone/.next/static && cp -R public .next/standalone/public && node --env-file=.env .next/standalone/server.js",
     "start:dev": "bash scripts/start-dev.sh",
     "build-no-check": "NODE_OPTIONS='--max-old-space-size=4096' next build --no-lint",
     "vercel-build": "NODE_OPTIONS='--max-old-space-size=4096' NEXT_TELEMETRY_DISABLED=1 next build",

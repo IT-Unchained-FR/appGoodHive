@@ -93,22 +93,14 @@ function describeModelError(error: unknown) {
 }
 
 const DEFAULT_MATCH_SCORE_MODELS = [
-  "models/gemini-2.5-flash",
-  "models/gemini-flash-latest",
-  "models/gemini-2.5-flash-lite",
-  "models/gemini-pro-latest",
-  "models/gemini-2.0-flash",
+  "llama-3.3-70b-versatile",
+  "llama-3.1-8b-instant",
 ];
 
 function getMatchScoreModels() {
   const configuredModel = process.env.GEMINI_FAST_MODEL?.trim();
-  const configuredFallbacks =
-    process.env.GEMINI_MATCH_SCORE_MODELS?.split(",")
-      .map((model) => model.trim())
-      .filter(Boolean) ?? [];
   const candidates = [
     configuredModel,
-    ...configuredFallbacks,
     ...DEFAULT_MATCH_SCORE_MODELS,
   ];
 
