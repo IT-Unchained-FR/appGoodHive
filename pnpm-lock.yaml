@@ -191,6 +191,9 @@ importers:
       groq:
         specifier: ^3.58.0
         version: 3.99.0
+      groq-sdk:
+        specifier: ^1.2.1
+        version: 1.2.1
       iron-session:
         specifier: ^6.3.1
         version: 6.3.1(express@5.2.1)(next@14.2.33(@babel/core@7.28.5)(react-dom@18.2.0(react@18.3.1))(react@18.3.1)(sass@1.94.2))
@@ -7969,6 +7972,10 @@ packages:
   groq-js@1.20.0:
     resolution: {integrity: sha512-hMY8SLk/BK60NpH4aqGWm67NxPcD8PV0gdXUI42wTNvoSevvLH2VOJ4BdgFs/RqcU2hm7zcCa8HiZWMBcfWGiQ==}
     engines: {node: '>= 14'}
+
+  groq-sdk@1.2.1:
+    resolution: {integrity: sha512-dsDSWJRJf+n2dPiCv7zU3IsJbrh7jfSPqi6vc1q0TTK1oUF6bn+wv4P2VFdynkHpuJ0TTJ57vlpT87judPgVPA==}
+    hasBin: true
 
   groq@3.99.0:
     resolution: {integrity: sha512-ZwKAWzvVCw51yjmIf5484KgsAzZAlGTM4uy9lki4PjAYxcEME2Xf93d31LhHzgUAr2JI79H+cNKoRjDHdv1BXQ==}
@@ -22749,6 +22756,8 @@ snapshots:
       debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
+
+  groq-sdk@1.2.1: {}
 
   groq@3.99.0: {}
 
