@@ -12,7 +12,7 @@ import {
   normalizeExtractedResumeFacts,
 } from "./pdf-import-utils";
 
-const GEMINI_MODEL = process.env.GEMINI_CHAT_MODEL ?? process.env.GEMINI_FAST_MODEL ?? "gemini-2.5-flash";
+const GEMINI_MODEL = process.env.GEMINI_CHAT_MODEL ?? process.env.GEMINI_FAST_MODEL ?? "llama-3.3-70b-versatile";
 const PDF_TEXT_EXTRACTOR_URL =
   process.env.PDF_TEXT_EXTRACTOR_URL ??
   "https://pdf-text-extractor-ki7lh2h1i-jubayer-juhans-projects-85b1bbdc.vercel.app/upload-pdf";

@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
     }));
 
     // Call Gemini — use env var model name if available
-    const modelName = process.env.GEMINI_CHAT_MODEL ?? process.env.GEMINI_FAST_MODEL ?? "gemini-2.0-flash";
+    const modelName = process.env.GEMINI_CHAT_MODEL ?? process.env.GEMINI_FAST_MODEL ?? "llama-3.3-70b-versatile";
     const model = getGeminiModel(modelName);
     const chat = model.startChat({
       systemInstruction: { role: "user", parts: [{ text: systemPrompt }] },

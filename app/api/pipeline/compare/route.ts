@@ -73,7 +73,7 @@ Provide a concise, structured comparison covering:
 Be direct, practical, and concise. Format using markdown headings and bullets. Do not repeat candidate names unnecessarily. Keep the total response under 400 words.`;
 
     const modelName =
-      process.env.GEMINI_CHAT_MODEL ?? process.env.GEMINI_FAST_MODEL ?? "gemini-2.0-flash";
+      process.env.GEMINI_CHAT_MODEL ?? process.env.GEMINI_FAST_MODEL ?? "llama-3.3-70b-versatile";
     const model = getGeminiModel(modelName);
 
     const result = await model.generateContent({

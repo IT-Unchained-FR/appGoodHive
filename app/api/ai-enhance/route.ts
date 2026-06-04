@@ -15,7 +15,7 @@ async function generateGeminiText(prompt: string, temperature = 0.7) {
   const modelName =
     process.env.GEMINI_CHAT_MODEL ??
     process.env.GEMINI_FAST_MODEL ??
-    "gemini-2.0-flash";
+    "llama-3.3-70b-versatile";
   const model = getGeminiModel(modelName);
   const result = await model.generateContent({
     contents: [{ role: "user", parts: [{ text: prompt }] }],

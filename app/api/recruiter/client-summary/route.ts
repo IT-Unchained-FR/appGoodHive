@@ -89,7 +89,7 @@ Requirements:
 Output the summary text only. No preamble, no explanation.`;
 
     const modelName =
-      process.env.GEMINI_CHAT_MODEL ?? process.env.GEMINI_FAST_MODEL ?? "gemini-2.0-flash";
+      process.env.GEMINI_CHAT_MODEL ?? process.env.GEMINI_FAST_MODEL ?? "llama-3.3-70b-versatile";
     const model = getGeminiModel(modelName);
 
     const result = await model.generateContent({

@@ -13,9 +13,8 @@ function getOutreachModels() {
     process.env.GEMINI_FAST_MODEL?.trim(),
   ];
   const defaults = [
-    "models/gemini-2.5-flash",
-    "models/gemini-flash-latest",
-    "models/gemini-2.0-flash",
+    "llama-3.3-70b-versatile",
+    "llama-3.1-8b-instant",
   ];
   const all = [...configured, ...defaults];
   return all.filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);

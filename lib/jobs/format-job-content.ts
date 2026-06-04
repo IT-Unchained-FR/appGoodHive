@@ -4,7 +4,7 @@ import { getGeminiModel } from "@/lib/gemini";
 const MODEL_NAME =
   process.env.GEMINI_CHAT_MODEL ??
   process.env.GEMINI_FAST_MODEL ??
-  "gemini-2.0-flash";
+  "llama-3.3-70b-versatile";
 
 const STRUCTURED_HTML_PATTERN = /<(p|ul|ol|li|h2|h3|h4|blockquote|br)\b/i;
 const URL_PATTERN = /(https?:\/\/[^\s<]+)/gi;
