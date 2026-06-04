@@ -3,9 +3,9 @@ import { retrieveRagContexts, type RagContext } from "./ragEngine";
 import { GoodHiveQuickCallUrl } from "@/app/constants/common";
 
 const CHAT_MODEL =
-  process.env.GEMINI_CHAT_MODEL ?? "models/gemini-1.5-flash";
+  process.env.GEMINI_CHAT_MODEL ?? "llama-3.3-70b-versatile";
 const FAST_MODEL =
-  process.env.GEMINI_FAST_MODEL ?? "models/gemini-1.5-flash";
+  process.env.GEMINI_FAST_MODEL ?? "llama-3.1-8b-instant";
 let resolvedChatModelName: string | null = null;
 
 const getRagSourceLabel = (context: RagContext) => {
