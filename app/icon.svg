@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Hexagon background -->
+  <polygon points="16,1 29,8.5 29,23.5 16,31 3,23.5 3,8.5" fill="#FFC905"/>
+  <!-- Bee body -->
+  <ellipse cx="16" cy="18" rx="6" ry="8" fill="#1A1A1A"/>
+  <!-- Yellow stripes on body -->
+  <rect x="10.5" y="15.5" width="11" height="2.5" rx="1.2" fill="#FFC905"/>
+  <rect x="10.5" y="20" width="11" height="2.5" rx="1.2" fill="#FFC905"/>
+  <!-- Head -->
+  <circle cx="16" cy="10" r="3.2" fill="#1A1A1A"/>
+  <!-- Wings -->
+  <ellipse cx="10.5" cy="13" rx="4" ry="2.2" fill="white" fill-opacity="0.85"/>
+  <ellipse cx="21.5" cy="13" rx="4" ry="2.2" fill="white" fill-opacity="0.85"/>
+</svg>

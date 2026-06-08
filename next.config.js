@@ -27,13 +27,24 @@ const nextConfig = {
     ];
   },
   images: {
-    domains: [
-      "goodhive-image.s3.us-east-005.backblazeb2.com",
-      "goodhive.s3.us-east-005.backblazeb2.com",
-      "cdn.sanity.io",
-      "picsum.photos",
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "goodhive-image.s3.us-east-005.backblazeb2.com",
+      },
+      {
+        protocol: "https",
+        hostname: "goodhive.s3.us-east-005.backblazeb2.com",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn.sanity.io",
+      },
+      {
+        protocol: "https",
+        hostname: "picsum.photos",
+      },
     ],
-    unoptimized: true,
   },
   typescript: {
     ignoreBuildErrors: true,

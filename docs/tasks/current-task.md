@@ -751,6 +751,18 @@ No other files need changing.
 ### P3 — TASK-007 (blocked)
 - Replace blockchain section with video on company profile (waiting on Benoit's video URL)
 
+### P1 — Cleanup + Performance Audit Implementation (June 7, 2026)
+- [x] Fixed the recruiter top-talents TypeScript failure around JSON serialization for search history
+- [x] Removed public test/demo routes for `/test-blockchain` and `/test-popup`
+- [x] Lazy-loaded the Superbot widget shell and deferred chat/FAQ network calls until the widget opens
+- [x] Removed high-confidence dead files: duplicate last-active component, unused old JSON imports, and default Next/Vercel starter SVGs
+- [x] Removed root `force-dynamic`, added root Suspense boundaries for client search-param consumers, and explicitly marked cookie/request-based API routes dynamic
+- [x] Re-enabled Next image optimization via `remotePatterns`
+- [x] Added bounded candidate prefiltering before AI match scoring in recruiter/company top-candidate endpoints
+- [x] Validation passed: `pnpm tsc --noEmit`
+- [x] Validation passed: `pnpm lint` (warnings only; existing hook-deps and remaining `<img>` warnings)
+- [x] Validation passed: `pnpm build` (warnings only: stale Browserslist/baseline data and missing `metadataBase`)
+
 ### P1 — Job detail page guest privacy + redesign (March 30, 2026)
 - [x] `app/jobs/[jobId]/page.tsx` now mirrors the job-card privacy contract for guests: job content stays visible, but company identity/profile links stay hidden until auth
 - [x] Removed public exposure of company profile links from the guest sidebar state
@@ -794,8 +806,8 @@ No other files need changing.
 | users.id | INTEGER PK (do NOT use for FK in app-level tables) |
 | users.userid | UUID (use this for all app-level foreign keys) |
 
-## Known Pre-existing TypeScript errors
-`pnpm tsc --noEmit` fails with repo-wide errors unrelated to this work. Only lint warnings are expected from our code. Do not try to fix pre-existing TS errors outside scope.
+## Known Validation Notes
+`pnpm tsc --noEmit` currently passes. `pnpm lint` passes with existing warnings for hook dependencies and remaining `<img>` usage.
 
 ---
 

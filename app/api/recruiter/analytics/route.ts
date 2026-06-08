@@ -3,6 +3,8 @@ import { getSessionUser } from "@/lib/auth/sessionUtils";
 import { isApprovedRecruiterOrCompany } from "@/app/lib/recruiting-auth";
 import sql from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const user = await getSessionUser();

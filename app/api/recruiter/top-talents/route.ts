@@ -8,6 +8,9 @@ import { expireStaleImmediateAvailability, safeBase64Decode } from "@/lib/talent
 
 export const dynamic = "force-dynamic";
 
+const MAX_TALENTS_TO_CONSIDER = 120;
+const MAX_TALENTS_TO_SCORE = 30;
+
 interface TalentRow {
   user_id: string;
   first_name: string | null;
@@ -50,12 +53,48 @@ interface CandidateResult {
   message?: string;
 }
 
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue =
+  | JsonPrimitive
+  | readonly JsonValue[]
+  | { readonly [key: string]: JsonValue | undefined };
+
 function normalizeSkills(value: string | null | undefined) {
   if (!value) return [];
   return value
     .split(",")
     .map((skill) => skill.trim())
     .filter(Boolean);
+}
+
+function tokenize(value: string) {
+  return new Set(
+    value
+      .toLowerCase()
+      .split(/[^a-z0-9+#.]+/i)
+      .map((token) => token.trim())
+      .filter((token) => token.length > 2),
+  );
+}
+
+function getCheapRelevanceScore(talent: TalentRow, jobTokens: Set<string>) {
+  const skills = normalizeSkills(talent.skills);
+  const searchable = [
+    talent.title,
+    talent.description,
+    talent.about_work,
+    skills.join(" "),
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const talentTokens = tokenize(searchable);
+  let overlap = 0;
+
+  jobTokens.forEach((token) => {
+    if (talentTokens.has(token)) overlap += 1;
+  });
+
+  return overlap * 3 + skills.length;
 }
 
 function normalizeNumeric(value: number | string | null | undefined) {
@@ -82,6 +121,30 @@ function normalizeAvailability(status: string | null, legacy: boolean | string |
   }
 
   return "not_looking";
+}
+
+function toSearchHistoryJson(candidate: CandidateResult): JsonValue {
+  return {
+    userId: candidate.userId,
+    firstName: candidate.firstName,
+    lastName: candidate.lastName,
+    title: candidate.title,
+    description: candidate.description,
+    skills: candidate.skills,
+    city: candidate.city,
+    country: candidate.country,
+    imageUrl: candidate.imageUrl,
+    minRate: candidate.minRate,
+    maxRate: candidate.maxRate,
+    currency: candidate.currency,
+    availabilityStatus: candidate.availabilityStatus,
+    lastActive: candidate.lastActive,
+    score: candidate.score,
+    reasons: candidate.reasons,
+    gaps: candidate.gaps,
+    unavailable: candidate.unavailable,
+    message: candidate.message,
+  };
 }
 
 export async function POST(request: NextRequest) {
@@ -143,6 +206,7 @@ export async function POST(request: NextRequest) {
         AND (availability = true OR LOWER(CAST(availability AS TEXT)) = 'available')
         AND user_id != ${sessionUser.user_id}::uuid
       ORDER BY last_active DESC NULLS LAST
+      LIMIT ${MAX_TALENTS_TO_CONSIDER}
     `;
 
     if (talents.length === 0) {
@@ -152,10 +216,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const jobTokens = tokenize(jobDescription);
+    const talentsToScore = [...talents]
+      .sort((left, right) => {
+        const relevanceDiff =
+          getCheapRelevanceScore(right, jobTokens) -
+          getCheapRelevanceScore(left, jobTokens);
+        if (relevanceDiff !== 0) return relevanceDiff;
+        return 0;
+      })
+      .slice(0, MAX_TALENTS_TO_SCORE);
+
     const results: CandidateResult[] = [];
 
-    for (let index = 0; index < talents.length; index += 3) {
-      const chunk = talents.slice(index, index + 3);
+    for (let index = 0; index < talentsToScore.length; index += 3) {
+      const chunk = talentsToScore.slice(index, index + 3);
       const chunkResults = await Promise.all(
         chunk.map(async (talent): Promise<CandidateResult> => {
           const talentSkills = normalizeSkills(talent.skills);
@@ -205,12 +280,13 @@ export async function POST(request: NextRequest) {
       );
 
       results.push(...chunkResults);
-      if (index + 3 < talents.length) await new Promise((r) => setTimeout(r, 1000));
+      if (index + 3 < talentsToScore.length) await new Promise((r) => setTimeout(r, 1000));
     }
 
     const candidates = results
       .sort((left, right) => (right.score ?? -1) - (left.score ?? -1))
       .slice(0, 5);
+    const candidatesJson = candidates.map(toSearchHistoryJson);
 
     try {
       await sql`
@@ -219,7 +295,7 @@ export async function POST(request: NextRequest) {
         VALUES (
           ${sessionUser.user_id}::uuid,
           ${jobDescription},
-          ${sql.json(candidates)},
+          ${sql.json(candidatesJson)},
           ${results.length}
         )
       `;

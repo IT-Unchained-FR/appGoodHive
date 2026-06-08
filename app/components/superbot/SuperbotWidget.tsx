@@ -2,6 +2,7 @@
 
 import type { ChangeEvent, ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { ChevronRight, MessageCircle, X } from "lucide-react";
 import { SUPERBOT_NAME } from "@/lib/superbot/constants";
@@ -348,6 +349,7 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
   }, [parseChatResponse]);
 
   useEffect(() => {
+    if (!isOpen) return;
     if (startedRef.current) return;
     startedRef.current = true;
 
@@ -359,9 +361,11 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
     // Prefer explicit `sessionId` from query, otherwise fall back to localStorage.
     const existing = querySession || storedSession || undefined;
     startConversation(existing, payload ?? undefined);
-  }, [params, startConversation]);
+  }, [isOpen, params, startConversation]);
 
   useEffect(() => {
+    if (!isOpen) return;
+
     let active = true;
 
     const loadSuggestions = async () => {
@@ -390,7 +394,7 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
     return () => {
       active = false;
     };
-  }, []);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!endRef.current) return;
@@ -532,9 +536,11 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
         <div className={styles.header}>
           <div className={styles.headerIdentity}>
             <div className={styles.headerAvatar} aria-hidden="true">
-              <img
+              <Image
                 src="/icons/bee-agent.svg"
                 alt=""
+                width={32}
+                height={32}
                 className={styles.headerAvatarIcon}
               />
             </div>

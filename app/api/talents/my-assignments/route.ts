@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import sql from "@/lib/db";
 import { getSessionUser } from "@/lib/auth/sessionUtils";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const sessionUser = await getSessionUser();

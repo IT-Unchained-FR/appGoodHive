@@ -1,19 +1,25 @@
 "use client";
 
-import Cookies from "js-cookie";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
-import { Suspense, useEffect, useState, type ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { Toaster } from "react-hot-toast";
 
 import { Footer } from "@components/footer/footer";
 import { NavBar } from "@components/nav-bar";
 
 import LastActiveHandler from "./components/LastActiveHandler";
-import OnboardingPopup from "./components/Onboarding/OnboardingPopup";
 import ReferralCodeHandler from "./components/referralCodeHandler/ReferralCodeHandler";
 import { Providers } from "./providers";
 import { AnalyticsProvider } from "./components/AnalyticsProvider";
-import { SuperbotWidget } from "./components/superbot/SuperbotWidget";
+
+const SuperbotWidget = dynamic(
+  () =>
+    import("./components/superbot/SuperbotWidget").then(
+      (mod) => mod.SuperbotWidget,
+    ),
+  { ssr: false },
+);
 
 interface ClientLayoutProps {
   children: ReactNode;
@@ -21,7 +27,6 @@ interface ClientLayoutProps {
 
 export function ClientLayout({ children }: ClientLayoutProps) {
   const pathname = usePathname();
-  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const isAdminSection = pathname?.startsWith("/admin");
   const isDashboardSection =
@@ -29,56 +34,12 @@ export function ClientLayout({ children }: ClientLayoutProps) {
     pathname?.startsWith("/companies/dashboard");
   const showSuperbot = !isAdminSection;
 
-  useEffect(() => {
-    if (isAdminSection) {
-      return;
-    }
-
-    try {
-      const loggedInUserCookie = Cookies.get("loggedIn_user");
-
-      if (!loggedInUserCookie) {
-        return;
-      }
-
-      const loggedInUser = JSON.parse(loggedInUserCookie);
-
-      if (!loggedInUser) {
-        return;
-      }
-
-      const isMentorPending =
-        loggedInUser.mentor_status === "pending" || !loggedInUser.mentor_status;
-      const isRecruiterPending =
-        loggedInUser.recruiter_status === "pending" ||
-        !loggedInUser.recruiter_status;
-      const isTalentPending =
-        loggedInUser.talent_status === "pending" || !loggedInUser.talent_status;
-
-      const allStatusesPending =
-        isMentorPending && isRecruiterPending && isTalentPending;
-
-      // Temporarily disabled - will integrate later with the website
-      // if (allStatusesPending) {
-      //   setShowOnboarding(true);
-      // }
-    } catch (error) {
-      console.error("Error checking user status for onboarding:", error);
-    }
-  }, [isAdminSection]);
-
   if (isAdminSection) {
     return <div className="min-h-screen">{children}</div>;
   }
 
   return (
     <Providers>
-      <OnboardingPopup
-        isOpen={showOnboarding}
-        onClose={() => {
-          setShowOnboarding(false);
-        }}
-      />
       <div className="flex flex-col min-h-screen">
         {!isAdminSection && <NavBar />}
         {/* Spacer so page content starts below the fixed navbar */}

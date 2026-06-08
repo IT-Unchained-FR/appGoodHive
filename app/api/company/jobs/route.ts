@@ -4,6 +4,8 @@ import { getSessionUser } from "@/lib/auth/sessionUtils";
 import sql from "@/lib/db";
 import { getCompanyDashboardJobs } from "@/lib/jobs/company-jobs";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const sessionUser = await getSessionUser();

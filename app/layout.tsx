@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 
 import Script from "next/script";
 import { Analytics } from '@vercel/analytics/react';
@@ -9,8 +9,6 @@ import "./globals.css";
 
 import { ClientLayout } from "./client-layout";
 import { GAListener } from "./ga-listener";
-
-export const dynamic = "force-dynamic";
 
 const GA_TRACKING_ID = process.env.NEXT_PUBLIC_GA_ID;
 const isProduction = process.env.NODE_ENV === 'production';
@@ -41,10 +39,14 @@ function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 gtag('config', '${GA_TRACKING_ID}', { send_page_view: false });`}
             </Script>
-            <GAListener />
+            <Suspense fallback={null}>
+              <GAListener />
+            </Suspense>
           </>
         )}
-        <ClientLayout>{children}</ClientLayout>
+        <Suspense fallback={<div className="min-h-screen" />}>
+          <ClientLayout>{children}</ClientLayout>
+        </Suspense>
         <Analytics />
         <SpeedInsights />
       </body>

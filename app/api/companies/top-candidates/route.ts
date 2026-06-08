@@ -7,6 +7,9 @@ import { expireStaleImmediateAvailability, safeBase64Decode } from "@/lib/talent
 
 export const dynamic = "force-dynamic";
 
+const MAX_TALENTS_TO_CONSIDER = 120;
+const MAX_TALENTS_TO_SCORE = 30;
+
 interface CompanyRow {
   user_id: string;
   published: boolean | null;
@@ -75,6 +78,39 @@ function normalizeSkills(value: string | null | undefined) {
     .split(",")
     .map((skill) => skill.trim())
     .filter(Boolean);
+}
+
+function tokenize(value: string) {
+  return new Set(
+    value
+      .toLowerCase()
+      .split(/[^a-z0-9+#.]+/i)
+      .map((token) => token.trim())
+      .filter((token) => token.length > 2),
+  );
+}
+
+function getCheapRelevanceScore(talent: TalentRow, job: JobRow) {
+  const talentSkills = normalizeSkills(talent.skills);
+  const jobTokens = tokenize(
+    [job.title, job.description, job.skills].filter(Boolean).join(" "),
+  );
+  const searchable = [
+    talent.title,
+    talent.description,
+    talent.about_work,
+    talentSkills.join(" "),
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const talentTokens = tokenize(searchable);
+  let overlap = 0;
+
+  jobTokens.forEach((token) => {
+    if (talentTokens.has(token)) overlap += 1;
+  });
+
+  return overlap * 3 + talentSkills.length;
 }
 
 function normalizeStringList(value: unknown) {
@@ -220,6 +256,7 @@ export async function POST(request: NextRequest) {
         AND (availability = true OR LOWER(CAST(availability AS TEXT)) = 'available')
         AND user_id != ${sessionUser.user_id}::uuid
       ORDER BY last_active DESC NULLS LAST
+      LIMIT ${MAX_TALENTS_TO_CONSIDER}
     `;
 
     if (talents.length === 0) {
@@ -229,13 +266,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const talentsToScore = [...talents]
+      .sort((left, right) => {
+        const relevanceDiff =
+          getCheapRelevanceScore(right, job) -
+          getCheapRelevanceScore(left, job);
+        if (relevanceDiff !== 0) return relevanceDiff;
+        return 0;
+      })
+      .slice(0, MAX_TALENTS_TO_SCORE);
+
     const cachedRows = forceRefresh
       ? []
       : await sql<CacheRow[]>`
           SELECT talent_id, score, reasons, gaps
           FROM goodhive.match_score_cache
           WHERE job_id = ${jobId}::uuid
-            AND talent_id = ANY(${talents.map((talent) => talent.user_id)}::uuid[])
+            AND talent_id = ANY(${talentsToScore.map((talent) => talent.user_id)}::uuid[])
             AND expires_at > NOW()
         `;
 
@@ -252,8 +299,8 @@ export async function POST(request: NextRequest) {
 
     const results: CandidateResult[] = [];
 
-    for (let index = 0; index < talents.length; index += 3) {
-      const chunk = talents.slice(index, index + 3);
+    for (let index = 0; index < talentsToScore.length; index += 3) {
+      const chunk = talentsToScore.slice(index, index + 3);
       const chunkResults = await Promise.all(
         chunk.map(async (talent): Promise<CandidateResult> => {
           const cached = cacheByTalentId.get(talent.user_id);
@@ -329,7 +376,7 @@ export async function POST(request: NextRequest) {
       );
 
       results.push(...chunkResults);
-      if (index + 3 < talents.length) await new Promise((r) => setTimeout(r, 1000));
+      if (index + 3 < talentsToScore.length) await new Promise((r) => setTimeout(r, 1000));
     }
 
     const candidates = results

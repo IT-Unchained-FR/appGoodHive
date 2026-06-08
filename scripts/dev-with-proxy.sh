@@ -5,7 +5,7 @@ PROXY_PORT_MAIN=5433
 PROXY_PORT_RAG=5434
 INSTANCE_MAIN="${CLOUD_SQL_CONNECTION_NAME:-goodhive-1706112296263:europe-west9:goodhive-prod-db}"
 INSTANCE_RAG="${CLOUD_SQL_CONNECTION_NAME_RAG_CHATBOT:-$INSTANCE_MAIN}"
-PROXY_BIN="./cloud_sql_proxy"
+PROXY_BIN="${CLOUD_SQL_PROXY_BIN:-}"
 SHARE_PROXY_PORT=0
 PROXY_START_TIMEOUT_SECONDS="${PROXY_START_TIMEOUT_SECONDS:-30}"
 DEFAULT_APP_PORT="${PORT:-3000}"
@@ -14,6 +14,20 @@ DEFAULT_CREDENTIAL_FILE="./github-actions-key.json"
 has_cmd() {
   command -v "$1" >/dev/null 2>&1
 }
+
+if [ -z "${PROXY_BIN}" ]; then
+  if [ -x "./cloud_sql_proxy" ]; then
+    PROXY_BIN="./cloud_sql_proxy"
+  elif has_cmd cloud-sql-proxy; then
+    PROXY_BIN="$(command -v cloud-sql-proxy)"
+  elif has_cmd cloud_sql_proxy; then
+    PROXY_BIN="$(command -v cloud_sql_proxy)"
+  else
+    echo "❌ Cloud SQL Auth Proxy not found."
+    echo "   Install it, or set CLOUD_SQL_PROXY_BIN=/path/to/cloud-sql-proxy."
+    exit 1
+  fi
+fi
 
 is_listening() {
   local port="$1"

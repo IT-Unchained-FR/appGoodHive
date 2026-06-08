@@ -61,6 +61,12 @@ github-actions-key.json
 # Deployment artifacts
 goodhive-build.tar.gz
 
+# Database backup artifacts
+*.dump
+*_backup.sql
+db/backups/
+goodhive_*backup*.sql
+
 # Temporary documentation files
 .temp-docs/
 *.temp.md

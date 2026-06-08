@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { fetchTalents } from "@/lib/talents";
 
+export const dynamic = "force-dynamic";
+
 function getParam(searchParams: URLSearchParams, key: string) {
   return searchParams.get(key) ?? "";
 }

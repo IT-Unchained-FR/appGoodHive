@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import sql from "@/lib/db";
 import { getSessionUser } from "@/lib/auth/sessionUtils";
 
+export const dynamic = "force-dynamic";
+
 // Lightweight endpoint — returns only the total unread message count.
 // Used by the navbar to refresh the badge after an SSE unread event fires.
 export async function GET() {
