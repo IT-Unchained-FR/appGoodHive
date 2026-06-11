@@ -248,14 +248,7 @@ export async function POST(request: Request) {
     const isNewReviewSubmission =
       validate === true && existingTalent[0]?.inreview !== true;
 
-    if (existingTalent[0]?.inreview === true) {
-      return new Response(
-        JSON.stringify({
-          message: "Your profile is currently under review and cannot be edited.",
-        }),
-        { status: 409 },
-      );
-    }
+
 
     if (validate === true) {
       const hasMinRate = min_rate !== undefined && min_rate !== null;

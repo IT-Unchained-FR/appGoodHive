@@ -252,14 +252,28 @@ Currently if a fetch fails, a toast appears and the section shows nothing (loadi
 
 ## ✅ Acceptance Criteria
 
-- [ ] Opening `/recruiter/dashboard` shows **zero** hardcoded numbers
-- [ ] Stat card deltas reflect real DB data (may show "—" if no history yet)
-- [ ] Sparklines trace real activity over the last 12 days
-- [ ] Clicking "Shortlisted" tab shows actual shortlisted pipeline entries with talent names
-- [ ] Pipeline health bar renders correctly for recruiter users (not always 0)
-- [ ] Greeting shows recruiter's real first name
-- [ ] Section label says "Latest AI Search Results" (not "this week" if data is older)
-- [ ] Each section shows an error card with Retry button on fetch failure
+- [x] Opening `/recruiter/dashboard` shows **zero** hardcoded numbers
+- [x] Stat card deltas reflect real DB data (may show "—" if no history yet)
+- [x] Sparklines trace real activity over the last 12 days
+- [x] Clicking "Shortlisted" tab shows actual shortlisted pipeline entries with talent names
+- [x] Pipeline health bar renders correctly for recruiter users (not always 0)
+- [x] Greeting shows recruiter's real first name
+- [x] Section label says "Latest AI Search Results" (not "this week" if data is older)
+- [x] Each section shows an error card with Retry button on fetch failure
+
+---
+
+## 🎯 TALENT PROFILE SAVING FIX — June 9, 2026
+
+**Context:** Talents were unable to update their profiles while their status was `inreview`. A strict 409 error blocked all edits during review.
+
+### What was fixed
+- [x] Removed the 409 error block in `app/api/talents/my-profile/route.ts` that prevented any updates when `inreview` is true.
+- [x] Now, talents can update their data while in review, and it will not spam emails because `isNewReviewSubmission` correctly guards it.
+
+### Validation
+- [x] `pnpm tsc --noEmit`
+- [x] `pnpm lint`
 
 ---
 
@@ -273,13 +287,13 @@ npm run build
 
 ### Previous Focus
 - [x] **#1 Recruiter Home Dashboard** — dashboard page built (UI done, API wiring in progress above)
-- [ ] **#2 Pipeline Count Badges** — live counts on sidebar (see ENHANCEMENT-1 above)
-- [ ] **#3 Export Pipeline to CSV** — one-click download
+- [x] **#2 Pipeline Count Badges** — live counts on sidebar (see ENHANCEMENT-1 above)
+- [x] **#3 Export Pipeline to CSV** — one-click download
 
 ### Up Next (Medium)
-- [ ] **#4 Analytics Page** — pipeline funnel + search activity charts
-- [ ] **#5 Candidate Comparison View** — side-by-side modal
-- [ ] **#6 Send to Client Summary** — AI-generated talent blurb
+- [x] **#4 Analytics Page** — pipeline funnel + search activity charts
+- [x] **#5 Candidate Comparison View** — side-by-side modal
+- [x] **#6 Send to Client Summary** — AI-generated talent blurb
 
 ---
 

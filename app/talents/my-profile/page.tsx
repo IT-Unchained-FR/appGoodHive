@@ -417,7 +417,7 @@ function StatusBanner({ profileData }: { profileData: ProfileData }) {
             </p>
             <p className="mt-1 text-sm leading-6">
               {isUnderReview
-                ? "Your profile has been submitted and is currently under review. Role toggles are locked until the review is complete."
+                ? "Your profile has been submitted and is currently under review. You can still edit and save your profile at any time."
                 : "Your profile is approved. You can edit details and save updates anytime."}
             </p>
           </div>
@@ -628,10 +628,8 @@ export default function ProfilePage() {
     return currentEmail !== originalEmail || currentTelegram !== originalTelegram;
   }, [profileData.email, profileData.telegram]);
 
-  const canShowSubmitAction = useMemo(
-    () => !isProfileInReview,
-    [isProfileInReview],
-  );
+  // Always allow submitting for review, even if already under review
+  const canShowSubmitAction = true;
 
   const fetchProfile = useCallback(async () => {
     if (!user_id) return;
@@ -1178,12 +1176,13 @@ export default function ProfilePage() {
   const currentChapterMeta =
     PROFILE_CHAPTERS[currentChapterIndex] || PROFILE_CHAPTERS[0];
   const isLastChapter = currentChapterIndex === PROFILE_CHAPTERS.length - 1;
-  const roleSelectionLocked = isProfileInReview;
+  const roleSelectionLocked = false;
+  const baseLabel = isProfileInReview ? "Re-submit Profile for Review" : "Submit Profile for Review";
   const submitActionLabel = isApprovedProfile
     ? hasCriticalFieldChanged
-      ? "Submit Profile for Review"
+      ? baseLabel
       : "Submit Role Request for Review"
-    : "Submit Profile for Review";
+    : baseLabel;
   const isReviewReady = useMemo(() => {
     const requiredFields = [
       profileData.title,
@@ -1540,7 +1539,7 @@ export default function ProfilePage() {
                                 value={profileData.availability_status}
                                 legacyAvailability={profileData.availability}
                                 updatedAt={profileData.availability_updated_at}
-                                disabled={isProfileInReview}
+                                disabled={false}
                                 onSaved={(nextStatus, updatedAt) =>
                                   setProfileData((prev) => ({
                                     ...prev,
@@ -1934,11 +1933,7 @@ export default function ProfilePage() {
                             );
                           })}
                         </div>
-                        {roleSelectionLocked && (
-                          <FieldHint>
-                            Role selection is locked while your profile is under review.
-                          </FieldHint>
-                        )}
+
                         {!roleSelectionLocked && approvedRoleKeys.size > 0 && (
                           <FieldHint>
                             Approved roles stay active. Contact admin support if a role needs to be removed.
@@ -2278,15 +2273,15 @@ export default function ProfilePage() {
                         <p className="mt-1 text-sm text-slate-500">
                           {hasCriticalFieldChanged
                             ? "Email or Telegram changed. Submit your profile for review to apply these updates."
-                            : isProfileInReview
-                              ? "You already submitted your profile. It is currently under review."
-                              : isReviewReady
-                                ? "All mandatory details are complete. You can now submit your profile."
-                                : "Complete required details, including hourly rate, to submit your profile."}
+                            : isReviewReady
+                              ? isProfileInReview
+                                ? "Your profile is under review. You can still save changes and re-submit."
+                                : "All mandatory details are complete. You can now submit your profile."
+                              : "Complete required details, including hourly rate, to submit your profile."}
                         </p>
                       </div>
                       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
-                        {!isProfileInReview && !hasCriticalFieldChanged && (
+                        {!hasCriticalFieldChanged && (
                           <button
                             className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md"
                             type="button"
@@ -2322,12 +2317,6 @@ export default function ProfilePage() {
                               ? "Submitting Profile..."
                               : submitActionLabel}
                           </button>
-                        )}
-                        {isProfileInReview && (
-                          <div className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-5 text-sm font-semibold text-amber-800">
-                            <CircleCheckBig className="h-4 w-4" />
-                            Profile Submitted - Under Review
-                          </div>
                         )}
                       </div>
                     </div>
