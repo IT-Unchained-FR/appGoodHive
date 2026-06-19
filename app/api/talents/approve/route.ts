@@ -99,6 +99,7 @@ export async function POST(request: Request) {
         email: contact.email,
         firstName: contact.first_name,
         approvedRoles: selectedRoles,
+        userId,
       });
     }
 

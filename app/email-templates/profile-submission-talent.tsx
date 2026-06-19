@@ -10,37 +10,23 @@ export const ProfileSubmissionTalentTemplate: React.FC<
 
   return (
     <div>
-      <p>Hi, {displayName}</p>
+      <p>Hi {displayName},</p>
       <p>
-        Big cheers for hopping on board at GoodHive! You&apos;re now part of
-        GoodHive&apos;s journey toward shaping the Future of Work, and we&apos;re
-        excited to have you with us.
+        Thanks for creating your profile on GoodHive!
       </p>
       <p>
-        Your profile has been received and sent for review. Our team will review
-        it shortly.
-      </p>
-      <p>
-        In the meantime, please book your assessment interview here:{" "}
-        <a
-          href={GoodHiveIntroCallUrl}
-          style={{
-            color: "#FFC905",
-            textDecoration: "none",
-            fontWeight: "bold",
-          }}
-        >
-          {GoodHiveIntroCallUrl}
-        </a>
-      </p>
-      <p>
-        We&apos;re looking forward to learning more about your background, your
-        goals, and the kind of opportunities you want to unlock with GoodHive.
+        Quick heads-up: your profile isn&apos;t visible to recruiters yet. Every
+        profile on GoodHive is validated through an interview, we answer your
+        questions, walk you through how the platform works, and run a detailed
+        assessment. That&apos;s how we keep the talent pool credible and why
+        clients trust it.
       </p>
       {props.referralLink && (
         <p>
-          If you know talented people who should join too, you can also share
-          your referral link:{" "}
+          In the meantime, if you know Web3 talents or clients who could be a
+          great fit, feel free to recommend them. Your referral link stays
+          active and earns you rewards:
+          {" "}
           <a
             href={props.referralLink}
             style={{
@@ -53,8 +39,21 @@ export const ProfileSubmissionTalentTemplate: React.FC<
           </a>
         </p>
       )}
+      <p>
+        Book your slot here:{" "}
+        <a
+          href={GoodHiveIntroCallUrl}
+          style={{
+            color: "#FFC905",
+            textDecoration: "none",
+            fontWeight: "bold",
+          }}
+        >
+          {GoodHiveIntroCallUrl}
+        </a>
+      </p>
       <br />
-      <p>Best regards,</p>
+      <p>Talk soon,</p>
       <p>The GoodHive Team</p>
     </div>
   );

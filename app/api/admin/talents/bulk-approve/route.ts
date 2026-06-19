@@ -137,6 +137,7 @@ export async function POST(req: NextRequest) {
             email: user.email,
             firstName: user.first_name,
             approvedRoles: selectedRoles,
+            userId: user.userid,
           }),
         ),
     );

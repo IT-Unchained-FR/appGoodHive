@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { getAdminJWTSecret, isAdminAuthError } from "@/app/lib/admin-auth";
 import {
   sendTalentApprovalEmail,
+  sendTalentDeferredEmail,
   sendTalentRejectionEmail,
   type TalentRole,
 } from "@/lib/email/talent-review-notifications";
@@ -144,6 +145,7 @@ export async function POST(req: NextRequest) {
           email: user.email,
           firstName: user.first_name,
           approvedRoles: selectedRoles,
+          userId,
         });
       }
       const adminEmail = (decoded as { email?: string }).email ?? "unknown";
@@ -188,6 +190,12 @@ export async function POST(req: NextRequest) {
           recruiter_status = CASE WHEN ${reviewableRoles.includes("recruiter")} THEN 'deferred' ELSE recruiter_status END
         WHERE userid = ${userId}
       `;
+      if (user.email && reviewableRoles.length) {
+        await sendTalentDeferredEmail({
+          email: user.email,
+          firstName: user.first_name,
+        });
+      }
     } else {
       await sql`
         UPDATE goodhive.talents

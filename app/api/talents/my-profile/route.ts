@@ -11,6 +11,7 @@ import {
   serializeResumeArray,
 } from "@/lib/talent-profile/resume-data";
 import { expireStaleImmediateAvailability } from "@/lib/talents";
+import { getOrCreateReferralLink } from "@/lib/referrals";
 import { GoodHiveIntroCallUrl, GoodHiveContractEmail } from "@constants/common";
 
 import type { NextRequest } from "next/server";
@@ -53,6 +54,7 @@ async function postProfileSubmissionEmail(
     email: string;
     message: string;
     name: string;
+    referralLink?: string;
     subject: string;
     type: ProfileSubmissionEmailType;
   },
@@ -111,6 +113,7 @@ async function sendProfileSubmissionEmails(request: Request, userId: string) {
   const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
   const displayName = fullName || firstName || "A GoodHive talent";
   const talentEmail = talent.email?.trim();
+  const referralLink = await getOrCreateReferralLink(userId);
 
   const emailJobs: Promise<void>[] = [
     postProfileSubmissionEmail(request, {
@@ -129,7 +132,8 @@ async function sendProfileSubmissionEmails(request: Request, userId: string) {
         message:
           `Thank you for submitting your profile. Our GoodHive team will review it shortly. In the meantime, please book your assessment interview: ${GoodHiveIntroCallUrl}`,
         name: firstName || displayName,
-        subject: "Your GoodHive profile has been received",
+        referralLink,
+        subject: "One step left before your profile goes live",
         type: "profile-submission-talent",
       }),
     );
