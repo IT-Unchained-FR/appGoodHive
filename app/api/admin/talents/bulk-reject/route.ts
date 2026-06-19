@@ -122,12 +122,20 @@ export async function POST(req: NextRequest) {
       `;
 
       if (user.email && rejectedRoles.length) {
-        await sendTalentRejectionEmail({
-          email: user.email,
-          firstName: user.first_name,
-          rejectedRoles,
-          rejectionReason: normalizedReason,
-        });
+        try {
+          const sent = await sendTalentRejectionEmail({
+            email: user.email,
+            firstName: user.first_name,
+            rejectedRoles,
+            rejectionReason: normalizedReason,
+          });
+
+          if (!sent) {
+            console.error(`Failed to send rejection email for talent ${user.userid}`);
+          }
+        } catch (error) {
+          console.error(`Error sending rejection email for talent ${user.userid}:`, error);
+        }
       }
     }
 

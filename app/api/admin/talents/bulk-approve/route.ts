@@ -132,14 +132,22 @@ export async function POST(req: NextRequest) {
     await Promise.all(
       users
         .filter((user) => Boolean(user.email))
-        .map((user) =>
-          sendTalentApprovalEmail({
-            email: user.email,
-            firstName: user.first_name,
-            approvedRoles: selectedRoles,
-            userId: user.userid,
-          }),
-        ),
+        .map(async (user) => {
+          try {
+            const sent = await sendTalentApprovalEmail({
+              email: user.email,
+              firstName: user.first_name,
+              approvedRoles: selectedRoles,
+              userId: user.userid,
+            });
+
+            if (!sent) {
+              console.error(`Failed to send approval email for talent ${user.userid}`);
+            }
+          } catch (error) {
+            console.error(`Error sending approval email for talent ${user.userid}:`, error);
+          }
+        }),
     );
 
     return new Response(

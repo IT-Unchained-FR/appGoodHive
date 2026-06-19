@@ -33,6 +33,21 @@ const verifyAdminToken = async () => {
 
 type TalentStatus = "approved" | "in_review" | "rejected" | "deferred" | "pending";
 
+async function sendReviewEmailSafely(
+  label: string,
+  send: () => Promise<boolean>,
+  userId: string,
+) {
+  try {
+    const sent = await send();
+    if (!sent) {
+      console.error(`Failed to send ${label} email for talent ${userId}`);
+    }
+  } catch (error) {
+    console.error(`Error sending ${label} email for talent ${userId}:`, error);
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const decoded = await verifyAdminToken();
@@ -141,12 +156,17 @@ export async function POST(req: NextRequest) {
         `;
       }
       if (user.email && selectedRoles.length) {
-        await sendTalentApprovalEmail({
-          email: user.email,
-          firstName: user.first_name,
-          approvedRoles: selectedRoles,
+        await sendReviewEmailSafely(
+          "approval",
+          () =>
+            sendTalentApprovalEmail({
+              email: user.email,
+              firstName: user.first_name,
+              approvedRoles: selectedRoles,
+              userId,
+            }),
           userId,
-        });
+        );
       }
       const adminEmail = (decoded as { email?: string }).email ?? "unknown";
       sql`
@@ -191,10 +211,15 @@ export async function POST(req: NextRequest) {
         WHERE userid = ${userId}
       `;
       if (user.email && reviewableRoles.length) {
-        await sendTalentDeferredEmail({
-          email: user.email,
-          firstName: user.first_name,
-        });
+        await sendReviewEmailSafely(
+          "deferred",
+          () =>
+            sendTalentDeferredEmail({
+              email: user.email,
+              firstName: user.first_name,
+            }),
+          userId,
+        );
       }
     } else {
       await sql`
@@ -214,13 +239,18 @@ export async function POST(req: NextRequest) {
         WHERE userid = ${userId}
       `;
       if (user.email && reviewableRoles.length) {
-        await sendTalentRejectionEmail({
-          email: user.email,
-          firstName: user.first_name,
-          rejectedRoles: reviewableRoles,
-          rejectionReason:
-            rejectionReason || "Profile submission was rejected by admin review.",
-        });
+        await sendReviewEmailSafely(
+          "rejection",
+          () =>
+            sendTalentRejectionEmail({
+              email: user.email,
+              firstName: user.first_name,
+              rejectedRoles: reviewableRoles,
+              rejectionReason:
+                rejectionReason || "Profile submission was rejected by admin review.",
+            }),
+          userId,
+        );
       }
       const adminEmail = (decoded as { email?: string }).email ?? "unknown";
       sql`

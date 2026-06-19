@@ -83,7 +83,8 @@ export default function AdminTalentApproval() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update talent status");
+        const errorBody = await response.json().catch(() => null);
+        throw new Error(errorBody?.message || "Failed to update talent status");
       }
 
       toast.success("Talent status updated");
