@@ -19,7 +19,7 @@ const OnboardingPopup = ({
   isOpen,
   onClose,
   onContinue,
-  videoUrl = "https://www.youtube.com/watch?v=4ep_oZ0khzo",
+  videoUrl = "https://youtu.be/PGaVwFAP_2I",
   title = "Welcome To GoodHive!",
   description = "Let's get you started with creating your talent profile.",
 }: OnboardingPopupProps) => {
