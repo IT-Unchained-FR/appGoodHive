@@ -392,6 +392,18 @@ export async function POST(request: Request) {
               END
             ELSE recruiter_status
           END,
+          talent_deferred_until = CASE
+            WHEN ${effectiveRoleSelections.talent} = true AND talent_status <> 'approved' THEN NULL
+            ELSE talent_deferred_until
+          END,
+          mentor_deferred_until = CASE
+            WHEN ${effectiveRoleSelections.mentor} = true AND mentor_status <> 'approved' THEN NULL
+            ELSE mentor_deferred_until
+          END,
+          recruiter_deferred_until = CASE
+            WHEN ${effectiveRoleSelections.recruiter} = true AND recruiter_status <> 'approved' THEN NULL
+            ELSE recruiter_deferred_until
+          END,
           talent_status_reason = CASE
             WHEN ${effectiveRoleSelections.talent} = true AND talent_status <> 'approved' THEN NULL
             ELSE talent_status_reason

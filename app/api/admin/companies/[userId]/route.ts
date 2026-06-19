@@ -4,8 +4,124 @@ import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { getAdminJWTSecret, isAdminAuthError } from "@/app/lib/admin-auth";
 import { updateCompanySchema, validateInput } from "@/app/lib/admin-validations";
+import { resolveJobReviewStatus, type JobReviewStatus } from "@/lib/jobs/review";
 
 export const dynamic = "force-dynamic";
+
+type CompanyRow = {
+  address: string | null;
+  approved: boolean | null;
+  city: string | null;
+  country: string | null;
+  created_at: string | null;
+  designation: string | null;
+  email: string | null;
+  github: string | null;
+  headline: string | null;
+  image_url: string | null;
+  inreview: boolean | null;
+  linkedin: string | null;
+  phone_country_code: string | null;
+  phone_number: string | null;
+  portfolio: string | null;
+  published: boolean | null;
+  stackoverflow: string | null;
+  status: string | null;
+  telegram: string | null;
+  twitter: string | null;
+  user_id: string;
+  wallet_address: string | null;
+};
+
+type RecentJobRow = {
+  id: string;
+  title: string | null;
+  review_status: string | null;
+  published: boolean | null;
+  created_at: string | null;
+};
+
+const COMPLETENESS_FIELDS = [
+  "image_url",
+  "designation",
+  "headline",
+  "email",
+  "phone_number",
+  "address",
+  "city",
+  "country",
+  "wallet_address",
+] as const;
+
+const getProfileCompleteness = (company: CompanyRow) => {
+  const presentCount = COMPLETENESS_FIELDS.filter((field) => {
+    const value = company[field];
+    return typeof value === "string" ? value.trim().length > 0 : Boolean(value);
+  }).length;
+
+  return Math.round((presentCount / COMPLETENESS_FIELDS.length) * 100);
+};
+
+const getLinkCount = (company: CompanyRow) =>
+  [
+    company.linkedin,
+    company.github,
+    company.twitter,
+    company.stackoverflow,
+    company.portfolio,
+    company.telegram,
+  ].filter((value) => Boolean(value && value.trim().length > 0)).length;
+
+const createEmptyJobSummary = () => ({
+  total: 0,
+  published: 0,
+  pendingReview: 0,
+  approved: 0,
+  active: 0,
+  rejected: 0,
+  closed: 0,
+  draft: 0,
+});
+
+const buildJobSummary = (jobs: RecentJobRow[]) => {
+  const summary = createEmptyJobSummary();
+
+  for (const job of jobs) {
+    const resolvedStatus = resolveJobReviewStatus(
+      job.review_status,
+      job.published,
+    ) as JobReviewStatus;
+
+    summary.total += 1;
+    if (job.published) {
+      summary.published += 1;
+    }
+
+    switch (resolvedStatus) {
+      case "pending_review":
+        summary.pendingReview += 1;
+        break;
+      case "approved":
+        summary.approved += 1;
+        break;
+      case "active":
+        summary.active += 1;
+        break;
+      case "rejected":
+        summary.rejected += 1;
+        break;
+      case "closed":
+        summary.closed += 1;
+        break;
+      case "draft":
+      default:
+        summary.draft += 1;
+        break;
+    }
+  }
+
+  return summary;
+};
 
 const verifyAdminToken = async () => {
   const cookieStore = cookies();
@@ -40,7 +156,7 @@ export async function GET(
       });
     }
 
-    const company = await sql`
+    const company = await sql<CompanyRow[]>`
       SELECT * FROM goodhive.companies WHERE user_id = ${userId}
     `;
 
@@ -50,7 +166,40 @@ export async function GET(
       });
     }
 
-    return new Response(JSON.stringify(company[0]), { status: 200 });
+    const companyRow = company[0];
+
+    const jobRows = await sql<RecentJobRow[]>`
+      SELECT
+        jo.id,
+        jo.title,
+        jo.review_status,
+        COALESCE(jo.published, false) AS published,
+        jo.created_at
+      FROM goodhive.job_offers jo
+      WHERE jo.user_id = ${userId}::uuid
+      ORDER BY COALESCE(jo.created_at, NOW()) DESC
+    `;
+
+    const adminMeta = {
+      profileCompleteness: getProfileCompleteness(companyRow),
+      linkCounts: getLinkCount(companyRow),
+      jobSummary: buildJobSummary(jobRows),
+      recentJobs: jobRows.slice(0, 5).map((job) => ({
+        id: job.id,
+        title: job.title?.trim() || "Untitled job",
+        review_status: resolveJobReviewStatus(job.review_status, job.published),
+        published: Boolean(job.published),
+        created_at: job.created_at,
+      })),
+    };
+
+    return new Response(
+      JSON.stringify({
+        company: companyRow,
+        adminMeta,
+      }),
+      { status: 200 },
+    );
   } catch (error) {
     console.error("Get company error:", error);
     if (isAdminAuthError(error)) {

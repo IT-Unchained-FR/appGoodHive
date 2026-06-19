@@ -997,7 +997,7 @@ export default function ProfilePage() {
               ? "Profile sent to review by the core team!"
               : "Profile saved successfully",
           );
-          void fetchProfile();
+          void Promise.all([fetchProfile(), fetchUser()]);
         } else {
           const profileSavingErrorData = await profileResponse.json();
           toast.error(profileSavingErrorData.message);
@@ -1013,6 +1013,7 @@ export default function ProfilePage() {
     [
       cvFile,
       fetchProfile,
+      fetchUser,
       profileData,
       profileImage,
       selectedCountry,

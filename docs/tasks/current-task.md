@@ -4,10 +4,15 @@
 `RECRUITER DASHBOARD — API WIRING & REAL DATA (May 24, 2026)`
 
 ## Last Updated
-2026-05-24
+2026-06-20
 
 ## Handoff Note
-`2026-06-17`
+`2026-06-20`
+
+- Rebuilt `app/admin/company/[user_id]/page.tsx` into a company control center with a stronger hero, status metrics, job activity context, clearer admin actions, and a more intentional review/history layout.
+- Extended `GET /api/admin/companies/[userId]` to return `{ company, adminMeta }`, where `adminMeta` includes profile completeness, external link counts, derived job summary counts, and recent jobs for the company.
+- Rebuilt `app/admin/talent/[user_id]/page.tsx` into a modern admin review surface with a richer hero, summary metrics, cleaner section cards, a sticky admin rail, and better CV/action placement.
+- The admin talent detail now surfaces profile completeness, resume section coverage, skill chips, clearer status badges, stronger contact/link presentation, and more structured review context without changing the existing backend payload path.
 
 - Added a scoped implementation pass for talent profile review UX outside the recruiter dashboard task tracked below.
 - Admin talent detail now needs to surface structured profile sections like experience, education, certifications, projects, and languages.

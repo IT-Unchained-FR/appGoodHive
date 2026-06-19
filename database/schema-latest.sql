@@ -555,9 +555,9 @@ CREATE TABLE goodhive.users (
     thirdweb_wallet_address text,
     wallet_type text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT check_mentor_status CHECK (((mentor_status)::text = ANY (ARRAY[('pending'::character varying)::text, ('approved'::character varying)::text]))),
-    CONSTRAINT check_recruiter_status CHECK (((recruiter_status)::text = ANY (ARRAY[('pending'::character varying)::text, ('approved'::character varying)::text]))),
-    CONSTRAINT check_talent_status CHECK (((talent_status)::text = ANY (ARRAY[('pending'::character varying)::text, ('approved'::character varying)::text]))),
+    CONSTRAINT check_mentor_status CHECK (((mentor_status)::text = ANY (ARRAY[('pending'::character varying)::text, ('approved'::character varying)::text, ('rejected'::character varying)::text, ('deferred'::character varying)::text]))),
+    CONSTRAINT check_recruiter_status CHECK (((recruiter_status)::text = ANY (ARRAY[('pending'::character varying)::text, ('approved'::character varying)::text, ('rejected'::character varying)::text, ('deferred'::character varying)::text]))),
+    CONSTRAINT check_talent_status CHECK (((talent_status)::text = ANY (ARRAY[('pending'::character varying)::text, ('approved'::character varying)::text, ('rejected'::character varying)::text, ('deferred'::character varying)::text]))),
     CONSTRAINT email_or_wallet_required CHECK (((email IS NOT NULL) OR (wallet_address IS NOT NULL))),
     CONSTRAINT users_wallet_type_check CHECK ((wallet_type = ANY (ARRAY['external'::text, 'in-app'::text, 'both'::text])))
 );
