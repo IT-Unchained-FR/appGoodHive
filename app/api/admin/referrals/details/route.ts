@@ -42,8 +42,11 @@ export async function GET(req: NextRequest) {
         t.approved,
         u.email,
         u.talent_status,
+        u.talent_deferred_until,
         u.mentor_status,
+        u.mentor_deferred_until,
         u.recruiter_status,
+        u.recruiter_deferred_until,
         u.created_at
       FROM goodhive.users u
       LEFT JOIN goodhive.talents t ON u.userid = t.user_id

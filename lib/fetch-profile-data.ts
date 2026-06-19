@@ -1,4 +1,13 @@
 import sql from "@/lib/db";
+import {
+  calculateYearsExperience,
+  parseStoredResumeArray,
+  type ResumeCertification,
+  type ResumeEducation,
+  type ResumeExperience,
+  type ResumeLanguage,
+  type ResumeProject,
+} from "@/lib/talent-profile/resume-data";
 
 export async function getProfileData(userId: string) {
   if (!userId) {
@@ -71,9 +80,27 @@ export async function getProfileData(userId: string) {
         effectiveRecruiter,
       ),
       talent_approved: profileUser.talent_status === "approved" ? true : false,
+      experience: parseStoredResumeArray<ResumeExperience>(
+        talent[0].resume_experience,
+      ),
+      education: parseStoredResumeArray<ResumeEducation>(
+        talent[0].resume_education,
+      ),
+      certifications: parseStoredResumeArray<ResumeCertification>(
+        talent[0].resume_certifications,
+      ),
+      projects: parseStoredResumeArray<ResumeProject>(
+        talent[0].resume_projects,
+      ),
+      languages: parseStoredResumeArray<ResumeLanguage>(
+        talent[0].resume_languages,
+      ),
     };
 
-    return talentData;
+    return {
+      ...talentData,
+      years_experience: calculateYearsExperience(talentData.experience),
+    };
   } catch (error) {
     console.log("Error retrieving data:", error);
     throw new Error("Failed to fetch data from the server");

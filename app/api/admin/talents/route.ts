@@ -36,7 +36,7 @@ const getLegacySortClause = (sort: string) => {
     status: `CASE
       WHEN u.talent_status = 'approved' OR t.approved = true THEN 1
       WHEN u.talent_status IN ('pending', 'in_review') OR t.inreview = true THEN 2
-      WHEN u.talent_status = 'deferred' THEN 3
+      WHEN u.talent_deferred_until > NOW() OR u.mentor_deferred_until > NOW() OR u.recruiter_deferred_until > NOW() THEN 3
       WHEN u.talent_status = 'rejected' OR (u.talent_status IS NULL AND t.approved = false AND t.inreview = false) THEN 4
       ELSE 5
     END ASC, COALESCE(u.created_at, t.created_at) DESC`,
@@ -78,7 +78,7 @@ const getTalentSortClause = ({
     talent_status: `CASE
       WHEN u.talent_status = 'approved' OR t.approved = true THEN 1
       WHEN u.talent_status IN ('pending', 'in_review') OR t.inreview = true THEN 2
-      WHEN u.talent_status = 'deferred' THEN 3
+      WHEN u.talent_deferred_until > NOW() OR u.mentor_deferred_until > NOW() OR u.recruiter_deferred_until > NOW() THEN 3
       WHEN u.talent_status = 'rejected' OR (u.talent_status IS NULL AND t.approved = false AND t.inreview = false) THEN 4
       ELSE 5
     END ${direction}, COALESCE(u.created_at, t.created_at) DESC`,
@@ -143,7 +143,11 @@ export async function GET(req: NextRequest) {
           values: ["pending", "in_review", true],
         });
       } else if (status === "deferred") {
-        filters.push({ condition: "u.talent_status = $", values: ["deferred"] });
+        filters.push({
+          condition:
+            "(u.talent_deferred_until > NOW() OR u.mentor_deferred_until > NOW() OR u.recruiter_deferred_until > NOW())",
+          values: [],
+        });
       } else if (status === "rejected") {
         filters.push({
           condition:

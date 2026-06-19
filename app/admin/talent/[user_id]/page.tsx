@@ -21,6 +21,7 @@ import Image from "next/image";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import SafeHTML from "@/app/components/SafeHTML";
 import { formatRateRange } from "@/app/utils/format-rate-range";
+import { ResumeStructuredSections } from "@/app/components/talents/ResumeStructuredSections";
 import CvAdminManager from "./CvAdminManager";
 
 export const metadata: Metadata = {
@@ -125,6 +126,20 @@ export default async function Page(context: MyProfilePageProps) {
             <SafeHTML
               html={user.about_work || ""}
               className="text-gray-700 rich-text-content"
+            />
+          </div>
+
+          <div className="border-t pt-4">
+            <h2 className="text-xl font-semibold mb-4">
+              Experience, Education, and More
+            </h2>
+            <ResumeStructuredSections
+              experience={user.experience}
+              education={user.education}
+              certifications={user.certifications}
+              projects={user.projects}
+              languages={user.languages}
+              emptyMessage="No structured experience or education details were added to this profile yet."
             />
           </div>
 

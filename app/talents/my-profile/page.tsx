@@ -6,6 +6,7 @@ import ProfileImageUpload from "@/app/components/profile-image-upload";
 import { ReferralSection } from "@/app/components/referral/referral-section";
 import { SearchableSelectInput } from "@/app/components/searchable-select-input";
 import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/honey-bee-spinner";
+import { StructuredProfileEditor } from "@/app/components/talents/StructuredProfileEditor";
 import { ResumeStructuredSections } from "@/app/components/talents/ResumeStructuredSections";
 import { ToggleButton } from "@/app/components/toggle-button";
 import {
@@ -16,6 +17,7 @@ import {
   GoodHiveIntroCallUrl,
   createJobServices,
 } from "@/app/constants/common";
+import { deriveReviewStatus } from "@/lib/talent-status";
 import { countries } from "@/app/constants/countries";
 import { skills } from "@/app/constants/skills";
 import { useAuthCheck } from "@/app/hooks/useAuthCheck";
@@ -103,6 +105,9 @@ export type ProfileData = {
   talent_status_reason?: string;
   mentor_status_reason?: string;
   recruiter_status_reason?: string;
+  talent_deferred_until?: string | Date | null;
+  mentor_deferred_until?: string | Date | null;
+  recruiter_deferred_until?: string | Date | null;
   hide_contact_details?: boolean;
   referrer?: string;
   referrer_name?: string | null;
@@ -137,6 +142,9 @@ type UserRoleStatus = {
   talent_status_reason?: string | null;
   mentor_status_reason?: string | null;
   recruiter_status_reason?: string | null;
+  talent_deferred_until?: string | Date | null;
+  mentor_deferred_until?: string | Date | null;
+  recruiter_deferred_until?: string | Date | null;
   referred_by?: string | null;
 };
 
@@ -145,24 +153,28 @@ const ROLE_CONFIG: Array<{
   label: string;
   statusKey: keyof UserRoleStatus;
   reasonKey: keyof UserRoleStatus;
+  deferredUntilKey: keyof UserRoleStatus;
 }> = [
   {
     key: "talent",
     label: "Talent",
     statusKey: "talent_status",
     reasonKey: "talent_status_reason",
+    deferredUntilKey: "talent_deferred_until",
   },
   {
     key: "mentor",
     label: "Mentor",
     statusKey: "mentor_status",
     reasonKey: "mentor_status_reason",
+    deferredUntilKey: "mentor_deferred_until",
   },
   {
     key: "recruiter",
     label: "Recruiter",
     statusKey: "recruiter_status",
     reasonKey: "recruiter_status_reason",
+    deferredUntilKey: "recruiter_deferred_until",
   },
 ];
 
@@ -310,6 +322,87 @@ function decodeBase64HtmlWrappedInPTags(str: string) {
 
 function stripHtmlLength(value?: string) {
   return value?.replace(/<[^>]*>/g, "").trim().length ?? 0;
+}
+
+function sanitizeExperienceEntries(items?: ResumeExperience[]) {
+  return (items || [])
+    .map((item) => ({
+      title: item.title?.trim() || undefined,
+      company: item.company?.trim() || undefined,
+      location: item.location?.trim() || undefined,
+      startDate: item.startDate?.trim() || undefined,
+      endDate: item.endDate?.trim() || undefined,
+      description: item.description?.trim() || undefined,
+    }))
+    .filter((item) =>
+      [
+        item.title,
+        item.company,
+        item.location,
+        item.startDate,
+        item.endDate,
+        item.description,
+      ].some(Boolean),
+    );
+}
+
+function sanitizeEducationEntries(items?: ResumeEducation[]) {
+  return (items || [])
+    .map((item) => ({
+      degree: item.degree?.trim() || undefined,
+      institution: item.institution?.trim() || undefined,
+      location: item.location?.trim() || undefined,
+      startDate: item.startDate?.trim() || undefined,
+      endDate: item.endDate?.trim() || undefined,
+      gpa: item.gpa?.trim() || undefined,
+      description: item.description?.trim() || undefined,
+    }))
+    .filter((item) =>
+      [
+        item.degree,
+        item.institution,
+        item.location,
+        item.startDate,
+        item.endDate,
+        item.gpa,
+        item.description,
+      ].some(Boolean),
+    );
+}
+
+function sanitizeCertificationEntries(items?: ResumeCertification[]) {
+  return (items || [])
+    .map((item) => ({
+      name: item.name?.trim() || undefined,
+      issuer: item.issuer?.trim() || undefined,
+      date: item.date?.trim() || undefined,
+      description: item.description?.trim() || undefined,
+    }))
+    .filter((item) =>
+      [item.name, item.issuer, item.date, item.description].some(Boolean),
+    );
+}
+
+function sanitizeProjectEntries(items?: ResumeProject[]) {
+  return (items || [])
+    .map((item) => ({
+      name: item.name?.trim() || undefined,
+      description: item.description?.trim() || undefined,
+      technologies: item.technologies?.trim() || undefined,
+      url: item.url?.trim() || undefined,
+    }))
+    .filter((item) =>
+      [item.name, item.description, item.technologies, item.url].some(Boolean),
+    );
+}
+
+function sanitizeLanguageEntries(items?: ResumeLanguage[]) {
+  return (items || [])
+    .map((item) => ({
+      language: item.language?.trim() || undefined,
+      proficiency: item.proficiency?.trim() || undefined,
+    }))
+    .filter((item) => [item.language, item.proficiency].some(Boolean));
 }
 
 function SectionCard({
@@ -590,7 +683,11 @@ export default function ProfilePage() {
       ).map((roleConfig) => ({
         key: roleConfig.key,
         label: roleConfig.label,
-        status: (user?.[roleConfig.statusKey] as string | null | undefined) || null,
+        status: deriveReviewStatus({
+          status: (user?.[roleConfig.statusKey] as string | null | undefined) || null,
+          deferredUntil:
+            (user?.[roleConfig.deferredUntilKey] as string | Date | null | undefined) || null,
+        }),
         reason: (user?.[roleConfig.reasonKey] as string | null | undefined) || null,
       })),
     [profileData, user],
@@ -619,6 +716,7 @@ export default function ProfilePage() {
       ),
     [selectedRoleMeta],
   );
+  const hasRejectedOrDeferredRoles = rejectedSelectedRoles.length > 0;
   const hasCriticalFieldChanged = useMemo(() => {
     const currentEmail = (profileData.email || "").trim();
     const currentTelegram = (profileData.telegram || "").trim();
@@ -628,8 +726,7 @@ export default function ProfilePage() {
     return currentEmail !== originalEmail || currentTelegram !== originalTelegram;
   }, [profileData.email, profileData.telegram]);
 
-  // Always allow submitting for review, even if already under review
-  const canShowSubmitAction = true;
+  const canShowSubmitAction = !isProfileInReview;
 
   const fetchProfile = useCallback(async () => {
     if (!user_id) return;
@@ -868,11 +965,13 @@ export default function ProfilePage() {
           cv_url: cvUrl,
           wallet_address: walletAddress,
           user_id,
-          experience: profileData.experience || [],
-          education: profileData.education || [],
-          certifications: profileData.certifications || [],
-          projects: profileData.projects || [],
-          languages: profileData.languages || [],
+          experience: sanitizeExperienceEntries(profileData.experience),
+          education: sanitizeEducationEntries(profileData.education),
+          certifications: sanitizeCertificationEntries(
+            profileData.certifications,
+          ),
+          projects: sanitizeProjectEntries(profileData.projects),
+          languages: sanitizeLanguageEntries(profileData.languages),
         };
 
         if (user?.referred_by) {
@@ -1177,7 +1276,9 @@ export default function ProfilePage() {
     PROFILE_CHAPTERS[currentChapterIndex] || PROFILE_CHAPTERS[0];
   const isLastChapter = currentChapterIndex === PROFILE_CHAPTERS.length - 1;
   const roleSelectionLocked = false;
-  const baseLabel = isProfileInReview ? "Re-submit Profile for Review" : "Submit Profile for Review";
+  const baseLabel = hasRejectedOrDeferredRoles
+    ? "Re-submit Profile for Review"
+    : "Submit Profile for Review";
   const submitActionLabel = isApprovedProfile
     ? hasCriticalFieldChanged
       ? baseLabel
@@ -2083,9 +2184,38 @@ export default function ProfilePage() {
                             <li>Headline, bio, and about-work copy</li>
                             <li>Contact and profile fields detected from your CV</li>
                             <li>Skills and profile links detected from your CV</li>
+                            <li>Experience, education, and more when available</li>
                           </ul>
                         </div>
                       </div>
+                    </div>
+
+                    <div className="mt-5">
+                      <StructuredProfileEditor
+                        experience={profileData.experience}
+                        education={profileData.education}
+                        certifications={profileData.certifications}
+                        projects={profileData.projects}
+                        languages={profileData.languages}
+                        onExperienceChange={(experience) =>
+                          setProfileData((prev) => ({ ...prev, experience }))
+                        }
+                        onEducationChange={(education) =>
+                          setProfileData((prev) => ({ ...prev, education }))
+                        }
+                        onCertificationsChange={(certifications) =>
+                          setProfileData((prev) => ({
+                            ...prev,
+                            certifications,
+                          }))
+                        }
+                        onProjectsChange={(projects) =>
+                          setProfileData((prev) => ({ ...prev, projects }))
+                        }
+                        onLanguagesChange={(languages) =>
+                          setProfileData((prev) => ({ ...prev, languages }))
+                        }
+                      />
                     </div>
 
                     <div className="mt-5">
@@ -2095,7 +2225,7 @@ export default function ProfilePage() {
                         certifications={profileData.certifications}
                         projects={profileData.projects}
                         languages={profileData.languages}
-                        emptyMessage="Imported resume details will appear here after AI parsing."
+                        emptyMessage="Manual or AI-generated profile details will appear here after you add them."
                       />
                     </div>
                   </SectionCard>
@@ -2275,7 +2405,7 @@ export default function ProfilePage() {
                             ? "Email or Telegram changed. Submit your profile for review to apply these updates."
                             : isReviewReady
                               ? isProfileInReview
-                                ? "Your profile is under review. You can still save changes and re-submit."
+                                ? "Your profile is under review. You can still save changes while the admin team reviews it."
                                 : "All mandatory details are complete. You can now submit your profile."
                               : "Complete required details, including hourly rate, to submit your profile."}
                         </p>

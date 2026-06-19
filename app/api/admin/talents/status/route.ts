@@ -11,6 +11,7 @@ import {
 } from "@/lib/email/talent-review-notifications";
 
 export const dynamic = "force-dynamic";
+const DEFER_INTERVAL_SQL = sql`CURRENT_TIMESTAMP + INTERVAL '3 months'`;
 
 const verifyAdminToken = async () => {
   const cookieStore = cookies();
@@ -133,6 +134,9 @@ export async function POST(req: NextRequest) {
           talent_status = CASE WHEN ${selectedRoles.includes("talent")} THEN 'approved' ELSE talent_status END,
           mentor_status = CASE WHEN ${selectedRoles.includes("mentor")} THEN 'approved' ELSE mentor_status END,
           recruiter_status = CASE WHEN ${selectedRoles.includes("recruiter")} THEN 'approved' ELSE recruiter_status END,
+          talent_deferred_until = CASE WHEN ${selectedRoles.includes("talent")} THEN NULL ELSE talent_deferred_until END,
+          mentor_deferred_until = CASE WHEN ${selectedRoles.includes("mentor")} THEN NULL ELSE mentor_deferred_until END,
+          recruiter_deferred_until = CASE WHEN ${selectedRoles.includes("recruiter")} THEN NULL ELSE recruiter_deferred_until END,
           talent_status_reason = CASE WHEN ${selectedRoles.includes("talent")} THEN NULL ELSE talent_status_reason END,
           mentor_status_reason = CASE WHEN ${selectedRoles.includes("mentor")} THEN NULL ELSE mentor_status_reason END,
           recruiter_status_reason = CASE WHEN ${selectedRoles.includes("recruiter")} THEN NULL ELSE recruiter_status_reason END
@@ -191,6 +195,9 @@ export async function POST(req: NextRequest) {
           talent_status = CASE WHEN ${reviewableRoles.includes("talent")} THEN 'pending' ELSE talent_status END,
           mentor_status = CASE WHEN ${reviewableRoles.includes("mentor")} THEN 'pending' ELSE mentor_status END,
           recruiter_status = CASE WHEN ${reviewableRoles.includes("recruiter")} THEN 'pending' ELSE recruiter_status END,
+          talent_deferred_until = CASE WHEN ${reviewableRoles.includes("talent")} THEN NULL ELSE talent_deferred_until END,
+          mentor_deferred_until = CASE WHEN ${reviewableRoles.includes("mentor")} THEN NULL ELSE mentor_deferred_until END,
+          recruiter_deferred_until = CASE WHEN ${reviewableRoles.includes("recruiter")} THEN NULL ELSE recruiter_deferred_until END,
           talent_status_reason = CASE WHEN ${reviewableRoles.includes("talent")} THEN NULL ELSE talent_status_reason END,
           mentor_status_reason = CASE WHEN ${reviewableRoles.includes("mentor")} THEN NULL ELSE mentor_status_reason END,
           recruiter_status_reason = CASE WHEN ${reviewableRoles.includes("recruiter")} THEN NULL ELSE recruiter_status_reason END
@@ -205,9 +212,12 @@ export async function POST(req: NextRequest) {
       await sql`
         UPDATE goodhive.users
         SET
-          talent_status = CASE WHEN ${reviewableRoles.includes("talent")} THEN 'deferred' ELSE talent_status END,
-          mentor_status = CASE WHEN ${reviewableRoles.includes("mentor")} THEN 'deferred' ELSE mentor_status END,
-          recruiter_status = CASE WHEN ${reviewableRoles.includes("recruiter")} THEN 'deferred' ELSE recruiter_status END
+          talent_status = CASE WHEN ${reviewableRoles.includes("talent")} THEN 'pending' ELSE talent_status END,
+          mentor_status = CASE WHEN ${reviewableRoles.includes("mentor")} THEN 'pending' ELSE mentor_status END,
+          recruiter_status = CASE WHEN ${reviewableRoles.includes("recruiter")} THEN 'pending' ELSE recruiter_status END,
+          talent_deferred_until = CASE WHEN ${reviewableRoles.includes("talent")} THEN ${DEFER_INTERVAL_SQL} ELSE talent_deferred_until END,
+          mentor_deferred_until = CASE WHEN ${reviewableRoles.includes("mentor")} THEN ${DEFER_INTERVAL_SQL} ELSE mentor_deferred_until END,
+          recruiter_deferred_until = CASE WHEN ${reviewableRoles.includes("recruiter")} THEN ${DEFER_INTERVAL_SQL} ELSE recruiter_deferred_until END
         WHERE userid = ${userId}
       `;
       if (user.email && reviewableRoles.length) {
@@ -233,6 +243,9 @@ export async function POST(req: NextRequest) {
           talent_status = CASE WHEN ${reviewableRoles.includes("talent")} THEN 'rejected' ELSE talent_status END,
           mentor_status = CASE WHEN ${reviewableRoles.includes("mentor")} THEN 'rejected' ELSE mentor_status END,
           recruiter_status = CASE WHEN ${reviewableRoles.includes("recruiter")} THEN 'rejected' ELSE recruiter_status END,
+          talent_deferred_until = CASE WHEN ${reviewableRoles.includes("talent")} THEN NULL ELSE talent_deferred_until END,
+          mentor_deferred_until = CASE WHEN ${reviewableRoles.includes("mentor")} THEN NULL ELSE mentor_deferred_until END,
+          recruiter_deferred_until = CASE WHEN ${reviewableRoles.includes("recruiter")} THEN NULL ELSE recruiter_deferred_until END,
           talent_status_reason = CASE WHEN ${reviewableRoles.includes("talent")} THEN ${rejectionReason || "Profile submission was rejected by admin review."} ELSE talent_status_reason END,
           mentor_status_reason = CASE WHEN ${reviewableRoles.includes("mentor")} THEN ${rejectionReason || "Profile submission was rejected by admin review."} ELSE mentor_status_reason END,
           recruiter_status_reason = CASE WHEN ${reviewableRoles.includes("recruiter")} THEN ${rejectionReason || "Profile submission was rejected by admin review."} ELSE recruiter_status_reason END

@@ -21,6 +21,7 @@ import { MoreHorizontal, CheckSquare, Square } from "lucide-react";
 import { ProfileData } from "@/app/talents/my-profile/page";
 import ApprovalPopup from "./components/ApprovalPopup";
 import { BulkApproval } from "@/app/components/admin/BulkApproval";
+import { deriveReviewStatus } from "@/lib/talent-status";
 import toast from "react-hot-toast";
 import moment from "moment";
 import { GridRowSelectionModel } from "@mui/x-data-grid";
@@ -44,20 +45,12 @@ export default function AdminTalentApproval() {
   const [pageSize, setPageSize] = useState(10);
 
   const getTalentStatus = (user: ProfileDataWithName) => {
-    const status = user.talent_status;
-    if (status === "approved" || user.approved) {
-      return "approved";
-    }
-    if (status === "deferred") {
-      return "deferred";
-    }
-    if (status === "rejected") {
-      return "rejected";
-    }
-    if (status === "pending" || status === "in_review" || user.inreview) {
-      return "in_review";
-    }
-    return "in_review";
+    return deriveReviewStatus({
+      status: user.talent_status,
+      inReview: user.inreview,
+      approved: user.approved,
+      deferredUntil: user.talent_deferred_until,
+    });
   };
 
   const handleApproveClick = (user: ProfileDataWithName) => {

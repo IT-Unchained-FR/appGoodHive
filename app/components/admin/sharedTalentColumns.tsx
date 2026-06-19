@@ -11,6 +11,7 @@
 import { Column } from "@/app/components/admin/EnhancedTable";
 import { StatusPill } from "@/app/components/admin/StatusPill";
 import { ProfileData } from "@/app/talents/my-profile/page";
+import { deriveReviewStatus, isDeferredUntilActive } from "@/lib/talent-status";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Copy, Globe, Linkedin, Send } from "lucide-react";
 import Image from "next/image";
@@ -28,12 +29,12 @@ const renderEmpty = (label = "Not set") => (
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 export const getTalentApprovalStatus = (row: ProfileData) => {
-  if (row.talent_status === "approved" || row.approved) return "approved";
-  if (row.talent_status === "deferred") return "deferred";
-  if (row.talent_status === "rejected") return "rejected";
-  if (row.talent_status === "pending" || row.talent_status === "in_review" || row.inreview)
-    return "in_review";
-  return "in_review";
+  return deriveReviewStatus({
+    status: row.talent_status,
+    inReview: row.inreview,
+    approved: row.approved,
+    deferredUntil: row.talent_deferred_until,
+  });
 };
 
 export const renderTalentApprovalBadge = (row: ProfileData) => {
@@ -78,8 +79,15 @@ export const renderMentorStatusPill = (row: ProfileData) => {
     return <span title="Mentor Approved" className={`${base} bg-green-50 text-green-700 ring-green-200`}>{check}Mentor</span>;
   if (row.mentor === true && row.mentor_status === "pending")
     return <span title="Mentor Pending" className={`${base} bg-yellow-50 text-yellow-700 ring-yellow-200`}>{clock}Mentor</span>;
-  if (row.mentor === true && (row.mentor_status === "deferred" || row.mentor_status === "rejected"))
-    return <span title={`Mentor ${row.mentor_status}`} className={`${base} bg-red-50 text-red-600 ring-red-200`}>{xmark}Mentor</span>;
+  if (row.mentor === true && (isDeferredUntilActive(row.mentor_deferred_until) || row.mentor_status === "rejected"))
+    return (
+      <span
+        title={isDeferredUntilActive(row.mentor_deferred_until) ? "Mentor deferred" : `Mentor ${row.mentor_status}`}
+        className={`${base} bg-red-50 text-red-600 ring-red-200`}
+      >
+        {xmark}Mentor
+      </span>
+    );
   return <span title="Not a mentor" className={`${base} bg-gray-100 text-gray-400 ring-gray-200`}>{xmark}Mentor</span>;
 };
 

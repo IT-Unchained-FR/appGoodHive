@@ -6,6 +6,14 @@
 ## Last Updated
 2026-05-24
 
+## Handoff Note
+`2026-06-17`
+
+- Added a scoped implementation pass for talent profile review UX outside the recruiter dashboard task tracked below.
+- Admin talent detail now needs to surface structured profile sections like experience, education, certifications, projects, and languages.
+- Talent self-serve profile editing now supports manual structured entries in addition to AI resume import.
+- Re-submit review affordances were tightened so they only appear after admin rejection or deferral, while save/edit remains available during review.
+
 ## Active Feature Plan
 See full battle plan → [`docs/features/recruiter-dashboard-features.md`](../features/recruiter-dashboard-features.md)
 
@@ -789,6 +797,7 @@ No other files need changing.
 - [x] Changed availability label from "Not looking" to "Not available" across the main status UI and stale-availability email copy
 - [x] Repaired approved-role drift for talent profiles so approved roles stay active across save/review flows and admin status changes cannot leave profiles stuck as both approved and under review
 - [x] Unified talent profile submission emails so only the server-side submission email is sent, using the updated assessment-call Calendly link and the refreshed welcome copy
+- [x] Updated talent review emails with the new submission, approval, rejection, and deferred copy, and now guarantee a real referral link is included in talent-facing submission and approval emails
 - [x] Added an in-app interview-call CTA to the talent profile review banner so submitted talents can book the same Benoit Calendly link directly from their profile page
 - [x] Polished the company profile photo validation state with softer helper copy, a branded inline error card, and a simplified hero title that now reads "Build Your Company Profile"
 - [x] Rebuilt the public company profile page with a calmer 2026-style layout, stronger spacing hierarchy, published-only job cards, and direct contact details gated to approved viewers or admins only

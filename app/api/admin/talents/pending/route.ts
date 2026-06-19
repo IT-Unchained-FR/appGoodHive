@@ -22,6 +22,9 @@ export async function GET(req: NextRequest) {
     conditions.push(`talents.inreview = true`);
     conditions.push(`COALESCE(users.talent_status, '') NOT IN ('approved', 'deferred', 'rejected')`);
     conditions.push(`COALESCE(talents.approved, false) = false`);
+    conditions.push(`(users.talent_deferred_until IS NULL OR users.talent_deferred_until <= NOW())`);
+    conditions.push(`(users.mentor_deferred_until IS NULL OR users.mentor_deferred_until <= NOW())`);
+    conditions.push(`(users.recruiter_deferred_until IS NULL OR users.recruiter_deferred_until <= NOW())`);
     // Must have a name — profiles without a name were never properly submitted
     conditions.push(`(TRIM(COALESCE(talents.first_name, '')) != '' OR TRIM(COALESCE(talents.last_name, '')) != '')`);
 
@@ -78,7 +81,7 @@ export async function GET(req: NextRequest) {
       status: `CASE
         WHEN users.talent_status = 'approved' OR talents.approved = true THEN 1
         WHEN users.talent_status IN ('pending', 'in_review') OR talents.inreview = true THEN 2
-        WHEN users.talent_status = 'deferred' THEN 3
+        WHEN users.talent_deferred_until > NOW() OR users.mentor_deferred_until > NOW() OR users.recruiter_deferred_until > NOW() THEN 3
         WHEN users.talent_status = 'rejected' OR (talents.approved = false AND talents.inreview = false) THEN 4
         ELSE 5
       END, talents.created_at DESC`,
@@ -96,6 +99,9 @@ export async function GET(req: NextRequest) {
         users.talent_status_reason,
         users.mentor_status_reason,
         users.recruiter_status_reason,
+        users.talent_deferred_until,
+        users.mentor_deferred_until,
+        users.recruiter_deferred_until,
         users.referred_by,
         users.approved_roles,
         users.created_at AS user_created_at
