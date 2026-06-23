@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { ApprovalToggle } from "./ApprovalToggle";
-import { ProfileData } from "@/app/talents/my-profile/page";
+import type { ProfileData } from "@/app/talents/my-profile/types";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 

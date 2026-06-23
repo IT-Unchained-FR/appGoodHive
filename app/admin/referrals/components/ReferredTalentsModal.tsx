@@ -10,7 +10,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Image from "next/image";
 import { renderTalentApprovalBadge, getTalentApprovalStatus } from "@/app/components/admin/sharedTalentColumns";
-import { ProfileData } from "@/app/talents/my-profile/page";
+import type { ProfileData } from "@/app/talents/my-profile/types";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { StatusPill } from "@/app/components/admin/StatusPill";

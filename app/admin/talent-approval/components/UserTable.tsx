@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ProfileData } from "@/app/talents/my-profile/page";
+import type { ProfileData } from "@/app/talents/my-profile/types";
 import { Button } from "@/components/ui/button";
 import {
   Table,

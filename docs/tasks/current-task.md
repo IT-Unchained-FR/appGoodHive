@@ -9,6 +9,8 @@
 ## Handoff Note
 `2026-06-20`
 
+- Rebuilt `app/admin/talent-approval/page.tsx` into a stronger review cockpit with queue metrics, richer row signals, improved active-filter/selection context, and a more intentional batch-review action bar.
+- Refreshed the talent single-approval modal and shared bulk-approval modal so the review dialogs match the upgraded admin design language while keeping the existing approval and rejection APIs unchanged.
 - Rebuilt `app/admin/company/[user_id]/page.tsx` into a company control center with a stronger hero, status metrics, job activity context, clearer admin actions, and a more intentional review/history layout.
 - Extended `GET /api/admin/companies/[userId]` to return `{ company, adminMeta }`, where `adminMeta` includes profile completeness, external link counts, derived job summary counts, and recent jobs for the company.
 - Rebuilt `app/admin/talent/[user_id]/page.tsx` into a modern admin review surface with a richer hero, summary metrics, cleaner section cards, a sticky admin rail, and better CV/action placement.

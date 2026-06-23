@@ -13,7 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import toast from "react-hot-toast";
 import { UserCheck } from "lucide-react";
-import { ProfileData } from "@/app/talents/my-profile/page";
+import type { ProfileData } from "@/app/talents/my-profile/types";
 
 interface EditTalentModalProps {
   open: boolean;

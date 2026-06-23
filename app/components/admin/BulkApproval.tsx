@@ -116,9 +116,18 @@ export function BulkApproval({
           {!action && (
             <div className="space-y-3 px-6 py-5">
               <p className="text-sm text-gray-600">
-                Choose an action for {selectedItems.length} selected{" "}
+                Choose how you want to process {selectedItems.length} selected{" "}
                 {entityType}(s):
               </p>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+                <p className="text-sm font-semibold text-slate-900">
+                  Batch decision context
+                </p>
+                <p className="mt-1 text-sm text-slate-600">
+                  This screen applies one decision pattern to every selected
+                  record in the current queue selection.
+                </p>
+              </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <button
                   onClick={() => setAction("approve")}
@@ -164,6 +173,15 @@ export function BulkApproval({
                   Approve {selectedItems.length} talent(s)
                 </span>
               </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+                <p className="text-sm font-semibold text-slate-900">
+                  Role approval rules
+                </p>
+                <p className="mt-1 text-sm text-slate-600">
+                  Every enabled role below will be granted to all selected
+                  applicants in this batch.
+                </p>
+              </div>
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
                   Roles to approve
@@ -191,7 +209,8 @@ export function BulkApproval({
                 <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500" />
                 <p className="text-xs leading-relaxed text-amber-800">
                   This will approve all {selectedItems.length} selected{" "}
-                  {entityType}(s). This action cannot be undone.
+                  {entityType}(s) with the same role settings. This action
+                  cannot be undone.
                 </p>
               </div>
             </div>
@@ -204,6 +223,15 @@ export function BulkApproval({
                 <span className="text-sm font-semibold">
                   Reject {selectedItems.length} {entityType}(s)
                 </span>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+                <p className="text-sm font-semibold text-slate-900">
+                  Rejection note
+                </p>
+                <p className="mt-1 text-sm text-slate-600">
+                  This reason will be used for the entire selected batch, so keep
+                  it broadly accurate.
+                </p>
               </div>
               <div className="space-y-1.5">
                 <label className="block text-xs font-semibold uppercase tracking-wide text-gray-400">
@@ -233,6 +261,15 @@ export function BulkApproval({
                 <span className="text-sm font-semibold">
                   Approve {selectedItems.length} company(s)
                 </span>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+                <p className="text-sm font-semibold text-slate-900">
+                  Batch approval context
+                </p>
+                <p className="mt-1 text-sm text-slate-600">
+                  All selected companies will receive the same approval outcome in
+                  one action.
+                </p>
               </div>
               <div className="flex items-start gap-2 rounded-xl border border-amber-100 bg-amber-50 p-3">
                 <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500" />
