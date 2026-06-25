@@ -4,9 +4,13 @@
 `RECRUITER DASHBOARD — API WIRING & REAL DATA (May 24, 2026)`
 
 ## Last Updated
-2026-06-20
+2026-06-26
 
 ## Handoff Note
+`2026-06-26`
+
+- Hardened `app/api/pdf-to-profile/pdf-import-utils.ts` so AI resume import can recover when model JSON includes raw control characters inside quoted strings, which previously caused `Bad control character in string literal` failures during "Generate Profile with AI" on `/talents/my-profile`.
+
 `2026-06-20`
 
 - Rebuilt `app/admin/talent-approval/page.tsx` into a stronger review cockpit with queue metrics, richer row signals, improved active-filter/selection context, and a more intentional batch-review action bar.

@@ -184,7 +184,67 @@ export const extractJsonObject = <T>(content: string): T => {
       ? withoutFence.slice(firstBraceIndex, lastBraceIndex + 1)
       : withoutFence;
 
-  return JSON.parse(jsonPayload) as T;
+  try {
+    return JSON.parse(jsonPayload) as T;
+  } catch (error) {
+    const repairedPayload = escapeControlCharactersInJsonStrings(jsonPayload);
+
+    if (repairedPayload !== jsonPayload) {
+      return JSON.parse(repairedPayload) as T;
+    }
+
+    throw error;
+  }
+};
+
+const CONTROL_CHARACTER_ESCAPES: Record<string, string> = {
+  "\b": "\\b",
+  "\f": "\\f",
+  "\n": "\\n",
+  "\r": "\\r",
+  "\t": "\\t",
+};
+
+const escapeControlCharactersInJsonStrings = (value: string) => {
+  let repaired = "";
+  let isInsideString = false;
+  let isEscaping = false;
+
+  for (const character of value) {
+    if (isInsideString) {
+      if (isEscaping) {
+        repaired += character;
+        isEscaping = false;
+        continue;
+      }
+
+      if (character === "\\") {
+        repaired += character;
+        isEscaping = true;
+        continue;
+      }
+
+      if (character === "\"") {
+        repaired += character;
+        isInsideString = false;
+        continue;
+      }
+
+      const codePoint = character.charCodeAt(0);
+      if (codePoint <= 0x1f) {
+        repaired +=
+          CONTROL_CHARACTER_ESCAPES[character] ??
+          `\\u${codePoint.toString(16).padStart(4, "0")}`;
+        continue;
+      }
+    } else if (character === "\"") {
+      isInsideString = true;
+    }
+
+    repaired += character;
+  }
+
+  return repaired;
 };
 
 const mergeSkills = (values: Array<string[] | undefined>) => {
