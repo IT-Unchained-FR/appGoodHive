@@ -36,6 +36,7 @@ import { formatRateRange } from "@/app/utils/format-rate-range";
 
 import "@/app/styles/rich-text.css";
 
+import CodeOfHiveAdminPanel from "./CodeOfHiveAdminPanel";
 import CvAdminManager from "./CvAdminManager";
 
 export const metadata: Metadata = {
@@ -436,6 +437,10 @@ export default async function Page(context: MyProfilePageProps) {
                     <StatusBadge label="Mentor" value={user.mentor_status} />
                     <StatusBadge label="Recruiter" value={user.recruiter_status} />
                     <StatusBadge label="CV on file" value={Boolean(user.cv_url)} />
+                    <StatusBadge
+                      label="Code of the Hive"
+                      value={Boolean(user.code_of_hive_signed)}
+                    />
                   </div>
 
                   <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
@@ -633,6 +638,16 @@ export default async function Page(context: MyProfilePageProps) {
                     <li>Confirm the listed rate and availability are current.</li>
                     <li>Review external links for proof of recent work.</li>
                   </ul>
+                </div>
+
+                <div className="rounded-[24px] border border-slate-200 bg-slate-50/70 p-4">
+                  <CodeOfHiveAdminPanel
+                    userId={user_id}
+                    signed={Boolean(user.code_of_hive_signed)}
+                    signedAt={user.code_of_hive_signed_at}
+                    version={user.code_of_hive_version}
+                    cohort={user.code_of_hive_cohort}
+                  />
                 </div>
 
                 <div className="rounded-[24px] border border-slate-200 bg-slate-50/70 p-4">

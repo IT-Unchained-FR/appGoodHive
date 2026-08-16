@@ -231,6 +231,15 @@
 }
 
 // Role badges (talent, mentor, recruiter)
+.codeOfHiveBadgeWrapper {
+  display: flex;
+  margin-top: 1rem;
+
+  @media (max-width: 768px) {
+    justify-content: center;
+  }
+}
+
 .roleBadges {
   display: flex;
   gap: 0.5rem;

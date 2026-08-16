@@ -108,6 +108,8 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
     education,
     certifications,
     projects,
+    code_of_hive_signed,
+    code_of_hive_signed_at,
   } = profileData;
 
   const isOwner = user?.user_id === profileData.user_id;
@@ -171,6 +173,8 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
         availability={availability}
         availability_status={availability_status}
         showSaveButton={isApprovedCompanyViewer}
+        code_of_hive_signed={code_of_hive_signed}
+        code_of_hive_signed_at={code_of_hive_signed_at}
       />
 
       {/* Two-Column Content Grid */}

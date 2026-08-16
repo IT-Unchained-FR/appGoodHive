@@ -32,6 +32,23 @@ const RESUME_IMPORT_COLUMNS = [
 ] as const;
 
 type ResumeImportColumn = (typeof RESUME_IMPORT_COLUMNS)[number];
+
+const CODE_OF_HIVE_COLUMNS = [
+  "code_of_hive_signed",
+  "code_of_hive_signed_at",
+  "code_of_hive_version",
+  "code_of_hive_cohort",
+] as const;
+
+type CodeOfHiveColumn = (typeof CODE_OF_HIVE_COLUMNS)[number];
+
+const CODE_OF_HIVE_COLUMN_FALLBACKS: Record<CodeOfHiveColumn, string> = {
+  code_of_hive_signed: "FALSE",
+  code_of_hive_signed_at: "NULL::TIMESTAMPTZ",
+  code_of_hive_version: "NULL::TEXT",
+  code_of_hive_cohort: "NULL::TEXT",
+};
+
 type ProfileSubmissionEmailType =
   | "profile-submission-admin"
   | "profile-submission-talent";
@@ -148,27 +165,28 @@ async function sendProfileSubmissionEmails(request: Request, userId: string) {
   }
 }
 
-async function getAvailableResumeImportColumns(): Promise<Set<ResumeImportColumn>> {
+/**
+ * Which of the given columns actually exist on goodhive.talents.
+ *
+ * Lets the profile read survive a deploy that lands ahead of its migration —
+ * missing columns are selected as literals instead of blowing up the query.
+ */
+async function getAvailableTalentColumns<T extends string>(
+  candidates: readonly T[],
+): Promise<Set<T>> {
   const columns = await sql<{ column_name: string }[]>`
     SELECT column_name
     FROM information_schema.columns
     WHERE table_schema = 'goodhive'
       AND table_name = 'talents'
-      AND column_name IN (
-        'resume_experience',
-        'resume_education',
-        'resume_certifications',
-        'resume_projects',
-        'resume_languages'
-      )
+      AND column_name IN ${sql(candidates as unknown as string[])}
   `;
 
   return new Set(
     columns
       .map((row) => row.column_name)
-      .filter(
-        (column): column is ResumeImportColumn =>
-          RESUME_IMPORT_COLUMNS.includes(column as ResumeImportColumn),
+      .filter((column): column is T =>
+        (candidates as readonly string[]).includes(column),
       ),
   );
 }
@@ -277,7 +295,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const availableResumeColumns = await getAvailableResumeImportColumns();
+    const availableResumeColumns = await getAvailableTalentColumns(RESUME_IMPORT_COLUMNS);
     const shouldClearCv = clear_cv === true;
     // Filter out undefined, null, and empty string fields
     const fields: Record<string, unknown> = {
@@ -491,11 +509,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const availableResumeColumns = await getAvailableResumeImportColumns();
+    const availableResumeColumns = await getAvailableTalentColumns(RESUME_IMPORT_COLUMNS);
     const resumeColumnSelect = RESUME_IMPORT_COLUMNS.map((column) =>
       availableResumeColumns.has(column)
         ? column
         : `NULL::TEXT AS ${column}`,
+    ).join(",\n        ");
+
+    const availableCodeOfHiveColumns =
+      await getAvailableTalentColumns(CODE_OF_HIVE_COLUMNS);
+    const codeOfHiveColumnSelect = CODE_OF_HIVE_COLUMNS.map((column) =>
+      availableCodeOfHiveColumns.has(column)
+        ? column
+        : `${CODE_OF_HIVE_COLUMN_FALLBACKS[column]} AS ${column}`,
     ).join(",\n        ");
 
     await expireStaleImmediateAvailability(user_id);
@@ -539,7 +565,8 @@ export async function GET(request: NextRequest) {
         inReview,
         user_id,
         last_active,
-        ${resumeColumnSelect}
+        ${resumeColumnSelect},
+        ${codeOfHiveColumnSelect}
       FROM goodhive.talents
       WHERE user_id = $1
     `,
@@ -651,6 +678,13 @@ export async function GET(request: NextRequest) {
       projects: parsedProjects,
       languages: parsedLanguages,
       years_experience: calculateYearsExperience(parsedExperience),
+      // Deliberately outside the canViewSensitive gate: the Code of the Hive
+      // signature is a public commitment, verifiable by anyone viewing the
+      // profile, not a private field.
+      code_of_hive_signed: Boolean(talent.code_of_hive_signed),
+      code_of_hive_signed_at: talent.code_of_hive_signed_at ?? null,
+      code_of_hive_version: talent.code_of_hive_version ?? null,
+      code_of_hive_cohort: talent.code_of_hive_cohort ?? null,
     };
 
     return NextResponse.json(profileData);

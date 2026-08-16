@@ -15,6 +15,7 @@ import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { SaveToPipelineButton } from "@/app/components/SaveToPipelineButton";
+import { CodeOfHiveBadge } from "@/app/components/code-of-hive/CodeOfHiveBadge";
 import styles from "./TalentPageHeader.module.scss";
 
 interface TalentPageHeaderProps {
@@ -36,6 +37,9 @@ interface TalentPageHeaderProps {
   availability?: boolean | string;
   availability_status?: string | null;
   showSaveButton?: boolean;
+  /** Derived from the database signature only — never from Talent-supplied input. */
+  code_of_hive_signed?: boolean;
+  code_of_hive_signed_at?: string | Date | null;
 }
 
 export const TalentPageHeader = ({
@@ -57,6 +61,8 @@ export const TalentPageHeader = ({
   canViewSensitive: canViewSensitiveProp,
   canViewBasic: canViewBasicProp,
   showSaveButton = false,
+  code_of_hive_signed = false,
+  code_of_hive_signed_at,
 }: TalentPageHeaderProps) => {
   const router = useRouter();
   const [imageError, setImageError] = useState(false);
@@ -398,6 +404,13 @@ export const TalentPageHeader = ({
             status={availability_status}
             legacyAvailability={availability}
           />
+
+          {/* Code of the Hive — public commitment, shown to every viewer */}
+          {code_of_hive_signed && (
+            <div className={styles.codeOfHiveBadgeWrapper}>
+              <CodeOfHiveBadge signedAt={code_of_hive_signed_at} />
+            </div>
+          )}
 
           {/* Role Badges */}
           {(talent || mentor || recruiter) && (

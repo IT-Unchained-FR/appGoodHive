@@ -1000,7 +1000,14 @@ CREATE TABLE goodhive.talents (
     user_id uuid,
     approved boolean DEFAULT false,
     inreview boolean DEFAULT false,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    code_of_hive_signed boolean DEFAULT false,
+    code_of_hive_signed_at timestamp with time zone,
+    code_of_hive_version character varying(10),
+    code_of_hive_cohort character varying(50),
+    code_of_hive_token_id character varying(255),
+    code_of_hive_token_chain character varying(50),
+    code_of_hive_token_tx character varying(255)
 );
 
 

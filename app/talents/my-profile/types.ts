@@ -55,6 +55,11 @@ export type ProfileData = {
   years_experience?: number;
   last_active?: string;
   website?: string;
+  // Code of the Hive
+  code_of_hive_signed?: boolean;
+  code_of_hive_signed_at?: string | Date | null;
+  code_of_hive_version?: string | null;
+  code_of_hive_cohort?: string | null;
 };
 
 export interface CountryOption {

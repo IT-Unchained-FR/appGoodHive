@@ -7,6 +7,36 @@
 2026-06-26
 
 ## Handoff Note
+`2026-08-16`
+
+- Started **Code of the Hive — MVP** (Phase A). Full plan → [`docs/features/code-of-the-hive.md`](../features/code-of-the-hive.md).
+- Added `database/migrations/add_code_of_hive.sql` — signature columns plus Phase 2 SBT placeholders on `goodhive.talents`. **Not yet applied to any environment.**
+- Added `app/constants/code-of-hive.ts` — the Code content keyed by version `1.0`, cohort `nuptial-flight-2026`, badge asset map, and all UI copy. Published versions must never be edited in place; add a new version key instead.
+- Added `POST/GET /api/talents/code-of-hive` — signing and status. Double-sign is enforced by `WHERE code_of_hive_signed IS NOT TRUE`, not by UI state.
+- Generalised `getAvailableResumeImportColumns` into `getAvailableTalentColumns` in `app/api/talents/my-profile/route.ts` and reused it so the profile read survives a deploy landing ahead of the migration.
+- Signature fields are returned from `my-profile` **outside** the `canViewSensitive` gate — public verification is the point of the feature.
+- Phase C done: added `GET/DELETE /api/admin/talents/code-of-hive` and `app/admin/talent/[user_id]/CodeOfHiveAdminPanel.tsx`, wired into the admin rail plus a hero status chip. Revoke clears the signature *and* the Phase 2 token columns so a revoked commitment leaves no mintable reference.
+- Revoke asserts `role === "admin"` on the token (matching `talents/status/route.ts`) rather than the weaker `requireAdminAuth` parse-only check, because it is destructive.
+- Phase B done: `/code-of-the-hive` landing page (static prerender), `CodeOfHiveSeal` (full artwork), `CodeOfHiveBadge` (profile chip), `SignCodeModal`, and the badge slot in `TalentPageHeader`.
+- Badge source art landed at `public/img/Code_Of_The_Hive_Nuptial_Flight.png` (1448x1086, 1.5MB). Derived `public/img/code-of-hive-badge.webp` at 800w / 101KB is what actually ships; the constant maps cohort → asset.
+- The profile chip is a redrawn inline SVG hexagon, not the scaled seal — the seal's lettering is illegible below ~160px, and this keeps profile pages free of a decorative image request.
+- Logged-out CTA uses `?connectWallet=true` on the current path, matching `app/jobs/[jobId]/page.tsx`. Because the member never leaves the page, "return to /code-of-the-hive after auth" holds by construction.
+- Verified: `next build` exit 0, `/code-of-the-hive` prerenders static (7.67 kB / 249 kB first load); page rendered in a dev server and inspected — 7 principles, commitment gradient, CTA, and the chip reading "Code of the Hive / Member since August 2026".
+- Added the signatory count: `GET /api/talents/code-of-hive` returns `signatory_count` (isolated in its own try/catch so a count failure can never break the CTA), rendered under the CTA and hidden below 5 signatories.
+- Set `"root": true` in `.eslintrc.json`. `pnpm lint` previously failed outright inside `.claude/worktrees/*` because ESLint walked up and found the parent repo's config, declaring `@typescript-eslint` twice. Now exits 0 (warnings only, all pre-existing).
+- **Migration applied to `goodhive-prod`** (2026-08-16, explicit authorization, single transaction). Verified: 199 rows before and after, 45 → 52 columns, all rows defaulted to `code_of_hive_signed = false`, partial index created.
+- Verified sign / double-sign / count / revoke as SQL against the production schema inside a `BEGIN … ROLLBACK`. The second sign attempt returned `UPDATE 0`, confirming the guard. Production signature count is still 0 — the test persisted nothing.
+- Note: at 199 rows the planner picks a seq scan over `idx_talents_code_of_hive_signed` for the count. Expected at this size; the index earns its keep as the table grows.
+- **Fixed two bugs found by clicking through the real page:**
+  1. "Join the Code" was a dead link. It pointed at `?connectWallet=true`, copying `app/jobs/[jobId]/page.tsx`, but the nav-bar effect that reads that param only *strips* it — nothing anywhere opens a modal from it. Replaced with `useConnectModal()` driven directly, reusing `supportedWallets` and the previously-unused `connectModalOptions` from `lib/auth/walletConfig.ts`. Verified: the modal opens. Note `app/jobs/[jobId]/page.tsx:259` almost certainly has the same dead CTA — worth a separate look.
+  2. The CTA could hang on its loading placeholder forever. `status` started as null and only resolved after `/api/talents/code-of-hive` returned; with the database slow or unreachable the fetch never settled and **no CTA rendered at all**. Now the fetch is bounded by an 8s `AbortController`, and a logged-out visitor gets their CTA from client auth state with no database round-trip — the newsletter path no longer depends on the database being up.
+- **Handled Neon free-tier suspend.** The compute sleeps when idle, so the first request after a quiet period does not fail fast — it blocks while the instance wakes. Three changes:
+  1. Status fetch retries up to 3× with a 15s window each, since the attempt that wakes Neon often times out while the next lands on a warm instance. A "Waking the hive…" state shows instead of an empty CTA.
+  2. `loadSignatoryCount()` is raced against a 2.5s bail. It ran before the logged-out early return, so every anonymous request paid the driver's full 10s connect timeout for a decorative number. Measured: **10–18s → a steady 2.55s** with the database asleep.
+  3. On total failure the client records `loadFailed` rather than `eligible: false`, so a real Talent is never told to go create a talent profile. They get a "Try again" instead.
+- Remaining before launch: deploy, then sign once as a real Talent through the UI to exercise the session-authenticated path.
+- **Database confirmed:** production is `goodhive-prod` on Neon (eu-west-2), which is what `.env` / `.env.local` point at and what the migration was applied to. A `goodhive-dev` name raised mid-session was a false alarm. No references to it exist anywhere; the `goodhive-dev-database` hits in `devops-infrastructure-plan.md` and old `app/db/migrations/*.sql` headers are a legacy Google Cloud SQL instance, unrelated.
+
 `2026-06-26`
 
 - Hardened `app/api/pdf-to-profile/pdf-import-utils.ts` so AI resume import can recover when model JSON includes raw control characters inside quoted strings, which previously caused `Bad control character in string literal` failures during "Generate Profile with AI" on `/talents/my-profile`.

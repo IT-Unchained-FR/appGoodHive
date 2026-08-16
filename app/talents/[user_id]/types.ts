@@ -57,4 +57,9 @@ export interface TalentProfileData {
   education?: ResumeEducation[];
   certifications?: ResumeCertification[];
   projects?: ResumeProject[];
+  // Code of the Hive — public, never gated behind viewer permissions
+  code_of_hive_signed?: boolean;
+  code_of_hive_signed_at?: string | Date | null;
+  code_of_hive_version?: string | null;
+  code_of_hive_cohort?: string | null;
 }
