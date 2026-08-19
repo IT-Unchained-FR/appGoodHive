@@ -152,6 +152,7 @@ export const TalentPageSidebar = ({
             <span className={styles.rateCurrency}>/hr</span>
           </div>
 
+          {/* HIDDEN 2026-08-19: availability status in the rate card. Uncomment to restore.
           {availability !== undefined && (
             <div className={styles.availabilityStatus}>
               {availability ? (
@@ -166,7 +167,7 @@ export const TalentPageSidebar = ({
                 </>
               )}
             </div>
-          )}
+          )} */}
         </div>
       )}
 

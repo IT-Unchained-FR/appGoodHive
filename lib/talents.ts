@@ -349,6 +349,9 @@ export async function fetchTalents({
         ),
         userId: talent.user_id,
         last_active: talent.last_active,
+        // Public commitment — deliberately ungated, same as the profile read path.
+        code_of_hive_signed: Boolean(talent.code_of_hive_signed),
+        code_of_hive_signed_at: talent.code_of_hive_signed_at,
       };
     });
 
