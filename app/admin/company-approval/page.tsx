@@ -356,6 +356,7 @@ export default function AdminCompanyApproval() {
         <AdminDataGrid
           rows={users}
           columns={columns}
+          exportFileName="company-approvals"
           getRowId={(row) => row.user_id}
           loading={loading}
           emptyMessage="No company requests found"

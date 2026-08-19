@@ -1,0 +1,40 @@
+/*
+ * app/styles/rich-text.css force-styles every .ql-toolbar/.ql-container on the
+ * site with a brand-yellow !important border via a `div[class*="quill"]`
+ * attribute selector, meant for the public profile editors. An attribute
+ * selector outranks any number of class selectors, so overriding it needs an
+ * ID selector (which always wins over class/attribute selectors) rather than
+ * a wrapper class.
+ */
+#newsletter-compose-editor .ql-toolbar.ql-snow,
+#newsletter-compose-editor .ql-container.ql-snow {
+  border-color: #e5e7eb !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+#newsletter-compose-editor .ql-toolbar.ql-snow {
+  border-radius: 8px 8px 0 0 !important;
+}
+
+#newsletter-compose-editor .ql-container.ql-snow {
+  border-radius: 0 0 8px 8px !important;
+  min-height: 240px !important;
+}
+
+#newsletter-compose-editor .ql-editor {
+  min-height: 240px !important;
+}
+
+#newsletter-compose-editor:hover .ql-toolbar.ql-snow,
+#newsletter-compose-editor:hover .ql-container.ql-snow,
+#newsletter-compose-editor:focus-within .ql-toolbar.ql-snow,
+#newsletter-compose-editor:focus-within .ql-container.ql-snow {
+  border-color: #9ca3af !important;
+  box-shadow: none !important;
+}
+
+#newsletter-compose-editor .ql-toolbar.ql-snow button:hover,
+#newsletter-compose-editor .ql-toolbar.ql-snow .ql-active {
+  color: #111827 !important;
+}

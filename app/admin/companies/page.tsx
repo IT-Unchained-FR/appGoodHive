@@ -517,6 +517,7 @@ export default function AdminManageCompanies() {
           <AdminDataGrid
             rows={companies}
             columns={columns}
+            exportFileName="companies"
             getRowId={(row) => row.user_id}
             loading={loading}
             emptyMessage="No companies found"

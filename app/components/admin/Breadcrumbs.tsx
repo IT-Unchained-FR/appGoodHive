@@ -16,6 +16,7 @@ import {
   Settings,
   FileText,
   ChevronRight,
+  Mail,
 } from "lucide-react";
 
 interface BreadcrumbsProps {
@@ -39,6 +40,7 @@ const routeConfig: Record<string, RouteConfig> = {
   "/admin/talent-approval": { label: "Approve Talents", icon: UserCheck },
   "/admin/company-approval": { label: "Approve Companies", icon: Building2 },
   "/admin/settings": { label: "Settings", icon: Settings },
+  "/admin/newsletter": { label: "Newsletter", icon: Mail },
 };
 
 interface Breadcrumb {
