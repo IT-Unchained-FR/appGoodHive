@@ -793,6 +793,7 @@ export default function AdminTalentApproval() {
         <AdminDataGrid
           rows={users}
           columns={columns}
+          exportFileName="talent-approvals"
           getRowId={(row) => row.user_id || row.email || row.name || "talent"}
           loading={loading}
           emptyMessage="No talent requests found for the current queue view"

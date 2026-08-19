@@ -25,6 +25,19 @@
 - Verified: `tsc --noEmit` clean, `next lint` clean on all touched files (only pre-existing warnings elsewhere), `next build --no-lint` exit 0. Clicked through a dev server on both pages logged out at 1440px and 375px: no "Last active" / "Active now" / "Available for work" / "Not available" / "Available Now" text anywhere on either page, Freelancing/Remote chips and the rate pill intact, three balanced stat tiles, badge rendering on the two real signatories.
 - Note for the newsletter: production already has signatories — the search page showed two signed talents, so the badge is live the moment this deploys.
 
+`2026-08-18`
+
+- Built **Admin Newsletter Broadcast** end-to-end. Full plan → [`docs/features/admin-newsletter-broadcast.md`](../features/admin-newsletter-broadcast.md).
+- New `/admin/newsletter` page: segment filters (all / talents only / companies only / talent+company / Code of the Hive signed), an `AdminDataGrid` recipient table with checkbox selection plus a Gmail-style "select all N matching filter" banner (with per-row deselect via an `excludedIds` set — no MUI Pro features used), and an inline compose panel (subject + `react-quill` body, already a dependency) with a send-confirmation dialog.
+- Added `goodhive.newsletter_campaigns` / `goodhive.newsletter_recipients` tables and `users.newsletter_opt_out{,_at}` columns — `database/migrations/add_newsletter.sql`. **Not yet applied to any environment** (same posture as the Code of the Hive migration before it landed).
+- Sends go through `resend.batch.send()` chunked at 100/call (`lib/email/newsletter.ts`), not one call per recipient, to stay inside the function timeout for large segments. Per-recipient send status is written in one bulk `INSERT ... sql(records, ...)` call, not a loop of awaits.
+- Unsubscribe is a stateless signed HMAC token (`lib/newsletter-token.ts`, no DB storage, so old email links never expire) — `GET /api/newsletter/unsubscribe` flips `newsletter_opt_out` and redirects to `/newsletter/unsubscribe`. Opted-out users are excluded at the SQL level in `lib/newsletter/recipients.ts`, so they can never be selected by any audience mode.
+- `users.email` was chosen as the canonical recipient address (falls back to the talent/company profile email when null) — flagged as an open question in the feature doc since the three tables' emails can diverge.
+- Verified: `pnpm tsc --noEmit` and `pnpm lint` both clean, zero new warnings. Found and dropped a redundant planned `/recipients/count` endpoint — `pagination.total` from the list endpoint already gives the "select all N" banner what it needs.
+- Manually verified in a real dev server (the port-3000 process already running was a stale standalone prod build predating these files — 404'd for that reason, not a bug; spun up `next dev -p 3001` instead via a new `.claude/launch.json`). `/newsletter/unsubscribe?status=success` renders correctly; `/admin/newsletter` renders the full page (filters, grid, compose panel, quill toolbar) with only the expected 401 since no admin session was available in this environment.
+- **Migration applied to `goodhive-prod`** (2026-08-18, explicit authorization, single transaction). Verified: 554 users before and after (unchanged), both `newsletter_opt_out`/`newsletter_opt_out_at` columns present on `users`, both `newsletter_campaigns`/`newsletter_recipients` tables created empty, all four indexes present.
+- Open before shipping to real recipients: Benoit's business mailing address for the CAN-SPAM footer (not yet in the email template), and confirming `users.email` is the right canonical address per above.
+
 `2026-08-16`
 
 - Started **Code of the Hive — MVP** (Phase A). Full plan → [`docs/features/code-of-the-hive.md`](../features/code-of-the-hive.md).

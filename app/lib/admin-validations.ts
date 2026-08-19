@@ -132,6 +132,29 @@ export const updateTalentSchema = z.object({
 
 export type UpdateTalentInput = z.infer<typeof updateTalentSchema>;
 
+// Newsletter campaign validation
+export const newsletterAudienceSchema = z
+  .object({
+    mode: z.enum(["ids", "filter"]),
+    segment: z.enum(["all", "talent", "company", "both", "code_of_hive"]).optional(),
+    approvedOnly: z.boolean().optional(),
+    search: z.string().max(200).optional(),
+    userIds: z.array(z.string().uuid()).max(20000).optional(),
+    excludedIds: z.array(z.string().uuid()).max(20000).optional(),
+  })
+  .refine(
+    (data) => data.mode !== "ids" || (data.userIds && data.userIds.length > 0),
+    "userIds is required when mode is \"ids\"",
+  );
+
+export const newsletterCampaignSchema = z.object({
+  subject: z.string().min(3, "Subject must be at least 3 characters").max(200),
+  bodyHtml: z.string().min(1, "Newsletter body cannot be empty").max(50000),
+  audience: newsletterAudienceSchema,
+});
+
+export type NewsletterCampaignInput = z.infer<typeof newsletterCampaignSchema>;
+
 // Validation helper function
 export function validateInput<T>(
   schema: z.ZodSchema<T>,

@@ -555,6 +555,8 @@ CREATE TABLE goodhive.users (
     thirdweb_wallet_address text,
     wallet_type text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
+    newsletter_opt_out boolean DEFAULT false,
+    newsletter_opt_out_at timestamp with time zone,
     CONSTRAINT check_mentor_status CHECK (((mentor_status)::text = ANY (ARRAY[('pending'::character varying)::text, ('approved'::character varying)::text, ('rejected'::character varying)::text, ('deferred'::character varying)::text]))),
     CONSTRAINT check_recruiter_status CHECK (((recruiter_status)::text = ANY (ARRAY[('pending'::character varying)::text, ('approved'::character varying)::text, ('rejected'::character varying)::text, ('deferred'::character varying)::text]))),
     CONSTRAINT check_talent_status CHECK (((talent_status)::text = ANY (ARRAY[('pending'::character varying)::text, ('approved'::character varying)::text, ('rejected'::character varying)::text, ('deferred'::character varying)::text]))),
@@ -1807,6 +1809,80 @@ ALTER TABLE ONLY goodhive.talents
 
 ALTER TABLE ONLY goodhive.job_sections
     ADD CONSTRAINT job_sections_job_id_fkey FOREIGN KEY (job_id) REFERENCES goodhive.job_offers(id) ON DELETE CASCADE;
+
+
+--
+-- Name: newsletter_campaigns; Type: TABLE; Schema: goodhive; Owner: -
+--
+
+CREATE TABLE goodhive.newsletter_campaigns (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    subject text NOT NULL,
+    body_html text NOT NULL,
+    audience_filter jsonb NOT NULL,
+    recipient_count integer DEFAULT 0 NOT NULL,
+    sent_count integer DEFAULT 0 NOT NULL,
+    failed_count integer DEFAULT 0 NOT NULL,
+    status character varying(20) DEFAULT 'sending'::character varying NOT NULL,
+    created_by text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    completed_at timestamp with time zone,
+    CONSTRAINT newsletter_campaigns_status_check CHECK (((status)::text = ANY (ARRAY[('sending'::character varying)::text, ('sent'::character varying)::text, ('failed'::character varying)::text])))
+);
+
+
+--
+-- Name: newsletter_recipients; Type: TABLE; Schema: goodhive; Owner: -
+--
+
+CREATE TABLE goodhive.newsletter_recipients (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    campaign_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    email text NOT NULL,
+    status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
+    error text,
+    sent_at timestamp with time zone,
+    CONSTRAINT newsletter_recipients_status_check CHECK (((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('sent'::character varying)::text, ('failed'::character varying)::text])))
+);
+
+
+--
+-- Name: newsletter_campaigns newsletter_campaigns_pkey; Type: CONSTRAINT; Schema: goodhive; Owner: -
+--
+
+ALTER TABLE ONLY goodhive.newsletter_campaigns
+    ADD CONSTRAINT newsletter_campaigns_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: newsletter_recipients newsletter_recipients_pkey; Type: CONSTRAINT; Schema: goodhive; Owner: -
+--
+
+ALTER TABLE ONLY goodhive.newsletter_recipients
+    ADD CONSTRAINT newsletter_recipients_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: idx_newsletter_recipients_campaign; Type: INDEX; Schema: goodhive; Owner: -
+--
+
+CREATE INDEX idx_newsletter_recipients_campaign ON goodhive.newsletter_recipients USING btree (campaign_id);
+
+
+--
+-- Name: idx_users_newsletter_opt_out; Type: INDEX; Schema: goodhive; Owner: -
+--
+
+CREATE INDEX idx_users_newsletter_opt_out ON goodhive.users USING btree (newsletter_opt_out) WHERE (newsletter_opt_out = true);
+
+
+--
+-- Name: newsletter_recipients newsletter_recipients_campaign_id_fkey; Type: FK CONSTRAINT; Schema: goodhive; Owner: -
+--
+
+ALTER TABLE ONLY goodhive.newsletter_recipients
+    ADD CONSTRAINT newsletter_recipients_campaign_id_fkey FOREIGN KEY (campaign_id) REFERENCES goodhive.newsletter_campaigns(id) ON DELETE CASCADE;
 
 
 --

@@ -205,6 +205,7 @@ export default function AdminReferralsPage() {
           <AdminDataGrid
             rows={referrers}
             columns={columns}
+            exportFileName="referrals"
             getRowId={(row) => row.referral_code || row.user_id}
             loading={loading}
             emptyMessage="No referrers found"

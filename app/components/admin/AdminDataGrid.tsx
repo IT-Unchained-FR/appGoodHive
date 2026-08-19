@@ -2,7 +2,7 @@
 
 import { Column } from "@/app/components/admin/EnhancedTable";
 import { Input } from "@/components/ui/input";
-import { Box, Typography } from "@mui/material";
+import { Box, MenuItem, Typography } from "@mui/material";
 import {
   DataGrid,
   GridColDef,
@@ -12,12 +12,87 @@ import {
   GridRowId,
   GridSortModel,
   GridValidRowModel,
-  GridToolbar,
+  GridToolbarContainer,
+  GridToolbarColumnsButton,
+  GridToolbarFilterButton,
+  GridToolbarDensitySelector,
+  GridToolbarExportContainer,
+  GridCsvExportMenuItem,
+  GridToolbarQuickFilter,
+  useGridApiContext,
 } from "@mui/x-data-grid";
 import { Search } from "lucide-react";
 import { useMemo } from "react";
 
+// Official MUI extension point for passing custom props through slotProps.toolbar
+// without an `any` cast — see https://mui.com/x/react-data-grid/components/#toolbar
+declare module "@mui/x-data-grid" {
+  interface ToolbarPropsOverrides {
+    exportFileName?: string;
+  }
+}
+
 type SortDirection = "asc" | "desc" | null;
+
+function JsonExportMenuItem({
+  hideMenu,
+  fileName = "export",
+}: {
+  hideMenu?: () => void;
+  fileName?: string;
+}) {
+  const apiRef = useGridApiContext();
+
+  const handleClick = () => {
+    const columns = apiRef.current
+      .getVisibleColumns()
+      .filter((column) => column.field !== "__check__" && column.field !== "actions");
+    const rowIds = apiRef.current.getSortedRowIds();
+
+    const data = rowIds.map((id) => {
+      const record: Record<string, unknown> = {};
+      columns.forEach((column) => {
+        record[column.field] = apiRef.current.getCellParams(id, column.field).value;
+      });
+      return record;
+    });
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${fileName}.json`;
+    link.click();
+    window.URL.revokeObjectURL(url);
+    hideMenu?.();
+  };
+
+  return <MenuItem onClick={handleClick}>Export as JSON</MenuItem>;
+}
+
+function AdminGridToolbar({
+  showQuickFilter = true,
+  quickFilterProps = {},
+  exportFileName = "export",
+}: {
+  showQuickFilter?: boolean;
+  quickFilterProps?: { debounceMs?: number };
+  exportFileName?: string;
+}) {
+  return (
+    <GridToolbarContainer>
+      <GridToolbarColumnsButton />
+      <GridToolbarFilterButton />
+      <GridToolbarDensitySelector />
+      <GridToolbarExportContainer>
+        <GridCsvExportMenuItem options={{ fileName: exportFileName }} />
+        <JsonExportMenuItem fileName={exportFileName} />
+      </GridToolbarExportContainer>
+      <div style={{ flex: 1 }} />
+      {showQuickFilter ? <GridToolbarQuickFilter {...quickFilterProps} /> : null}
+    </GridToolbarContainer>
+  );
+}
 
 type AdminDataGridProps<T extends GridValidRowModel> = {
   rows: T[];
@@ -47,6 +122,8 @@ type AdminDataGridProps<T extends GridValidRowModel> = {
   filterModel?: any; // GridFilterModel
   onFilterModelChange?: (model: any) => void;
   disableColumnFilter?: boolean;
+  /** Base file name (no extension) used for the toolbar's CSV/JSON export. */
+  exportFileName?: string;
 };
 
 const getColumnMinWidth = (column: { key: string; header: string }) => {
@@ -93,6 +170,7 @@ export function AdminDataGrid<T extends GridValidRowModel>({
   filterModel,
   onFilterModelChange,
   disableColumnFilter = false,
+  exportFileName = "export",
 }: AdminDataGridProps<T>) {
   const gridColumns = useMemo<GridColDef<T>[]>(
     () =>
@@ -276,7 +354,7 @@ export function AdminDataGrid<T extends GridValidRowModel>({
           rowHeight={76}
           showToolbar
           slots={{
-            toolbar: GridToolbar,
+            toolbar: AdminGridToolbar,
           }}
           sx={{
             "& .MuiDataGrid-toolbarContainer": {
@@ -292,6 +370,7 @@ export function AdminDataGrid<T extends GridValidRowModel>({
               quickFilterProps: {
                 debounceMs: 300,
               },
+              exportFileName,
             },
             pagination: {
               labelRowsPerPage: "Rows",

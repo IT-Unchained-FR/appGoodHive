@@ -909,6 +909,7 @@ export default function AdminManageTalents() {
           <AdminDataGrid
             rows={talents}
             columns={activeColumns}
+            exportFileName="talents"
             getRowId={(row) =>
               row.user_id ||
               row.email ||
