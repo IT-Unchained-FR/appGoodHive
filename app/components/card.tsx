@@ -14,6 +14,7 @@ import { useAuth } from "@/app/contexts/AuthContext";
 import { CompanyInfoGuard } from "./CompanyInfoGuard";
 import { useAuthCheck } from "@/app/hooks/useAuthCheck";
 import { formatRateRange } from "@/app/utils/format-rate-range";
+import { CodeOfHiveBadge } from "@/app/components/code-of-hive/CodeOfHiveBadge";
 
 interface Props {
   jobId?: string | number;
@@ -44,6 +45,8 @@ interface Props {
   remote?: boolean;
   availability?: boolean;
   last_active?: Date;
+  codeOfHiveSigned?: boolean;
+  codeOfHiveSignedAt?: string | null;
 }
 
 export const Card: FC<Props> = ({
@@ -71,6 +74,8 @@ export const Card: FC<Props> = ({
   freelancer,
   remote,
   availability,
+  codeOfHiveSigned,
+  codeOfHiveSignedAt,
   type,
 }) => {
   // Function to generate dynamic "Open to" text
@@ -327,6 +332,16 @@ export const Card: FC<Props> = ({
               )}
             </div>
 
+            {/* Code of the Hive — public commitment, shown to every viewer */}
+            {type === "talent" && codeOfHiveSigned && (
+              <div className="mb-1.5">
+                <CodeOfHiveBadge
+                  variant="compact"
+                  signedAt={codeOfHiveSignedAt}
+                />
+              </div>
+            )}
+
             {/* Location info */}
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-500 truncate flex items-center gap-1">
@@ -433,7 +448,8 @@ export const Card: FC<Props> = ({
 
             {type === "talent" && (
               <>
-                <LastActiveStatus lastActiveTime={postedOn} />
+                {/* HIDDEN 2026-08-19: last-active status on talent cards. Uncomment to restore.
+                <LastActiveStatus lastActiveTime={postedOn} /> */}
                 {(freelancer || remote) && (
                   <div className="flex items-center gap-1 text-xs">
                     {freelancer && remote ? (
@@ -470,7 +486,7 @@ export const Card: FC<Props> = ({
           </div>
         </div>
 
-        {/* Availability indicator for talents */}
+        {/* HIDDEN 2026-08-19: availability indicator for talents. Uncomment to restore.
         {type === "talent" && (
           <div className="flex items-center gap-2 mt-3 pt-3 border-t border-amber-200/50">
             <div
@@ -482,7 +498,7 @@ export const Card: FC<Props> = ({
               {availability ? "Available for work" : "Not available"}
             </span>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

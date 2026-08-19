@@ -7,6 +7,24 @@
 2026-06-26
 
 ## Handoff Note
+
+`2026-08-19`
+
+- **Hid availability + last-active from the public talent surfaces.** Display-only and temporary: every block is commented out in place with a `HIDDEN 2026-08-19:` note, so restoring is a pure uncomment. Nothing was deleted, no columns dropped.
+  - `app/components/card.tsx` — `LastActiveStatus` line and the whole green/red "Available for work / Not available" strip (including its `border-t` divider).
+  - `app/components/talent-page/TalentPageHeader.tsx` — the `last_active` wrapper and `<AvailabilityBadge>`.
+  - `app/components/talent-page/TalentPageSidebar.tsx` — the "Available for hire / Not available" line inside the rate card. The Hourly Rate card itself still renders.
+  - `app/companies/search-talents/talent-result.tsx` — the "Available Now" Quick Stats tile; the grid dropped to `md:grid-cols-3` so three tiles stay balanced. **Restoring the tile means putting the grid back to `md:grid-cols-4`.**
+- Deliberately **not** touched: the Availability filter chip (desktop + mobile drawer), the "Available now or soon" active-filter chip, the `sort=recent` default, and the `WHERE`/`ORDER BY` on availability/`last_active` in `lib/talents.ts`. Filtering and sorting still work on live data — only the display is hidden. Admin and recruiter surfaces (`app/admin/talent/[user_id]`, `/recruiter/dashboard/find-talents`, `/companies/dashboard/top-candidates`) keep showing availability, which is correct for moderation and internal review.
+- Props were left in place too (`Card`'s `availability` / `last_active`, the caller expressions in `talent-result.tsx`). Passing an unused prop is free here — `@typescript-eslint/no-unused-vars` is `off` and `noUnusedLocals` is not set — and it keeps the revert to a single uncomment per block.
+- **Code of the Hive badge now renders on talent search cards**, not just the profile. Placed directly under the name, above the location line, so it reads as a verification mark.
+  - `lib/talents.ts` — the response mapper now returns `code_of_hive_signed` (via `Boolean(...)`, matching `my-profile`) and `code_of_hive_signed_at`. No SQL change: the query is already `SELECT *`, the mapper was just whitelisting fields and dropping them. No migration.
+  - Reuses the existing `CodeOfHiveBadge` with `variant="compact"` — the variant the MVP shipped unused and documented as "for dense rows like search results". No new component.
+  - `CodeOfHiveBadge.module.scss` gained a `.compact` size modifier (15px glyph, 11px title, tighter padding); previously `compact` only dropped the subtitle and kept profile-header sizing, which was too heavy beside a 12–14px card name. Renders at 129×25 desktop / 132×27 mobile with no card overflow.
+  - Badge is intentionally ungated — shown to logged-out visitors whose talent names are still masked, matching AC-6 and the existing `TalentPageHeader` placement.
+- Verified: `tsc --noEmit` clean, `next lint` clean on all touched files (only pre-existing warnings elsewhere), `next build --no-lint` exit 0. Clicked through a dev server on both pages logged out at 1440px and 375px: no "Last active" / "Active now" / "Available for work" / "Not available" / "Available Now" text anywhere on either page, Freelancing/Remote chips and the rate pill intact, three balanced stat tiles, badge rendering on the two real signatories.
+- Note for the newsletter: production already has signatories — the search page showed two signed talents, so the badge is live the moment this deploys.
+
 `2026-08-16`
 
 - Started **Code of the Hive — MVP** (Phase A). Full plan → [`docs/features/code-of-the-hive.md`](../features/code-of-the-hive.md).

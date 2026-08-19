@@ -31,6 +31,8 @@ export interface TalentData {
   availability_status?: string;
   userId: string;
   last_active: string;
+  code_of_hive_signed?: boolean;
+  code_of_hive_signed_at?: string | null;
 }
 
 interface MatchScoreState {
@@ -311,6 +313,8 @@ export default function TalentResult({
                     talent.availability === "Available" ||
                     talent.availability === true
                   }
+                  codeOfHiveSigned={talent.code_of_hive_signed}
+                  codeOfHiveSignedAt={talent.code_of_hive_signed_at}
                   uniqueId={talent.userId}
                 />
 
@@ -349,7 +353,7 @@ export default function TalentResult({
 
       {/* Quick Stats */}
       <div className="mt-8 pt-6 border-t border-amber-200/30">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-center">
           <div className="bg-white/50 rounded-lg p-4 border border-amber-200/20">
             <div className="text-2xl font-bold text-amber-600">
               {talents.length}
@@ -368,6 +372,8 @@ export default function TalentResult({
             </div>
             <div className="text-sm text-gray-600">Remote Workers</div>
           </div>
+          {/* HIDDEN 2026-08-19: "Available Now" stat tile. Restoring it also means
+              putting the grid back to md:grid-cols-4 above.
           <div className="bg-white/50 rounded-lg p-4 border border-amber-200/20">
             <div className="text-2xl font-bold text-green-600">
               {talents.filter(
@@ -378,7 +384,7 @@ export default function TalentResult({
               ).length}
             </div>
             <div className="text-sm text-gray-600">Available Now</div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

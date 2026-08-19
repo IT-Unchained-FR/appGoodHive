@@ -109,8 +109,11 @@ The supplied artwork is a high-detail raster seal: gold shield, bee motif, `CODE
 |---|---|---|---|
 | `CodeOfHiveSeal` | Landing page hero, success state, badge modal | 240–320px | Full artwork, `next/image`, `priority` on landing only |
 | `CodeOfHiveBadge` | Talent profile header | ~28px glyph + text | Gold hexagon glyph + "Code of the Hive" + "Member since August 2026" |
+| `CodeOfHiveBadge variant="compact"` | Talent cards on `/companies/search-talents` | ~130x26px | Same chip, denser: 15px glyph, 11px title, no "Member since" subtitle. Sits under the talent name, above the location line. |
 
 The compact chip matches the MVP spec's own description (`⬡ Code of the Hive / Member since August 2026`), so spec and artwork agree. Clicking either navigates to `/code-of-the-hive`.
+
+**On `variant="compact"`:** shipped in the MVP but unused, and it only dropped the subtitle — the chip kept profile-header sizing. As of 2026-08-19 it also carries a `.compact` size modifier, because at 13px text beside a 12-14px card name the default chip out-weighed the name it was vouching for. The navy-and-gold palette is unchanged on purpose: the chip's job is to read as the same object the viewer saw on the landing page, and deep navy is the highest-contrast mark available against the card's cream/amber ground.
 
 **Asset handling:** export WebP alongside the PNG and serve via `next/image`. Talent profile pages are already image-heavy; the full seal must not be shipped on profile routes at all — only the hexagon glyph is.
 

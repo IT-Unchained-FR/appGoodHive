@@ -394,6 +394,7 @@ export const TalentPageHeader = ({
             </div>
           )}
 
+          {/* HIDDEN 2026-08-19: last-active + availability on the talent profile. Uncomment to restore.
           {last_active && (
             <div className={styles.lastActiveWrapper}>
               <LastActiveStatus lastActiveTime={last_active} />
@@ -403,7 +404,7 @@ export const TalentPageHeader = ({
           <AvailabilityBadge
             status={availability_status}
             legacyAvailability={availability}
-          />
+          /> */}
 
           {/* Code of the Hive — public commitment, shown to every viewer */}
           {code_of_hive_signed && (

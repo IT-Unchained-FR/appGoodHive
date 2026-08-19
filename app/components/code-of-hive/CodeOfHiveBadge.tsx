@@ -35,7 +35,7 @@ export function CodeOfHiveBadge({
   return (
     <Link
       href={CODE_OF_HIVE_PATH}
-      className={`${styles.badge} ${className}`}
+      className={`${styles.badge} ${variant === "compact" ? styles.compact : ""} ${className}`}
       title={
         memberSince
           ? `${CODE_OF_HIVE_COPY.badgeTitle} — ${memberSince}`
