@@ -8,7 +8,30 @@ export interface MatchScoreResult {
   message?: string;
 }
 
-interface ComputeMatchScoreParams {
+export type WorkMode = "onsite" | "hybrid" | "remote" | "any";
+
+/**
+ * Hard constraints (location, work mode, language) plus the talent-side facts
+ * they are checked against. All optional — `computeMatchScore` is shared with
+ * the company-side surfaces, which pass none of this and are unaffected.
+ *
+ * These are only ever *soft* signals here: they shape the score and the stated
+ * gaps. Enforcement is the caller's job (SQL pre-filter + post-scoring guard),
+ * because an LLM must never be the thing standing between a contractual
+ * requirement and the shortlist.
+ */
+export interface MatchConstraints {
+  workMode?: WorkMode;
+  jobCountry?: string | null;
+  jobCity?: string | null;
+  requiredLanguages?: string[];
+  talentCountry?: string | null;
+  talentCity?: string | null;
+  talentRemoteOnly?: boolean | null;
+  talentLanguages?: string[];
+}
+
+interface ComputeMatchScoreParams extends MatchConstraints {
   jobTitle: string;
   jobDescription: string;
   jobSkills: string[];
@@ -52,6 +75,57 @@ function tryParseModelJson(raw: string): Record<string, unknown> | null {
   }
 }
 
+/**
+ * Renders the constraint block appended to the prompt. Returns "" when the
+ * caller supplied no constraints, so the company-side callers get the exact
+ * prompt they got before this feature existed.
+ */
+function buildConstraintsBlock(params: ComputeMatchScoreParams): string {
+  const workMode = params.workMode ?? "any";
+  const requiredLanguages = (params.requiredLanguages ?? []).filter(Boolean);
+  const jobLocation = [params.jobCity, params.jobCountry].filter(Boolean).join(", ");
+  const hasLocationConstraint = workMode !== "any" && workMode !== "remote" && Boolean(jobLocation);
+
+  if (!hasLocationConstraint && requiredLanguages.length === 0) return "";
+
+  const talentLocation =
+    [params.talentCity, params.talentCountry].filter(Boolean).join(", ") || "Unknown";
+  const talentLanguages = (params.talentLanguages ?? []).filter(Boolean);
+
+  const lines: string[] = ["", "HARD REQUIREMENTS:"];
+
+  if (hasLocationConstraint) {
+    lines.push(
+      `Work mode: ${workMode} — the talent must be able to work from ${jobLocation}.`,
+      `Talent location: ${talentLocation}.`,
+      `Talent is remote-only: ${
+        params.talentRemoteOnly === null || params.talentRemoteOnly === undefined
+          ? "Unknown"
+          : params.talentRemoteOnly
+            ? "Yes"
+            : "No"
+      }.`,
+    );
+  }
+
+  if (requiredLanguages.length > 0) {
+    lines.push(
+      `Required languages: ${requiredLanguages.join(", ")}.`,
+      `Talent languages: ${talentLanguages.length > 0 ? talentLanguages.join(", ") : "Not stated on profile"}.`,
+    );
+  }
+
+  lines.push(
+    "",
+    "RULES FOR HARD REQUIREMENTS:",
+    "- A hard requirement that is clearly NOT met caps the score at 40, no matter how strong the skills are. Say which requirement failed in \"gaps\".",
+    "- Distinguish \"not stated on the profile\" from \"confirmed not met\". Missing information is NOT a failure — do not cap the score for it. Note it in \"gaps\" as something to verify.",
+    "- Never let strong skills compensate for a failed hard requirement.",
+  );
+
+  return lines.join("\n");
+}
+
 export async function computeMatchScore(
   params: ComputeMatchScoreParams,
 ): Promise<MatchScoreResult> {
@@ -66,6 +140,7 @@ TALENT:
 Skills: ${params.talentSkills.join(", ")}
 Bio: ${params.talentBio}
 Years of Experience: ${params.yearsExperience ?? "Unknown"}
+${buildConstraintsBlock(params)}
 
 Return ONLY valid JSON (no markdown, no explanation):
 {

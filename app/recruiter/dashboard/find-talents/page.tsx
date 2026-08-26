@@ -15,6 +15,7 @@ import {
   History,
   Loader2,
   Mail,
+  MapPin,
   RefreshCw,
   Sparkles,
   Star,
@@ -25,6 +26,16 @@ import {
 } from "lucide-react";
 
 import { AvailabilityBadge } from "@/app/components/AvailabilityBadge";
+import { countries } from "@/app/constants/countries";
+import { requiresPresence, type WorkMode } from "@/app/lib/matching/constraints";
+import { LANGUAGES } from "@/app/constants/languages";
+
+const WORK_MODE_OPTIONS: Array<{ value: WorkMode; label: string; hint: string }> = [
+  { value: "any", label: "Any", hint: "No location requirement" },
+  { value: "onsite", label: "Onsite", hint: "Must be in the country" },
+  { value: "hybrid", label: "Hybrid", hint: "Must be in the country" },
+  { value: "remote", label: "Remote", hint: "Location does not matter" },
+];
 import { formatRateRange } from "@/app/utils/format-rate-range";
 
 interface TopTalent {
@@ -51,7 +62,12 @@ interface TopTalent {
 
 interface TalentsResponse {
   success: boolean;
-  data?: { candidates: TopTalent[]; scoredCount: number };
+  data?: {
+    candidates: TopTalent[];
+    scoredCount: number;
+    constraintsApplied?: boolean;
+    emptyReason?: string | null;
+  };
   error?: string;
 }
 
@@ -270,6 +286,11 @@ function TalentCard({ talent, rank, isHero = false, onClick }: TalentCardProps) 
 
 export default function FindTalentsPage() {
   const [jobDescription, setJobDescription] = useState("");
+  const [workMode, setWorkMode] = useState<WorkMode>("any");
+  const [country, setCountry] = useState("");
+  const [city, setCity] = useState("");
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+  const [emptyReason, setEmptyReason] = useState<string | null>(null);
   const [talents, setTalents] = useState<TopTalent[]>([]);
   const [selectedTalent, setSelectedTalent] = useState<TopTalent | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -329,7 +350,7 @@ export default function FindTalentsPage() {
       const response = await fetch("/api/recruiter/top-talents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobDescription: jobDesc }),
+        body: JSON.stringify(buildSearchBody(jobDesc)),
       });
       const payload = (await response.json()) as TalentsResponse;
       if (!response.ok || !payload.success || !payload.data) {
@@ -337,7 +358,7 @@ export default function FindTalentsPage() {
       }
       setTalents(payload.data.candidates);
       setLastScoredCount(payload.data.scoredCount);
-      toast.success("Top talents found");
+      setEmptyReason(payload.data.emptyReason ?? null);
       await fetchHistory();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to find top talents");
@@ -360,7 +381,26 @@ export default function FindTalentsPage() {
   };
 
   const charCount = jobDescription.length;
-  const canSubmit = charCount >= MIN_DESC_LENGTH && charCount <= MAX_DESC_LENGTH && !isSearching;
+  const needsCountry = requiresPresence(workMode);
+  const requiredLanguages = selectedLanguages;
+
+  const toggleLanguage = (label: string) =>
+    setSelectedLanguages((prev) =>
+      prev.includes(label) ? prev.filter((entry) => entry !== label) : [...prev, label],
+    );
+  const canSubmit =
+    charCount >= MIN_DESC_LENGTH &&
+    charCount <= MAX_DESC_LENGTH &&
+    !isSearching &&
+    (!needsCountry || Boolean(country));
+
+  const buildSearchBody = (description: string) => ({
+    jobDescription: description,
+    workMode,
+    country: needsCountry ? country : null,
+    city: city.trim() || null,
+    requiredLanguages,
+  });
 
   const findTopTalents = async () => {
     if (!canSubmit) return;
@@ -369,12 +409,13 @@ export default function FindTalentsPage() {
     setTalents([]);
     setLastScoredCount(null);
     setHistorySource(null);
+    setEmptyReason(null);
 
     try {
       const response = await fetch("/api/recruiter/top-talents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobDescription }),
+        body: JSON.stringify(buildSearchBody(jobDescription)),
       });
       const payload = (await response.json()) as TalentsResponse;
 
@@ -384,7 +425,12 @@ export default function FindTalentsPage() {
 
       setTalents(payload.data.candidates);
       setLastScoredCount(payload.data.scoredCount);
-      toast.success("Top talents found");
+      setEmptyReason(payload.data.emptyReason ?? null);
+      if (payload.data.candidates.length === 0) {
+        toast(payload.data.emptyReason ?? "No matching talents found");
+      } else {
+        toast.success("Top talents found");
+      }
       await fetchHistory();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to find top talents");
@@ -498,8 +544,132 @@ export default function FindTalentsPage() {
               </div>
             )}
           </div>
+
+          {/* Hard requirements — enforced as filters, not left to the AI to weigh */}
+          <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+            <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-800">
+              <MapPin className="h-4 w-4 text-amber-600" />
+              Requirements
+              <span className="font-normal text-slate-400">— applied as filters, not preferences</span>
+            </p>
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <label className="block">
+                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Work mode
+                </span>
+                <select
+                  value={workMode}
+                  onChange={(event) => setWorkMode(event.target.value as WorkMode)}
+                  disabled={isSearching}
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-200 disabled:cursor-not-allowed disabled:bg-slate-100"
+                >
+                  {WORK_MODE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label} — {option.hint}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {needsCountry && (
+                <>
+                  <label className="block">
+                    <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Country <span className="text-amber-600">*</span>
+                    </span>
+                    <select
+                      value={country}
+                      onChange={(event) => setCountry(event.target.value)}
+                      disabled={isSearching}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-200 disabled:cursor-not-allowed disabled:bg-slate-100"
+                    >
+                      <option value="">Select a country…</option>
+                      {countries.map((entry: { value: string; label: string }) => (
+                        <option key={entry.value} value={entry.value}>
+                          {entry.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      City <span className="font-normal normal-case text-slate-400">(optional)</span>
+                    </span>
+                    <input
+                      type="text"
+                      value={city}
+                      onChange={(event) => setCity(event.target.value)}
+                      disabled={isSearching}
+                      placeholder="e.g. Paris"
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-200 disabled:cursor-not-allowed disabled:bg-slate-100"
+                    />
+                  </label>
+                </>
+              )}
+
+              <label className="block">
+                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Add a language
+                </span>
+                <select
+                  value=""
+                  onChange={(event) => {
+                    if (event.target.value) toggleLanguage(event.target.value);
+                  }}
+                  disabled={isSearching}
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-200 disabled:cursor-not-allowed disabled:bg-slate-100"
+                >
+                  <option value="">Select a language…</option>
+                  {LANGUAGES.filter((option) => !selectedLanguages.includes(option.label)).map(
+                    (option) => (
+                      <option key={option.code} value={option.label}>
+                        {option.label}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </label>
+            </div>
+
+            {needsCountry && !country && (
+              <p className="mt-3 text-xs text-amber-700">
+                Onsite and hybrid roles need a country before you can search.
+              </p>
+            )}
+            {selectedLanguages.length > 0 && (
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                {selectedLanguages.map((language) => (
+                  <button
+                    key={language}
+                    type="button"
+                    onClick={() => toggleLanguage(language)}
+                    disabled={isSearching}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900 transition hover:bg-amber-200 disabled:opacity-60"
+                  >
+                    {language}
+                    <X className="h-3 w-3" />
+                  </button>
+                ))}
+              </div>
+            )}
+            {requiredLanguages.length > 0 && (
+              <p className="mt-3 text-xs text-slate-500">
+                Talents with no languages on their profile are kept and flagged for you to verify,
+                never filtered out. Working proficiency means B2 or above.
+              </p>
+            )}
+          </div>
         </div>
       </div>
+
+      {emptyReason && !isSearching && talents.length === 0 && (
+        <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
+          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+          <span>{emptyReason}</span>
+        </div>
+      )}
 
       {/* Historical Results Banner */}
       {historySource && !isSearching && (

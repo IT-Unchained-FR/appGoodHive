@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  LANGUAGES,
+  PROFICIENCY_LEVELS,
+  normalizeLanguage,
+  normalizeProficiency,
+} from "@/app/constants/languages";
 import type { ReactNode } from "react";
 import type {
   ResumeCertification,
@@ -605,72 +611,97 @@ export function StructuredProfileEditor({
 
       <SectionHeader
         title="Languages"
-        description="Optional language skills can help with matching and admin review."
+        description="Recruiters filter on this. Adding your languages makes you findable for roles that require them."
         onAdd={() => onLanguagesChange([...languages, {}])}
       />
       {languages.length === 0 ? (
         <EmptyState label="Languages" />
       ) : (
         <div className="space-y-4">
-          {languages.map((item, index) => (
-            <div
-              key={`language-${index}`}
-              className="rounded-[22px] border border-slate-200 bg-slate-50/70 p-5"
-            >
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-slate-900">
-                  Language #{index + 1}
-                </p>
-                <button
-                  type="button"
-                  onClick={() =>
-                    removeListItem(languages, index, onLanguagesChange)
-                  }
-                  className="text-sm font-semibold text-rose-600 transition hover:text-rose-700"
-                >
-                  Remove
-                </button>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <OptionalFieldLabel>Language</OptionalFieldLabel>
-                  <input
-                    type="text"
-                    value={item.language || ""}
-                    onChange={(event) =>
-                      updateListItem(
-                        languages,
-                        index,
-                        "language",
-                        event.target.value,
-                        onLanguagesChange,
-                      )
+          {languages.map((item, index) => {
+            const canonicalLanguage = normalizeLanguage(item.language)?.label ?? "";
+            const canonicalProficiency = normalizeProficiency(item.proficiency)?.value ?? "";
+            const unrecognised = Boolean(item.language) && !canonicalLanguage;
+
+            return (
+              <div
+                key={`language-${index}`}
+                className="rounded-[22px] border border-slate-200 bg-slate-50/70 p-5"
+              >
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-slate-900">
+                    Language #{index + 1}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      removeListItem(languages, index, onLanguagesChange)
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900"
-                  />
+                    className="text-sm font-semibold text-rose-600 transition hover:text-rose-700"
+                  >
+                    Remove
+                  </button>
                 </div>
-                <div>
-                  <OptionalFieldLabel>Proficiency</OptionalFieldLabel>
-                  <input
-                    type="text"
-                    value={item.proficiency || ""}
-                    onChange={(event) =>
-                      updateListItem(
-                        languages,
-                        index,
-                        "proficiency",
-                        event.target.value,
-                        onLanguagesChange,
-                      )
-                    }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900"
-                  />
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <OptionalFieldLabel>Language</OptionalFieldLabel>
+                    <select
+                      value={canonicalLanguage}
+                      onChange={(event) =>
+                        updateListItem(
+                          languages,
+                          index,
+                          "language",
+                          event.target.value,
+                          onLanguagesChange,
+                        )
+                      }
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900"
+                    >
+                      <option value="">Select a language…</option>
+                      {LANGUAGES.map((option) => (
+                        <option key={option.code} value={option.label}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <OptionalFieldLabel>Proficiency</OptionalFieldLabel>
+                    <select
+                      value={canonicalProficiency}
+                      onChange={(event) =>
+                        updateListItem(
+                          languages,
+                          index,
+                          "proficiency",
+                          event.target.value,
+                          onLanguagesChange,
+                        )
+                      }
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900"
+                    >
+                      <option value="">Select a level…</option>
+                      {PROFICIENCY_LEVELS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
+                {unrecognised && (
+                  <p className="mt-3 text-xs text-amber-700">
+                    &ldquo;{item.language}&rdquo; isn&rsquo;t a spoken language we can match on.
+                    Pick one from the list, or remove this entry.
+                  </p>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
+
     </div>
   );
 }
