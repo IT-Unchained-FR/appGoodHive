@@ -1,7 +1,9 @@
 import Groq from "groq-sdk";
 
-const GROQ_DEFAULT_MODEL = "llama-3.3-70b-versatile";
-const GROQ_FAST_MODEL = "llama-3.1-8b-instant";
+// See lib/ai/groq.ts for the same fix and why: the previous IDs here were 404/decommissioned on
+// Groq as of Aug 2026, verified live against GET /openai/v1/models on 2026-08-28.
+const GROQ_DEFAULT_MODEL = "openai/gpt-oss-120b";
+const GROQ_FAST_MODEL = "openai/gpt-oss-20b";
 
 // Maps Gemini model name env vars to Groq model names
 const resolveGroqModel = (modelName: string): string => {

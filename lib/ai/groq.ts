@@ -1,20 +1,25 @@
 import Groq from "groq-sdk";
 import sql from "@/lib/db";
 
+// The previous IDs here (llama-3.3-70b-versatile, llama-3.1-8b-instant, mixtral-8x7b-32768,
+// gemma2-9b-it) were all 404/decommissioned on Groq as of Aug 2026 — every call silently failed
+// across every Groq-backed feature in the app. Verified live against this account's
+// GET /openai/v1/models on 2026-08-28; see docs/features/ai-matching-engine.md for the same
+// finding from an earlier audit. Re-verify against that endpoint before assuming these are current.
 export const GROQ_MODELS = {
-  LLAMA_70B: "llama-3.3-70b-versatile",
-  LLAMA_8B: "llama-3.1-8b-instant",
-  MIXTRAL: "mixtral-8x7b-32768",
-  GEMMA2: "gemma2-9b-it",
+  QWEN_27B: "qwen/qwen3.8-27b",
+  QWEN_27B_ALT: "qwen/qwen3.6-27b",
+  GPT_OSS_120B: "openai/gpt-oss-120b",
+  GPT_OSS_20B: "openai/gpt-oss-20b",
 } as const;
 
 export type GroqModelId = (typeof GROQ_MODELS)[keyof typeof GROQ_MODELS];
 
 export const DEFAULT_MODEL_POOL: GroqModelId[] = [
-  GROQ_MODELS.LLAMA_70B,
-  GROQ_MODELS.LLAMA_8B,
-  GROQ_MODELS.MIXTRAL,
-  GROQ_MODELS.GEMMA2,
+  GROQ_MODELS.QWEN_27B,
+  GROQ_MODELS.GPT_OSS_120B,
+  GROQ_MODELS.GPT_OSS_20B,
+  GROQ_MODELS.QWEN_27B_ALT,
 ];
 
 export interface GenerateOptions {
