@@ -4,6 +4,7 @@ import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { getAdminJWTSecret, isAdminAuthError } from "@/app/lib/admin-auth";
 import { bulkOperationSchema, validateInput } from "@/app/lib/admin-validations";
+import { evaluateAndStoreTalentProfile } from "@/app/lib/ai/evaluate-talent-profile";
 import {
   sendTalentApprovalEmail,
   type TalentRole,
@@ -149,6 +150,25 @@ export async function POST(req: NextRequest) {
           }
         }),
     );
+
+    if (selectedRoles.includes("talent")) {
+      // Evaluate each approved talent's profile once, now, so future recruiter searches reuse
+      // this instead of re-reading raw bio/CV text per search. Bounded concurrency (matching the
+      // batching already used in app/api/recruiter/top-talents/route.ts) so a large batch
+      // approval doesn't fire an unbounded number of parallel LLM calls. A failure for any one
+      // talent is logged and self-heals the next time they surface in a search — it never fails
+      // the bulk approval itself.
+      for (let index = 0; index < users.length; index += 3) {
+        const chunk = users.slice(index, index + 3);
+        await Promise.all(
+          chunk.map((user) =>
+            evaluateAndStoreTalentProfile(user.userid).catch((error) => {
+              console.error(`bulk-approve: profile evaluation failed for ${user.userid}:`, error);
+            }),
+          ),
+        );
+      }
+    }
 
     return new Response(
       JSON.stringify({

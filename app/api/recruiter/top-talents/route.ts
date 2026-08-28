@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { computeMatchScore } from "@/app/lib/ai/match-score";
+import {
+  AI_PROFILE_SUMMARY_VERSION,
+  evaluateAndStoreTalentProfile,
+  formatTalentProfileSummaryForPrompt,
+  type TalentProfileSummary,
+} from "@/app/lib/ai/evaluate-talent-profile";
 import { PROFICIENCY_LEVELS } from "@/app/constants/languages";
 import {
   EMPTY_CONSTRAINTS,
@@ -44,6 +50,9 @@ interface TalentRow {
   last_active: string | null;
   remote_only: boolean | null;
   resume_languages: string | null;
+  ai_profile_summary: TalentProfileSummary | null;
+  ai_profile_summary_version: number | null;
+  ai_profile_stale: boolean | null;
 }
 
 /** A scored candidate plus the facts the post-scoring guard needs. The extra
@@ -275,7 +284,10 @@ export async function POST(request: NextRequest) {
         availability_status,
         last_active,
         remote_only,
-        resume_languages
+        resume_languages,
+        ai_profile_summary,
+        ai_profile_summary_version,
+        ai_profile_stale
       FROM goodhive.talents
       WHERE approved = true
         AND (availability = true OR LOWER(CAST(availability AS TEXT)) = 'available')
@@ -357,11 +369,33 @@ export async function POST(request: NextRequest) {
             languages: parseTalentLanguages(talent.resume_languages),
           };
 
+          // Prefer the cached, pre-computed profile understanding (evaluated once at approval
+          // time — see app/lib/ai/evaluate-talent-profile.ts) over re-sending raw bio/CV text on
+          // every search. A missing/stale/outdated-version cache is a self-healing fallback: we
+          // evaluate this one candidate inline so the *next* search is fast for them too, and use
+          // today's raw-bio behavior for this search regardless of whether that succeeds.
+          let cachedSummary =
+            talent.ai_profile_summary &&
+            talent.ai_profile_summary_version === AI_PROFILE_SUMMARY_VERSION &&
+            !talent.ai_profile_stale
+              ? talent.ai_profile_summary
+              : null;
+
+          if (!cachedSummary) {
+            cachedSummary = await evaluateAndStoreTalentProfile(talent.user_id).catch((error) => {
+              console.error(`top-talents: fallback evaluation failed for ${talent.user_id}:`, error);
+              return null;
+            });
+          }
+
           const matchScore = await computeMatchScore({
             jobTitle,
             jobDescription,
             jobSkills,
             talentBio: description,
+            talentProfileSummary: cachedSummary
+              ? formatTalentProfileSummaryForPrompt(cachedSummary)
+              : null,
             talentSkills,
             yearsExperience: null,
             workMode: constraints.workMode,

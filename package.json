@@ -15,7 +15,8 @@
     "lint": "next lint",
     "migrate": "tsx app/db/run-migration.ts",
     "migrate:otp": "tsx app/db/run-otp-migration.ts",
-    "status-sync-check": "tsx scripts/status-sync-check.ts"
+    "status-sync-check": "tsx scripts/status-sync-check.ts",
+    "backfill:talent-profile-evaluations": "tsx scripts/backfill-talent-profile-evaluations.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.327.0",

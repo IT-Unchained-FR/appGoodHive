@@ -3,6 +3,7 @@ import sql from "@/lib/db";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { getAdminJWTSecret, isAdminAuthError } from "@/app/lib/admin-auth";
+import { evaluateAndStoreTalentProfile } from "@/app/lib/ai/evaluate-talent-profile";
 import {
   sendTalentApprovalEmail,
   sendTalentDeferredEmail,
@@ -142,6 +143,16 @@ export async function POST(req: NextRequest) {
           recruiter_status_reason = CASE WHEN ${selectedRoles.includes("recruiter")} THEN NULL ELSE recruiter_status_reason END
         WHERE userid = ${userId}
       `;
+      if (selectedRoles.includes("talent")) {
+        // Evaluate the profile once, now, so every future recruiter search reuses this instead
+        // of re-reading raw bio/CV text. Awaited (like the email send above) so it actually
+        // finishes before this serverless invocation ends — but a failure here never fails or
+        // blocks the approval itself; it just self-heals the next time this talent surfaces in a
+        // search (see app/api/recruiter/top-talents/route.ts).
+        await evaluateAndStoreTalentProfile(userId).catch((error) => {
+          console.error(`talents/status: profile evaluation failed for ${userId}:`, error);
+        });
+      }
       for (const role of selectedRoles) {
         await sql`
           UPDATE goodhive.users

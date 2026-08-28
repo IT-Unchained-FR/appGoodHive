@@ -38,6 +38,14 @@ interface ComputeMatchScoreParams extends MatchConstraints {
   talentBio: string;
   talentSkills: string[];
   yearsExperience: number | null;
+  /**
+   * A pre-computed, cached understanding of the talent (see
+   * `app/lib/ai/evaluate-talent-profile.ts`), formatted for the prompt. When supplied, this
+   * replaces `talentBio` in the TALENT block so the search path never has to re-send the raw
+   * bio/CV text it was derived from. Omit to keep today's raw-bio behavior (e.g. company-side
+   * callers, or a talent with no cached evaluation yet).
+   */
+  talentProfileSummary?: string | null;
 }
 
 function clampScore(value: unknown): number | null {
@@ -129,6 +137,10 @@ function buildConstraintsBlock(params: ComputeMatchScoreParams): string {
 export async function computeMatchScore(
   params: ComputeMatchScoreParams,
 ): Promise<MatchScoreResult> {
+  const talentProfileBlock = params.talentProfileSummary
+    ? params.talentProfileSummary
+    : `Bio: ${params.talentBio}`;
+
   const prompt = `You are a technical recruiter AI. Given a job description and a talent profile, calculate how well this talent matches the job.
 
 JOB:
@@ -138,7 +150,7 @@ Required Skills: ${params.jobSkills.join(", ")}
 
 TALENT:
 Skills: ${params.talentSkills.join(", ")}
-Bio: ${params.talentBio}
+${talentProfileBlock}
 Years of Experience: ${params.yearsExperience ?? "Unknown"}
 ${buildConstraintsBlock(params)}
 

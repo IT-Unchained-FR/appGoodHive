@@ -33,6 +33,20 @@ const RESUME_IMPORT_COLUMNS = [
 
 type ResumeImportColumn = (typeof RESUME_IMPORT_COLUMNS)[number];
 
+const PROFILE_EVALUATION_COLUMNS = ["ai_profile_stale"] as const;
+
+/** Fields that feed the cached AI profile evaluation — see app/lib/ai/evaluate-talent-profile.ts. */
+const EVALUATION_RELEVANT_FIELDS = [
+  "skills",
+  "description",
+  "about_work",
+  "cv_url",
+  "resume_experience",
+  "resume_education",
+  "resume_certifications",
+  "resume_projects",
+] as const;
+
 const CODE_OF_HIVE_COLUMNS = [
   "code_of_hive_signed",
   "code_of_hive_signed_at",
@@ -261,8 +275,8 @@ export async function POST(request: Request) {
         existingUserStatuses?.recruiter_status === "approved",
     };
 
-    const existingTalent = await sql<{ inreview: boolean | null }[]>`
-      SELECT inreview
+    const existingTalent = await sql<{ inreview: boolean | null; approved: boolean | null }[]>`
+      SELECT inreview, approved
       FROM goodhive.talents
       WHERE user_id = ${user_id}
       LIMIT 1
@@ -348,6 +362,25 @@ export async function POST(request: Request) {
     }
     if (availableResumeColumns.has("resume_languages")) {
       fields.resume_languages = serializeResumeArray(languages);
+    }
+
+    // An already-approved talent editing a field the cached AI evaluation was built from
+    // (skills, bio, resume sections, CV) invalidates that cache rather than leaving it silently
+    // wrong. This doesn't re-run the AI evaluation here — it's a cheap flag flip; the next
+    // recruiter search that surfaces this talent re-evaluates lazily (see
+    // app/api/recruiter/top-talents/route.ts), and saving the profile is never slowed down
+    // waiting on AI.
+    const availableEvaluationColumns = await getAvailableTalentColumns(PROFILE_EVALUATION_COLUMNS);
+    const touchesEvaluationRelevantField = EVALUATION_RELEVANT_FIELDS.some((key) => {
+      const value = fields[key];
+      return value !== undefined && value !== null && value !== "";
+    });
+    if (
+      existingTalent[0]?.approved === true &&
+      availableEvaluationColumns.has("ai_profile_stale") &&
+      touchesEvaluationRelevantField
+    ) {
+      fields.ai_profile_stale = true;
     }
 
     const filteredFields = Object.entries(fields).filter(([key, value]) => {

@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-// Use the direct lib path to avoid pdf-parse loading test files at import time,
-// which crashes in Next.js serverless / edge environments.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require("pdf-parse/lib/pdf-parse.js");
 import { generateWithFallback } from "@/lib/ai/groq";
+import { extractPdfText } from "@/app/lib/pdf/extract-pdf-text";
 import {
   chunkTextForAI,
   extractJsonObject,
@@ -12,12 +9,7 @@ import {
   normalizeExtractedResumeFacts,
 } from "./pdf-import-utils";
 
-const PDF_TEXT_EXTRACTOR_URL =
-  process.env.PDF_TEXT_EXTRACTOR_URL ??
-  "https://pdf-text-extractor-ki7lh2h1i-jubayer-juhans-projects-85b1bbdc.vercel.app/upload-pdf";
-
 const MAX_SIZE = 10 * 1024 * 1024;
-const MIN_LOCAL_TEXT_LENGTH = 200;
 
 const EXTRACTION_SYSTEM_PROMPT = `
 You extract facts from one chunk of resume text.
@@ -137,55 +129,6 @@ const callGeminiForJson = async <T,>(
   const text = await generateWithFallback(userPrompt, { systemPrompt, temperature: 0.2, feature: "pdf-to-profile" });
   if (!text) throw new Error("No response from AI");
   return extractJsonObject<T>(text);
-};
-
-const extractTextLocally = async (buffer: Buffer) => {
-  try {
-    const parsedPdf = await pdfParse(buffer);
-    const extractedText = parsedPdf.text?.trim() || "";
-
-    if (extractedText.length >= MIN_LOCAL_TEXT_LENGTH) {
-      return extractedText;
-    }
-  } catch (error) {
-    console.error("Local PDF parsing failed:", error);
-  }
-
-  return "";
-};
-
-const extractTextWithFallbackService = async (buffer: Buffer, fileName: string) => {
-  const externalFormData = new FormData();
-  const blob = new Blob([buffer], { type: "application/pdf" });
-  externalFormData.append("pdf", blob, fileName);
-
-  const externalResponse = await fetch(PDF_TEXT_EXTRACTOR_URL, {
-    method: "POST",
-    body: externalFormData,
-  });
-
-  if (!externalResponse.ok) {
-    throw new Error(
-      `Failed to extract text from PDF (status ${externalResponse.status})`,
-    );
-  }
-
-  const pdfParsingResponse = await externalResponse.json();
-  return pdfParsingResponse?.text?.trim() || "";
-};
-
-const extractPdfText = async (buffer: Buffer, fileName: string) => {
-  const localText = await extractTextLocally(buffer);
-  if (localText) {
-    return localText;
-  }
-
-  const fallbackText = await extractTextWithFallbackService(buffer, fileName);
-  if (fallbackText) {
-    return fallbackText;
-  }
-
-  throw new Error("Unable to extract readable text from the PDF");
 };
 
 const hasMeaningfulFacts = (facts: ExtractedResumeFacts) =>
