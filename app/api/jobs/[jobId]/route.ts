@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { readViewerAccess } from "@/lib/auth/api-guards";
 import { getSessionUser } from "@/lib/auth/sessionUtils";
 import sql from "@/lib/db";
 import {
@@ -118,6 +119,12 @@ export async function GET(
       return NextResponse.json({ message: "Job not found" }, { status: 404 });
     }
 
+    // Company identity is confidential: only admins, approved talents,
+    // approved companies, and the job owner may see it.
+    const access = await readViewerAccess();
+    const canViewCompany =
+      access.canViewConfidentialInfo || access.userId === jobData.user_id;
+
     const sectionsQuery = await sql`
       SELECT id, heading, content, sort_order, created_at, updated_at
       FROM goodhive.job_sections
@@ -168,19 +175,34 @@ export async function GET(
       blockchainJobId: jobData.blockchain_job_id,
       escrowAmount: jobData.escrow_amount,
       paymentTokenAddress: jobData.payment_token_address,
-      company: {
-        id: jobData.user_id,
-        name: jobData.company_name || jobData.designation,
-        logo: jobData.company_logo,
-        headline: jobData.headline,
-        city: jobData.company_city,
-        country: jobData.company_country,
-        email: jobData.company_email,
-        linkedin: jobData.linkedin,
-        twitter: jobData.twitter,
-        website: jobData.portfolio || null,
-        walletAddress: jobData.company_wallet_address || null,
-      },
+      company: canViewCompany
+        ? {
+            id: jobData.user_id,
+            name: jobData.company_name || jobData.designation,
+            logo: jobData.company_logo,
+            headline: jobData.headline,
+            city: jobData.company_city,
+            country: jobData.company_country,
+            email: jobData.company_email,
+            linkedin: jobData.linkedin,
+            twitter: jobData.twitter,
+            website: jobData.portfolio || null,
+            walletAddress: jobData.company_wallet_address || null,
+          }
+        : {
+            id: null,
+            name: null,
+            logo: null,
+            headline: null,
+            city: null,
+            country: null,
+            email: null,
+            linkedin: null,
+            twitter: null,
+            website: null,
+            walletAddress: null,
+            locked: true,
+          },
       sections: sectionsQuery.map((section) => ({
         id: section.id.toString(),
         jobId,
@@ -203,10 +225,12 @@ export async function GET(
       applicationCount: Number(applicationCountQuery[0]?.application_count || 0),
     };
 
+    // Never shared-cache: the payload varies by viewer entitlement.
     return NextResponse.json(job, {
       status: 200,
       headers: {
-        "Cache-Control": "public, max-age=300, stale-while-revalidate=600",
+        "Cache-Control": "private, no-store",
+        Vary: "Cookie",
       },
     });
   } catch (error) {

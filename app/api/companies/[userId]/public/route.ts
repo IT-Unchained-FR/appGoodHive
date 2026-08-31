@@ -1,7 +1,17 @@
 import { NextRequest } from "next/server";
 import sql from "@/lib/db";
+import { readViewerAccess } from "@/lib/auth/api-guards";
 
 export const dynamic = "force-dynamic";
+
+/** Non-identifying fields any visitor may see about a published company. */
+const PUBLIC_COMPANY_FIELDS = [
+  "user_id",
+  "approved",
+  "published",
+  "country",
+  "city",
+] as const;
 
 export async function GET(
   request: NextRequest,
@@ -38,11 +48,30 @@ export async function GET(
       );
     }
 
-    return new Response(JSON.stringify(company[0]), {
+    // `SELECT *` here previously handed out the company's email, phone number,
+    // street address, and wallet address to anonymous callers. Redact unless
+    // the viewer is entitled or is the company itself.
+    const access = await readViewerAccess();
+    const record = company[0] as Record<string, unknown>;
+    const canViewIdentity =
+      access.canViewConfidentialInfo || access.userId === record.user_id;
+
+    const payload = canViewIdentity
+      ? record
+      : {
+          ...Object.fromEntries(
+            PUBLIC_COMPANY_FIELDS.map((field) => [field, record[field] ?? null]),
+          ),
+          locked: true,
+        };
+
+    return new Response(JSON.stringify(payload), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        "Cache-Control": "public, max-age=300, stale-while-revalidate=600", // Cache for 5 minutes
+        // Varies by viewer entitlement — must never land in a shared cache.
+        "Cache-Control": "private, no-store",
+        Vary: "Cookie",
       },
     });
   } catch (error) {

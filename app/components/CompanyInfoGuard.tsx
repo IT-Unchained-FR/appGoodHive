@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowRight, LockKeyhole } from "lucide-react";
 import { useMemo, useState, useRef, useEffect, type ReactNode } from "react";
 import { useConnectModal } from "thirdweb/react";
 import { connectModalOptions, supportedWallets } from "@/lib/auth/walletConfig";
 import { thirdwebClient } from "@/clients";
 import { activeChain } from "@/config/chains";
 import { ReturnUrlManager } from "@/app/utils/returnUrlManager";
+import { useConfidentialLockCopy } from "@/app/hooks/useConfidentialLock";
 
 type TooltipPlacement = "top" | "bottom" | "left" | "right";
 
@@ -24,31 +26,12 @@ interface CompanyInfoGuardProps {
   compact?: boolean;
   children?: ReactNode;
   redirectUrl?: string; // URL to redirect to after authentication
+  /** What is hidden behind the blur — drives the tooltip copy. */
+  subject?: "company" | "talent";
 }
-
-const placeholders = [
-  "Connect Wallet to see",
-  "Connect to view",
-  "Connect to reveal",
-  "Connect to see company",
-  "Connect Wallet to view",
-  "Connect Wallet to reveal",
-  "Connect to see",
-  "Connect Wallet here",
-];
 
 const classNames = (...values: Array<string | false | undefined>) =>
   values.filter(Boolean).join(" ");
-
-const pickPlaceholder = (seed: string) => {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    hash = (hash << 5) - hash + seed.charCodeAt(i);
-    hash |= 0;
-  }
-  const index = Math.abs(hash) % placeholders.length;
-  return placeholders[index];
-};
 
 export const CompanyInfoGuard = ({
   value,
@@ -64,14 +47,20 @@ export const CompanyInfoGuard = ({
   compact = false,
   children,
   redirectUrl,
+  subject = "company",
 }: CompanyInfoGuardProps) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const { connect } = useConnectModal();
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lockCopy = useConfidentialLockCopy({
+    seed: seed || value || "company",
+    subject,
+  });
+  const needsWalletConnection = lockCopy.reason === "connect";
 
   const resolvedPlaceholder = useMemo(
-    () => placeholder || pickPlaceholder(seed || value || "company"),
-    [placeholder, seed, value],
+    () => placeholder || lockCopy.blurredLabel,
+    [placeholder, lockCopy.blurredLabel],
   );
 
   const displayValue = isVisible ? value || resolvedPlaceholder : resolvedPlaceholder;
@@ -144,10 +133,12 @@ export const CompanyInfoGuard = ({
       }
     : undefined;
 
+  // An absolutely positioned tooltip shrink-to-fits, so multi-line copy needs an
+  // explicit width or it collapses into a tall one-word column.
   const tooltipBase =
-    "absolute z-30 whitespace-nowrap rounded-xl bg-gradient-to-br from-amber-900 to-yellow-900 text-white text-left shadow-lg shadow-amber-300/40 transition-all duration-150 border border-amber-700/60";
+    "absolute z-30 overflow-hidden rounded-2xl bg-slate-900/95 text-left text-white shadow-[0_24px_48px_-16px_rgba(15,23,42,0.55)] ring-1 ring-white/10 backdrop-blur-md transition-all duration-150";
 
-  const tooltipPadding = compact ? "px-4 py-2.5 text-xs" : "px-3.5 py-3 text-xs";
+  const tooltipSizing = compact ? "w-[244px] p-3.5" : "w-[268px] p-4";
 
   const tooltipVisibility = showTooltip
     ? "opacity-100 translate-y-0 pointer-events-auto"
@@ -175,7 +166,13 @@ export const CompanyInfoGuard = ({
           style={blurMaskStyle}
         >
           <span
-            aria-label={isVisible ? value : "Company hidden"}
+            aria-label={
+              isVisible
+                ? value
+                : subject === "talent"
+                  ? "Talent hidden"
+                  : "Company hidden"
+            }
             style={!isVisible ? {
               filter: "brightness(1.15)",
               letterSpacing: "0.5px",
@@ -191,53 +188,52 @@ export const CompanyInfoGuard = ({
           className={classNames(
             tooltipBase,
             tooltipPosition,
-            tooltipPadding,
+            tooltipSizing,
             tooltipVisibility,
           )}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
+          {/* Soft amber glow so the panel reads as part of the Hive palette. */}
           <span
-            className={classNames(
-              "pointer-events-none absolute inline-block h-2.5 w-2.5 rotate-45 border border-amber-700/60 bg-gradient-to-br from-amber-900 to-yellow-900",
-              placement === "top" && "left-1/2 bottom-[-6px] -translate-x-1/2",
-              placement === "bottom" && "left-1/2 top-[-6px] -translate-x-1/2",
-              placement === "left" && "right-[-6px] top-1/2 -translate-y-1/2",
-              placement === "right" && "left-[-6px] top-1/2 -translate-y-1/2",
-            )}
             aria-hidden
+            className="pointer-events-none absolute -right-8 -top-10 h-24 w-24 rounded-full bg-amber-400/20 blur-2xl"
           />
 
-          {compact ? (
-            <div className="text-xs leading-tight">
+          <div className="relative flex flex-col gap-3 whitespace-normal">
+            <div className="flex items-start gap-2.5">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-400/15 text-amber-300 ring-1 ring-inset ring-amber-300/25">
+                <LockKeyhole className="h-3.5 w-3.5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[13px] font-semibold leading-5 text-white">
+                  {lockCopy.title}
+                </p>
+                <p className="mt-1 text-[11.5px] leading-[1.45] text-slate-300">
+                  {lockCopy.description}
+                </p>
+              </div>
+            </div>
+
+            {needsWalletConnection ? (
               <button
                 type="button"
                 onClick={handleConnectWallet}
-                className="font-semibold underline decoration-white/60 underline-offset-2 hover:decoration-white transition-all cursor-pointer"
+                className="group/cta inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-amber-400 px-3 py-2 text-[11.5px] font-semibold text-slate-900 transition hover:bg-amber-300"
               >
-                Connect Wallet
+                {lockCopy.ctaLabel}
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover/cta:translate-x-0.5" />
               </button>
-              <span> to see the company</span>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-1 font-semibold leading-none">
-                <span>Connect to reveal</span>
-              </div>
-              <p className="text-[11px] leading-tight text-white/90">
-                Connect your wallet to view this company.
-              </p>
-              <div className="flex gap-1.5 pt-0.5">
-                <button
-                  type="button"
-                  onClick={handleConnectWallet}
-                  className="inline-flex items-center justify-center rounded-md bg-white/90 px-3 py-1.5 text-[11px] font-semibold text-amber-700 shadow-sm transition hover:bg-white"
-                >
-                  Connect Wallet
-                </button>
-              </div>
-            </div>
-          )}
+            ) : lockCopy.ctaHref ? (
+              <Link
+                href={lockCopy.ctaHref}
+                className="group/cta inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-amber-400 px-3 py-2 text-[11.5px] font-semibold text-slate-900 transition hover:bg-amber-300"
+              >
+                {lockCopy.ctaLabel}
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover/cta:translate-x-0.5" />
+              </Link>
+            ) : null}
+          </div>
         </div>
       )}
     </div>

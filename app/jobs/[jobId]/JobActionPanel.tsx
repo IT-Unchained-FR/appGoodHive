@@ -5,14 +5,18 @@ import { CheckCircle2, Copy, ExternalLink, MessageSquare, Share2 } from "lucide-
 
 import { useAuthCheck } from "@/app/hooks/useAuthCheck";
 import { JobApplicationPopup } from "@/app/components/job-application-popup/job-application-popup";
+import type { ConfidentialAccessNotice } from "@/lib/auth/confidential-access-notice";
 
 interface JobActionPanelProps {
+  /** Next step for a signed-in viewer who is not an approved talent yet. */
+  accessNotice: ConfidentialAccessNotice;
   canEditJob: boolean;
   canMessageCompany: boolean;
   companyEmail: string;
   companyName: string;
   companyUserId: string;
   hasApplied: boolean;
+  hasApprovedCompany: boolean;
   isAdmin: boolean;
   isAuthenticated: boolean;
   isCompanyOwner: boolean;
@@ -29,12 +33,14 @@ interface JobActionPanelProps {
 }
 
 export default function JobActionPanel({
+  accessNotice,
   canEditJob,
   canMessageCompany,
   companyEmail,
   companyName,
   companyUserId,
   hasApplied,
+  hasApprovedCompany,
   isAdmin,
   isAuthenticated,
   isCompanyOwner,
@@ -161,6 +167,25 @@ export default function JobActionPanel({
             >
               Connect Wallet to Apply
             </button>
+          ) : null}
+
+          {!isAdmin &&
+          !isCompanyOwner &&
+          !hasApprovedCompany &&
+          isAuthenticated &&
+          !isApprovedTalent ? (
+            <div className="w-full rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-900">
+              <p className="font-semibold">{accessNotice.title}</p>
+              <p className="mt-1 leading-6">{accessNotice.description}</p>
+              {accessNotice.ctaHref ? (
+                <a
+                  href={accessNotice.ctaHref}
+                  className="mt-3 inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600"
+                >
+                  {accessNotice.ctaLabel}
+                </a>
+              ) : null}
+            </div>
           ) : null}
 
           {!isAdmin && !isCompanyOwner && canMessageCompany ? (

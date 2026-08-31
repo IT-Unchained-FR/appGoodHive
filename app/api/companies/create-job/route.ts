@@ -1,10 +1,18 @@
 import sql from "@/lib/db";
 import { IJobSection } from "@/interfaces/job-offer";
 import { normalizeJobDescriptionForDisplay, normalizeJobSectionsForStorage } from "@/lib/jobs/format-job-content";
+import { requireApiSession } from "@/lib/auth/api-guards";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  const sessionGuard = await requireApiSession();
+  if (!sessionGuard.ok) {
+    return sessionGuard.response;
+  }
+
   const {
-    userId,
+    userId: _ignoredUserId,
     title,
     typeEngagement,
     description,
@@ -26,6 +34,9 @@ export async function POST(request: Request) {
     in_saving_stage,
     sections, // New field for job sections
   } = await request.json();
+
+  // Owner comes from the session so a caller cannot post jobs as another company.
+  const userId = sessionGuard.userId;
 
   try {
     const postedAt = new Date().toISOString();

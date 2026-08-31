@@ -3,19 +3,20 @@ import { NextRequest, NextResponse } from "next/server";
 import sql from "@/lib/db";
 import { recordContactLog } from "@/lib/contact-logs";
 import { getSessionUser } from "@/lib/auth/sessionUtils";
+import { readViewerAccess } from "@/lib/auth/api-guards";
 import type { CreateJobRequestBody, JobRequest } from "@/interfaces/messenger";
 
-function resolveActorUserId(request: NextRequest, fallback?: string | null) {
-  return request.headers.get("x-user-id") ?? fallback ?? null;
+// Identity must come from the signed session only. The former `x-user-id`
+// header / `?userId=` fallbacks were caller-controlled, letting an
+// unauthenticated request act as any user.
+function resolveActorUserId(_request: NextRequest, _fallback?: string | null) {
+  return null;
 }
 
 export async function GET(request: NextRequest) {
   try {
     const sessionUser = await getSessionUser();
-    const userId =
-      sessionUser?.user_id ??
-      request.nextUrl.searchParams.get("userId") ??
-      resolveActorUserId(request);
+    const userId = sessionUser?.user_id ?? null;
     const role = request.nextUrl.searchParams.get("role") ?? "both";
     const status = request.nextUrl.searchParams.get("status");
 
@@ -118,6 +119,22 @@ export async function POST(request: NextRequest) {
     if (actorId !== companyUserId && actorId !== talentUserId) {
       return NextResponse.json(
         { message: "Actor must be a participant in the request" },
+        { status: 403 },
+      );
+    }
+
+    // Reaching out directly to a talent is a verified-member action. Without
+    // this, any signed-in account could open a conversation with any talent by
+    // passing its own id as `companyUserId`.
+    // Matches the talent page's `canViewSensitive`: approved talent, approved
+    // recruiter/company, or admin.
+    const access = await readViewerAccess();
+    if (!access.canViewConfidentialInfo && !access.isApprovedRecruiter) {
+      return NextResponse.json(
+        {
+          message:
+            "A verified GoodHive profile is required to send requests.",
+        },
         { status: 403 },
       );
     }

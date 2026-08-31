@@ -16,6 +16,9 @@ export interface User {
   talent_status?: string;
   mentor_status?: string;
   recruiter_status?: string;
+  /** Whether a talent profile row exists — distinguishes "never filled in" from "submitted, awaiting review". */
+  has_talent_profile?: boolean;
+  has_approved_company?: boolean;
 }
 
 export interface AuthState {
@@ -122,6 +125,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           talent_status: userData.talent_status,
           mentor_status: userData.mentor_status,
           recruiter_status: userData.recruiter_status,
+          has_talent_profile: userData.has_talent_profile === true,
+          has_approved_company: userData.has_approved_company === true,
         };
 
         // Keep cookie fresh so next page load reflects latest statuses.

@@ -1,7 +1,10 @@
+import { ConfidentialAccessCallout } from "@/app/components/access/ConfidentialAccessCallout";
 import { Pagination } from "@/app/components/pagination";
 import { fetchJobs } from "@/lib/jobsearch";
+import { getConfidentialAccessNotice } from "@/lib/auth/confidential-access-notice";
+import { getViewerAccess } from "@/lib/auth/viewer-access";
 import { Metadata } from "next";
-import JobResult from "./job-result";
+import JobResult, { type ApiJobOffer } from "./job-result";
 import {
   ArrowDownUp,
   Briefcase,
@@ -83,6 +86,23 @@ const itemsPerPage = 9;
 
 export const revalidate = 0;
 
+/**
+ * Job cards on this page must honour the same confidentiality rules as
+ * /jobs/[jobId]: company identity, logo, and wallet address only reach viewers
+ * with an approved talent/company profile (or an admin). We strip the fields
+ * server-side rather than blurring them client-side so they never ship in the
+ * RSC payload.
+ */
+function redactConfidentialJobFields(jobs: ApiJobOffer[]): ApiJobOffer[] {
+  return jobs.map((job) => ({
+    ...job,
+    companyName: "",
+    image_url: "",
+    company_logo_url: "",
+    walletAddress: undefined,
+  }));
+}
+
 export default async function JobSearchPage({
   searchParams,
 }: {
@@ -107,6 +127,13 @@ export default async function JobSearchPage({
 }) {
   const params = await searchParams;
   console.log("Search params received:", params);
+
+  const viewer = await getViewerAccess();
+  const canViewConfidential = viewer.canViewConfidentialInfo;
+  const accessNotice = getConfidentialAccessNotice({
+    isAuthenticated: viewer.isAuthenticated,
+    talentVerificationStage: viewer.talentVerificationStage,
+  });
 
   const query = { items: itemsPerPage, ...params };
   let { jobs, count } = (await fetchJobs(query)) || {
@@ -308,10 +335,23 @@ export default async function JobSearchPage({
           </div>
         )}
 
+        {!canViewConfidential && jobs.length > 0 && (
+          <div className="max-w-4xl mx-auto mb-8 px-4 sm:px-0">
+            <ConfidentialAccessCallout notice={accessNotice} />
+          </div>
+        )}
+
         {/* Jobs Section */}
         <div className="">
           {jobs.length > 0 ? (
-            <JobResult jobOffers={jobs} />
+            <JobResult
+              jobOffers={
+                canViewConfidential
+                  ? (jobs as ApiJobOffer[])
+                  : redactConfidentialJobFields(jobs as ApiJobOffer[])
+              }
+              canViewConfidential={canViewConfidential}
+            />
           ) : (
             <div className="text-center py-20">
               <div className="max-w-md mx-auto">

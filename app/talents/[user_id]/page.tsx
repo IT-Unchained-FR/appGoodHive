@@ -264,6 +264,7 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
               <QuickRequestComposer
                 targetTalentUserId={talentUserId}
                 talentName={`${first_name || ""} ${last_name || ""}`.trim() || "this talent"}
+                canSendRequest={canViewSensitive}
               />
             </div>
           )}

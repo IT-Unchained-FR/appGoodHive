@@ -1,5 +1,6 @@
 import sql from "@/lib/db";
 import { getViewerAccess, maskName, maskNameInText } from "@/lib/access-control";
+import { getApiUserId } from "@/lib/auth/api-guards";
 import {
   calculateYearsExperience,
   parseStoredResumeArray,
@@ -237,7 +238,7 @@ export async function POST(request: Request) {
     recruiter,
     hide_contact_details,
     availability,
-    user_id,
+    user_id: _ignoredUserId,
     validate,
     referred_by,
     clear_cv,
@@ -248,11 +249,15 @@ export async function POST(request: Request) {
     languages,
   } = await request.json();
 
+  // Bind the write to the session user. The body-supplied `user_id` let any
+  // caller overwrite another talent's profile.
+  const user_id = await getApiUserId();
+
   try {
     if (!user_id) {
       return new Response(
-        JSON.stringify({ message: "User ID is required" }),
-        { status: 400 },
+        JSON.stringify({ message: "Unauthorized" }),
+        { status: 401 },
       );
     }
 
@@ -532,8 +537,10 @@ export async function GET(request: NextRequest) {
     // Get user_id from query parameters
     const { searchParams } = new URL(request.url);
     const user_id = searchParams.get("user_id");
-    const viewerUserId =
-      request.headers.get("x-user-id") || request.cookies.get("user_id")?.value;
+    // Session-only. The previous `x-user-id` header / non-httpOnly `user_id`
+    // cookie were both caller-controlled, so anyone could claim an approved
+    // viewer's identity and unmask talent contact details.
+    const viewerUserId = await getApiUserId();
 
     if (!user_id) {
       return NextResponse.json(
@@ -614,7 +621,6 @@ export async function GET(request: NextRequest) {
     const viewerAccess = await getViewerAccess(viewerUserId);
     const isOwner = viewerUserId && viewerUserId === user_id;
     const canViewSensitive = viewerAccess.isApproved || isOwner;
-    const canViewBasic = viewerAccess.isAuthenticated || isOwner;
 
     // Get approved roles from users table
     const users = await sql<{
@@ -670,8 +676,13 @@ export async function GET(request: NextRequest) {
           : talent.availability === true || talent.availability === "Available"
             ? "immediately"
             : "not_looking",
-      first_name: canViewBasic ? talent.first_name : maskedName.firstName,
-      last_name: canViewBasic ? talent.last_name : maskedName.lastName,
+      // Names follow the same gate as the rest of the identity block. These
+      // two used to key off `canViewBasic` (merely signed in), so an
+      // unverified account saw the real name while an anonymous one saw it
+      // masked — and while `description`/`about_work` below still scrubbed
+      // that same name out of the bio text.
+      first_name: canViewSensitive ? talent.first_name : maskedName.firstName,
+      last_name: canViewSensitive ? talent.last_name : maskedName.lastName,
       email: canViewSensitive ? talent.email : null,
       phone_country_code: canViewSensitive ? talent.phone_country_code : null,
       phone_number: canViewSensitive ? talent.phone_number : null,

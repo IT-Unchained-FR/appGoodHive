@@ -1,5 +1,8 @@
 import type { NextRequest } from "next/server";
 import sql from "@/lib/db";
+import { requireSelfOrAdmin } from "@/lib/auth/api-guards";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   const searchParamsEntries = request.nextUrl.searchParams.entries();
@@ -14,6 +17,13 @@ export async function GET(request: NextRequest) {
         status: 400,
       },
     );
+  }
+
+  // This returns the company's own dashboard data (wallet address, applicant
+  // counts), so only the owner or an admin may read it.
+  const guard = await requireSelfOrAdmin(userId);
+  if (!guard.ok) {
+    return guard.response;
   }
 
   try {

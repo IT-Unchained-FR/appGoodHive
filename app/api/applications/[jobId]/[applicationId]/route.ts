@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import sql from "@/lib/db";
 import { ApplicationStatus } from "@/interfaces/job-application";
+import { readViewerAccess } from "@/lib/auth/api-guards";
+
+export const dynamic = "force-dynamic";
 
 const VALID_STATUSES: ApplicationStatus[] = ['new', 'reviewed', 'shortlisted', 'interview', 'rejected', 'hired'];
 
@@ -10,8 +13,6 @@ export async function GET(
 ) {
   try {
     const { jobId, applicationId } = await params;
-    const searchParams = request.nextUrl.searchParams;
-    const companyUserId = searchParams.get("companyUserId");
 
     if (!jobId || !applicationId) {
       return NextResponse.json(
@@ -54,15 +55,22 @@ export async function GET(
 
     const application = applications[0];
 
-    // Check authorization
-    if (companyUserId && application.company_user_id !== companyUserId) {
-      return NextResponse.json(
-        { message: "Unauthorized" },
-        { status: 403 }
-      );
+    // Authorization from the session, not a caller-supplied id. Omitting the
+    // old `companyUserId` param skipped this check entirely.
+    const access = await readViewerAccess();
+
+    if (!access.isAuthenticated && !access.isAdmin) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    return NextResponse.json(application, { status: 200 });
+    if (!access.isAdmin && application.company_user_id !== access.userId) {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+
+    return NextResponse.json(application, {
+      status: 200,
+      headers: { "Cache-Control": "private, no-store" },
+    });
   } catch (error) {
     console.error("Error fetching application:", error);
     return NextResponse.json(
@@ -79,7 +87,7 @@ export async function PATCH(
   try {
     const { jobId, applicationId } = await params;
     const body = await request.json();
-    const { status, internalNotes, rating, companyUserId } = body;
+    const { status, internalNotes, rating } = body;
 
     if (!jobId || !applicationId) {
       return NextResponse.json(
@@ -101,11 +109,17 @@ export async function PATCH(
       );
     }
 
-    if (companyUserId && existingApp[0].company_user_id !== companyUserId) {
-      return NextResponse.json(
-        { message: "Unauthorized" },
-        { status: 403 }
-      );
+    // Session-derived ownership. Previously a caller could mutate any
+    // application's status, rating, and internal notes by omitting
+    // `companyUserId` from the request body.
+    const access = await readViewerAccess();
+
+    if (!access.isAuthenticated && !access.isAdmin) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!access.isAdmin && existingApp[0].company_user_id !== access.userId) {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
     // Build update query dynamically

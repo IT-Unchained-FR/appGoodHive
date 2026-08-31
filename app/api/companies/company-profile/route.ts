@@ -1,13 +1,23 @@
 // pages/api/company.ts
 
 import { getCompanyData } from "@/lib/fetch-company-data";
+import { requireSelfOrAdmin } from "@/lib/auth/api-guards";
 import type { NextRequest } from "next/server";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   const searchParamsEntries = req.nextUrl.searchParams.entries();
   const searchParams = Object.fromEntries(searchParamsEntries);
 
   const { wallet_address } = searchParams;
+
+  // Returns the full company row (email, phone, address, wallet) — owner or
+  // admin only. `getCompanyData` looks the value up as a user_id.
+  const guard = await requireSelfOrAdmin(wallet_address);
+  if (!guard.ok) {
+    return guard.response;
+  }
 
   try {
     const companyData = await getCompanyData(wallet_address as string);

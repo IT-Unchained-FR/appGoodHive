@@ -1,19 +1,19 @@
 import sql from "@/lib/db";
+import { getApiUserId } from "@/lib/auth/api-guards";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
-    const userId =
-      request.headers.get("x-user-id") ||
-      request.nextUrl.searchParams.get("userId") ||
-      request.cookies.get("user_id")?.value;
+    // Always the caller's own status — the header/query/cookie inputs this
+    // used to accept let anyone probe another account's review state.
+    const userId = await getApiUserId();
 
     if (!userId) {
       return NextResponse.json(
-        { error: "User ID is required" },
-        { status: 400 },
+        { error: "Unauthorized" },
+        { status: 401 },
       );
     }
 

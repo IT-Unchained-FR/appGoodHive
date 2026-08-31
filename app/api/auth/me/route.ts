@@ -41,9 +41,23 @@ export async function GET() {
 
     console.log(payload, "payload");
     const users = await sql`
-      SELECT talent_status, mentor_status, recruiter_status
-      FROM goodhive.users
-      WHERE userid = ${userId}
+      SELECT
+        u.talent_status,
+        u.mentor_status,
+        u.recruiter_status,
+        EXISTS(
+          SELECT 1
+          FROM goodhive.talents t
+          WHERE t.user_id = ${userId}::uuid
+        ) AS has_talent_profile,
+        (
+          SELECT COUNT(*)::int
+          FROM goodhive.companies c
+          WHERE c.user_id = ${userId}::uuid
+            AND c.approved = true
+        ) AS approved_company_count
+      FROM goodhive.users u
+      WHERE u.userid = ${userId}
     `;
     const statusRow = users[0] || {};
 
@@ -56,6 +70,8 @@ export async function GET() {
       talent_status: statusRow.talent_status || "pending",
       mentor_status: statusRow.mentor_status || "pending",
       recruiter_status: statusRow.recruiter_status || "pending",
+      has_talent_profile: statusRow.has_talent_profile === true,
+      has_approved_company: Number(statusRow.approved_company_count || 0) > 0,
       iat: payload.iat,
       exp: payload.exp,
     });

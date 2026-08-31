@@ -1,7 +1,10 @@
 "use client";
 
+import { ConfidentialAccessCallout } from "@/app/components/access/ConfidentialAccessCallout";
 import { useAuthCheck } from "@/app/hooks/useAuthCheck";
 import { useCurrentUserId } from "@/app/hooks/useCurrentUserId";
+import { useTalentVerificationStage } from "@/app/hooks/useConfidentialLock";
+import { getConfidentialAccessNotice } from "@/lib/auth/confidential-access-notice";
 import { ArrowRight, SendHorizonal } from "lucide-react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
@@ -11,15 +14,23 @@ import toast from "react-hot-toast";
 interface QuickRequestComposerProps {
   targetTalentUserId: string;
   talentName: string;
+  /**
+   * Whether the viewer is entitled to contact this talent. Mirrors the
+   * server-side check in `POST /api/job-requests`; when false the composer is
+   * replaced by the verification steps.
+   */
+  canSendRequest?: boolean;
 }
 
 export function QuickRequestComposer({
   targetTalentUserId,
   talentName,
+  canSendRequest = false,
 }: QuickRequestComposerProps) {
   const router = useRouter();
   const currentUserId = useCurrentUserId();
   const { checkAuthAndShowConnectPrompt } = useAuthCheck();
+  const { isAuthenticated, stage } = useTalentVerificationStage();
 
   const [title, setTitle] = useState(`Opportunity for ${talentName}`);
   const [message, setMessage] = useState("");
@@ -90,6 +101,22 @@ export function QuickRequestComposer({
       setIsSubmitting(false);
     }
   };
+
+  // Unverified viewers get the path to verification instead of a form that the
+  // API would reject anyway. The talent's name is deliberately not shown here:
+  // it is masked for unentitled viewers everywhere else on the page.
+  if (!isOwner && !canSendRequest) {
+    return (
+      <ConfidentialAccessCallout
+        variant="compact"
+        notice={getConfidentialAccessNotice({
+          isAuthenticated,
+          subject: "contact",
+          talentVerificationStage: stage,
+        })}
+      />
+    );
+  }
 
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">

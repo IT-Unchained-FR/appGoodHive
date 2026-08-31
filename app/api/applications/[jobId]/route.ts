@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import sql from "@/lib/db";
+import { readViewerAccess } from "@/lib/auth/api-guards";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(
   request: NextRequest,
@@ -7,8 +10,6 @@ export async function GET(
 ) {
   try {
     const { jobId } = await params;
-    const searchParams = request.nextUrl.searchParams;
-    const companyUserId = searchParams.get("companyUserId");
 
     if (!jobId) {
       return NextResponse.json(
@@ -17,25 +18,26 @@ export async function GET(
       );
     }
 
-    // Verify the requesting user owns this job (authorization)
-    if (companyUserId) {
-      const jobOwner = await sql`
-        SELECT user_id FROM goodhive.job_offers WHERE id = ${jobId}::uuid
-      `;
+    // Ownership is derived from the session, never from a query parameter.
+    // The previous `if (companyUserId)` check was skipped entirely when the
+    // caller simply omitted the param, exposing every applicant's name, email,
+    // and cover letter for any job id.
+    const access = await readViewerAccess();
 
-      if (jobOwner.length === 0) {
-        return NextResponse.json(
-          { message: "Job not found" },
-          { status: 404 }
-        );
-      }
+    if (!access.isAuthenticated && !access.isAdmin) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
 
-      if (jobOwner[0].user_id !== companyUserId) {
-        return NextResponse.json(
-          { message: "Unauthorized" },
-          { status: 403 }
-        );
-      }
+    const jobOwner = await sql<{ user_id: string }[]>`
+      SELECT user_id FROM goodhive.job_offers WHERE id = ${jobId}::uuid
+    `;
+
+    if (jobOwner.length === 0) {
+      return NextResponse.json({ message: "Job not found" }, { status: 404 });
+    }
+
+    if (!access.isAdmin && jobOwner[0].user_id !== access.userId) {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
     // Fetch applications with applicant details
@@ -62,7 +64,10 @@ export async function GET(
       ORDER BY ja.created_at DESC
     `;
 
-    return NextResponse.json(applications, { status: 200 });
+    return NextResponse.json(applications, {
+      status: 200,
+      headers: { "Cache-Control": "private, no-store" },
+    });
   } catch (error) {
     console.error("Error fetching applications:", error);
     return NextResponse.json(

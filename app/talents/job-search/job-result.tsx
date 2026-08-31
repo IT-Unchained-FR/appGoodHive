@@ -52,7 +52,13 @@ export interface JobOffer {
   walletAddress?: string;
 }
 
-export default function JobResult({ jobOffers }: { jobOffers: ApiJobOffer[] }) {
+export default function JobResult({
+  jobOffers,
+  canViewConfidential = false,
+}: {
+  jobOffers: ApiJobOffer[];
+  canViewConfidential?: boolean;
+}) {
 
   const filteredJobs = jobOffers.filter((job) => !job.in_saving_stage);
 
@@ -91,6 +97,7 @@ export default function JobResult({ jobOffers }: { jobOffers: ApiJobOffer[] }) {
             <div key={`job-${jobOffer.id}-${index}`} className="group relative h-full">
               <Card
                 uniqueId={jobOffer?.user_id}
+                canViewConfidential={canViewConfidential}
                 jobId={jobOffer.id || undefined}
                 blockId={jobOffer.block_id}
                 type="job"

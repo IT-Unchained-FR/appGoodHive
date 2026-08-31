@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { fetchTalents } from "@/lib/talents";
+import { getApiUserId } from "@/lib/auth/api-guards";
 
 export const dynamic = "force-dynamic";
 
@@ -11,8 +12,9 @@ function getParam(searchParams: URLSearchParams, key: string) {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const viewerUserId =
-      request.headers.get("x-user-id") ?? request.cookies.get("user_id")?.value;
+    // `fetchTalents` unmasks names and contact details for approved viewers,
+    // so the viewer identity must be session-derived, not caller-supplied.
+    const viewerUserId = (await getApiUserId()) ?? undefined;
 
     const itemsValue = Number(searchParams.get("items") ?? "9");
     const pageValue = Number(searchParams.get("page") ?? "1");

@@ -47,6 +47,12 @@ interface Props {
   last_active?: Date;
   codeOfHiveSigned?: boolean;
   codeOfHiveSignedAt?: string | null;
+  /**
+   * Server-resolved answer to "may this viewer see company/talent identity?".
+   * When omitted we fall back to "any signed-in viewer", which is only safe on
+   * surfaces that do not carry confidential data.
+   */
+  canViewConfidential?: boolean;
 }
 
 export const Card: FC<Props> = ({
@@ -76,6 +82,7 @@ export const Card: FC<Props> = ({
   availability,
   codeOfHiveSigned,
   codeOfHiveSignedAt,
+  canViewConfidential,
   type,
 }) => {
   // Function to generate dynamic "Open to" text
@@ -151,8 +158,10 @@ export const Card: FC<Props> = ({
   // Generate consistent badge for all job cards
   const shouldShowBadge = type === "company" || type === "job"; // Only show badges for job cards
 
-  const hideCompanyDetails = type === "job" && !isAuthenticated;
-  const hideTalentDetails = type === "talent" && !isAuthenticated;
+  const hasConfidentialAccess =
+    typeof canViewConfidential === "boolean" ? canViewConfidential : isAuthenticated;
+  const hideCompanyDetails = type === "job" && !hasConfidentialAccess;
+  const hideTalentDetails = type === "talent" && !hasConfidentialAccess;
   const hidePostedBy = hideCompanyDetails || hideTalentDetails;
 
   const handleCompanyClick = (event: MouseEvent) => {
@@ -225,6 +234,7 @@ export const Card: FC<Props> = ({
               isVisible={false}
               seed={normalizedJobId || uniqueId || title}
               compact
+              subject="company"
               placement="top"
               className="relative flex-shrink-0"
               redirectUrl={knowMoreLink}
@@ -292,7 +302,7 @@ export const Card: FC<Props> = ({
                   jobId ? `/companies/${uniqueId}` : `/talents/${uniqueId}`
                 }
                 className="relative inline-flex max-w-[150px] min-w-0 items-center text-xs sm:text-sm font-medium text-gray-600 hover:text-[#FFC905] transition-colors"
-                title={!hidePostedBy ? postedBy : "Sign in to reveal"}
+                title={!hidePostedBy ? postedBy : undefined}
                 onClick={handleCompanyClick}
               >
                 {hidePostedBy ? (
@@ -302,7 +312,7 @@ export const Card: FC<Props> = ({
                       seed={normalizedJobId || uniqueId || title}
                       isVisible={false}
                       compact
-                      placeholder={hideTalentDetails ? "Connect to view talent" : undefined}
+                      subject={hideTalentDetails ? "talent" : "company"}
                       textClassName="!text-xs sm:!text-sm !font-medium tracking-wide text-gray-500"
                       blurAmount="blur-[3px]"
                       placement="top"

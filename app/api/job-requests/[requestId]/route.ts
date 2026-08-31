@@ -66,8 +66,9 @@ function canTransitionStatus({
   return false;
 }
 
-function resolveActorUserId(request: NextRequest, fallback?: string | null) {
-  return request.headers.get("x-user-id") ?? fallback ?? null;
+// Session-only identity; see the note in ../route.ts.
+function resolveActorUserId(_request: NextRequest, _fallback?: string | null) {
+  return null;
 }
 
 export async function GET(
@@ -79,7 +80,6 @@ export async function GET(
     const sessionUser = await getSessionUser();
     const userId =
       sessionUser?.user_id ??
-      request.nextUrl.searchParams.get("userId") ??
       resolveActorUserId(request);
 
     if (!userId) {

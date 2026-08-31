@@ -1,9 +1,12 @@
 import sql from "@/lib/db";
+import { getApiUserId, requireSelfOrAdmin } from "@/lib/auth/api-guards";
 import type { NextRequest } from "next/server";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   const {
-    user_id,
+    user_id: _ignoredUserId,
     headline,
     designation,
     address,
@@ -23,6 +26,10 @@ export async function POST(request: Request) {
     status,
     inreview,
   } = await request.json();
+
+  // The profile owner comes from the session, never the request body — the
+  // body value let any caller overwrite another company's profile.
+  const user_id = await getApiUserId();
 
   const fields = {
     headline,
@@ -105,6 +112,13 @@ export async function GET(request: NextRequest) {
           },
         },
       );
+    }
+
+    // "my-profile" means the caller's own profile: this returns the full
+    // company row, so it must be owner- or admin-only.
+    const guard = await requireSelfOrAdmin(userId);
+    if (!guard.ok) {
+      return guard.response;
     }
 
     const company = await sql`

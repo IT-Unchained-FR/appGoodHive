@@ -1,5 +1,8 @@
 import type { NextRequest } from "next/server";
 import sql from "@/lib/db";
+import { requireSelfOrAdmin } from "@/lib/auth/api-guards";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   const searchParamsEntries = request.nextUrl.searchParams.entries();
@@ -10,6 +13,12 @@ export async function GET(request: NextRequest) {
     return new Response(JSON.stringify({ message: "User ID is required" }), {
       status: 400,
     });
+  }
+
+  // Returns email, wallet addresses, and review statuses — owner or admin only.
+  const guard = await requireSelfOrAdmin(user_id);
+  if (!guard.ok) {
+    return guard.response;
   }
 
   try {

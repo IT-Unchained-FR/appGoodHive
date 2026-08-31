@@ -1,10 +1,17 @@
 import sql from "@/lib/db";
+import { requireApiAdmin } from "@/lib/auth/api-guards";
 import {
   sendTalentApprovalEmail,
   type TalentRole,
 } from "@/lib/email/talent-review-notifications";
 
 export async function POST(request: Request) {
+  // Approval grants confidential-data access, so it must never be self-serve.
+  const adminGuard = await requireApiAdmin();
+  if (!adminGuard.ok) {
+    return adminGuard.response;
+  }
+
   const { userId, approvalTypes, referral_code } = await request.json();
 
   try {

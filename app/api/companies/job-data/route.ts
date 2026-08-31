@@ -1,6 +1,9 @@
 import sql from "@/lib/db";
+import { readViewerAccess } from "@/lib/auth/api-guards";
 
 import type { NextRequest } from "next/server";
+
+export const dynamic = "force-dynamic";
 
 type JobOfferRow = {
   id: string;
@@ -100,6 +103,16 @@ export async function GET(request: NextRequest) {
       return new Response(JSON.stringify({ message: "Job not found" }), {
         status: 404,
       });
+    }
+
+    // This is the job-editing payload (company name, wallet address, escrow,
+    // admin feedback). Restrict it to the owning company or an admin.
+    const access = await readViewerAccess();
+    if (!access.isAdmin && access.userId !== jobsQuery[0].user_id) {
+      return new Response(
+        JSON.stringify({ message: access.isAuthenticated ? "Forbidden" : "Unauthorized" }),
+        { status: access.isAuthenticated ? 403 : 401 },
+      );
     }
 
     // Fetch job sections

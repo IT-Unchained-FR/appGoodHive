@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { computeMatchScore } from "@/app/lib/ai/match-score";
 import sql from "@/lib/db";
 import { safeBase64Decode } from "@/lib/talents";
+import { getApiUserId } from "@/lib/auth/api-guards";
 
 interface JobRow {
   id: string;
@@ -24,8 +25,10 @@ interface CacheRow {
   gaps: unknown;
 }
 
-function resolveActorUserId(request: NextRequest) {
-  return request.headers.get("x-user-id") ?? request.cookies.get("user_id")?.value ?? null;
+// Session-only: this route decides talent-vs-company entitlement from the
+// actor id, so a caller-supplied header must never be trusted here.
+async function resolveActorUserId(_request: NextRequest) {
+  return getApiUserId();
 }
 
 function normalizeSkills(value: string | null | undefined) {
@@ -74,7 +77,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const actorUserId = resolveActorUserId(request);
+    const actorUserId = await resolveActorUserId(request);
     if (!actorUserId) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },

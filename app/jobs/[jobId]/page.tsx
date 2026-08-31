@@ -2,7 +2,6 @@ import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { cookies } from "next/headers";
 import {
   ArrowLeft,
   ArrowRight,
@@ -18,8 +17,8 @@ import {
   Users,
   Users2,
 } from "lucide-react";
-import jwt from "jsonwebtoken";
 
+import { ConfidentialAccessCallout } from "@/app/components/access/ConfidentialAccessCallout";
 import { CompanyInfoGuard } from "@/app/components/CompanyInfoGuard";
 import SafeHTML from "@/app/components/SafeHTML";
 import { JobPageAnalytics } from "@/app/components/job-page/JobPageAnalytics";
@@ -33,8 +32,9 @@ import {
   projectTypes,
   typeEngagements,
 } from "@/app/constants/common";
-import { getAdminJWTSecret } from "@/app/lib/admin-auth";
-import { getSessionUser } from "@/lib/auth/sessionUtils";
+import { getConfidentialAccessNotice } from "@/lib/auth/confidential-access-notice";
+import type { TalentVerificationStage } from "@/lib/auth/confidential-lock";
+import { getViewerAccess } from "@/lib/auth/viewer-access";
 import sql from "@/lib/db";
 import { normalizeJobDescriptionForDisplay } from "@/lib/jobs/format-job-content";
 import { JobReviewStatus, resolveJobReviewStatus } from "@/lib/jobs/review";
@@ -105,6 +105,7 @@ interface ViewerState {
   isApprovedTalent: boolean;
   isAuthenticated: boolean;
   isCompanyOwner: boolean;
+  talentVerificationStage: TalentVerificationStage;
   userId: string | null;
 }
 
@@ -259,12 +260,25 @@ function MatchScoreLockedCard({
   let ctaHref = `/jobs/${jobId}?connectWallet=true`;
   let ctaLabel = "Connect to unlock";
 
-  if (viewer.isAuthenticated && !viewer.isApprovedTalent) {
-    title = "AI match is available after talent approval";
-    description =
-      "This score is personalized for approved talent profiles. Once your profile is approved, GoodHive can explain your fit, strengths, and gaps for this role.";
-    ctaHref = "/talents/my-profile";
-    ctaLabel = "Complete your talent profile";
+  if (
+    viewer.isAuthenticated &&
+    !viewer.isApprovedTalent &&
+    !viewer.hasApprovedCompany &&
+    !viewer.isCompanyOwner &&
+    !viewer.isAdmin
+  ) {
+    const notice = getConfidentialAccessNotice({
+      isAuthenticated: true,
+      talentVerificationStage: viewer.talentVerificationStage,
+    });
+
+    title =
+      viewer.talentVerificationStage === "none"
+        ? "Complete your talent profile to unlock the AI match"
+        : "AI match unlocks once your profile is approved";
+    description = notice.description;
+    ctaHref = notice.ctaHref || "/talents/my-profile";
+    ctaLabel = notice.ctaLabel || "Go to my profile";
   } else if (viewer.hasApprovedCompany || viewer.isCompanyOwner) {
     title = "AI match is built for talent profiles";
     description =
@@ -506,80 +520,40 @@ async function getJob(jobId: string): Promise<JobPageData | null> {
 }
 
 async function getViewerState(job: JobPageData): Promise<ViewerState> {
-  const sessionUser = await getSessionUser();
-  const viewerUserId = sessionUser?.user_id ?? null;
-  const adminToken = cookies().get("admin_token")?.value ?? null;
-  let isAdmin = false;
-
-  if (adminToken) {
-    try {
-      jwt.verify(adminToken, getAdminJWTSecret());
-      isAdmin = true;
-    } catch (error) {
-      isAdmin = false;
-    }
-  }
-
+  const access = await getViewerAccess();
+  const viewerUserId = access.userId;
   const isCompanyOwner = viewerUserId === job.userId;
 
   if (!viewerUserId) {
     return {
-      canViewJobDetails: false,
+      canViewJobDetails: access.canViewConfidentialInfo,
       canEditJob: false,
       canMessageCompany: false,
-      canPreviewUnpublished: isAdmin,
+      canPreviewUnpublished: access.isAdmin,
       hasApplied: false,
       hasApprovedCompany: false,
       hasApprovedTalent: false,
-      isAdmin,
+      isAdmin: access.isAdmin,
       isApprovedTalent: false,
       isAuthenticated: false,
       isCompanyOwner: false,
+      talentVerificationStage: access.talentVerificationStage,
       userId: null,
     };
   }
 
-  const [viewerRows, applicationRows] = await Promise.all([
-    sql<{
-      approved_company_count: number;
-      has_talent_profile: boolean;
-      talent_status: string | null;
-    }[]>`
-      SELECT
-        u.talent_status,
-        (
-          SELECT COUNT(*)::int
-          FROM goodhive.companies c
-          WHERE c.user_id = ${viewerUserId}::uuid
-            AND c.approved = true
-        ) AS approved_company_count,
-        EXISTS(
-          SELECT 1
-          FROM goodhive.talents t
-          WHERE t.user_id = ${viewerUserId}::uuid
-        ) AS has_talent_profile
-      FROM goodhive.users u
-      WHERE u.userid = ${viewerUserId}::uuid
-      LIMIT 1
-    `,
-    sql<{ id: string }[]>`
-      SELECT id
-      FROM goodhive.job_applications
-      WHERE job_id = ${job.id}::uuid
-        AND applicant_user_id = ${viewerUserId}::uuid
-      LIMIT 1
-    `,
-  ]);
+  const applicationRows = await sql<{ id: string }[]>`
+    SELECT id
+    FROM goodhive.job_applications
+    WHERE job_id = ${job.id}::uuid
+      AND applicant_user_id = ${viewerUserId}::uuid
+    LIMIT 1
+  `;
 
-  const viewer = viewerRows[0];
-  const isApprovedTalent =
-    viewer?.has_talent_profile === true && viewer.talent_status === "approved";
-  const hasApprovedCompany = Number(viewer?.approved_company_count || 0) > 0;
-  const canViewJobDetails =
-    isAdmin || isCompanyOwner || isApprovedTalent || hasApprovedCompany;
+  const { hasApprovedCompany, isAdmin, isApprovedTalent } = access;
 
   return {
-    canViewJobDetails,
+    canViewJobDetails: access.canViewConfidentialInfo || isCompanyOwner,
     canEditJob:
       isCompanyOwner &&
       (job.reviewStatus === "draft" || job.reviewStatus === "rejected"),
@@ -592,6 +566,7 @@ async function getViewerState(job: JobPageData): Promise<ViewerState> {
     isApprovedTalent,
     isAuthenticated: true,
     isCompanyOwner,
+    talentVerificationStage: access.talentVerificationStage,
     userId: viewerUserId,
   };
 }
@@ -612,18 +587,9 @@ export async function generateMetadata({
 
   const location = [job.city, job.country].filter(Boolean).join(", ") || "Remote";
   const budget = formatBudget(job.budget, job.currency);
-  const sessionUser = await getSessionUser();
-  const adminToken = cookies().get("admin_token")?.value ?? null;
-  let isPrivilegedViewer = Boolean(sessionUser);
-
-  if (!isPrivilegedViewer && adminToken) {
-    try {
-      jwt.verify(adminToken, getAdminJWTSecret());
-      isPrivilegedViewer = true;
-    } catch (error) {
-      isPrivilegedViewer = false;
-    }
-  }
+  const access = await getViewerAccess();
+  const isPrivilegedViewer =
+    access.canViewConfidentialInfo || access.userId === job.userId;
 
   const companyName = isPrivilegedViewer ? job.company.name : "a verified GoodHive company";
   const metadataImages = isPrivilegedViewer && job.company.logo ? [{ url: job.company.logo }] : [];
@@ -666,6 +632,10 @@ export default async function JobPage({
   const overviewCards = getOverviewCards(job);
   const canViewFullDetails = viewer.canViewJobDetails;
   const isCompanyVisible = canViewFullDetails;
+  const accessNotice = getConfidentialAccessNotice({
+    isAuthenticated: viewer.isAuthenticated,
+    talentVerificationStage: viewer.talentVerificationStage,
+  });
   const locationLabel = [job.city, job.country].filter(Boolean).join(", ") || "Remote";
   const budgetLabel = formatBudget(job.budget, job.currency);
   const audienceLabel = getAudienceLabel(job);
@@ -714,10 +684,12 @@ export default async function JobPage({
             Back to Jobs
           </Link>
 
-          {!viewer.isAuthenticated ? (
+          {!isCompanyVisible ? (
             <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white/85 px-4 py-2 text-sm font-medium text-amber-900 shadow-sm">
               <Sparkles className="h-4 w-4 text-amber-600" />
-              Public preview: connect your wallet to unlock company identity and contact details.
+              {viewer.isAuthenticated
+                ? `${accessNotice.title}: company identity and contact details stay hidden for now.`
+                : "Public preview: connect your wallet to unlock company identity and contact details."}
             </div>
           ) : null}
         </div>
@@ -874,11 +846,20 @@ export default async function JobPage({
                       <Lock className="h-5 w-5" />
                     </div>
                     <p className="mt-4 text-lg font-semibold text-slate-950">
-                      Company details stay private in public preview mode.
+                      {accessNotice.title}
                     </p>
                     <p className="mt-2 text-sm leading-6 text-slate-600">
-                      The role information stays open, but the hiring company identity and direct links unlock after connection.
+                      {accessNotice.description}
                     </p>
+                    {accessNotice.ctaHref ? (
+                      <Link
+                        href={accessNotice.ctaHref}
+                        className="mt-4 inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600"
+                      >
+                        {accessNotice.ctaLabel}
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    ) : null}
                   </>
                 )}
               </div>
@@ -1010,12 +991,14 @@ export default async function JobPage({
 
           <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
             <JobActionPanel
+              accessNotice={accessNotice}
               canEditJob={viewer.canEditJob}
               canMessageCompany={viewer.canMessageCompany}
               companyEmail={actionCompanyEmail}
               companyName={actionCompanyName}
               companyUserId={actionCompanyUserId}
               hasApplied={viewer.hasApplied}
+              hasApprovedCompany={viewer.hasApprovedCompany}
               isAdmin={viewer.isAdmin}
               isAuthenticated={viewer.isAuthenticated}
               isCompanyOwner={viewer.isCompanyOwner}
@@ -1185,15 +1168,13 @@ export default async function JobPage({
                         </div>
                       </div>
                     </div>
-
-                    <p className="mt-4 text-[13px] leading-6 text-slate-600">
-                      Connect your wallet to reveal the hiring company, explore their profile, and unlock external links.
-                    </p>
                   </div>
 
-                  <div className="mt-5 rounded-[24px] border border-dashed border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-900">
-                    This public preview keeps company identity private while still letting candidates review the role itself.
-                  </div>
+                  <ConfidentialAccessCallout
+                    className="mt-5"
+                    notice={accessNotice}
+                    variant="compact"
+                  />
                 </>
               )}
             </section>
