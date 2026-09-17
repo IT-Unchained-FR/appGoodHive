@@ -166,7 +166,7 @@ export default function AdminEditJobPage() {
         current
           ? {
               ...current,
-              published: action === "approve",
+              published: false,
               review_status: nextReviewStatus,
               admin_feedback: data.data?.admin_feedback ?? reviewFeedback,
             }
@@ -176,14 +176,16 @@ export default function AdminEditJobPage() {
         current
           ? {
               ...current,
-              published: action === "approve",
+              published: false,
               review_status: nextReviewStatus,
               admin_feedback: data.data?.admin_feedback ?? reviewFeedback,
             }
           : current,
       );
       toast.success(
-        action === "approve" ? "Job approved successfully" : "Job rejected successfully",
+        action === "approve"
+          ? "Job approved. It stays unpublished until the company completes blockchain activation."
+          : "Job rejected successfully",
       );
     } catch (error) {
       toast.error(
@@ -455,6 +457,12 @@ export default function AdminEditJobPage() {
                 <li>
                   If "Published" is ON but "In Saving Stage" is also ON, the job
                   will NOT show on the site
+                </li>
+                <li>
+                  Approving a job sets Review Status to "approved" but does NOT
+                  turn Published ON — the company must still complete blockchain
+                  activation (publish + provision fund) from their dashboard
+                  before the job goes live
                 </li>
               </ul>
             </div>

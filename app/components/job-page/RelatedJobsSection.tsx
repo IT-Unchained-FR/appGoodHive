@@ -21,6 +21,34 @@ interface RelatedJobsSectionProps {
   relatedJobs: RelatedJob[];
 }
 
+function normalizeCurrencyCode(currency: string) {
+  const normalized = currency?.trim().toUpperCase() || "USD";
+  return normalized.startsWith("0X") ? "USDC" : normalized;
+}
+
+function formatRelatedJobBudget(amount: number, currency: string) {
+  const normalizedCurrency = normalizeCurrencyCode(currency);
+
+  if (normalizedCurrency === "USDC") {
+    return `${new Intl.NumberFormat("en-US", {
+      maximumFractionDigits: 0,
+    }).format(amount)} USDC`;
+  }
+
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: normalizedCurrency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  } catch {
+    return `${new Intl.NumberFormat("en-US", {
+      maximumFractionDigits: 0,
+    }).format(amount)} ${normalizedCurrency}`;
+  }
+}
+
 export const RelatedJobsSection = ({ companyName, relatedJobs }: RelatedJobsSectionProps) => {
   const { isAuthenticated } = useAuth();
 
@@ -55,12 +83,7 @@ export const RelatedJobsSection = ({ companyName, relatedJobs }: RelatedJobsSect
           >
             <h3 className={styles.relatedJobTitle}>{relatedJob.title}</h3>
             <p className={styles.relatedJobMeta}>
-              {relatedJob.city}, {relatedJob.country} • {new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: relatedJob.currency === 'USDC' ? 'USD' : relatedJob.currency,
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-              }).format(relatedJob.budget)}
+              {relatedJob.city}, {relatedJob.country} • {formatRelatedJobBudget(relatedJob.budget, relatedJob.currency)}
             </p>
           </Link>
         ))}
