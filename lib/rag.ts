@@ -1,5 +1,6 @@
 import { generateWithFallback } from "./ai/groq";
-import { retrieveRagContexts, type RagContext } from "./ragEngine";
+import type { RagContext } from "./ragEngine";
+import { retrieveKnowledgeBaseContexts } from "./superbot/knowledge";
 import { GoodHiveQuickCallUrl } from "@/app/constants/common";
 
 
@@ -124,10 +125,9 @@ export async function generateChatResponse(
   try {
     let ragContexts: RagContext[] = [];
     try {
-      const ragResult = await retrieveRagContexts(userMessage);
-      ragContexts = ragResult?.contexts ?? [];
+      ragContexts = await retrieveKnowledgeBaseContexts(userMessage);
     } catch (error) {
-      console.warn("[rag-engine] Failed to retrieve contexts:", error);
+      console.warn("[knowledge-base] Failed to retrieve contexts:", error);
     }
     if (ragContexts.length === 0) {
       const isWalletQuestion = /wallet/i.test(userMessage);

@@ -4,9 +4,16 @@
 `RECRUITER DASHBOARD — API WIRING & REAL DATA (May 24, 2026)`
 
 ## Last Updated
-2026-06-26
+2026-09-21
 
 ## Handoff Note
+
+`2026-09-21`
+
+- **Fixed production Superbot chat (was fully down — 503 on open).** Root cause: `DATABASE_URL_RAG_CHATBOT` in Vercel Production (set 225d ago) pointed at a dead legacy Postgres host (`34.155.158.237`, db `telegram-outreach-chat-bot` — old telegram-outreach-app project), not the current `goodhive-prod` Neon DB. `lib/ragDb.ts` prefers that var over `DATABASE_URL`, so every DB-touching superbot/content-items call was hitting `ETIMEDOUT`. Removed the stale `DATABASE_URL_RAG_CHATBOT` from Production (falls back to the working `DATABASE_URL`, schema already confirmed present) and redeployed. Verified live on goodhive.io — widget loads correctly again.
+- **Found and disabled the dead Vertex AI RAG retrieval path.** Confirmed with the team it's not in use. It was also independently broken — Google Cloud project `goodhive-1706112296263` has billing disabled, so `lib/ragEngine.ts`'s `retrieveContexts` call 403'd on every real message. Removed `RAG_CORPUS_RESOURCE` and set `RAG_ENGINE_ENABLED=false` in both Production and Preview, redeployed Production. This was already flagged as unused back in the Groq migration (commit `8b83176`: "RAG embeddings (unused) throw a clear error pointing to disable flag") but never actually turned off in Vercel until now.
+- **Residual gap (not fixed yet, scoped as a follow-up):** disabling Vertex RAG stops the errors but the bot still can't answer real questions — `goodhive.content_items` (the only other knowledge source wired anywhere) has **0 rows** in production, and `generateChatResponse` (`lib/rag.ts`) has no other context source. Full plan → [`docs/features/superbot-knowledge-base.md`](../features/superbot-knowledge-base.md).
+- Not touched: `DATABASE_URL_RAG_CHATBOT`/`RAG_CORPUS_RESOURCE`/`RAG_ENGINE_ENABLED` still stale/dead in **Preview** for the DB var specifically — Preview has no `DATABASE_URL` fallback at all, so removing `DATABASE_URL_RAG_CHATBOT` there would break Preview harder, not fixed. Needs its own value before touching.
 
 `2026-08-28`
 
