@@ -39,6 +39,7 @@ const PUBLIC_PATHS = [
   "/api/superbot/chat",
   "/api/superbot/events",
   "/api/superbot/link-status",
+  "/api/superbot/knowledge-questions",
   "/api/content-items",
   "/api/telegram/webhook",
 ];
