@@ -370,14 +370,13 @@ export function SuperbotWidget({ defaultOpen = false }: { defaultOpen?: boolean 
 
     const loadSuggestions = async () => {
       try {
-        const response = await fetch("/api/content-items?type=faq&status=active");
+        const response = await fetch("/api/superbot/knowledge-questions");
         if (!response.ok) return;
         const data = (await response.json()) as {
-          items?: Array<{ title?: string }>;
+          questions?: string[];
         };
-        const items = data.items ?? [];
-        const questions = items
-          .map((item) => item.title?.trim() ?? "")
+        const questions = (data.questions ?? [])
+          .map((title) => title?.trim() ?? "")
           .filter((title) => title.length > 4);
         if (questions.length > 0 && active) {
           const merged = Array.from(

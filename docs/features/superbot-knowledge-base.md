@@ -1,6 +1,18 @@
-# Feature: Superbot Knowledge Base (Postgres-backed, replaces dead Vertex RAG)
+# Feature: Superbot Knowledge Base (markdown-backed, replaces dead Vertex RAG)
 
 ## Status
+`DONE`
+
+**2026-09-23 update:** shipped as **markdown files in the repo** (`content/superbot-knowledge/*.md`), not the Postgres `content_items` table originally planned below — explicit user decision: one source of truth, editable in-repo, no DB round trip. The `content_items` DB path (and its 12 seeded rows) was implemented first, verified working, then fully superseded and the seeded rows deleted. Left here for the historical reasoning; see "Final Architecture" below for what's actually live.
+
+## Final Architecture (as shipped)
+- Knowledge lives in `content/superbot-knowledge/*.md` — one file per FAQ category (`general.md`, `getting-started.md`, `pricing.md`, `jobs.md`, `technical.md`, `payments.md`, `security.md`, `support.md`), each with `## Question` sections.
+- `lib/superbot/knowledge.ts` reads all files (literal filenames, not `readdirSync`, so Next's file tracing bundles them into the `output: "standalone"` build), parses `##` sections into `{title, body, category}` entries, caches them in module scope for the process lifetime.
+- `retrieveKnowledgeBaseContexts(userMessage)` does keyword-overlap scoring (same approach as the DB version below) and returns the top 4 matching entries.
+- `listKnowledgeQuestions()` backs a new `GET /api/superbot/knowledge-questions` endpoint, which `SuperbotWidget.tsx`'s suggested-questions chips now read from (previously `/api/content-items?type=faq`).
+- Tradeoff accepted: adding/editing an answer now requires a git commit + redeploy, not a live API call. Chosen deliberately over the DB approach for a single source of truth that's easy to read/diff in the repo.
+
+## Status (original plan, superseded)
 `PLANNING`
 
 ## Business Goal

@@ -1,11 +1,27 @@
-import sql from "@/lib/ragDb";
+import fs from "fs";
+import path from "path";
 import type { RagContext } from "@/lib/ragEngine";
 
-type ContentItemRow = {
-  id: string;
+type KnowledgeEntry = {
   title: string;
   body: string;
+  category: string;
 };
+
+// Listed literally (not via readdirSync) so Next.js's file tracing bundles
+// them into the standalone serverless output.
+const KNOWLEDGE_FILES = [
+  "general.md",
+  "getting-started.md",
+  "pricing.md",
+  "jobs.md",
+  "technical.md",
+  "payments.md",
+  "security.md",
+  "support.md",
+] as const;
+
+const KNOWLEDGE_DIR = path.join(process.cwd(), "content", "superbot-knowledge");
 
 const STOPWORDS = new Set([
   "the", "a", "an", "is", "are", "do", "does", "did", "to", "of", "in", "on",
@@ -23,53 +39,75 @@ function tokenize(text: string): string[] {
     .filter((word) => word.length > 2 && !STOPWORDS.has(word));
 }
 
-let cachedItems: ContentItemRow[] | null = null;
-let cachedAt = 0;
-const CACHE_TTL_MS = 60_000;
+function parseKnowledgeFile(fileName: string, raw: string): KnowledgeEntry[] {
+  const lines = raw.split("\n");
+  const categoryLine = lines.find((line) => line.startsWith("# "));
+  const category = categoryLine ? categoryLine.replace(/^#\s+/, "").trim() : fileName;
 
-async function loadActiveFaqItems(): Promise<ContentItemRow[]> {
-  const now = Date.now();
-  if (cachedItems && now - cachedAt < CACHE_TTL_MS) {
-    return cachedItems;
+  const body = raw.replace(/^#\s+.*\n/, "");
+  const sections = body.split(/\n##\s+/).map((s) => s.trim()).filter(Boolean);
+
+  return sections.map((section) => {
+    const newlineIndex = section.indexOf("\n");
+    const title = (newlineIndex === -1 ? section : section.slice(0, newlineIndex))
+      .replace(/^##\s+/, "")
+      .trim();
+    const text = (newlineIndex === -1 ? "" : section.slice(newlineIndex + 1)).trim();
+    return { title, body: text, category };
+  });
+}
+
+let cachedEntries: KnowledgeEntry[] | null = null;
+
+function loadKnowledgeEntries(): KnowledgeEntry[] {
+  if (cachedEntries) return cachedEntries;
+
+  const entries: KnowledgeEntry[] = [];
+  for (const fileName of KNOWLEDGE_FILES) {
+    try {
+      const raw = fs.readFileSync(path.join(KNOWLEDGE_DIR, fileName), "utf-8");
+      entries.push(...parseKnowledgeFile(fileName, raw));
+    } catch (error) {
+      console.warn(`[knowledge-base] Failed to read ${fileName}:`, error);
+    }
   }
-  const rows = await sql<ContentItemRow[]>`
-    SELECT id, title, body
-    FROM goodhive.content_items
-    WHERE type = 'faq' AND status = 'active';
-  `;
-  cachedItems = rows;
-  cachedAt = now;
-  return rows;
+  cachedEntries = entries;
+  return entries;
 }
 
 /**
- * Keyword-overlap match against goodhive.content_items (type='faq').
- * Replaces the dead Vertex AI RAG retrieval — no external service, no embeddings.
+ * Keyword-overlap match against the markdown knowledge base in
+ * content/superbot-knowledge/*.md. Replaces the dead Vertex AI RAG
+ * retrieval — no external service, no database, no embeddings.
  */
 export async function retrieveKnowledgeBaseContexts(
   userMessage: string,
   topK = 4,
 ): Promise<RagContext[]> {
-  const items = await loadActiveFaqItems();
-  if (items.length === 0) return [];
+  const entries = loadKnowledgeEntries();
+  if (entries.length === 0) return [];
 
   const queryTokens = new Set(tokenize(userMessage));
   if (queryTokens.size === 0) return [];
 
-  const scored = items
-    .map((item) => {
-      const itemTokens = tokenize(`${item.title} ${item.body}`);
+  const scored = entries
+    .map((entry) => {
+      const entryTokens = tokenize(`${entry.title} ${entry.body}`);
       let score = 0;
-      for (const token of itemTokens) {
+      for (const token of entryTokens) {
         if (queryTokens.has(token)) score += 1;
       }
-      return { item, score };
+      return { entry, score };
     })
-    .filter((entry) => entry.score > 0)
+    .filter((match) => match.score > 0)
     .sort((a, b) => b.score - a.score);
 
-  return scored.slice(0, topK).map(({ item }) => ({
-    text: `${item.title}\n${item.body}`,
-    sourceDisplayName: "GoodHive FAQ",
+  return scored.slice(0, topK).map(({ entry }) => ({
+    text: `${entry.title}\n${entry.body}`,
+    sourceDisplayName: `GoodHive FAQ — ${entry.category}`,
   }));
+}
+
+export async function listKnowledgeQuestions(): Promise<string[]> {
+  return loadKnowledgeEntries().map((entry) => entry.title).filter(Boolean);
 }

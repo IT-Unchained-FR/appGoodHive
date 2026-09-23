@@ -4,9 +4,19 @@
 `RECRUITER DASHBOARD — API WIRING & REAL DATA (May 24, 2026)`
 
 ## Last Updated
-2026-09-21
+2026-09-23
 
 ## Handoff Note
+
+`2026-09-23`
+
+- **Switched Superbot's knowledge base from Postgres to markdown files**, per explicit user direction (one source of truth, in-repo, no DB dependency for content edits). Full doc → [`docs/features/superbot-knowledge-base.md`](../features/superbot-knowledge-base.md).
+- New `content/superbot-knowledge/*.md` — 8 files (one per FAQ category), `##`-per-question sections, sourced from the same content already public on `/faq` (`app/components/faq/faq.constants.ts`).
+- `lib/superbot/knowledge.ts` rewritten to parse these files (literal filenames, not `readdirSync`, so Next's standalone-output file tracing includes them) instead of querying `goodhive.content_items`. Same keyword-overlap scoring as before.
+- New `GET /api/superbot/knowledge-questions` — `SuperbotWidget.tsx`'s suggested-questions chips now read from this instead of `/api/content-items?type=faq`.
+- Deleted the 12 `content_items` rows seeded earlier today (2026-09-21 entry below) — no code references them anymore, kept would just be stale duplicate content.
+- Verified against a local dev server: all 12 questions answer correctly from the markdown source, an out-of-scope question still gets the graceful fallback, and the suggested-questions endpoint returns all 12 titles.
+- Validation: `pnpm tsc --noEmit` and `pnpm lint` (well, `eslint` directly on touched files) both clean.
 
 `2026-09-21`
 
