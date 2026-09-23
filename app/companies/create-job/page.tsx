@@ -22,6 +22,7 @@ import {
   gnosisChainTokens,
 } from "@/app/constants/common";
 import { useCurrentUserId } from "@/app/hooks/useCurrentUserId";
+import { CreateJobTour } from "./CreateJobTour";
 
 export default function CreateJob() {
   const [title, setTitle] = useState("");
@@ -47,6 +48,7 @@ export default function CreateJob() {
   const [isManageFundsModalOpen, setIsManageFundsModalOpen] = useState(false);
   const [jobImage, setJobImage] = useState<string | null>(null);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [tourReplayToken, setTourReplayToken] = useState(0);
 
   const [jobServices, setJobServices] = useState({
     talent: true,
@@ -286,6 +288,13 @@ export default function CreateJob() {
 
   return (
     <AuthLayout>
+      {!id && userId && (
+        <CreateJobTour
+          userId={userId}
+          autoStart
+          replayToken={tourReplayToken}
+        />
+      )}
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Header with AI button */}
@@ -296,8 +305,16 @@ export default function CreateJob() {
 
             {/* Show AI button only when creating new job (not editing) */}
             {!id && (
-              <div className="flex justify-center sm:justify-end">
+              <div className="flex items-center justify-center gap-3 sm:justify-end">
                 <button
+                  type="button"
+                  onClick={() => setTourReplayToken((n) => n + 1)}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl border-2 border-amber-300 bg-white text-amber-700 font-semibold text-sm sm:text-base hover:bg-amber-50 transition-colors"
+                >
+                  🧭 How it works
+                </button>
+                <button
+                  data-tour="create-with-ai"
                   onClick={() => setIsAiModalOpen(true)}
                   className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 text-sm sm:text-base"
                 >

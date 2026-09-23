@@ -725,7 +725,7 @@ export const JobForm = ({
       >
         <div className="flex flex-col gap-4">
           <div className="mt-4 flex justify-center">
-            <div className="flex flex-col gap-2 items-center">
+            <div className="flex flex-col gap-2 items-center" data-tour="job-image">
               <ProfileImageUpload
                 currentImage={jobImage || companyData?.image_url || ""}
                 displayName="Job Image"
@@ -761,7 +761,7 @@ export const JobForm = ({
               </div>
             </div>
           )}
-          <div className="flex-1">
+          <div className="flex-1" data-tour="job-title">
             <label
               htmlFor="title"
               className="inline-block ml-3 text-base text-gray-800 form-label mb-2 font-medium"
@@ -779,7 +779,7 @@ export const JobForm = ({
               onChange={(e) => setTitle(e.target.value)}
             />
           </div>
-          <div className="w-full flex gap-5 justify-between sm:flex-col">
+          <div className="w-full flex gap-5 justify-between sm:flex-col" data-tour="job-engagement">
             <SelectInput
               labelText="Type of engagement"
               name="type-engagement"
@@ -813,7 +813,7 @@ export const JobForm = ({
             />
           </div>
         </div>
-        <div className="flex flex-col w-full mt-4">
+        <div className="flex flex-col w-full mt-4" data-tour="job-description-ai">
           <JobDescriptionAIBuilder
             jobTitle={title}
             selectedSkills={selectedSkills}
@@ -825,7 +825,7 @@ export const JobForm = ({
             }}
           />
         </div>
-        <div className="flex flex-col w-full mt-4">
+        <div className="flex flex-col w-full mt-4" data-tour="job-sections">
           <JobSectionsManager
             sections={jobSections}
             onSectionsChange={setJobSections}
@@ -834,7 +834,7 @@ export const JobForm = ({
             Paste rough notes if you need to. GoodHive will automatically polish messy section text with Gemini on save, then keep the public job page clean and structured for candidates.
           </div>
         </div>
-        <div className="relative flex flex-col gap-4 mt-12 mb-10 sm:flex-row">
+        <div className="relative flex flex-col gap-4 mt-12 mb-10 sm:flex-row" data-tour="job-skills">
           <div className="flex-1">
             <label
               htmlFor="skills"
@@ -877,7 +877,7 @@ export const JobForm = ({
           </div>
         </div>
 
-        <div className="w-1/2 sm:w-full mb-5 px-3 flex justify-between sm:flex-wrap sm:gap-5">
+        <div className="w-1/2 sm:w-full mb-5 px-3 flex justify-between sm:flex-wrap sm:gap-5" data-tour="job-services">
           {createJobServices.map((service) => {
             const { label, value, tooltip } = service;
             const isChecked = jobServices[value as keyof typeof jobServices];
@@ -896,7 +896,7 @@ export const JobForm = ({
           })}
         </div>
 
-        <div className="flex gap-4 mt-4 sm:flex-col">
+        <div className="flex gap-4 mt-4 sm:flex-col" data-tour="job-budget">
           <div className="flex-1">
             <SelectInput
               labelText="Project Duration"
@@ -960,7 +960,7 @@ export const JobForm = ({
         </div>
 
         {/* GoodHive Commission Section */}
-        <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg" data-tour="job-commission">
           <div
             className="flex items-center justify-between cursor-pointer"
             onClick={() => setIsCommissionExpanded(!isCommissionExpanded)}
@@ -1154,7 +1154,7 @@ export const JobForm = ({
           )}
         </div>
 
-        <div className="flex gap-4 mt-4 sm:flex-col">
+        <div className="flex gap-4 mt-4 sm:flex-col" data-tour="job-chain">
           <div className="flex-1">
             <SelectInput
               labelText="Chain"
@@ -1299,6 +1299,7 @@ export const JobForm = ({
           ) : (
             <div className="flex gap-4">
               <button
+                data-tour="job-save-draft"
                 onClick={handleSaveJob}
                 className="my-2 text-base font-semibold bg-transparent h-14 w-56 rounded-full border-2 border-[#FFC905] transition-all duration-300 hover:bg-[#FFC905] cursor-pointer"
                 disabled={
@@ -1312,6 +1313,7 @@ export const JobForm = ({
                 <button
                   className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full transition-all duration-300 hover:bg-transparent hover:border-2 hover:border-[#FFC905] cursor-pointer"
                   type="button"
+                  data-tour="job-submit-review"
                   onClick={handleSubmitForReview}
                   disabled={
                     isLoading ||
