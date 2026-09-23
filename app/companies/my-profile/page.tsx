@@ -38,6 +38,7 @@ import "react-quill/dist/quill.snow.css";
 import { SelectInput } from "../../components/select-input";
 import { countries } from "../../constants/countries";
 import { useCurrentUserId } from "@/app/hooks/useCurrentUserId";
+import { CompanyProfileTour } from "./CompanyProfileTour";
 // Dynamically import React Quill to prevent server-side rendering issues
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
@@ -61,6 +62,7 @@ export default function MyProfile() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [tourReplayToken, setTourReplayToken] = useState(0);
   const [profileData, setProfileData] = useState({
     headline: "",
     designation: "",
@@ -872,6 +874,12 @@ export default function MyProfile() {
         }
       `}</style>
       
+      <CompanyProfileTour
+        userId={userId}
+        autoStart={noProfileFound}
+        replayToken={tourReplayToken}
+      />
+
       <main className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 relative overflow-hidden">
         {/* Decorative Background Elements */}
         <div className="absolute inset-0">
@@ -958,8 +966,19 @@ export default function MyProfile() {
                 <span className="w-5 h-5 flex items-center justify-center rounded-full border-2 border-amber-500 text-amber-600 text-xs font-bold leading-none"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></span>
                 Connect Logs
               </button>
+              {noProfileFound && (
+                <button
+                  type="button"
+                  onClick={() => setTourReplayToken((n) => n + 1)}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full border-2 border-amber-400 text-amber-700 bg-white bg-opacity-70 hover:bg-amber-50 transition-all duration-200 text-sm font-semibold shadow-sm"
+                >
+                  <span className="text-base leading-none">🧭</span>
+                  Take the tour
+                </button>
+              )}
               <button
                 type="button"
+                data-tour="how-it-works"
                 onClick={() => setShowVideoModal(true)}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full border-2 border-amber-400 text-amber-700 bg-white bg-opacity-70 hover:bg-amber-50 transition-all duration-200 text-sm font-semibold shadow-sm"
               >
@@ -1038,7 +1057,7 @@ export default function MyProfile() {
 
             <form className="relative">
               <div className="flex flex-col items-center justify-center w-full mb-12">
-              <div className="flex justify-center mb-4" data-field="image_url">
+              <div className="flex justify-center mb-4" data-field="image_url" data-tour="profile-image">
                 <div className="relative">
                   <ProfileImageUpload
                     currentImage={profileData.image_url}
@@ -1117,7 +1136,7 @@ export default function MyProfile() {
             {/* Clean Form Fields */}
             <div className="space-y-8">
               {/* Company Name */}
-              <div className="flex-1">
+              <div className="flex-1" data-tour="company-name">
                 <label
                   htmlFor="designation"
                   className="inline-block ml-3 text-base text-gray-800 form-label mb-2 font-medium"
@@ -1154,7 +1173,7 @@ export default function MyProfile() {
               </div>
 
               {/* Company Description - Increased Height */}
-              <div className="mt-5">
+              <div className="mt-5" data-tour="company-description">
                 <label
                   htmlFor="headline"
                   className="inline-block ml-3 text-base text-gray-800 form-label mb-2 font-medium"
@@ -1197,7 +1216,7 @@ export default function MyProfile() {
               </div>
 
               {/* Email */}
-              <div className="flex-1">
+              <div className="flex-1" data-tour="contact-email">
                 <label
                   htmlFor="email"
                   className="inline-block ml-3 text-base text-gray-800 form-label mb-2 font-medium"
@@ -1231,7 +1250,7 @@ export default function MyProfile() {
               </div>
 
               {/* Address, City & Country Row */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4" data-tour="location">
                 <div className="flex-1">
                   <label
                     htmlFor="address"
@@ -1337,7 +1356,7 @@ export default function MyProfile() {
                 </div>
               </div>
               {/* Phone Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-tour="phone">
                 <div className="flex-1">
                   <SelectInput
                     required={false}
@@ -1412,7 +1431,7 @@ export default function MyProfile() {
               </div>
 
               {/* Telegram */}
-              <div className="flex-1">
+              <div className="flex-1" data-tour="telegram">
                 <label
                   htmlFor="telegram"
                   className="inline-block ml-3 text-base text-gray-800 form-label mb-2 font-medium"
@@ -1446,7 +1465,7 @@ export default function MyProfile() {
               </div>
 
               {/* Social Media Links */}
-              <div className="flex w-full flex-col mt-8">
+              <div className="flex w-full flex-col mt-8" data-tour="social-links">
                 <h3 className="inline-block ml-3 text-base font-medium text-gray-800 form-label mb-4">
                   Social Media Links (Optional):
                 </h3>
@@ -1501,6 +1520,7 @@ export default function MyProfile() {
                 ) : (
                   <div className="flex gap-4 flex-wrap justify-center">
                     <button
+                      data-tour="save-draft"
                       className="group px-8 py-4 bg-white bg-opacity-80 text-amber-700 font-semibold rounded-2xl border-2 border-amber-200 hover:border-amber-400 hover:bg-amber-50 transform hover:-translate-y-1 transition-all duration-300 shadow-md hover:shadow-xl flex items-center"
                       onClick={handleFormSaving}
                     >
@@ -1513,6 +1533,7 @@ export default function MyProfile() {
                       <button
                         className="group px-8 py-4 bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold rounded-2xl hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 shadow-lg flex items-center relative overflow-hidden"
                         type="submit"
+                        data-tour="submit-review"
                         onClick={handleFormReview}
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-amber-600 to-yellow-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
