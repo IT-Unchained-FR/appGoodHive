@@ -10,6 +10,13 @@ import { supportedWallets, connectModalOptions } from "@/lib/auth/walletConfig";
 import styles from "./CompanyLandingPage.module.scss";
 import {
   AlertCircle,
+  ArrowRight,
+  Camera,
+  Compass,
+  Eye,
+  MessageSquare,
+  PlayCircle,
+  Plus,
   Briefcase,
   Globe,
   Zap,
@@ -27,31 +34,31 @@ import { ReferralSection } from "@/app/components/referral/referral-section";
 import { HoneybeeSpinner } from "@/app/components/spinners/honey-bee-spinner/honey-bee-spinner";
 import { countryCodes } from "@/app/constants/phoneNumberCountryCode";
 import "@/app/styles/rich-text.css";
-import { socialLinks } from "@/app/talents/my-profile/constant";
-import { SocialLink } from "@/app/talents/my-profile/social-link";
 import LabelOption from "@interfaces/label-option";
 import { uploadFileToBucket } from "@utils/upload-file-bucket";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import "react-quill/dist/quill.snow.css";
-import { SelectInput } from "../../components/select-input";
 import { countries } from "../../constants/countries";
 import { useCurrentUserId } from "@/app/hooks/useCurrentUserId";
 import { CompanyProfileTour } from "./CompanyProfileTour";
+import { FieldError, FieldRow, LinkRow, SectionTitle, hexClip, ui } from "./profile-ui";
 // Dynamically import React Quill to prevent server-side rendering issues
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
-// Define Quill modules and formats
+// Quill renders its buttons into the custom toolbar next to the "About" label
 const quillModules = {
-  toolbar: [
-    [{ header: [1, 2, 3, 4, 5, 6, false] }],
-    ["bold", "italic", "underline", "strike"],
-    [{ list: "ordered" }, { list: "bullet" }],
-    ["link"],
-    ["clean"],
-  ],
+  toolbar: { container: "#company-about-toolbar" },
 };
+
+const companyLinks = [
+  { name: "linkedin", label: "LinkedIn", placeholder: "https://linkedin.com/company/…" },
+  { name: "github", label: "GitHub", placeholder: "https://github.com/…" },
+  { name: "twitter", label: "X / Twitter", placeholder: "https://x.com/…" },
+  { name: "stackoverflow", label: "Stack Overflow", placeholder: "https://stackoverflow.com/…" },
+  { name: "portfolio", label: "Website", placeholder: "https://…" },
+];
 
 export default function MyProfile() {
   const router = useRouter();
@@ -59,6 +66,7 @@ export default function MyProfile() {
   const activeAccount = useActiveAccount();
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const imageInputValue = useRef(null);
+  const logoRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
@@ -845,719 +853,541 @@ export default function MyProfile() {
     return <HoneybeeSpinner message={"Saving Your Profile..."} />;
   }
 
+  const clearError = (key: string) => {
+    if (!errors[key]) return;
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
+  const aboutLength = profileData.headline?.replace(/<[^>]*>/g, "")?.length || 0;
+  const linkedCount = companyLinks.filter(
+    (link) => profileData[link.name as keyof typeof profileData],
+  ).length;
+  const locationText = [profileData.city, selectedCountry?.label]
+    .filter(Boolean)
+    .join(", ");
+  const shortWallet = walletAddress
+    ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}`
+    : "";
+
+  const status = profileData.approved
+    ? { title: "Profile approved", detail: "Live on GoodHive", dot: "bg-emerald-500" }
+    : unapprovedProfile
+      ? { title: "Under review", detail: "You'll be notified once it's approved", dot: "bg-sky-500" }
+      : savedProfile
+        ? { title: "Draft saved", detail: "Complete required fields and submit for review", dot: "bg-amber-500" }
+        : { title: "New profile", detail: "Create your profile to start posting jobs", dot: "bg-stone-400" };
+
   return (
     <>
       <style jsx global>{`
-        .quill-editor-custom .ql-toolbar {
-          border: 1px solid #f59e0b !important;
-          border-bottom: 1px solid #f59e0b !important;
+        .company-about .ql-toolbar.ql-snow,
+        .company-about .quill .ql-container.ql-snow,
+        .company-about div.company-about-editor .ql-container.ql-snow {
+          border: none !important;
+          border-radius: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          font-family: inherit !important;
+        }
+        .company-about .ql-toolbar.ql-snow {
+          padding: 0 !important;
+        }
+        .company-about .quill .ql-container.ql-snow {
+          min-height: 0 !important;
+          font-size: 17px !important;
+        }
+        .company-about .quill .ql-container.ql-snow .ql-editor {
+          min-height: 220px !important;
+          max-width: 70ch;
+          padding: 16px 0 8px !important;
+          font-size: 17px !important;
+          line-height: 1.6 !important;
+          color: #1c1917;
+        }
+        .company-about .ql-editor.ql-blank::before {
+          left: 0 !important;
+          right: 0 !important;
+          font-style: normal !important;
+          color: #a8a29e !important;
+        }
+        .company-about .ql-toolbar.ql-snow button {
+          width: 30px !important;
+          height: 30px !important;
+          padding: 6px !important;
+          border-radius: 0 !important;
+        }
+        .company-about .ql-toolbar.ql-snow button:hover,
+        .company-about .ql-toolbar.ql-snow button.ql-active {
           background: #fef3c7 !important;
-          border-radius: 12px 12px 0 0 !important;
         }
-        
-        .quill-editor-custom .ql-container {
-          border: 1px solid #f59e0b !important;
-          border-top: none !important;
-          font-size: 16px !important;
-          min-height: 350px !important;
-          border-radius: 0 0 12px 12px !important;
+        .company-about .ql-snow button:hover .ql-stroke,
+        .company-about .ql-snow button.ql-active .ql-stroke {
+          stroke: #d97706 !important;
         }
-        
-        .quill-editor-custom .ql-editor {
-          padding: 20px !important;
-          min-height: 350px !important;
-        }
-        
-        .quill-editor-custom .ql-editor::before {
-          font-style: italic !important;
-          color: #92400e !important;
+        .company-about .ql-snow button:hover .ql-fill,
+        .company-about .ql-snow button.ql-active .ql-fill {
+          fill: #d97706 !important;
         }
       `}</style>
-      
+
       <CompanyProfileTour
         userId={userId}
         autoStart={noProfileFound}
         replayToken={tourReplayToken}
       />
 
-      <main className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 relative overflow-hidden">
-        {/* Decorative Background Elements */}
-        <div className="absolute inset-0">
-          {/* Honeycomb Pattern */}
-          <div className="absolute top-0 left-0 w-full h-full opacity-5">
-            <div className="grid grid-cols-12 gap-4 transform rotate-12 scale-150 -translate-x-8 -translate-y-8">
-              {Array.from({ length: 144 }, (_, i) => (
-                <div key={i} className="w-8 h-8 border-2 border-amber-300 transform rotate-45"></div>
-              ))}
+      {showVideoModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60"
+          onClick={() => setShowVideoModal(false)}
+        >
+          <div
+            className="relative mx-4 w-full max-w-2xl overflow-hidden bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowVideoModal(false)}
+              className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center bg-stone-100 text-stone-600 transition-colors hover:bg-stone-200"
+            >
+              ✕
+            </button>
+            <div className="border-b border-stone-200 p-4 pb-2">
+              <h3 className="text-lg font-bold text-stone-900">
+                How to set up your company profile
+              </h3>
             </div>
-          </div>
-          
-          {/* Floating Bees */}
-          <div className="absolute top-20 right-20 w-8 h-8 opacity-60">
-            <div className="relative animate-bounce" style={{ animationDelay: '0s', animationDuration: '4s' }}>
-              <span className="text-2xl">🐝</span>
-            </div>
-          </div>
-          
-          <div className="absolute bottom-32 left-16 w-6 h-6 opacity-40">
-            <div className="relative animate-bounce" style={{ animationDelay: '2s', animationDuration: '5s' }}>
-              <span className="text-xl">🐝</span>
+            <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
+              <iframe
+                src="https://www.youtube.com/embed/bKD2_bNhGHI?autoplay=1"
+                title="Company Profile Walkthrough"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="absolute inset-0 h-full w-full"
+              />
             </div>
           </div>
         </div>
+      )}
 
-        <div className="relative container mx-auto px-6 py-8">
-          {/* Status Banners */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-8">
-            <div className="flex-1">
-              {noProfileFound && (
-                <div className="bg-gradient-to-r from-amber-400 to-yellow-500 rounded-2xl p-6 shadow-lg border-2 border-amber-300 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-white bg-opacity-20 backdrop-blur-sm"></div>
-                  <div className="relative flex items-center">
-                    <div className="w-12 h-12 bg-white bg-opacity-30 rounded-full flex items-center justify-center mr-4">
-                      <span className="text-2xl">🚀</span>
-                    </div>
-                    <div>
-                      <h3 className="text-white font-bold text-lg mb-1">Getting Started</h3>
-                      <p className="text-amber-100">Please create a profile to continue your hive journey!</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {unapprovedProfile && (
-                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-6 shadow-lg border-2 border-blue-400 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-white bg-opacity-20 backdrop-blur-sm"></div>
-                  <div className="relative flex items-center">
-                    <div className="w-12 h-12 bg-white bg-opacity-30 rounded-full flex items-center justify-center mr-4">
-                      <span className="text-2xl">⏳</span>
-                    </div>
-                    <div>
-                      <h3 className="text-white font-bold text-lg mb-1">Under Review</h3>
-                      <p className="text-blue-100">Profile submitted for review. You'll be notified once it's approved.</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {savedProfile && (
-                <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-6 shadow-lg border-2 border-amber-400 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-white bg-opacity-20 backdrop-blur-sm"></div>
-                  <div className="relative flex items-center">
-                    <div className="w-12 h-12 bg-white bg-opacity-30 rounded-full flex items-center justify-center mr-4 animate-pulse">
-                      <span className="text-2xl">🐝</span>
-                    </div>
-                    <div>
-                      <h3 className="text-white font-bold text-lg mb-1">Almost Ready!</h3>
-                      <p className="text-amber-100">Profile saved. Complete required fields and submit for review to get verified.</p>
-                    </div>
-                    <div className="absolute -right-4 -top-4 w-16 h-16 bg-white bg-opacity-10 rounded-full"></div>
-                  </div>
-                </div>
-              )}
+      <div className="min-h-screen bg-[#fffaf0] text-stone-900">
+        <main className="mx-auto w-full max-w-[1200px] px-4 pt-8 sm:px-8">
+          {/* Page header */}
+          <div className="flex flex-wrap items-end justify-between gap-4 pb-4">
+            <div>
+              <h6 className="mb-1 text-[13px] font-extrabold uppercase tracking-[0.08em] text-amber-600">
+                Company Hive Profile
+              </h6>
+              <p className={`text-[13px] ${ui.muted}`}>
+                Your public page on the GoodHive network. Talent sees exactly what you publish here.
+              </p>
             </div>
-
-            <div className="flex flex-col sm:flex-row gap-3 self-end sm:self-auto mt-4 sm:mt-0">
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => router.push("/connect-logs")}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border-2 border-amber-400 text-amber-700 bg-white bg-opacity-70 hover:bg-amber-50 transition-all duration-200 text-sm font-semibold shadow-sm"
+                data-tour="how-it-works"
+                onClick={() => setShowVideoModal(true)}
+                className={ui.btnAccent}
               >
-                <span className="w-5 h-5 flex items-center justify-center rounded-full border-2 border-amber-500 text-amber-600 text-xs font-bold leading-none"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></span>
-                Connect Logs
+                <PlayCircle className="h-4 w-4" />
+                How it works
               </button>
               {noProfileFound && (
                 <button
                   type="button"
                   onClick={() => setTourReplayToken((n) => n + 1)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full border-2 border-amber-400 text-amber-700 bg-white bg-opacity-70 hover:bg-amber-50 transition-all duration-200 text-sm font-semibold shadow-sm"
+                  className={ui.btnAccent}
                 >
-                  <span className="text-base leading-none">🧭</span>
+                  <Compass className="h-4 w-4" />
                   Take the tour
                 </button>
               )}
               <button
                 type="button"
-                data-tour="how-it-works"
-                onClick={() => setShowVideoModal(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border-2 border-amber-400 text-amber-700 bg-white bg-opacity-70 hover:bg-amber-50 transition-all duration-200 text-sm font-semibold shadow-sm"
+                onClick={() => router.push("/connect-logs")}
+                className={ui.btnAccent}
               >
-                <span className="w-5 h-5 flex items-center justify-center rounded-full border-2 border-amber-500 text-amber-600 text-xs font-bold leading-none">i</span>
-                How it works
+                <MessageSquare className="h-4 w-4" />
+                Connect logs
               </button>
-            </div>
-          </div>
-
-          {/* Professional Header */}
-          <div className="relative text-center mb-16 py-12">
-            {/* Floating elements */}
-            <div className="absolute top-4 left-1/4 w-16 h-16 bg-amber-400 bg-opacity-20 rounded-full blur-xl animate-pulse"></div>
-            <div className="absolute bottom-4 right-1/4 w-20 h-20 bg-yellow-400 bg-opacity-15 rounded-full blur-xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-            
-            <div className="relative z-10">
-              <div className="inline-flex items-center bg-white bg-opacity-60 backdrop-blur-sm text-amber-800 px-6 py-3 rounded-2xl text-sm font-semibold mb-6 shadow-lg border-2 border-amber-200 transform hover:-translate-y-1 transition-all duration-300">
-                <span className="text-xl mr-3">🍯</span>
-                <span className="text-lg">Company Hive Profile</span>
-              </div>
-
-              {/* Video Modal */}
-              {showVideoModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60" onClick={() => setShowVideoModal(false)}>
-                  <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      type="button"
-                      onClick={() => setShowVideoModal(false)}
-                      className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
-                    >
-                      ✕
-                    </button>
-                    <div className="p-4 pb-2 border-b border-gray-100">
-                      <h3 className="text-lg font-bold text-gray-800">How to set up your company profile</h3>
-                    </div>
-                    <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-                      <iframe
-                        src="https://www.youtube.com/embed/bKD2_bNhGHI?autoplay=1"
-                        title="Company Profile Walkthrough"
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        className="absolute inset-0 w-full h-full"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-                Build Your
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 mt-2">
-                  Company Profile
-                </span>
-              </h1>
-              
-              <p className="text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed mb-8">
-                Showcase your company's vision, culture, and opportunities to attract the finest Web3 talent from around the world
-              </p>
-              
-              {/* Decorative line */}
-              <div className="flex items-center justify-center space-x-4">
-                <div className="w-16 h-0.5 bg-gradient-to-r from-transparent to-amber-400"></div>
-                <div className="w-3 h-3 bg-amber-400 rounded-full animate-pulse"></div>
-                <div className="w-24 h-0.5 bg-gradient-to-r from-amber-400 to-yellow-400"></div>
-                <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
-                <div className="w-16 h-0.5 bg-gradient-to-r from-yellow-400 to-transparent"></div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Main Form Card */}
-          <div className="bg-white bg-opacity-60 backdrop-blur-sm rounded-3xl shadow-2xl border-2 border-amber-200 p-8 lg:p-12 relative overflow-hidden">
-            <div className="absolute -top-4 -right-4 w-24 h-24 bg-amber-400 bg-opacity-20 rounded-full"></div>
-            <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-yellow-400 bg-opacity-15 rounded-full"></div>
-
-            <form className="relative">
-              <div className="flex flex-col items-center justify-center w-full mb-12">
-              <div className="flex justify-center mb-4" data-field="image_url" data-tour="profile-image">
-                <div className="relative">
-                  <ProfileImageUpload
-                    currentImage={profileData.image_url}
-                    displayName={profileData.designation || ""}
-                    onImageUpdate={(imageUrl) => {
-                      setProfileData({
-                        ...profileData,
-                        image_url: imageUrl,
-                      });
-                      // Clear image error when image is uploaded
-                      if (errors.image_url && imageUrl) {
-                        setErrors(prev => {
-                          const newErrors = { ...prev };
-                          delete newErrors.image_url;
-                          return newErrors;
-                        });
-                      }
-                    }}
-                    size={180}
-                  />
-                  {errors.image_url && (
-                    <div className="absolute left-1/2 top-full z-10 mt-4 w-[280px] -translate-x-1/2 sm:w-[320px]">
-                      <div className="rounded-2xl border border-amber-200 bg-white/95 px-4 py-3 shadow-[0_18px_50px_rgba(245,158,11,0.18)] backdrop-blur-sm">
-                        <div className="flex items-start gap-3">
-                          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-100 via-yellow-50 to-white text-amber-600 shadow-inner">
-                            <AlertCircle className="h-4 w-4" />
-                          </div>
-                          <div className="min-w-0 text-left">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-amber-500">
-                              Profile photo needed
-                            </p>
-                            <p className="mt-1 text-sm font-medium leading-5 text-stone-700">
-                              {errors.image_url}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="w-full flex justify-center gap-4 mb-8">
-              <Link
-                href={`/companies/${userId}`}
-                className="inline-flex items-center px-6 py-3 bg-white bg-opacity-80 text-amber-700 font-semibold rounded-xl border-2 border-amber-200 hover:border-amber-400 hover:bg-amber-50 transform hover:-translate-y-0.5 transition-all duration-300 shadow-md hover:shadow-lg"
-              >
-                👁️ Public View
+              <Link href={`/companies/${userId}`} className={ui.btnAccent}>
+                <Eye className="h-4 w-4" />
+                Public view
               </Link>
-
               {!noProfileFound && !unapprovedProfile && (
-                <Link
-                  href="/companies/create-job"
-                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
-                >
-                  💼 Create Job
+                <Link href="/companies/create-job" className={ui.btnAccent}>
+                  <Plus className="h-4 w-4" />
+                  Create job
                 </Link>
               )}
             </div>
-            
-            {noProfileFound && (
-              <div className="text-center mb-8">
-                <p className="text-amber-700 bg-amber-100 px-4 py-2 rounded-full inline-block">
-                  🐝 Please create a profile before posting jobs!
-                </p>
-              </div>
-            )}
-            
-            {unapprovedProfile && (
-              <div className="text-center mb-8">
-                <p className="text-blue-700 bg-blue-100 px-4 py-2 rounded-full inline-block">
-                  ⏳ Profile approval required before creating jobs
-                </p>
-              </div>
-            )}
-            {/* Clean Form Fields */}
-            <div className="space-y-8">
-              {/* Company Name */}
-              <div className="flex-1" data-tour="company-name">
-                <label
-                  htmlFor="designation"
-                  className="inline-block ml-3 text-base text-gray-800 form-label mb-2 font-medium"
-                >
-                  Company Name*
-                </label>
-                <input
-                  name="designation"
-                  className="form-control block w-full px-4 py-3 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-amber-300 rounded-xl hover:shadow-md transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-amber-500 focus:outline-none"
-                  placeholder="Enter your company name"
-                  type="text"
-                  maxLength={100}
-                  defaultValue={profileData.designation}
-                  onChange={(e) => {
-                    setProfileData({
-                      ...profileData,
-                      designation: e.target.value,
-                    });
-                    // Clear error when user starts typing
-                    if (errors.designation) {
-                      setErrors(prev => {
-                        const newErrors = { ...prev };
-                        delete newErrors.designation;
-                        return newErrors;
-                      });
-                    }
-                  }}
-                />
-                {errors.designation && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.designation as string}
-                  </p>
-                )}
-              </div>
+          </div>
 
-              {/* Company Description - Increased Height */}
-              <div className="mt-5" data-tour="company-description">
-                <label
-                  htmlFor="headline"
-                  className="inline-block ml-3 text-base text-gray-800 form-label mb-2 font-medium"
-                >
-                  Company Description*
-                </label>
-                <div style={{ borderRadius: "12px" }}>
-                  <ReactQuill
-                    theme="snow"
-                    modules={quillModules}
-                    className="quill-editor-custom"
-                    value={profileData.headline || ""}
-                    onChange={(content) => {
-                      setProfileData({ ...profileData, headline: content });
-                      // Clear error when user starts typing
-                      if (errors.headline) {
-                        setErrors(prev => {
-                          const newErrors = { ...prev };
-                          delete newErrors.headline;
-                          return newErrors;
-                        });
-                      }
-                    }}
-                    placeholder="Describe your company, mission, values, and what makes you unique..."
-                    style={{
-                      fontSize: "1rem",
-                      height: "400px", // Much taller like talent profile
-                      marginBottom: "50px",
-                    }}
-                  />
-                </div>
-                {errors.headline && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.headline as string}
-                  </p>
-                )}
-                <p className="text-amber-600 text-sm text-right w-full mt-12 font-medium">
-                  {profileData.headline?.replace(/<[^>]*>/g, "")?.length || 0} / 10,000
-                </p>
-              </div>
+          {(noProfileFound || unapprovedProfile) && (
+            <div className="mb-4 flex items-center gap-3 border-l-4 border-amber-500 bg-amber-100/60 px-4 py-3 text-[13px] text-stone-800">
+              <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
+              {noProfileFound
+                ? "Please create a profile before posting jobs."
+                : "Profile approval is required before creating jobs. You'll be notified once it's approved."}
+            </div>
+          )}
 
-              {/* Email */}
-              <div className="flex-1" data-tour="contact-email">
-                <label
-                  htmlFor="email"
-                  className="inline-block ml-3 text-base text-gray-800 form-label mb-2 font-medium"
-                >
-                  Email Address*
-                </label>
-                <input
-                  name="email"
-                  className="form-control block w-full px-4 py-3 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-amber-300 rounded-xl hover:shadow-md transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-amber-500 focus:outline-none"
-                  placeholder="company@example.com"
-                  type="email"
-                  maxLength={255}
-                  defaultValue={profileData.email}
-                  onChange={(e) => {
-                    setProfileData({ ...profileData, email: e.target.value });
-                    // Clear error when user starts typing
-                    if (errors.email) {
-                      setErrors(prev => {
-                        const newErrors = { ...prev };
-                        delete newErrors.email;
-                        return newErrors;
-                      });
-                    }
-                  }}
-                />
-                {errors.email && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.email as string}
-                  </p>
-                )}
-              </div>
-
-              {/* Address, City & Country Row */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4" data-tour="location">
-                <div className="flex-1">
-                  <label
-                    htmlFor="address"
-                    className="inline-block ml-3 text-base text-gray-800 form-label mb-2 font-medium"
+          <form id="company-profile-form" onSubmit={handleFormReview}>
+            {/* 01 Identity */}
+            <section className="relative border-b-2 border-t-2 border-b-stone-900/20 border-t-stone-900 pb-9 pt-10">
+              <div className="relative flex flex-wrap gap-10">
+                <div className="flex flex-[0_0_180px] flex-col gap-3">
+                  <SectionTitle index="01">Identity</SectionTitle>
+                  <div
+                    ref={logoRef}
+                    className="relative"
+                    data-field="image_url"
+                    data-tour="profile-image"
                   >
-                    Address*
-                  </label>
-                  <input
-                    name="address"
-                    className="form-control block w-full px-4 py-3 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-amber-300 rounded-xl hover:shadow-md transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-amber-500 focus:outline-none"
-                    placeholder="Company address"
-                    type="text"
-                    maxLength={100}
-                    defaultValue={profileData.address}
-                    onChange={(e) => {
-                      setProfileData({ ...profileData, address: e.target.value });
-                      // Clear error when user starts typing
-                      if (errors.address) {
-                        setErrors(prev => {
-                          const newErrors = { ...prev };
-                          delete newErrors.address;
-                          return newErrors;
-                        });
-                      }
-                    }}
-                  />
-                  {errors.address && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.address as string}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex-1">
-                  <label
-                    htmlFor="city"
-                    className="inline-block ml-3 text-base text-gray-800 form-label mb-2 font-medium"
-                  >
-                    City*
-                  </label>
-                  <input
-                    name="city"
-                    className="form-control block w-full px-4 py-3 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-amber-300 rounded-xl hover:shadow-md transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-amber-500 focus:outline-none"
-                    placeholder="City name"
-                    type="text"
-                    pattern="[a-zA-Z \-]+"
-                    maxLength={100}
-                    defaultValue={profileData.city}
-                    onChange={(e) => {
-                      setProfileData({ ...profileData, city: e.target.value });
-                      // Clear error when user starts typing
-                      if (errors.city) {
-                        setErrors(prev => {
-                          const newErrors = { ...prev };
-                          delete newErrors.city;
-                          return newErrors;
-                        });
-                      }
-                    }}
-                  />
-                  {errors.city && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.city as string}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex-1">
-                  <SelectInput
-                    required={false}
-                    labelText="Country"
-                    name="country"
-                    inputValue={selectedCountry}
-                    setInputValue={(country: any) => {
-                      setSelectedCountry(country);
-                    setProfileData({
-                      ...profileData,
-                      country: country?.value || "",
-                    });
-                      // Clear error when country is selected
-                      if (errors.country) {
-                        setErrors(prev => {
-                          const newErrors = { ...prev };
-                          delete newErrors.country;
-                          return newErrors;
-                        });
-                      }
-                    }}
-                    options={countries}
-                    defaultValue={
-                      countries[
-                        countries.findIndex(
-                          (country) => country.value === profileData?.country,
-                        )
-                      ]
-                    }
-                  />
-                  {errors.country && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.country as string}
-                    </p>
-                  )}
-                </div>
-              </div>
-              {/* Phone Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-tour="phone">
-                <div className="flex-1">
-                  <SelectInput
-                    required={false}
-                    labelText="Phone Country Code"
-                    name="phone_country_code"
-                    inputValue={selectedPhoneCountryCode}
-                    setInputValue={(phoneCountryCode: any) => {
-                      setSelectedPhoneCountryCode(phoneCountryCode);
-                      setProfileData({ 
-                        ...profileData, 
-                        phone_country_code: phoneCountryCode?.value || '' 
-                      });
-                      // Clear error when user selects
-                      if (errors.phone_country_code) {
-                        setErrors(prev => {
-                          const newErrors = { ...prev };
-                          delete newErrors.phone_country_code;
-                          return newErrors;
-                        });
-                      }
-                    }}
-                    options={phoneCountryCodeOptions}
-                    defaultValue={
-                      phoneCountryCodeOptions.find(
-                        (option) => option.value === profileData?.phone_country_code,
-                      )
-                    }
-                  />
-                  {errors.phone_country_code && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.phone_country_code as string}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex-1">
-                  <label
-                    htmlFor="phone_number"
-                    className="inline-block ml-3 text-base text-gray-800 form-label mb-2 font-medium"
-                  >
-                    Phone Number*
-                  </label>
-                  <input
-                    name="phone_number"
-                    className="form-control block w-full px-4 py-3 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-amber-300 rounded-xl hover:shadow-md transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-amber-500 focus:outline-none"
-                    placeholder="Phone Number"
-                    type="text"
-                    pattern="[0-9]+"
-                    maxLength={20}
-                    defaultValue={profileData.phone_number}
-                    onChange={(e) => {
-                      setProfileData({
-                        ...profileData,
-                        phone_number: e.target.value,
-                      });
-                      // Clear error when user starts typing
-                      if (errors.phone_number) {
-                        setErrors(prev => {
-                          const newErrors = { ...prev };
-                          delete newErrors.phone_number;
-                          return newErrors;
-                        });
-                      }
-                    }}
-                  />
-                  {errors.phone_number && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.phone_number as string}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Telegram */}
-              <div className="flex-1" data-tour="telegram">
-                <label
-                  htmlFor="telegram"
-                  className="inline-block ml-3 text-base text-gray-800 form-label mb-2 font-medium"
-                >
-                  Telegram*
-                </label>
-                <input
-                  name="telegram"
-                  className="form-control block w-full px-4 py-3 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-amber-300 rounded-xl hover:shadow-md transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-amber-500 focus:outline-none"
-                  placeholder="@your_telegram_handle"
-                  type="text"
-                  maxLength={100}
-                  defaultValue={profileData.telegram}
-                  onChange={(e) => {
-                    setProfileData({ ...profileData, telegram: e.target.value });
-                    // Clear error when user starts typing
-                    if (errors.telegram) {
-                      setErrors(prev => {
-                        const newErrors = { ...prev };
-                        delete newErrors.telegram;
-                        return newErrors;
-                      });
-                    }
-                  }}
-                />
-                {errors.telegram && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.telegram as string}
-                  </p>
-                )}
-              </div>
-
-              {/* Social Media Links */}
-              <div className="flex w-full flex-col mt-8" data-tour="social-links">
-                <h3 className="inline-block ml-3 text-base font-medium text-gray-800 form-label mb-4">
-                  Social Media Links (Optional):
-                </h3>
-                <div className="space-y-4">
-                  {socialLinks.map((socialLink) => (
-                    <SocialLink
-                      key={socialLink.name}
-                      name={socialLink.name}
-                      icon={socialLink.icon}
-                      placeholder={socialLink.placeholder}
-                      defaultValue={
-                        profileData[
-                          socialLink.name as keyof typeof profileData
-                        ]?.toString() || ""
-                      }
-                      setValue={(name, value) => {
-                        setProfileData((prev) => ({
-                          ...prev,
-                          [name]: value,
-                        }));
+                    <ProfileImageUpload
+                      currentImage={profileData.image_url}
+                      displayName={profileData.designation || ""}
+                      onImageUpdate={(imageUrl) => {
+                        setProfileData({ ...profileData, image_url: imageUrl });
+                        if (imageUrl) clearError("image_url");
                       }}
-                      errorMessage={errors[socialLink.name as keyof typeof errors]}
+                      size={160}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      logoRef.current
+                        ?.querySelector<HTMLElement>(".cursor-pointer")
+                        ?.click()
+                    }
+                    className={`${ui.btnGhost} self-start`}
+                  >
+                    <Camera className="h-4 w-4" />
+                    {profileData.image_url ? "Replace logo" : "Upload logo"}
+                  </button>
+                  <p className={`text-[11px] ${ui.muted}`}>
+                    Square PNG or JPG, 300px+. Cropped to the hive hexagon.
+                  </p>
+                  <FieldError message={errors.image_url} />
+                </div>
+
+                <div className="flex min-w-0 flex-[1_1_420px] flex-col gap-5">
+                  <div data-tour="company-name">
+                    <label
+                      htmlFor="designation"
+                      className={`mb-1 block text-xs ${ui.muted}`}
+                    >
+                      Company name *
+                    </label>
+                    <input
+                      id="designation"
+                      name="designation"
+                      placeholder="Company name"
+                      type="text"
+                      maxLength={100}
+                      defaultValue={profileData.designation}
+                      onChange={(e) => {
+                        setProfileData({ ...profileData, designation: e.target.value });
+                        clearError("designation");
+                      }}
+                      className="w-full rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pb-1.5 pt-0.5 text-[clamp(32px,5vw,56px)] font-extrabold leading-[1.05] tracking-[-0.025em] text-stone-900 placeholder:text-stone-300 hover:border-stone-900/20 focus:border-amber-500 focus:outline-none"
+                    />
+                    <FieldError message={errors.designation} />
+                    <div className={`mt-2.5 flex flex-wrap gap-x-[18px] gap-y-1.5 text-[13px] ${ui.muted}`}>
+                      <span>
+                        goodhive.io/companies/
+                        <b className="font-semibold text-stone-900">{userId}</b>
+                      </span>
+                      {locationText && <span>{locationText}</span>}
+                      {shortWallet && <span>Owner {shortWallet}</span>}
+                    </div>
+                  </div>
+
+                  <div className="company-about" data-tour="company-description">
+                    <div
+                      className={`flex items-center justify-between gap-3 border-y ${ui.divider} py-1.5`}
+                    >
+                      <label htmlFor="headline" className={`text-xs ${ui.muted}`}>
+                        About the company *
+                      </label>
+                      <div id="company-about-toolbar" className="flex gap-0.5">
+                        <button type="button" className="ql-bold" title="Bold" />
+                        <button type="button" className="ql-italic" title="Italic" />
+                        <button type="button" className="ql-underline" title="Underline" />
+                        <button type="button" className="ql-list" value="bullet" title="Bulleted list" />
+                        <button type="button" className="ql-list" value="ordered" title="Numbered list" />
+                        <button type="button" className="ql-link" title="Link" />
+                      </div>
+                    </div>
+                    <ReactQuill
+                      id="headline"
+                      theme="snow"
+                      modules={quillModules}
+                      className="company-about-editor"
+                      value={profileData.headline || ""}
+                      onChange={(content) => {
+                        setProfileData({ ...profileData, headline: content });
+                        clearError("headline");
+                      }}
+                      placeholder="Describe your company, mission, values, and what makes you unique..."
+                    />
+                    <div
+                      className={`flex justify-between gap-3 border-t ${ui.divider} pt-1.5 text-[11px] text-stone-500`}
+                    >
+                      <FieldError message={errors.headline} />
+                      <span className="ml-auto tabular-nums">
+                        {aboutLength} / 10,000
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* 02 Contact + 03 Links */}
+            <section
+              className={`grid grid-cols-[repeat(auto-fit,minmax(min(100%,440px),1fr))] gap-x-12 border-b-2 ${ui.divider}`}
+            >
+              <div className="py-7">
+                <SectionTitle index="02" className="mb-3.5">
+                  Contact
+                </SectionTitle>
+                <div className="grid grid-cols-[110px_minmax(0,1fr)] items-center gap-x-3 text-[13px]">
+                  <FieldRow label="Email *" htmlFor="email">
+                    <div data-tour="contact-email">
+                      <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="team@company.io"
+                        maxLength={255}
+                        defaultValue={profileData.email}
+                        onChange={(e) => {
+                          setProfileData({ ...profileData, email: e.target.value });
+                          clearError("email");
+                        }}
+                        className={ui.input}
+                      />
+                      <FieldError message={errors.email} />
+                    </div>
+                  </FieldRow>
+                  <FieldRow label="Address *" htmlFor="address">
+                    <input
+                      id="address"
+                      name="address"
+                      type="text"
+                      placeholder="Street, suite"
+                      maxLength={100}
+                      defaultValue={profileData.address}
+                      onChange={(e) => {
+                        setProfileData({ ...profileData, address: e.target.value });
+                        clearError("address");
+                      }}
+                      className={ui.input}
+                    />
+                    <FieldError message={errors.address} />
+                  </FieldRow>
+                  <FieldRow label="City / Country *" htmlFor="city">
+                    <div className="grid grid-cols-2 gap-2" data-tour="location">
+                      <div>
+                        <input
+                          id="city"
+                          name="city"
+                          type="text"
+                          placeholder="City"
+                          pattern="[a-zA-Z \-]+"
+                          maxLength={100}
+                          defaultValue={profileData.city}
+                          onChange={(e) => {
+                            setProfileData({ ...profileData, city: e.target.value });
+                            clearError("city");
+                          }}
+                          className={ui.input}
+                        />
+                        <FieldError message={errors.city} />
+                      </div>
+                      <div>
+                        <select
+                          name="country"
+                          value={selectedCountry?.value || ""}
+                          onChange={(e) => {
+                            const country =
+                              countries.find((c) => c.value === e.target.value) || null;
+                            setSelectedCountry(country);
+                            setProfileData({ ...profileData, country: country?.value || "" });
+                            clearError("country");
+                          }}
+                          className={ui.input}
+                        >
+                          <option value="">Country</option>
+                          {countries.map((country) => (
+                            <option key={country.value} value={country.value}>
+                              {country.label}
+                            </option>
+                          ))}
+                        </select>
+                        <FieldError message={errors.country} />
+                      </div>
+                    </div>
+                  </FieldRow>
+                  <FieldRow label="Phone *" htmlFor="phone_number">
+                    <div className="grid grid-cols-[150px_minmax(0,1fr)] gap-2" data-tour="phone">
+                      <div>
+                        <select
+                          name="phone_country_code"
+                          value={selectedPhoneCountryCode?.label || ""}
+                          onChange={(e) => {
+                            const option =
+                              phoneCountryCodeOptions.find((o) => o.label === e.target.value) ||
+                              null;
+                            setSelectedPhoneCountryCode(option);
+                            setProfileData({
+                              ...profileData,
+                              phone_country_code: option?.value || "",
+                            });
+                            clearError("phone_country_code");
+                          }}
+                          className={ui.input}
+                        >
+                          <option value="">Code</option>
+                          {phoneCountryCodeOptions.map((option) => (
+                            <option key={option.label} value={option.label}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                        <FieldError message={errors.phone_country_code} />
+                      </div>
+                      <div>
+                        <input
+                          id="phone_number"
+                          name="phone_number"
+                          type="tel"
+                          placeholder="Number"
+                          pattern="[0-9]+"
+                          maxLength={20}
+                          defaultValue={profileData.phone_number}
+                          onChange={(e) => {
+                            setProfileData({ ...profileData, phone_number: e.target.value });
+                            clearError("phone_number");
+                          }}
+                          className={`${ui.input} tabular-nums`}
+                        />
+                        <FieldError message={errors.phone_number} />
+                      </div>
+                    </div>
+                  </FieldRow>
+                  <FieldRow label="Telegram *" htmlFor="telegram" last>
+                    <div data-tour="telegram">
+                      <input
+                        id="telegram"
+                        name="telegram"
+                        type="text"
+                        placeholder="@handle"
+                        maxLength={100}
+                        defaultValue={profileData.telegram}
+                        onChange={(e) => {
+                          setProfileData({ ...profileData, telegram: e.target.value });
+                          clearError("telegram");
+                        }}
+                        className={ui.input}
+                      />
+                      <FieldError message={errors.telegram} />
+                    </div>
+                  </FieldRow>
+                </div>
+              </div>
+
+              <div className="py-7" data-tour="social-links">
+                <div className="mb-3.5 flex items-baseline justify-between">
+                  <SectionTitle index="03">Links</SectionTitle>
+                  <span className={`text-xs tabular-nums ${ui.muted}`}>
+                    {linkedCount} of {companyLinks.length} linked · optional
+                  </span>
+                </div>
+                <div className={`border-t ${ui.divider}`}>
+                  {companyLinks.map((link) => (
+                    <LinkRow
+                      key={link.name}
+                      name={link.name}
+                      label={link.label}
+                      placeholder={link.placeholder}
+                      value={
+                        profileData[link.name as keyof typeof profileData]?.toString() || ""
+                      }
+                      onChange={(value) =>
+                        setProfileData((prev) => ({ ...prev, [link.name]: value }))
+                      }
                     />
                   ))}
                 </div>
               </div>
+            </section>
 
-              {isShowReferralSection && <ReferralSection />}
-            </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-center gap-6 pt-8 mt-8 border-t-2 border-amber-200">
-                {isLoading ? (
-                  <div className="flex gap-4">
-                    <button
-                      className="px-8 py-4 bg-amber-300 text-amber-600 font-semibold rounded-2xl opacity-50 cursor-not-allowed transition duration-150 ease-in-out flex items-center"
-                      disabled
-                    >
-                      <div className="w-5 h-5 mr-2 animate-spin border-2 border-amber-600 border-t-transparent rounded-full"></div>
-                      Saving...
-                    </button>
-                    {!profileData.approved && (
-                      <button
-                        className="px-8 py-4 bg-amber-300 text-amber-600 font-semibold rounded-2xl opacity-50 cursor-not-allowed transition duration-150 ease-in-out flex items-center"
-                        disabled
-                      >
-                        <div className="w-5 h-5 mr-2 animate-spin border-2 border-amber-600 border-t-transparent rounded-full"></div>
-                        Processing...
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex gap-4 flex-wrap justify-center">
-                    <button
-                      data-tour="save-draft"
-                      className="group px-8 py-4 bg-white bg-opacity-80 text-amber-700 font-semibold rounded-2xl border-2 border-amber-200 hover:border-amber-400 hover:bg-amber-50 transform hover:-translate-y-1 transition-all duration-300 shadow-md hover:shadow-xl flex items-center"
-                      onClick={handleFormSaving}
-                    >
-                      <span className="mr-2 group-hover:rotate-12 transition-transform duration-300">💾</span>
-                      Save Draft
-                    </button>
-                    
-                    {/* Only show Submit for Review if not approved */}
-                    {!profileData.approved && (
-                      <button
-                        className="group px-8 py-4 bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold rounded-2xl hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 shadow-lg flex items-center relative overflow-hidden"
-                        type="submit"
-                        data-tour="submit-review"
-                        onClick={handleFormReview}
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-r from-amber-600 to-yellow-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        <span className="relative z-10 flex items-center">
-                          <span className="mr-2 group-hover:rotate-12 transition-transform duration-300">🚀</span>
-                          Submit for Review
-                        </span>
-                      </button>
-                    )}
-                    
-                    {/* Show approved status if profile is approved */}
-                    {profileData.approved && (
-                      <div className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-2xl shadow-lg flex items-center">
-                        <span className="mr-2">✅</span>
-                        Profile Approved
-                      </div>
-                    )}
-                  </div>
-                )}
+            {/* 04 Referral program */}
+            {isShowReferralSection && (
+              <div className="mb-10 mt-12">
+                <ReferralSection variant="editorial" index="04" />
               </div>
-            </form>
+            )}
+            {!isShowReferralSection && <div className="h-10" />}
+
+          </form>
+        </main>
+
+        {/* Sticky action bar */}
+        <div className="sticky bottom-0 z-20 border-t-2 border-stone-900 bg-[#fffaf0]">
+          <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-x-5 gap-y-3 px-4 py-3 sm:px-8">
+            <div className="flex min-w-[240px] flex-1 items-center gap-2.5 text-[13px]">
+              <span
+                className={`h-[11px] w-3 ${status.dot}`}
+                style={{ clipPath: hexClip }}
+              />
+              <b className="font-semibold">{status.title}</b>
+              <span className={ui.muted}>{status.detail}</span>
+            </div>
+            <div className="flex gap-2">
+              {profileData.approved ? (
+                <button
+                  type="button"
+                  data-tour="save-draft"
+                  onClick={handleFormSaving}
+                  className={`${ui.btnPrimary} min-w-[170px] justify-between`}
+                >
+                  Save changes
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    data-tour="save-draft"
+                    onClick={handleFormSaving}
+                    className={ui.btnSecondary}
+                  >
+                    Save draft
+                  </button>
+                  <button
+                    type="submit"
+                    form="company-profile-form"
+                    data-tour="submit-review"
+                    className={`${ui.btnPrimary} min-w-[170px] justify-between`}
+                  >
+                    Submit for review
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </main>
+      </div>
     </>
   );
 }

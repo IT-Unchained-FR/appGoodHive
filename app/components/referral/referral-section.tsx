@@ -35,7 +35,19 @@ const referralSteps = [
   },
 ] as const;
 
-export const ReferralSection = () => {
+type ReferralSectionProps = {
+  // "editorial" is the flat, sectioned layout used on the company profile page
+  variant?: "default" | "editorial";
+  index?: string;
+};
+
+const hexClip = "polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%)";
+
+export const ReferralSection = ({
+  variant = "default",
+  index,
+}: ReferralSectionProps) => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [referral, setReferral] = useState<ReferralObject | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -141,6 +153,154 @@ export const ReferralSection = () => {
       void getReferralCode();
     }
   }, [getReferralCode, user_id]);
+
+  if (variant === "editorial") {
+    const approvedTotal = totalTalentsApproved + totalCompaniesApproved;
+    const earnRows = [
+      {
+        rate: "5%",
+        title: "Referred talents",
+        description:
+          "Receive 5% of the commissions earned on every mission completed by a talent you refer, throughout their first year.",
+      },
+      {
+        rate: "20%",
+        title: "Referred companies",
+        description:
+          "Receive 20% of the commissions earned from all missions carried out by a company you refer, during its first year of activity.",
+      },
+    ];
+
+    return (
+      <section className="bg-[#fbf4e2] text-stone-900">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 px-6 py-4">
+          <h6 className="m-0 text-[13px] font-extrabold uppercase tracking-[0.08em]">
+            {index && <span className="text-amber-600">{index}</span>} Referral program
+          </h6>
+          <span className="min-w-[220px] flex-1 text-[13px] text-stone-600">
+            Share your GoodHive link and earn on the talent and companies who join through your code.
+          </span>
+          <span className="text-xs tabular-nums text-stone-600">
+            Code{" "}
+            <b className="font-semibold text-stone-900">
+              {referral?.referral_code || "not claimed"}
+            </b>{" "}
+            · Approved referrals{" "}
+            <b className="font-semibold text-stone-900">{approvedTotal}</b>
+          </span>
+          <button
+            type="button"
+            onClick={() => setIsCollapsed((v) => !v)}
+            className="h-9 px-1 text-sm font-bold text-stone-900 hover:text-amber-600"
+          >
+            {isCollapsed ? "Show" : "Hide"}
+          </button>
+        </div>
+
+        {!isCollapsed && (
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,380px),1fr))] gap-0.5 border-t-2 border-amber-200/80 bg-amber-200/80">
+            <div className="bg-[#fbf4e2] px-6 pb-6 pt-5">
+              <div className="mb-3.5 text-[10px] uppercase tracking-[0.1em] text-stone-600">
+                {referral ? "Active · share your link" : "Activate · 2 steps"}
+              </div>
+              {!referral ? (
+                <div className="grid grid-cols-2 gap-x-5">
+                  {referralSteps.map((step, stepIndex) => (
+                    <div key={step.title}>
+                      <div className="mb-3 flex items-center gap-2">
+                        <span
+                          className={`grid h-[26px] w-[30px] flex-none place-items-center text-[13px] font-extrabold text-white ${
+                            stepIndex === 0 ? "bg-amber-500" : "bg-stone-300"
+                          }`}
+                          style={{ clipPath: hexClip }}
+                        >
+                          {stepIndex + 1}
+                        </span>
+                        {stepIndex === 0 && <span className="h-0.5 flex-1 bg-stone-300" />}
+                      </div>
+                      <div className="mb-1 text-sm font-semibold">{step.title}</div>
+                      <p className="mb-3 text-[13px] text-stone-600">{step.description}</p>
+                      {stepIndex === 0 ? (
+                        <button
+                          type="button"
+                          onClick={handleClaimReferralCode}
+                          disabled={isLoading}
+                          className="inline-flex h-9 items-center gap-2 bg-amber-500 px-3.5 text-sm font-bold text-white transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {isLoading ? "Creating code..." : "Claim referral code"}
+                          <ArrowRight className="h-4 w-4" />
+                        </button>
+                      ) : (
+                        <span className="text-xs text-stone-500">Unlocks after code claim</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div>
+                  <div className="flex border border-stone-900/25 bg-white/60">
+                    <span className="min-w-0 flex-1 truncate px-3 py-2 text-sm text-stone-700">
+                      {referralLink}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={refLinkCopyToClipboard}
+                      className="inline-flex items-center gap-1.5 border-l border-stone-900/25 px-3 text-sm font-bold hover:bg-amber-50"
+                    >
+                      <Copy className="h-4 w-4" />
+                      Copy
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleNativeShare}
+                      className="inline-flex items-center gap-1.5 bg-amber-500 px-3 text-sm font-bold text-white hover:bg-amber-600"
+                    >
+                      <Share2 className="h-4 w-4" />
+                      {isSharing ? "Sharing..." : "Share"}
+                    </button>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-y-3 text-[13px] sm:grid-cols-4">
+                    {[
+                      ["Talents referred", totalTalentsReferred],
+                      ["Companies referred", totalCompaniesReferred],
+                      ["Approved talents", totalTalentsApproved],
+                      ["Approved companies", totalCompaniesApproved],
+                    ].map(([label, value]) => (
+                      <div key={label as string}>
+                        <div className="text-2xl font-extrabold tabular-nums">{value}</div>
+                        <div className="text-stone-600">{label}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="bg-[#fbf4e2] px-6 pb-6 pt-5">
+              <div className="mb-1.5 text-[10px] uppercase tracking-[0.1em] text-stone-600">
+                Earn · ongoing
+              </div>
+              {earnRows.map((row, rowIndex) => (
+                <div
+                  key={row.title}
+                  className={`grid grid-cols-[72px_minmax(0,1fr)] gap-x-4 py-3 ${
+                    rowIndex === 0 ? "border-b border-amber-200" : ""
+                  }`}
+                >
+                  <span className="text-[28px] font-extrabold leading-none tracking-[-0.02em]">
+                    {row.rate}
+                  </span>
+                  <div>
+                    <div className="mb-0.5 text-sm font-semibold">{row.title}</div>
+                    <div className="text-[13px] text-stone-600">{row.description}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+    );
+  }
 
   return (
     <div className="gh-referral-surface overflow-hidden rounded-[24px] border border-slate-200/80 bg-white">

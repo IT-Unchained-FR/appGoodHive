@@ -38,7 +38,7 @@ const steps: Step[] = [
   {
     target: '[data-tour="location"]',
     title: "Location",
-    content: "Add your address, city, and country.",
+    content: "Add your city and country.",
   },
   {
     target: '[data-tour="phone"]',
