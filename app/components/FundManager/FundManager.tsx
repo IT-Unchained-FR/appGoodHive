@@ -1,13 +1,25 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useActiveAccount } from 'thirdweb/react';
+import {
+  useActiveAccount,
+  useActiveWalletChain,
+  useSwitchActiveWalletChain,
+} from 'thirdweb/react';
 import { toast } from 'react-hot-toast';
 
 import { useJobManager, useJobData } from '@/hooks/contracts/useJobManager';
 import { getTokenInfo, getTokenBalance, formatTokenBalance } from '@/lib/contracts/erc20';
-import { ACTIVE_CHAIN_ID } from '@/config/chains';
+import { getFriendlyWalletError } from '@/lib/contracts/walletErrors';
+import { ACTIVE_CHAIN_ID, ACTIVE_CHAIN_NAME, activeChain } from '@/config/chains';
 import type { DatabaseIdentifier } from '@/lib/contracts/jobManager';
+
+// "polygon-amoy" -> "Polygon Amoy"
+function formatChainLabel(label: string): string {
+  return label
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
 
 interface FundManagerProps {
   jobId: DatabaseIdentifier;
@@ -27,6 +39,9 @@ export default function FundManager({
   onClose
 }: FundManagerProps) {
   const account = useActiveAccount();
+  const walletChain = useActiveWalletChain();
+  const switchChain = useSwitchActiveWalletChain();
+  const [isSwitchingNetwork, setIsSwitchingNetwork] = useState(false);
   const { addFunds, withdrawFunds, payFees, isLoading: isContractLoading } = useJobManager();
   const {
     jobData,
@@ -49,10 +64,9 @@ export default function FundManager({
   } | null>(null);
 
   const friendlyChainName = jobChainLabel
-    ? jobChainLabel
-        .replace(/[-_]/g, ' ')
-        .replace(/\b\w/g, (char) => char.toUpperCase())
-    : 'the correct network';
+    ? formatChainLabel(jobChainLabel)
+    : 'another network';
+  const appChainName = formatChainLabel(ACTIVE_CHAIN_NAME);
   const hasWithdrawableBalance = Boolean(jobBalance) && Number(jobBalance) > 0;
 
   // Load token info and user balance
@@ -166,14 +180,45 @@ export default function FundManager({
     setAmount(getMaxAmount());
   };
 
-  const chainMismatch = Boolean(
+  // The job lives on a different network than the app is configured for.
+  // Switching the wallet can't fix this — the app reads from its own network.
+  const jobOnOtherNetwork = Boolean(
     jobChainId !== undefined &&
       jobChainId !== null &&
       jobChainId !== ACTIVE_CHAIN_ID,
   );
 
+  // The company's wallet is on a different network than the app. Fixable
+  // with a network switch.
+  const walletOnWrongNetwork = Boolean(
+    !jobOnOtherNetwork && walletChain && walletChain.id !== ACTIVE_CHAIN_ID,
+  );
+
+  const handleSwitchNetwork = async () => {
+    setIsSwitchingNetwork(true);
+    try {
+      await switchChain(activeChain);
+      toast.success(`Switched to ${appChainName}`);
+    } catch (error) {
+      console.error('Failed to switch network:', error);
+      toast.error(
+        getFriendlyWalletError(
+          error,
+          `Couldn't switch network. Please switch to ${appChainName} in your wallet.`,
+        ),
+      );
+    } finally {
+      setIsSwitchingNetwork(false);
+    }
+  };
+
   const actionsDisabled =
-    isContractLoading || isLoading || chainMismatch || Boolean(jobDataError);
+    isContractLoading ||
+    isLoading ||
+    isSwitchingNetwork ||
+    jobOnOtherNetwork ||
+    walletOnWrongNetwork ||
+    Boolean(jobDataError);
 
   if (!account) {
     return (
@@ -301,13 +346,31 @@ export default function FundManager({
           </button>
         </div>
 
-        {(chainMismatch || tokenError || jobDataError) && (
+        {(jobOnOtherNetwork || walletOnWrongNetwork || tokenError || jobDataError) && (
           <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
-            {chainMismatch && (
+            {jobOnOtherNetwork && (
               <p>
-                This job is deployed on the {friendlyChainName} network. Please
-                switch your wallet to that network to manage funds.
+                This job was created on the {friendlyChainName} network, but
+                GoodHive is currently running on {appChainName}, so its funds
+                can&apos;t be managed here. Please contact support for help.
               </p>
+            )}
+            {walletOnWrongNetwork && (
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p>
+                  Your wallet is connected to{' '}
+                  {walletChain?.name ? formatChainLabel(walletChain.name) : 'another network'}.
+                  Switch to {appChainName} to manage funds.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void handleSwitchNetwork()}
+                  disabled={isSwitchingNetwork}
+                  className="shrink-0 rounded-md bg-amber-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-amber-300"
+                >
+                  {isSwitchingNetwork ? 'Switching…' : `Switch to ${appChainName}`}
+                </button>
+              </div>
             )}
             {tokenError && <p className="mt-2">{tokenError}</p>}
             {jobDataError && (
