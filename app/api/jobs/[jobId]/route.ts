@@ -9,6 +9,7 @@ import {
 } from "@/lib/jobs/format-job-content";
 import {
   COMPANY_ALWAYS_LOCKED_JOB_FIELDS,
+  COMPANY_PRICE_FIELDS,
   resolveJobReviewStatus,
 } from "@/lib/jobs/review";
 
@@ -45,7 +46,12 @@ const COMPANY_EDITABLE_JOB_FIELDS = new Set([
   "wallet_address",
 ]);
 
-function normalizePatchPayload(payload: Record<string, unknown>) {
+type PriceField = (typeof COMPANY_PRICE_FIELDS)[number];
+
+function normalizePatchPayload(
+  payload: Record<string, unknown>,
+  current: { isDraft: boolean } & Record<PriceField, unknown>,
+) {
   const lockedFields = new Set<string>();
   const updateFields: Record<string, unknown> = {};
 
@@ -58,6 +64,18 @@ function normalizePatchPayload(payload: Record<string, unknown>) {
 
     if (COMPANY_ALWAYS_LOCKED_JOB_FIELDS.includes(normalizedKey as never)) {
       lockedFields.add(normalizedKey);
+      continue;
+    }
+
+    // Price is editable on drafts. After submission it is locked, but the
+    // form re-sends it on every save, so only reject an actual change.
+    if (COMPANY_PRICE_FIELDS.includes(normalizedKey as never)) {
+      const field = normalizedKey as PriceField;
+      if (current.isDraft) {
+        updateFields[field] = rawValue;
+      } else if (String(rawValue ?? "") !== String(current[field] ?? "")) {
+        lockedFields.add(field);
+      }
       continue;
     }
 
@@ -261,11 +279,13 @@ export async function PATCH(
     const body = (await request.json()) as Record<string, unknown>;
     const jobRows = await sql<{
       id: string;
+      budget: string | null;
+      currency: string | null;
       published: boolean | null;
       review_status: string | null;
       user_id: string;
     }[]>`
-      SELECT id, user_id, review_status, published
+      SELECT id, user_id, review_status, published, budget, currency
       FROM goodhive.job_offers
       WHERE id = ${jobId}::uuid
       LIMIT 1
@@ -298,7 +318,11 @@ export async function PATCH(
       );
     }
 
-    const { lockedFields, updateFields } = normalizePatchPayload(body);
+    const { lockedFields, updateFields } = normalizePatchPayload(body, {
+      isDraft: reviewStatus === "draft",
+      budget: job.budget,
+      currency: job.currency,
+    });
     if (lockedFields.length > 0) {
       return NextResponse.json(
         {
