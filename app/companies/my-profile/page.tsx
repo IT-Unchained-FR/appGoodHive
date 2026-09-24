@@ -14,6 +14,12 @@ import {
   Camera,
   Compass,
   Eye,
+  Github,
+  Linkedin,
+  Mail,
+  MapPin,
+  Phone,
+  Send,
   MessageSquare,
   PlayCircle,
   Plus,
@@ -43,7 +49,16 @@ import "react-quill/dist/quill.snow.css";
 import { countries } from "../../constants/countries";
 import { useCurrentUserId } from "@/app/hooks/useCurrentUserId";
 import { CompanyProfileTour } from "./CompanyProfileTour";
-import { FieldError, FieldRow, LinkRow, SectionTitle, hexClip, ui } from "./profile-ui";
+import {
+  FieldError,
+  FieldRow,
+  LinkRow,
+  SectionTitle,
+  StackOverflowIcon,
+  XIcon,
+  hexClip,
+  ui,
+} from "./profile-ui";
 // Dynamically import React Quill to prevent server-side rendering issues
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
@@ -53,11 +68,11 @@ const quillModules = {
 };
 
 const companyLinks = [
-  { name: "linkedin", label: "LinkedIn", placeholder: "https://linkedin.com/company/…" },
-  { name: "github", label: "GitHub", placeholder: "https://github.com/…" },
-  { name: "twitter", label: "X / Twitter", placeholder: "https://x.com/…" },
-  { name: "stackoverflow", label: "Stack Overflow", placeholder: "https://stackoverflow.com/…" },
-  { name: "portfolio", label: "Website", placeholder: "https://…" },
+  { name: "linkedin", label: "LinkedIn", icon: Linkedin, placeholder: "https://linkedin.com/company/…" },
+  { name: "github", label: "GitHub", icon: Github, placeholder: "https://github.com/…" },
+  { name: "twitter", label: "X / Twitter", icon: XIcon, placeholder: "https://x.com/…" },
+  { name: "stackoverflow", label: "Stack Overflow", icon: StackOverflowIcon, placeholder: "https://stackoverflow.com/…" },
+  { name: "portfolio", label: "Website", icon: Globe, placeholder: "https://…" },
 ];
 
 export default function MyProfile() {
@@ -1158,8 +1173,8 @@ export default function MyProfile() {
                 <SectionTitle index="02" className="mb-3.5">
                   Contact
                 </SectionTitle>
-                <div className="grid grid-cols-[110px_minmax(0,1fr)] items-center gap-x-3 text-[13px]">
-                  <FieldRow label="Email *" htmlFor="email">
+                <div className="grid grid-cols-[150px_minmax(0,1fr)] items-center gap-x-3 text-[13px]">
+                  <FieldRow label="Email *" icon={Mail} htmlFor="email">
                     <div data-tour="contact-email">
                       <input
                         id="email"
@@ -1177,7 +1192,7 @@ export default function MyProfile() {
                       <FieldError message={errors.email} />
                     </div>
                   </FieldRow>
-                  <FieldRow label="Address *" htmlFor="address">
+                  <FieldRow label="Address *" icon={MapPin} htmlFor="address">
                     <input
                       id="address"
                       name="address"
@@ -1193,7 +1208,7 @@ export default function MyProfile() {
                     />
                     <FieldError message={errors.address} />
                   </FieldRow>
-                  <FieldRow label="City / Country *" htmlFor="city">
+                  <FieldRow label="City / Country *" icon={Globe} htmlFor="city">
                     <div className="grid grid-cols-2 gap-2" data-tour="location">
                       <div>
                         <input
@@ -1236,7 +1251,7 @@ export default function MyProfile() {
                       </div>
                     </div>
                   </FieldRow>
-                  <FieldRow label="Phone *" htmlFor="phone_number">
+                  <FieldRow label="Phone *" icon={Phone} htmlFor="phone_number">
                     <div className="grid grid-cols-[150px_minmax(0,1fr)] gap-2" data-tour="phone">
                       <div>
                         <select
@@ -1283,7 +1298,7 @@ export default function MyProfile() {
                       </div>
                     </div>
                   </FieldRow>
-                  <FieldRow label="Telegram *" htmlFor="telegram" last>
+                  <FieldRow label="Telegram *" icon={Send} htmlFor="telegram" last>
                     <div data-tour="telegram">
                       <input
                         id="telegram"
@@ -1317,6 +1332,7 @@ export default function MyProfile() {
                       key={link.name}
                       name={link.name}
                       label={link.label}
+                      icon={link.icon}
                       placeholder={link.placeholder}
                       value={
                         profileData[link.name as keyof typeof profileData]?.toString() || ""
