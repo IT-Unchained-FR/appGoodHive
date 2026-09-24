@@ -26,13 +26,30 @@ import {
 import { chains } from "@/app/constants/chains";
 import { Textarea } from "@/components/ui/textarea";
 
-// Currency options from tokens.json
+// Jobs store the token symbol (see create-job), not the token address.
 const currencyOptions = [
-  { value: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359", label: "USDC" },
-  { value: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063", label: "DAI" },
-  { value: "0xE0B52e49357Fd4DAf2c15e02058DCE6BC0057db4", label: "AUGUR" },
-  { value: "0x4d0B6356605e6FA95c025a6f6092ECcf0Cf4317b", label: "EURO" },
+  { value: "USDC", label: "USDC" },
+  { value: "DAI", label: "DAI" },
 ];
+
+// Fields the admin PUT route accepts. Sending the full row would include
+// blockchain fields (block_id, payment_token_address) that the route rejects.
+const ADMIN_EDITABLE_FIELDS = [
+  "title",
+  "description",
+  "type_engagement",
+  "job_type",
+  "project_type",
+  "duration",
+  "skills",
+  "budget",
+  "chain",
+  "currency",
+  "published",
+  "image_url",
+] as const;
+
+const APPROVED_STATUSES = ["approved", "active"];
 
 export default function AdminEditJobPage() {
   const params = useParams();
@@ -103,40 +120,52 @@ export default function AdminEditJobPage() {
     setJob({ ...job, [name]: checked });
   };
 
-  const handleSave = async () => {
-    if (!job) return;
+  const handleSave = async (options?: { silent?: boolean }) => {
+    if (!job) return false;
     setIsSaving(true);
     try {
+      const payload = Object.fromEntries(
+        ADMIN_EDITABLE_FIELDS.map((field) => [field, job[field as keyof IJobOffer]]),
+      );
       const response = await fetch(`/api/admin/job/${job_id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(job),
+        body: JSON.stringify(payload),
       });
 
       if (response.status === 401) {
         router.push("/admin/login");
-        return;
+        return false;
       }
 
-      if (response.ok) {
-        const updatedJob = await response.json();
-        setJob(updatedJob);
-        setInitialJob(updatedJob);
-        toast.success("Job updated successfully!");
-      } else {
-        toast.error("Failed to update job.");
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        toast.error(data?.message || data?.error || "Failed to update job.");
+        return false;
       }
+
+      setJob(data);
+      setInitialJob(data);
+      if (!options?.silent) toast.success("Job updated successfully!");
+      return true;
     } catch (error) {
       console.error(error);
       toast.error("An error occurred while saving.");
+      return false;
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleReview = async (action: "approve" | "reject") => {
+    // Persist unsaved edits first so the admin approves what they see.
+    if (hasChanges) {
+      const saved = await handleSave({ silent: true });
+      if (!saved) return;
+    }
+
     setIsReviewing(true);
     try {
       const response = await fetch(`/api/admin/jobs/${job_id}/review`, {
@@ -155,9 +184,9 @@ export default function AdminEditJobPage() {
         return;
       }
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to review job");
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || "Failed to review job");
       }
 
       const nextReviewStatus =
@@ -195,6 +224,11 @@ export default function AdminEditJobPage() {
       setIsReviewing(false);
     }
   };
+
+  const reviewStatus =
+    job?.review_status || (job?.published ? "approved" : "draft");
+  const isApproved = APPROVED_STATUSES.includes(reviewStatus);
+  const isRejected = reviewStatus === "rejected";
 
   if (loading) {
     return (
@@ -377,6 +411,10 @@ export default function AdminEditJobPage() {
                   <SelectValue placeholder="Select currency" />
                 </SelectTrigger>
                 <SelectContent>
+                  {job.currency &&
+                    !currencyOptions.some((o) => o.value === job.currency) && (
+                      <SelectItem value={job.currency}>{job.currency}</SelectItem>
+                    )}
                   {currencyOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
@@ -415,7 +453,7 @@ export default function AdminEditJobPage() {
               <Label htmlFor="review_status">Review Status</Label>
               <Input
                 id="review_status"
-                value={job.review_status || (job.published ? "approved" : "draft")}
+                value={reviewStatus}
                 disabled
               />
             </div>
@@ -482,20 +520,24 @@ export default function AdminEditJobPage() {
                 placeholder="Add optional feedback for the company..."
               />
             </div>
+            <p className="text-sm text-gray-600">
+              Current status: <strong>{reviewStatus}</strong>
+              {hasChanges && " · unsaved edits will be saved before reviewing"}
+            </p>
             <div className="flex flex-col-reverse gap-3 sm:flex-row">
               <Button
                 type="button"
                 onClick={() => handleReview("approve")}
-                disabled={isReviewing}
+                disabled={isReviewing || isSaving || isApproved}
                 size="lg"
                 className="w-full sm:w-auto"
               >
-                Approve Job
+                {isReviewing ? "Working..." : isApproved ? "Approved" : "Approve Job"}
               </Button>
               <Button
                 type="button"
                 onClick={() => handleReview("reject")}
-                disabled={isReviewing}
+                disabled={isReviewing || isSaving || isRejected}
                 size="lg"
                 variant="destructive"
                 className="w-full sm:w-auto"
@@ -508,7 +550,7 @@ export default function AdminEditJobPage() {
 
         <div className="flex justify-end pt-4">
           <Button
-            onClick={handleSave}
+            onClick={() => void handleSave()}
             disabled={!hasChanges || isSaving}
             size="lg"
             className="w-full sm:w-auto"
