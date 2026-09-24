@@ -642,23 +642,30 @@ export const JobForm = ({
         return;
       }
 
-      const { jobId: blockchainJobId, transactionHash } = result;
+      const {
+        jobId: blockchainJobId,
+        transactionHash,
+        tokenAddress: onChainTokenAddress,
+      } = result;
 
-      // Step 2: Sync real blockchain ID to DB
-      toast.loading("Syncing with database…", { id: toastId });
+      // Step 2: Sync real blockchain ID to DB. Skipped when the job was
+      // already on-chain and recovered — there's no new creation tx to record.
+      if (transactionHash) {
+        toast.loading("Syncing with database…", { id: toastId });
 
-      await fetch("/api/blockchain/sync-job", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jobId: jobData?.id,
-          blockchainJobId,
-          transactionHash,
-          tokenAddress: fundManagerTokenAddress,
-          contractAddress: "",
-          status: "confirmed",
-        }),
-      });
+        await fetch("/api/blockchain/sync-job", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jobId: jobData?.id,
+            blockchainJobId,
+            transactionHash,
+            tokenAddress: onChainTokenAddress,
+            contractAddress: "",
+            status: "confirmed",
+          }),
+        });
+      }
 
       // Step 3: Mark as published in DB with real blockchain ID
       toast.loading("Publishing…", { id: toastId });
@@ -671,7 +678,7 @@ export const JobForm = ({
           publish: true,
           in_saving_stage: false,
           blockchainJobId,
-          paymentTokenAddress: fundManagerTokenAddress,
+          paymentTokenAddress: onChainTokenAddress,
         }),
       });
 

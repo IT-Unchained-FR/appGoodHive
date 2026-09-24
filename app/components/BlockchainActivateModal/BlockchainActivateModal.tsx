@@ -11,7 +11,10 @@ import {
   getTokenBalance,
   getTokenInfo,
 } from "@/lib/contracts/erc20";
-import { getSupportedTokensForChain } from "@/lib/contracts/jobManager";
+import {
+  getJobBalance,
+  getSupportedTokensForChain,
+} from "@/lib/contracts/jobManager";
 import { ACTIVE_CHAIN_ID, ACTIVE_CHAIN_NAME } from "@/config/chains";
 
 export interface BlockchainActivateJob {
@@ -77,6 +80,39 @@ export default function BlockchainActivateModal({
   const [resolvedBlockchainJobId, setResolvedBlockchainJobId] = useState<
     number | null
   >(job.blockchainJobId);
+
+  // Escrow balance already on-chain for this job. If it's above zero, funding
+  // happened before (e.g. a previous attempt whose activation failed), so we
+  // must only activate — never ask the wallet to pay again.
+  const [escrowBalance, setEscrowBalance] = useState<bigint | null>(null);
+  const [isCheckingEscrow, setIsCheckingEscrow] = useState(false);
+  // Set as soon as addFunds succeeds in this session, independent of the
+  // on-chain read, so a retry can't re-send funds even if that read fails.
+  const [fundsAdded, setFundsAdded] = useState(false);
+
+  const isFunded = fundsAdded || (escrowBalance !== null && escrowBalance > 0n);
+
+  useEffect(() => {
+    if (!isOpen || step !== 2 || resolvedBlockchainJobId === null) return;
+
+    let cancelled = false;
+    setIsCheckingEscrow(true);
+
+    (async () => {
+      try {
+        const balance = await getJobBalance(resolvedBlockchainJobId);
+        if (!cancelled) setEscrowBalance(balance);
+      } catch (err) {
+        console.warn("Failed to read escrow balance:", err);
+      } finally {
+        if (!cancelled) setIsCheckingEscrow(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, step, resolvedBlockchainJobId]);
 
   // Load token info + wallet balance whenever token selection or account changes
   useEffect(() => {
@@ -148,8 +184,11 @@ export default function BlockchainActivateModal({
         return;
       }
 
-      const { jobId: onChainJobId } = result;
+      // When recovering an already-published job, its on-chain token wins
+      // over the current selection.
+      const { jobId: onChainJobId, tokenAddress: onChainTokenAddress } = result;
       const blockchainJobIdNum = Number(onChainJobId);
+      setSelectedTokenAddress(onChainTokenAddress);
 
       // Persist to DB — also save the active chain so FundManager uses the correct network
       const res = await fetch(`/api/jobs/${job.id}/blockchain-publish`, {
@@ -158,7 +197,7 @@ export default function BlockchainActivateModal({
         body: JSON.stringify({
           blockchainJobId: blockchainJobIdNum,
           chain: ACTIVE_CHAIN_NAME,
-          paymentTokenAddress: selectedTokenAddress,
+          paymentTokenAddress: onChainTokenAddress,
         }),
       });
 
@@ -179,19 +218,60 @@ export default function BlockchainActivateModal({
     }
   }
 
+  // Marks the job active in our DB. Safe to retry: the endpoint returns
+  // success if the job is already active.
+  async function activateJob(): Promise<boolean> {
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/activate`, {
+        method: "POST",
+      });
+
+      const payload = (await res.json().catch(() => ({}))) as {
+        success?: boolean;
+        error?: string;
+      };
+      if (!res.ok || !payload.success) {
+        throw new Error(payload.error ?? "Failed to activate job");
+      }
+
+      return true;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to activate job";
+      toast.error(
+        `Your funds are safely in escrow, but activation failed: ${message}. Please retry.`,
+      );
+      return false;
+    }
+  }
+
   async function handleAddFundAndActivate() {
     if (!account) {
       toast.error("Please connect your wallet first");
       return;
     }
 
-    if (!fundAmount || Number(fundAmount) <= 0) {
-      toast.error("Please enter a valid fund amount");
+    if (resolvedBlockchainJobId === null) {
+      toast.error("Blockchain job ID is missing. Please restart from step 1.");
       return;
     }
 
-    if (resolvedBlockchainJobId === null) {
-      toast.error("Blockchain job ID is missing. Please restart from step 1.");
+    // Funds are already in escrow — only retry the activation, never pay again.
+    if (isFunded) {
+      setIsProcessing(true);
+      try {
+        if (await activateJob()) {
+          toast.success("Job is now live!");
+          onActivated(job.id);
+          onClose();
+        }
+      } finally {
+        setIsProcessing(false);
+      }
+      return;
+    }
+
+    if (!fundAmount || Number(fundAmount) <= 0) {
+      toast.error("Please enter a valid fund amount");
       return;
     }
 
@@ -209,28 +289,26 @@ export default function BlockchainActivateModal({
         return;
       }
 
-      // Activate the job in our DB
-      const res = await fetch(`/api/jobs/${job.id}/activate`, {
-        method: "POST",
-      });
+      setFundsAdded(true);
+      getJobBalance(resolvedBlockchainJobId)
+        .then(setEscrowBalance)
+        .catch(() => {
+          // Non-fatal — fundsAdded already blocks a second payment
+        });
 
-      const payload = (await res.json()) as { success?: boolean; error?: string };
-      if (!res.ok || !payload.success) {
-        throw new Error(payload.error ?? "Failed to activate job");
+      if (await activateJob()) {
+        toast.success(`Job is now live! ${fundAmount} ${tokenSymbol} added as provision fund.`);
+        onActivated(job.id);
+        onClose();
       }
-
-      toast.success(`Job is now live! ${fundAmount} ${tokenSymbol} added as provision fund.`);
-      onActivated(job.id);
-      onClose();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to activate job";
-      toast.error(message);
     } finally {
       setIsProcessing(false);
     }
   }
 
   const isBusy = isProcessing || isContractLoading;
+  const formattedEscrowBalance =
+    escrowBalance !== null ? formatTokenBalance(escrowBalance, tokenDecimals) : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -401,32 +479,44 @@ export default function BlockchainActivateModal({
                 </div>
               </div>
 
-              {/* Amount input */}
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Fund Amount ({tokenSymbol || "tokens"})
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min="0"
-                    step="any"
-                    value={fundAmount}
-                    onChange={(e) => setFundAmount(e.target.value)}
-                    disabled={isBusy}
-                    placeholder="e.g. 500"
-                    className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200 disabled:bg-slate-50"
-                  />
-                  <button
-                    type="button"
-                    disabled={isBusy}
-                    onClick={() => setFundAmount(walletBalance)}
-                    className="shrink-0 rounded-full border border-slate-300 px-3 py-3 text-xs font-medium text-slate-600 transition hover:border-slate-900 hover:text-slate-900 disabled:opacity-50"
-                  >
-                    Max
-                  </button>
+              {isFunded ? (
+                <div className="flex items-start gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>
+                    {escrowBalance !== null && escrowBalance > 0n
+                      ? `Already funded: ${formattedEscrowBalance} ${tokenSymbol} is in escrow.`
+                      : "Your funds are in escrow."}{" "}
+                    You only need to activate the job — no further payment is
+                    required.
+                  </span>
                 </div>
-              </div>
+              ) : (
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Fund Amount ({tokenSymbol || "tokens"})
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={fundAmount}
+                      onChange={(e) => setFundAmount(e.target.value)}
+                      disabled={isBusy}
+                      placeholder="e.g. 500"
+                      className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200 disabled:bg-slate-50"
+                    />
+                    <button
+                      type="button"
+                      disabled={isBusy}
+                      onClick={() => setFundAmount(walletBalance)}
+                      className="shrink-0 rounded-full border border-slate-300 px-3 py-3 text-xs font-medium text-slate-600 transition hover:border-slate-900 hover:text-slate-900 disabled:opacity-50"
+                    >
+                      Max
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Info note */}
               <div className="flex items-start gap-2 rounded-2xl bg-amber-50 px-4 py-3 text-xs text-amber-800">
@@ -440,7 +530,12 @@ export default function BlockchainActivateModal({
 
               <button
                 type="button"
-                disabled={isBusy || !account || !fundAmount || Number(fundAmount) <= 0}
+                disabled={
+                  isBusy ||
+                  isCheckingEscrow ||
+                  !account ||
+                  (!isFunded && (!fundAmount || Number(fundAmount) <= 0))
+                }
                 onClick={() => void handleAddFundAndActivate()}
                 className="flex w-full items-center justify-center gap-2 rounded-full bg-amber-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:bg-amber-300"
               >
@@ -449,6 +544,15 @@ export default function BlockchainActivateModal({
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Processing…
                   </>
+                ) : isCheckingEscrow ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Checking escrow…
+                  </>
+                ) : fundsAdded ? (
+                  "Retry Activation"
+                ) : isFunded ? (
+                  "Activate Job"
                 ) : (
                   "Fund & Activate Job"
                 )}

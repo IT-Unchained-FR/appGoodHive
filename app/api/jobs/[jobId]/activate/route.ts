@@ -45,15 +45,18 @@ export async function POST(
       );
     }
 
+    // Already active: treat as success so a retry after a failed response
+    // (funds already in escrow) doesn't surface as an error.
+    if (job.review_status === "active") {
+      return NextResponse.json(
+        { success: true, data: { jobId, reviewStatus: "active" } },
+        { status: 200 },
+      );
+    }
+
     if (job.review_status !== "approved") {
       return NextResponse.json(
-        {
-          success: false,
-          error:
-            job.review_status === "active"
-              ? "Job is already active"
-              : "Job must be in approved state to activate",
-        },
+        { success: false, error: "Job must be in approved state to activate" },
         { status: 409 },
       );
     }

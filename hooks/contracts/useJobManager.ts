@@ -33,8 +33,40 @@ import {
   parseTokenAmount
 } from '@/lib/contracts/erc20';
 
+import { getFriendlyWalletError, UserFacingError } from '@/lib/contracts/walletErrors';
+
 import { thirdwebClient } from '@/clients/thirdwebClient';
 import { activeChain } from '@/config/chains';
+
+export interface CreateJobResult {
+  jobId: string;
+  // null when the job was already on-chain and we only recovered its ID
+  transactionHash: string | null;
+  tokenAddress: string;
+  alreadyPublished: boolean;
+}
+
+// Finds the on-chain job owned by `owner` that was created for `databaseId`.
+// Returns null when no exact match exists — never guesses.
+async function findOwnedJobByDatabaseId(
+  owner: string,
+  databaseId: bigint
+): Promise<{ jobId: string; tokenAddress: string } | null> {
+  const userJobIds = await getUserJobs(owner);
+
+  for (const jobId of [...userJobIds].reverse()) {
+    try {
+      const jobData = await getJob(jobId);
+      if (jobData && BigInt(jobData.databaseId) === databaseId) {
+        return { jobId: jobId.toString(), tokenAddress: jobData.tokenAddress };
+      }
+    } catch (err) {
+      console.warn(`Failed to load job ${jobId.toString()} while matching database ID`, err);
+    }
+  }
+
+  return null;
+}
 
 // Hook for managing job contract interactions
 export function useJobManager() {
@@ -54,7 +86,7 @@ export function useJobManager() {
   const isContractConfigured = !!JOB_MANAGER_CONTRACT_ADDRESS;
 
   // Create a new job on the blockchain
-  const createJob = useCallback(async (params: JobCreationParams): Promise<{ jobId: string; transactionHash: string } | null> => {
+  const createJob = useCallback(async (params: JobCreationParams): Promise<CreateJobResult | null> => {
     if (!account) {
       setError('Please connect your wallet');
       return null;
@@ -72,9 +104,24 @@ export function useJobManager() {
       // Check if database ID is already used
       const normalizedDatabaseId = normalizeDatabaseId(params.databaseId);
 
+      // Already on-chain (e.g. a previous attempt whose DB save failed):
+      // recover the existing job instead of failing or sending a new tx.
       const isUsed = await isDatabaseIdUsed(normalizedDatabaseId);
       if (isUsed) {
-        throw new Error('Database ID already exists on blockchain');
+        const existing = await findOwnedJobByDatabaseId(account.address, normalizedDatabaseId);
+        if (!existing) {
+          throw new UserFacingError(
+            'This job is already on the blockchain under a different wallet. Connect the wallet that published it and try again.'
+          );
+        }
+
+        toast.success('Job is already on the blockchain. Picking up where you left off.');
+        return {
+          jobId: existing.jobId,
+          transactionHash: null,
+          tokenAddress: existing.tokenAddress,
+          alreadyPublished: true,
+        };
       }
 
       // Prepare the transaction (gas settings are now in prepareCreateJobCall)
@@ -146,61 +193,35 @@ export function useJobManager() {
 
       if (!blockchainJobId) {
         try {
-          const userJobIds = await getUserJobs(account.address);
-          let matched = false;
-
-          for (const jobId of [...userJobIds].reverse()) {
-            try {
-              const jobData = await getJob(Number(jobId));
-              if (!jobData) {
-                continue;
-              }
-
-              const jobDatabaseId =
-                typeof jobData.databaseId === 'bigint'
-                  ? jobData.databaseId
-                  : BigInt(jobData.databaseId);
-
-              if (jobDatabaseId === normalizedDatabaseId) {
-                blockchainJobId = jobId.toString();
-                matched = true;
-                break;
-              }
-            } catch (innerError) {
-              console.warn(
-                `Failed to load job ${jobId.toString()} for fallback lookup`,
-                innerError
-              );
-            }
-          }
-
-          if (!matched && userJobIds.length > 0) {
-            blockchainJobId = userJobIds[userJobIds.length - 1].toString();
-          }
+          const existing = await findOwnedJobByDatabaseId(account.address, normalizedDatabaseId);
+          blockchainJobId = existing?.jobId ?? null;
         } catch (fallbackError) {
           console.warn('Failed to determine blockchain job ID via fallback', fallbackError);
         }
       }
 
       if (!blockchainJobId) {
-        console.warn('Unable to determine blockchain job ID after successful transaction');
+        // The tx succeeded, so a retry will take the recovery path above
+        // once the job is readable — no second transaction is sent.
+        throw new UserFacingError(
+          'Your job was created on the blockchain, but we could not confirm its ID yet. Please wait a moment and try again.'
+        );
       }
 
       toast.success('Job created on blockchain!');
 
-      if (!blockchainJobId) return null;
-      return { jobId: blockchainJobId, transactionHash };
-    } catch (err: any) {
+      return {
+        jobId: blockchainJobId,
+        transactionHash,
+        tokenAddress: params.tokenAddress,
+        alreadyPublished: false,
+      };
+    } catch (err: unknown) {
       console.error('Failed to create job:', err);
-      const isRateLimited =
-        (err?.code === -32603 || err?.code === 'RATE_LIMITED') &&
-        typeof err?.message === 'string' &&
-        err.message.toLowerCase().includes('rate limited');
-
-      const errorMessage = isRateLimited
-        ? 'RPC provider rate limit hit while broadcasting the transaction. Please switch MetaMask to a custom Polygon RPC (e.g. an Alchemy/Infura endpoint) and try again.'
-        : err?.message || 'Failed to create job';
-
+      const errorMessage = getFriendlyWalletError(
+        err,
+        "Couldn't publish the job to the blockchain. Please try again."
+      );
       setError(errorMessage);
       toast.error(errorMessage);
       return null;
@@ -237,32 +258,37 @@ export function useJobManager() {
       );
 
       if (!permissions.hasBalance) {
-        throw new Error(`Insufficient ${tokenInfo.symbol} balance`);
+        throw new UserFacingError(`Insufficient ${tokenInfo.symbol} balance`);
       }
 
       // Approve if needed
       if (permissions.needsApproval) {
-        toast.loading('Approving token spending...');
+        const approvalToastId = toast.loading('Approving token spending...');
 
-        const approvalTransaction = prepareApproveCall(
-          tokenAddress,
-          JOB_MANAGER_CONTRACT_ADDRESS,
-          amountWei
-        );
+        try {
+          const approvalTransaction = prepareApproveCall(
+            tokenAddress,
+            JOB_MANAGER_CONTRACT_ADDRESS,
+            amountWei
+          );
 
-        const { transactionHash: approvalHash } = await sendTransaction({
-          transaction: approvalTransaction,
-          account
-        });
+          const { transactionHash: approvalHash } = await sendTransaction({
+            transaction: approvalTransaction,
+            account
+          });
 
-        await waitForReceipt({
-          client: thirdwebClient,
-          chain: approvalTransaction.chain ?? activeChain,
-          transactionHash: approvalHash
-        });
+          await waitForReceipt({
+            client: thirdwebClient,
+            chain: approvalTransaction.chain ?? activeChain,
+            transactionHash: approvalHash
+          });
 
-        toast.dismiss();
-        toast.success('Token spending approved!');
+          toast.success('Token spending approved!', { id: approvalToastId });
+        } catch (approvalError) {
+          // Clear the spinner on reject/failure; the outer catch shows the error.
+          toast.dismiss(approvalToastId);
+          throw approvalError;
+        }
       }
 
       // Add funds
@@ -281,9 +307,9 @@ export function useJobManager() {
 
       toast.success('Funds added successfully!');
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to add funds:', err);
-      const errorMessage = err.message || 'Failed to add funds';
+      const errorMessage = getFriendlyWalletError(err, "Couldn't add funds. Please try again.");
       setError(errorMessage);
       toast.error(errorMessage);
       return false;
@@ -333,9 +359,9 @@ export function useJobManager() {
 
       toast.success(withdrawAll ? 'All funds withdrawn!' : 'Funds withdrawn successfully!');
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to withdraw funds:', err);
-      const errorMessage = err.message || 'Failed to withdraw funds';
+      const errorMessage = getFriendlyWalletError(err, "Couldn't withdraw funds. Please try again.");
       setError(errorMessage);
       toast.error(errorMessage);
       return false;
@@ -369,7 +395,7 @@ export function useJobManager() {
       // Check if job has sufficient balance
       const jobBalance = await getJobBalance(jobId);
       if (jobBalance < totalFees) {
-        throw new Error('Insufficient balance in job to pay fees');
+        throw new UserFacingError('Insufficient balance in job to pay fees');
       }
 
       const transaction = preparePayFeesCall(jobId, baseAmountWei);
@@ -387,9 +413,9 @@ export function useJobManager() {
 
       toast.success('Fees paid successfully!');
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to pay fees:', err);
-      const errorMessage = err.message || 'Failed to pay fees';
+      const errorMessage = getFriendlyWalletError(err, "Couldn't pay the fees. Please try again.");
       setError(errorMessage);
       toast.error(errorMessage);
       return false;
