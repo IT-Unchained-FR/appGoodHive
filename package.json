@@ -16,7 +16,8 @@
     "migrate": "tsx app/db/run-migration.ts",
     "migrate:otp": "tsx app/db/run-otp-migration.ts",
     "status-sync-check": "tsx scripts/status-sync-check.ts",
-    "backfill:talent-profile-evaluations": "tsx scripts/backfill-talent-profile-evaluations.ts"
+    "backfill:talent-profile-evaluations": "tsx scripts/backfill-talent-profile-evaluations.ts",
+    "seed:knowledge-base": "tsx scripts/seed-knowledge-base-files.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.327.0",
@@ -110,8 +111,8 @@
     "react-hook-form": "^7.53.2",
     "react-hot-toast": "^2.4.0",
     "react-icons": "^5.5.0",
-    "react-loading-skeleton": "^3.2.1",
     "react-joyride": "^3.2.0",
+    "react-loading-skeleton": "^3.2.1",
     "react-modal": "^3.16.1",
     "react-pro-sidebar": "^1.1.0",
     "react-quill": "^2.0.0",

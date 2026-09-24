@@ -1,5 +1,4 @@
-import fs from "fs";
-import path from "path";
+import sql from "@/lib/ragDb";
 import type { RagContext } from "@/lib/ragEngine";
 
 type KnowledgeEntry = {
@@ -7,21 +6,6 @@ type KnowledgeEntry = {
   body: string;
   category: string;
 };
-
-// Listed literally (not via readdirSync) so Next.js's file tracing bundles
-// them into the standalone serverless output.
-const KNOWLEDGE_FILES = [
-  "general.md",
-  "getting-started.md",
-  "pricing.md",
-  "jobs.md",
-  "technical.md",
-  "payments.md",
-  "security.md",
-  "support.md",
-] as const;
-
-const KNOWLEDGE_DIR = path.join(process.cwd(), "content", "superbot-knowledge");
 
 const STOPWORDS = new Set([
   "the", "a", "an", "is", "are", "do", "does", "did", "to", "of", "in", "on",
@@ -39,52 +23,61 @@ function tokenize(text: string): string[] {
     .filter((word) => word.length > 2 && !STOPWORDS.has(word));
 }
 
-function parseKnowledgeFile(fileName: string, raw: string): KnowledgeEntry[] {
-  const lines = raw.split("\n");
-  const categoryLine = lines.find((line) => line.startsWith("# "));
-  const category = categoryLine ? categoryLine.replace(/^#\s+/, "").trim() : fileName;
-
+function parseKnowledgeFile(title: string, raw: string): KnowledgeEntry[] {
   const body = raw.replace(/^#\s+.*\n/, "");
   const sections = body.split(/\n##\s+/).map((s) => s.trim()).filter(Boolean);
 
   return sections.map((section) => {
     const newlineIndex = section.indexOf("\n");
-    const title = (newlineIndex === -1 ? section : section.slice(0, newlineIndex))
+    const sectionTitle = (newlineIndex === -1 ? section : section.slice(0, newlineIndex))
       .replace(/^##\s+/, "")
       .trim();
     const text = (newlineIndex === -1 ? "" : section.slice(newlineIndex + 1)).trim();
-    return { title, body: text, category };
+    return { title: sectionTitle, body: text, category: title };
   });
 }
 
+const CACHE_TTL_MS = 60_000;
 let cachedEntries: KnowledgeEntry[] | null = null;
+let cachedAt = 0;
 
-function loadKnowledgeEntries(): KnowledgeEntry[] {
-  if (cachedEntries) return cachedEntries;
-
-  const entries: KnowledgeEntry[] = [];
-  for (const fileName of KNOWLEDGE_FILES) {
-    try {
-      const raw = fs.readFileSync(path.join(KNOWLEDGE_DIR, fileName), "utf-8");
-      entries.push(...parseKnowledgeFile(fileName, raw));
-    } catch (error) {
-      console.warn(`[knowledge-base] Failed to read ${fileName}:`, error);
-    }
+async function loadKnowledgeEntries(): Promise<KnowledgeEntry[]> {
+  if (cachedEntries && Date.now() - cachedAt < CACHE_TTL_MS) {
+    return cachedEntries;
   }
-  cachedEntries = entries;
-  return entries;
+
+  try {
+    const rows = await sql<{ title: string; content: string }[]>`
+      SELECT title, content
+      FROM goodhive.knowledge_base_files
+      ORDER BY title ASC;
+    `;
+
+    const entries: KnowledgeEntry[] = [];
+    for (const row of rows) {
+      entries.push(...parseKnowledgeFile(row.title, row.content));
+    }
+
+    cachedEntries = entries;
+    cachedAt = Date.now();
+    return entries;
+  } catch (error) {
+    console.warn("[knowledge-base] Failed to load knowledge_base_files:", error);
+    return cachedEntries ?? [];
+  }
 }
 
 /**
- * Keyword-overlap match against the markdown knowledge base in
- * content/superbot-knowledge/*.md. Replaces the dead Vertex AI RAG
- * retrieval — no external service, no database, no embeddings.
+ * Keyword-overlap match against goodhive.knowledge_base_files, editable live
+ * from /admin/knowledge-base. Replaces the dead Vertex AI RAG retrieval — no
+ * external service, no embeddings; module-scope cache with a short TTL keeps
+ * per-message cost low while still picking up admin edits within ~1 minute.
  */
 export async function retrieveKnowledgeBaseContexts(
   userMessage: string,
   topK = 4,
 ): Promise<RagContext[]> {
-  const entries = loadKnowledgeEntries();
+  const entries = await loadKnowledgeEntries();
   if (entries.length === 0) return [];
 
   const queryTokens = new Set(tokenize(userMessage));
@@ -109,5 +102,6 @@ export async function retrieveKnowledgeBaseContexts(
 }
 
 export async function listKnowledgeQuestions(): Promise<string[]> {
-  return loadKnowledgeEntries().map((entry) => entry.title).filter(Boolean);
+  const entries = await loadKnowledgeEntries();
+  return entries.map((entry) => entry.title).filter(Boolean);
 }

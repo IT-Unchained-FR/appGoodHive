@@ -8,7 +8,19 @@
 
 ## Handoff Note
 
-`2026-09-23`
+`2026-09-23` (later same day)
+
+- **Moved Superbot's knowledge base from repo markdown files to a Postgres table** (`goodhive.knowledge_base_files`) plus a new `/admin/knowledge-base` admin UI, per explicit user request to upload/edit knowledge-base content from the admin panel without a git commit + redeploy. This reverses the entry directly below. Full doc → [`docs/features/superbot-knowledge-base.md`](../features/superbot-knowledge-base.md) (see "Update #2").
+- New migration `db/migrations/add-knowledge-base-files.sql`, applied to production (`goodhive-prod` — confirmed with the user first, since this repo's `.env`/`.env.local` both point at prod with no separate dev DB).
+- New `scripts/seed-knowledge-base-files.ts` (`pnpm seed:knowledge-base`) imported the 8 existing `content/superbot-knowledge/*.md` files into the table, then those files were deleted (no longer read by any code path).
+- `lib/superbot/knowledge.ts` now queries the DB via `lib/ragDb` instead of `fs.readFileSync`; cache TTL dropped from "whole process lifetime" to 60s so admin edits go live quickly.
+- New admin API: `GET/POST /api/admin/knowledge-base`, `PUT/DELETE /api/admin/knowledge-base/[id]` (same JWT admin-auth pattern as `/api/admin/settings`). New admin page `app/admin/knowledge-base/page.tsx`, linked from the sidebar.
+- Verified end-to-end against a local dev server pointed at the same production DB: list, edit (question added + reflected in `/api/superbot/knowledge-questions` within the same request), create, and delete all confirmed working; test data reverted/deleted afterward.
+- Validation: `pnpm tsc --noEmit` clean (whole project); `next lint` on touched files clean aside from one pre-existing-pattern warning already present elsewhere in the admin panel.
+
+---
+
+`2026-09-23` (earlier same day, superseded by the entry above)
 
 - **Switched Superbot's knowledge base from Postgres to markdown files**, per explicit user direction (one source of truth, in-repo, no DB dependency for content edits). Full doc → [`docs/features/superbot-knowledge-base.md`](../features/superbot-knowledge-base.md).
 - New `content/superbot-knowledge/*.md` — 8 files (one per FAQ category), `##`-per-question sections, sourced from the same content already public on `/faq` (`app/components/faq/faq.constants.ts`).

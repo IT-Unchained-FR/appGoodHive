@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   BarChart3,
+  BookOpen,
   Briefcase,
   Building2,
   CreditCard,
@@ -106,6 +107,12 @@ const managementNav: NavDef[] = [
     icon: Mail,
     label: "Newsletter",
     dataE2e: "newsletter-menu",
+  },
+  {
+    href: "/admin/knowledge-base",
+    icon: BookOpen,
+    label: "Knowledge Base",
+    dataE2e: "knowledge-base-menu",
   },
 ];
 

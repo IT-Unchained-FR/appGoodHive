@@ -3,14 +3,18 @@
 ## Status
 `DONE`
 
-**2026-09-23 update:** shipped as **markdown files in the repo** (`content/superbot-knowledge/*.md`), not the Postgres `content_items` table originally planned below — explicit user decision: one source of truth, editable in-repo, no DB round trip. The `content_items` DB path (and its 12 seeded rows) was implemented first, verified working, then fully superseded and the seeded rows deleted. Left here for the historical reasoning; see "Final Architecture" below for what's actually live.
+**2026-09-23 update #2:** moved storage from static repo files to a Postgres table (`goodhive.knowledge_base_files`) so Benoit/admins can upload and edit knowledge-base markdown live from `/admin/knowledge-base`, with no git commit/redeploy required. This reverses the "markdown files in the repo" decision below — see "Final Architecture" for what's live now.
 
-## Final Architecture (as shipped)
-- Knowledge lives in `content/superbot-knowledge/*.md` — one file per FAQ category (`general.md`, `getting-started.md`, `pricing.md`, `jobs.md`, `technical.md`, `payments.md`, `security.md`, `support.md`), each with `## Question` sections.
-- `lib/superbot/knowledge.ts` reads all files (literal filenames, not `readdirSync`, so Next's file tracing bundles them into the `output: "standalone"` build), parses `##` sections into `{title, body, category}` entries, caches them in module scope for the process lifetime.
-- `retrieveKnowledgeBaseContexts(userMessage)` does keyword-overlap scoring (same approach as the DB version below) and returns the top 4 matching entries.
-- `listKnowledgeQuestions()` backs a new `GET /api/superbot/knowledge-questions` endpoint, which `SuperbotWidget.tsx`'s suggested-questions chips now read from (previously `/api/content-items?type=faq`).
-- Tradeoff accepted: adding/editing an answer now requires a git commit + redeploy, not a live API call. Chosen deliberately over the DB approach for a single source of truth that's easy to read/diff in the repo.
+**2026-09-23 update #1 (superseded by update #2):** shipped as **markdown files in the repo** (`content/superbot-knowledge/*.md`), not the Postgres `content_items` table originally planned below — explicit user decision at the time: one source of truth, editable in-repo, no DB round trip. The `content_items` DB path (and its 12 seeded rows) was implemented first, verified working, then fully superseded and the seeded rows deleted.
+
+## Final Architecture (as shipped, update #2)
+- Knowledge lives in `goodhive.knowledge_base_files` (Postgres, same DB as the rest of Superbot — `lib/ragDb`): `id, slug, title, content, updated_by, created_at, updated_at`. One row per FAQ category, `content` is the full markdown body with `## Question` sections. Migration: `db/migrations/add-knowledge-base-files.sql`.
+- `lib/superbot/knowledge.ts` queries all rows, parses `##` sections into `{title, body, category}` entries, and caches them in module scope for **60 seconds** (not indefinitely — admin edits need to become visible without a redeploy/cold start).
+- `retrieveKnowledgeBaseContexts(userMessage)` — unchanged keyword-overlap scoring, now sourced from the DB.
+- `listKnowledgeQuestions()` — unchanged, backs `GET /api/superbot/knowledge-questions`.
+- Admin CRUD: `GET/POST /api/admin/knowledge-base` and `GET/PUT/DELETE /api/admin/knowledge-base/[id]`, same `admin_token` JWT auth pattern as `/api/admin/settings`. UI at `/admin/knowledge-base` (linked from the sidebar, "Knowledge Base") — table of files with Edit/Delete, a "New File" modal, and an "Upload .md" button that reads a local `.md` file client-side (`FileReader`) and pre-fills the create form (slug from filename, title from the `# Heading` line) — no S3/Blob involved, it's just text into the DB.
+- One-off import: `scripts/seed-knowledge-base-files.ts` (`pnpm seed:knowledge-base`) read the original 8 `content/superbot-knowledge/*.md` files into the new table (`ON CONFLICT (slug) DO NOTHING`, safe to re-run). Already run against production; the `content/superbot-knowledge/` directory has been deleted — it's no longer read by any code path.
+- Tradeoff reversed from update #1: content edits are now a live DB write (visible to the bot within ~60s, no deploy), at the cost of reintroducing a DB dependency for content storage. Chosen deliberately (2026-09-23) because live admin editing was the actual requirement — git-diffable history was nice-to-have, not load-bearing.
 
 ## Status (original plan, superseded)
 `PLANNING`
@@ -82,3 +86,43 @@ Plus manual: open the Superbot widget on a dev server, ask 3–4 real GoodHive q
 - [ ] Lint passes
 - [ ] Typecheck passes
 - [ ] Docs updated
+
+---
+
+## Update #2 (2026-09-23): DB-backed storage for live admin editing
+
+### Business Goal
+Benoit wants to upload new knowledge-base files and edit existing ones from the admin panel, without a git commit + redeploy for every content change.
+
+### Impacted Files / Modules
+- New `db/migrations/add-knowledge-base-files.sql` — `goodhive.knowledge_base_files` table.
+- New `scripts/seed-knowledge-base-files.ts` (`pnpm seed:knowledge-base`) — one-off import of the (now-deleted) `content/superbot-knowledge/*.md` files.
+- `lib/superbot/knowledge.ts` — rewritten to query `goodhive.knowledge_base_files` via `lib/ragDb` instead of `fs.readFileSync`; cache TTL changed from "forever" (module lifetime) to 60s.
+- New `app/api/admin/knowledge-base/route.ts` (GET list, POST create) and `app/api/admin/knowledge-base/[id]/route.ts` (PUT update, DELETE) — same `admin_token` JWT pattern as `app/api/admin/settings/route.ts`.
+- New `app/admin/knowledge-base/page.tsx` — list/edit/create/delete UI, plus a client-side `.md` file reader that pre-fills the create form.
+- `app/components/Sidebar/Sidebar.tsx` — added "Knowledge Base" nav item under Management.
+- Deleted `content/superbot-knowledge/*.md` (8 files) — no longer read by any code path after the seed import ran.
+
+### DB Changes
+- New table: `goodhive.knowledge_base_files` (`id, slug, title, content, updated_by, created_at, updated_at`; `slug` unique).
+- Migration applied to production (`goodhive-prod`, the only DB this repo is configured against — no separate dev/staging DB) on 2026-09-23, with explicit user confirmation since `.env`/`.env.local` both point at prod.
+- Seed script run once against production the same day; imported all 8 original files.
+
+### API Changes
+- New: `GET/POST /api/admin/knowledge-base`, `PUT/DELETE /api/admin/knowledge-base/[id]` (admin-auth only).
+- Unchanged externally: `GET /api/superbot/knowledge-questions`, and the bot's context retrieval — both keep the same function signatures, only their data source changed.
+
+### Validation Performed
+- `npx tsc --noEmit` — clean (whole project).
+- `next lint` on changed files — clean except a pre-existing-pattern `react-hooks/exhaustive-deps` warning (same warning exists in `app/admin/manage-admins/page.tsx` for the same `fetchX` re-fetch pattern).
+- Manual, against a local dev server pointed at the same production DB (`pnpm exec next dev -p 3002`, admin session via a locally-minted JWT cookie for the same `ADMIN_JWT_SECRET`):
+  - `/admin/knowledge-base` lists all 8 seeded files with correct per-file question counts.
+  - Edit → added a question to `general.md`, saved, row's `updated_by`/`updated_at` updated correctly.
+  - `GET /api/superbot/knowledge-questions` immediately reflected the new question (fresh process, cache empty).
+  - `POST /api/admin/knowledge-base` (create) → 201; `DELETE .../[id]` → 200. Both exercised directly (file-picker UI wasn't automatable in this session) — same code path as the "New File" / "Upload .md" buttons.
+  - Test edit and test row were reverted/deleted after verification — production data left exactly as the seed script produced it.
+
+### Open Questions / TBDs
+- No content versioning/undo — an admin edit overwrites `content` immediately with no history. Acceptable for now; worth a follow-up if edits get destructive in practice (e.g. add an `audit_log` table or keep N previous versions).
+- `content` is stored/edited as raw markdown text (plain `<textarea>`), not a WYSIWYG/markdown-preview editor — matches the existing `## Question` convention `lib/superbot/knowledge.ts` parses, but there's no live preview of how a section will render to the bot.
+- No production DB backup/rollback plan was set up specifically for this table — relies on whatever backup policy already covers `goodhive-prod`.
