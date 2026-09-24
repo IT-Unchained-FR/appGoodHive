@@ -73,3 +73,7 @@ goodhive_*backup*.sql
 
 # Invoices
 invoice*
+
+# Local editor/agent tooling
+.antigravity/
+.claude/launch.json
