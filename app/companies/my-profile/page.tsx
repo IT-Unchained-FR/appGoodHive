@@ -1056,8 +1056,10 @@ export default function MyProfile() {
             {/* 01 Identity */}
             <section className="relative border-b-2 border-t-2 border-b-stone-900/20 border-t-stone-900 pb-9 pt-10">
               <div className="relative flex flex-wrap gap-10">
-                <div className="flex flex-[0_0_180px] flex-col gap-3">
-                  <SectionTitle index="01">Identity</SectionTitle>
+                <div className="flex w-full flex-col items-center gap-3 text-center md:w-auto md:flex-[0_0_180px] md:items-stretch md:text-left">
+                  <SectionTitle index="01" className="self-start">
+                    Identity
+                  </SectionTitle>
                   <div
                     ref={logoRef}
                     className="relative"
@@ -1081,7 +1083,7 @@ export default function MyProfile() {
                         ?.querySelector<HTMLElement>(".cursor-pointer")
                         ?.click()
                     }
-                    className={`${ui.btnGhost} self-start`}
+                    className={`${ui.btnGhost} md:self-start`}
                   >
                     <Camera className="h-4 w-4" />
                     {profileData.image_url ? "Replace logo" : "Upload logo"}
