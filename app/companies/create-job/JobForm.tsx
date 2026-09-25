@@ -20,6 +20,7 @@ import { ToggleButton } from "@components/toggle-button";
 import { chains } from "@constants/chains";
 import {
   createJobServices,
+  getTotalServiceFeePercent,
   ethereumTokens,
   gnosisChainTokens,
   jobTypes,
@@ -249,13 +250,7 @@ export const JobForm = ({
   } = useJobManager();
 
   // Calculate total percentage of selected services
-  const getTotalPercentage = () => {
-    let total = 0;
-    if (jobServices.talent) total += 10;
-    if (jobServices.recruiter) total += 8;
-    if (jobServices.mentor) total += 12;
-    return total;
-  };
+  const getTotalPercentage = () => getTotalServiceFeePercent(jobServices);
 
   const onJobServicesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const updatedServices = {

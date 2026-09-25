@@ -21,6 +21,7 @@ import {
 
 import { useConfirm } from '@/app/components/ConfirmDialog/ConfirmDialog';
 import { FundManagerTour } from './FundManagerTour';
+import { getServiceFeePercent } from '@/app/constants/common';
 
 import { useJobManager, useJobData } from '@/hooks/contracts/useJobManager';
 import { getTokenInfo, getTokenBalance, formatTokenBalance } from '@/lib/contracts/erc20';
@@ -576,9 +577,9 @@ export default function FundManager({
             </p>
             <dl className="space-y-1.5 text-sm">
               {[
-                { on: jobData.talentService, label: 'Talent selection', fee: '10%' },
-                { on: jobData.recruiterService, label: 'Recruiter', fee: '8%' },
-                { on: jobData.mentorService, label: 'Mentor', fee: '12%' },
+                { on: jobData.talentService, label: 'Talent selection', fee: `${getServiceFeePercent('talent')}%` },
+                { on: jobData.recruiterService, label: 'Recruiter', fee: `${getServiceFeePercent('recruiter')}%` },
+                { on: jobData.mentorService, label: 'Mentor', fee: `${getServiceFeePercent('mentor')}%` },
               ]
                 .filter((s) => s.on)
                 .map((s) => (
