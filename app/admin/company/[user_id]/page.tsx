@@ -31,6 +31,7 @@ import { ActionHistory } from "@/app/components/admin/ActionHistory";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import {
   EditCompanyModal,
+  getCompanySaveError,
   type Company,
 } from "@/app/components/admin/EditCompanyModal";
 import { Badge } from "@/components/ui/badge";
@@ -336,14 +337,14 @@ export default function CompaniesPage({
       }
 
       if (!response.ok) {
-        throw new Error("Failed to update company");
+        throw new Error(await getCompanySaveError(response));
       }
 
       toast.success("Company updated successfully");
       await fetchData();
     } catch (saveError) {
       console.error("Error updating company:", saveError);
-      toast.error("Failed to update company");
+      toast.error(saveError instanceof Error ? saveError.message : "Failed to update company");
       throw saveError;
     }
   };

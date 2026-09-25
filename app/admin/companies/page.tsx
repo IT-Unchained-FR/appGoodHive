@@ -6,7 +6,7 @@ import { AdminDataGrid } from "@/app/components/admin/AdminDataGrid";
 import { AdminFilters } from "@/app/components/admin/AdminFilters";
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
 import { DeleteConfirmDialog } from "@/app/components/admin/DeleteConfirmDialog";
-import { EditCompanyModal } from "@/app/components/admin/EditCompanyModal";
+import { EditCompanyModal, getCompanySaveError } from "@/app/components/admin/EditCompanyModal";
 import { Column } from "@/app/components/admin/EnhancedTable";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
 import { generateCountryFlag } from "@/app/utils/generate-country-flag";
@@ -256,14 +256,14 @@ export default function AdminManageCompanies() {
       }
 
       if (!response.ok) {
-        throw new Error("Failed to update company");
+        throw new Error(await getCompanySaveError(response));
       }
 
       toast.success("Company updated successfully");
       await fetchAllCompanies();
     } catch (error) {
       console.error("Error updating company:", error);
-      toast.error("Failed to update company");
+      toast.error(error instanceof Error ? error.message : "Failed to update company");
       throw error;
     } finally {
       setLoading(false);

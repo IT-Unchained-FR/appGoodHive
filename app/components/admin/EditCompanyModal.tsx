@@ -9,7 +9,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import toast from "react-hot-toast";
 import { Building2 } from "lucide-react";
 
 export interface Company {
@@ -60,6 +59,36 @@ function SectionHeading({ children }: { children: ReactNode }) {
   );
 }
 
+const FIELD_LABELS: Record<string, string> = {
+  designation: "Company name",
+  headline: "Description",
+  email: "Email",
+  phone_country_code: "Phone country code",
+  phone_number: "Phone number",
+  address: "Address",
+  city: "City",
+  country: "Country",
+  linkedin: "LinkedIn",
+  twitter: "Twitter",
+  github: "GitHub",
+  telegram: "Telegram",
+};
+
+/** Turns a failed PUT /api/admin/companies/[userId] response into a readable message. */
+export async function getCompanySaveError(response: Response): Promise<string> {
+  const payload = (await response.json().catch(() => null)) as {
+    errors?: string[];
+    message?: string;
+  } | null;
+  const first = payload?.errors?.[0];
+  if (first) {
+    const [field, ...rest] = first.split(": ");
+    const label = FIELD_LABELS[field];
+    return label ? `${label}: ${rest.join(": ")}` : first;
+  }
+  return payload?.message || "Failed to update company";
+}
+
 export function EditCompanyModal({
   open,
   onOpenChange,
@@ -85,11 +114,10 @@ export function EditCompanyModal({
 
     try {
       setLoading(true);
+      // onSave shows the success/error toast; keep the modal open on error.
       await onSave({ ...company, ...formData } as Company);
-      toast.success("Company updated successfully");
       onOpenChange(false);
     } catch (error) {
-      toast.error("Failed to update company");
       console.error(error);
     } finally {
       setLoading(false);

@@ -59,19 +59,29 @@ export const rejectUserSchema = z.object({
 export type RejectUserInput = z.infer<typeof rejectUserSchema>;
 
 // Company update validation
+// Stored company rows use null or "" for empty fields; treat both as "not
+// set" (the route saves an unset field as null either way).
+const optionalText = (schema: z.ZodString): z.ZodType<string | undefined, z.ZodTypeDef, unknown> =>
+  z.preprocess(
+    (value) => (value === null || (typeof value === "string" && value.trim() === "") ? undefined : value),
+    schema.optional(),
+  );
+
+// Mirrors what the company profile form accepts (it has no length or URL
+// rules), so an admin can always save a company as it's stored.
 export const updateCompanySchema = z.object({
-  designation: z.string().min(2).max(200).optional(),
-  headline: z.string().min(10).max(500).optional(),
-  email: z.string().email().optional(),
-  phone_country_code: z.string().regex(/^\d{1,4}$/).optional(),
-  phone_number: z.string().regex(/^\d{6,15}$/).optional(),
-  address: z.string().max(500).optional(),
-  city: z.string().max(100).optional(),
-  country: z.string().length(2, "Country code must be 2 characters").optional(),
-  linkedin: z.string().url().optional().or(z.literal("")),
-  twitter: z.string().url().optional().or(z.literal("")),
-  github: z.string().url().optional().or(z.literal("")),
-  telegram: z.string().max(100).optional(),
+  designation: optionalText(z.string().min(1).max(200)),
+  headline: optionalText(z.string().max(10000)),
+  email: optionalText(z.string().email()),
+  phone_country_code: optionalText(z.string().regex(/^\+?\d{1,4}$/, "Use digits, optionally starting with +")),
+  phone_number: optionalText(z.string().regex(/^\+?[\d\s-]{6,20}$/, "Use 6–20 digits")),
+  address: optionalText(z.string().max(500)),
+  city: optionalText(z.string().max(100)),
+  country: optionalText(z.string().max(100)),
+  linkedin: optionalText(z.string().max(500)),
+  twitter: optionalText(z.string().max(500)),
+  github: optionalText(z.string().max(500)),
+  telegram: optionalText(z.string().max(255)),
   approved: z.boolean().optional(),
   published: z.boolean().optional(),
 });
@@ -157,7 +167,7 @@ export type NewsletterCampaignInput = z.infer<typeof newsletterCampaignSchema>;
 
 // Validation helper function
 export function validateInput<T>(
-  schema: z.ZodSchema<T>,
+  schema: z.ZodType<T, z.ZodTypeDef, unknown>,
   data: unknown
 ): { success: true; data: T } | { success: false; errors: string[] } {
   try {
