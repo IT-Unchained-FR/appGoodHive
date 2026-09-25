@@ -329,12 +329,8 @@ export default function MyProfile() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            email: dataForm.email,
-            name: dataForm.designation,
-            type: "new-company",
-            subject: `Welcome to GoodHive, ${dataForm.designation}! 🌟 Let's Connect You with Top IT Talent`,
-          }),
+          // Sent to the address on the saved profile.
+          body: JSON.stringify({ type: "new-company" }),
         });
 
         toast.success("Profile sent to review by the core team!");

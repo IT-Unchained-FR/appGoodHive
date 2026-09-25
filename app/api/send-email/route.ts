@@ -1,261 +1,227 @@
 import * as React from "react";
-import { Resend } from "resend";
+import { NextResponse } from "next/server";
 
-import ContactCompanyTemplate from "@/app/email-templates/contact-company";
 import ContactTalentTemplate from "@/app/email-templates/contact-talent";
 import ContactUsTemplate from "@/app/email-templates/contact-us";
 import ContactUsConfirmationTemplate from "@/app/email-templates/contact-us-confirmation";
-import JobAppliedTemplate from "@/app/email-templates/job-applied";
 import CompanyRegistrationTemplate from "@/app/email-templates/new-company-user";
-import ProfileSubmissionAdminTemplate from "@/app/email-templates/profile-submission-admin";
-import ProfileSubmissionTalentTemplate from "@/app/email-templates/profile-submission-talent";
+import { getSessionUser } from "@/lib/auth/sessionUtils";
+import sql from "@/lib/db";
+import { GOODHIVE_BASE_URL, sendEmail } from "@/lib/email/resend-sender";
+import { rateLimit } from "@/lib/rate-limit";
 import { GoodHiveContractEmail } from "@constants/common";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Every email type has server-chosen recipients: callers can only supply
+// their own message, never an address to send to. Anything that lets a
+// caller pick the recipient would turn this route into an open relay.
 
-const TEMPLATES = {
-  "contact-talent": ContactTalentTemplate,
-  "job-applied": JobAppliedTemplate,
-  "contact-company": ContactCompanyTemplate,
-  "contact-us": ContactUsTemplate,
-  "contact-us-confirmation": ContactUsConfirmationTemplate,
-  "new-company": CompanyRegistrationTemplate,
-  "profile-submission-admin": ProfileSubmissionAdminTemplate,
-  "profile-submission-talent": ProfileSubmissionTalentTemplate,
-};
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_NAME = 200;
+const MAX_SUBJECT = 200;
+const MAX_MESSAGE = 5000;
 
-interface RequestContentType {
-  name: string;
-  toUserName?: string;
-  email: string;
-  type:
-    | "contact-talent"
-    | "job-applied"
-    | "contact-company"
-    | "contact-us"
-    | "contact-us-confirmation"
-    | "new-company"
-    | "profile-submission-admin"
-    | "profile-submission-talent";
-  subject: string;
-  userEmail?: string;
-  message: string;
-  jobtitle?: string;
-  userProfile?: string;
-  jobLink?: string;
-  referralLink?: string;
+type Body = Record<string, unknown>;
+
+function text(value: unknown, max: number): string {
+  return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
+
+function badRequest(message: string) {
+  return NextResponse.json({ message }, { status: 400 });
+}
+
+function getClientIp(request: Request): string {
+  return (
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "unknown"
+  );
+}
+
+// Public contact form: goes to the GoodHive team, plus a fixed
+// confirmation (without the visitor's message) to the address they gave.
+async function sendContactUs(request: Request, body: Body) {
+  const limit = rateLimit(`send-email:contact-us:${getClientIp(request)}`, {
+    windowMs: 10 * 60 * 1000,
+    max: 5,
+  });
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { message: "Too many messages. Please try again later." },
+      { status: 429 },
+    );
+  }
+
+  const name = text(body.name, MAX_NAME);
+  const email = text(body.email, 320);
+  const subject = text(body.subject, MAX_SUBJECT);
+  const message = text(body.message, MAX_MESSAGE);
+  if (!name || !EMAIL_PATTERN.test(email) || !message) {
+    return badRequest("Name, a valid email and a message are required");
+  }
+
+  await sendEmail({
+    react: React.createElement(ContactUsTemplate, { name, email, message }),
+    subject: subject
+      ? `New Contact Message from ${name}: ${subject}`
+      : `New Contact Message from ${name}`,
+    text: `From: ${name} <${email}>\n\n${message}`,
+    to: GoodHiveContractEmail,
+  });
+
+  try {
+    await sendEmail({
+      react: React.createElement(ContactUsConfirmationTemplate, { name, email }),
+      subject: "🍯 Thank you for contacting GoodHive!",
+      text: `Hi ${name}, thanks for contacting GoodHive. We've received your message and will get back to you soon.`,
+      to: email,
+    });
+  } catch (error) {
+    console.error("Contact confirmation email failed:", error);
+  }
+
+  return NextResponse.json({ message: "Email sent" });
+}
+
+// A signed-in company contacting a talent. The talent's address and the
+// company's name come from the database.
+async function sendContactTalent(body: Body) {
+  const sessionUser = await getSessionUser();
+  if (!sessionUser?.user_id) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
+  const limit = rateLimit(`send-email:contact-talent:${sessionUser.user_id}`, {
+    windowMs: 60 * 60 * 1000,
+    max: 30,
+  });
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { message: "You've contacted a lot of talent recently. Please try again later." },
+      { status: 429 },
+    );
+  }
+
+  const talentUserId = text(body.talentUserId, 64);
+  const message = text(body.message, MAX_MESSAGE);
+  if (!talentUserId || !message) {
+    return badRequest("talentUserId and message are required");
+  }
+
+  const [company] = await sql<{ designation: string | null; email: string | null }[]>`
+    SELECT designation, email FROM goodhive.companies
+    WHERE user_id = ${sessionUser.user_id}::uuid
+    LIMIT 1
+  `;
+  if (!company) {
+    return NextResponse.json({ message: "Only companies can contact talent" }, { status: 403 });
+  }
+
+  const [talent] = await sql<{ email: string | null; first_name: string | null; last_name: string | null }[]>`
+    SELECT email, first_name, last_name FROM goodhive.talents
+    WHERE user_id = ${talentUserId}::uuid
+    LIMIT 1
+  `.catch(() => []);
+  if (!talent?.email?.trim()) {
+    return NextResponse.json({ message: "Talent not found" }, { status: 404 });
+  }
+
+  const companyName = company.designation?.trim() || "A company";
+  const talentName =
+    [talent.first_name, talent.last_name].filter(Boolean).join(" ").trim() || "there";
+  const companyProfile = `${GOODHIVE_BASE_URL}/companies/${sessionUser.user_id}`;
+
+  await sendEmail({
+    react: React.createElement(ContactTalentTemplate, {
+      message,
+      name: companyName,
+      toUserName: talentName,
+      userProfile: companyProfile,
+    }),
+    subject: `GoodHive - ${companyName} is interested in your profile`,
+    text: `${companyName} sent you a message on GoodHive:\n\n${message}\n\nView their profile: ${companyProfile}`,
+    to: talent.email.trim(),
+  });
+
+  // Copies for the sender and the GoodHive team. React escapes the message,
+  // so nothing the sender typed is rendered as HTML.
+  const copy = (heading: string) =>
+    React.createElement(
+      "div",
+      { style: { fontFamily: "sans-serif", color: "#333" } },
+      React.createElement("h2", { style: { color: "#f59e0b" } }, heading),
+      React.createElement("p", null, `${companyName} → ${talentName}`),
+      React.createElement("p", { style: { whiteSpace: "pre-wrap" } }, message),
+    );
+  const copies = [
+    sendEmail({
+      react: copy("🍯 Company contacted a talent"),
+      subject: `[Admin] contact-talent: ${companyName} -> ${talentName}`,
+      text: `${companyName} -> ${talentName}\n\n${message}`,
+      to: GoodHiveContractEmail,
+    }),
+  ];
+  if (company.email?.trim()) {
+    copies.push(
+      sendEmail({
+        react: copy("Message sent successfully 🐝"),
+        subject: `Confirmation: Message sent to ${talentName}`,
+        text: `Your message to ${talentName} was sent.\n\n${message}`,
+        to: company.email.trim(),
+      }),
+    );
+  }
+  for (const result of await Promise.allSettled(copies)) {
+    if (result.status === "rejected") console.error("Contact copy email failed:", result.reason);
+  }
+
+  return NextResponse.json({ message: "Email sent" });
+}
+
+// Welcome email to the signed-in company, at the address on its profile.
+async function sendNewCompany() {
+  const sessionUser = await getSessionUser();
+  if (!sessionUser?.user_id) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
+  const [company] = await sql<{ designation: string | null; email: string | null }[]>`
+    SELECT designation, email FROM goodhive.companies
+    WHERE user_id = ${sessionUser.user_id}::uuid
+    LIMIT 1
+  `;
+  if (!company?.email?.trim()) {
+    return NextResponse.json({ message: "Company profile not found" }, { status: 404 });
+  }
+
+  const name = company.designation?.trim() || "there";
+  await sendEmail({
+    react: React.createElement(CompanyRegistrationTemplate, { name }),
+    subject: `Welcome to GoodHive, ${name}! 🌟 Let's Connect You with Top IT Talent`,
+    text: `Welcome to GoodHive, ${name}! Your profile has been sent to our team for review.`,
+    to: company.email.trim(),
+  });
+
+  return NextResponse.json({ message: "Email sent" });
 }
 
 export async function POST(request: Request) {
-  const {
-    name,
-    toUserName,
-    email,
-    type,
-    subject,
-    userEmail,
-    message,
-    userProfile,
-    jobLink,
-    referralLink,
-  }: RequestContentType = await request.json();
-
-  console.log(
-    email,
-    type,
-    subject,
-    toUserName,
-    name,
-    message,
-    userProfile,
-    "send-email-body",
-  );
+  const body = (await request.json().catch(() => null)) as Body | null;
+  if (!body) return badRequest("Invalid request body");
 
   try {
-    const isDev = process.env.NODE_ENV !== "production";
-    const testEmail = process.env.TEST_EMAIL || "jubayerjuhan.dev@gmail.com";
-
-    // In development, redirect all emails to the test address
-    const recipientEmail = isDev ? testEmail : email;
-    const teamRecipientEmail = isDev ? testEmail : GoodHiveContractEmail;
-    const senderRecipientEmail = isDev && userEmail ? testEmail : userEmail;
-    const isSingleSendTemplate =
-      type === "profile-submission-admin" ||
-      type === "profile-submission-talent";
-
-    if (isSingleSendTemplate) {
-      const result = await resend.emails.send({
-        from: "GoodHive <no-reply@goodhive.io>",
-        to: [recipientEmail],
-        subject: isDev ? `[TEST] ${subject}` : subject,
-        react: TEMPLATES[type]({
-          name,
-          toUserName,
-          message,
-          userProfile,
-          jobLink,
-          referralLink,
-        }) as React.ReactElement,
-      });
-
-      if (result.error) {
-        console.error("Resend error (Single Send) >>", result.error);
-        return new Response(
-          JSON.stringify({
-            message: "Error sending email",
-            error: result.error,
-          }),
-          {
-            status: 500,
-          },
-        );
-      }
-    } else if (type === "contact-us") {
-      // Send email to GoodHive team
-      const teamEmailResult = await resend.emails.send({
-        from: "GoodHive <no-reply@goodhive.io>",
-        to: teamRecipientEmail,
-        subject: isDev ? `[TEST] ${subject}` : subject,
-        react: TEMPLATES[type]({ name, email, message }) as React.ReactElement,
-      });
-
-      // Send confirmation email to user
-      const userEmailResult = await resend.emails.send({
-        from: "GoodHive <no-reply@goodhive.io>",
-        to: recipientEmail,
-        subject: isDev ? `[TEST] 🍯 Thank you for contacting GoodHive!` : "🍯 Thank you for contacting GoodHive!",
-        react: TEMPLATES["contact-us-confirmation"]({
-          name,
-          email,
-          message,
-        }) as React.ReactElement,
-      });
-
-      if (teamEmailResult.error || userEmailResult.error) {
-        console.error("Email sending errors:", {
-          teamEmail: teamEmailResult.error,
-          userEmail: userEmailResult.error,
-        });
-        return new Response(
-          JSON.stringify({
-            message: "Error sending email",
-            errors: {
-              teamEmail: teamEmailResult.error,
-              userEmail: userEmailResult.error,
-            },
-          }),
-          {
-            status: 500,
-          },
-        );
-      }
-    } else {
-      // 1. Send to Receiver (Original)
-      const recipient = [recipientEmail];
-      const receiverPromise = resend.emails.send({
-        from: "GoodHive <no-reply@goodhive.io>",
-        to: recipient,
-        subject: isDev ? `[TEST] ${subject}` : subject,
-        react: TEMPLATES[type]({
-          name,
-          toUserName,
-          message,
-          userProfile,
-          jobLink,
-          referralLink,
-          email: userEmail || email,
-        }) as React.ReactElement,
-      });
-
-      // 2. Send to Sender (Confirmation)
-      let senderPromise: any = Promise.resolve({ error: null });
-      if (userEmail) {
-        const senderHtml = `
-           <div style="font-family: sans-serif; padding: 20px; color: #333;">
-             <h2 style="color: #f59e0b;">Message Sent Successfully 🐝</h2>
-             <p>Hi <strong>${name}</strong>,</p>
-             <p>Your message to <strong>${toUserName || "the recipient"}</strong> has been sent successfully.</p>
-             <div style="background: #fef3c7; padding: 20px; border-radius: 12px; margin: 20px 0; border: 1px solid #f59e0b;">
-               <strong style="color: #92400e;">Your Message:</strong><br/>
-               <p style="margin-top: 10px; white-space: pre-wrap;">${message}</p>
-             </div>
-             <p>We'll notify you when they reply.</p>
-             <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-             <p style="font-size: 14px; color: #666;">GoodHive Team</p>
-           </div>
-        `;
-        senderPromise = resend.emails.send({
-          from: "GoodHive <no-reply@goodhive.io>",
-          to: senderRecipientEmail as string,
-          subject: isDev ? `[TEST] Confirmation: Message sent to ${toUserName || "recipient"}` : `Confirmation: Message sent to ${toUserName || "recipient"}`,
-          html: senderHtml,
-        });
-      }
-
-      // 3. Send to Admin (High Level View)
-      const adminHtml = `
-        <div style="font-family: sans-serif; padding: 20px; color: #333;">
-           <h2 style="color: #111;">🍯 New Message Notification</h2>
-           <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb; margin-bottom: 20px;">
-             <h3 style="margin-top: 0;">Communication Details</h3>
-             <ul style="list-style: none; padding: 0;">
-               <li style="margin-bottom: 8px;"><strong>Type:</strong> ${type}</li>
-               <li style="margin-bottom: 8px;"><strong>Subject:</strong> ${subject}</li>
-               <li style="margin-bottom: 8px;"><strong>Sender:</strong> ${name || "N/A"} (${userEmail || "No email provided"})</li>
-               <li style="margin-bottom: 8px;"><strong>Receiver:</strong> ${toUserName || "N/A"} (${email || "N/A"})</li>
-             </ul>
-           </div>
-           ${message ? `
-           <div style="background: #fef3c7; padding: 20px; border-radius: 12px; border: 1px solid #f59e0b;">
-             <strong style="color: #92400e;">Message Content:</strong><br/>
-             <p style="margin-top: 10px; white-space: pre-wrap;">${message}</p>
-           </div>` : ""}
-           
-           <div style="margin-top: 20px; font-size: 14px; color: #666;">
-             ${userProfile ? `<p><strong>Sender Profile:</strong> <a href="${userProfile}">${userProfile}</a></p>` : ""}
-             ${jobLink ? `<p><strong>Job Link:</strong> <a href="${jobLink}">${jobLink}</a></p>` : ""}
-           </div>
-        </div>
-      `;
-      
-      const adminPromise = resend.emails.send({
-        from: "GoodHive System <no-reply@goodhive.io>",
-        to: teamRecipientEmail,
-        subject: isDev ? `[TEST] [Admin] ${type}: ${name || "N/A"} -> ${toUserName || "N/A"}` : `[Admin] ${type}: ${name || "N/A"} -> ${toUserName || "N/A"}`,
-        html: adminHtml,
-      });
-
-      const [receiverResult, senderResult, adminResult] = await Promise.all([
-        receiverPromise,
-        senderPromise,
-        adminPromise,
-      ]);
-
-      if (receiverResult.error) {
-        console.error("Resend error (Receiver) >>", receiverResult.error);
-        return new Response(
-          JSON.stringify({
-            message: "Error sending email to receiver",
-            error: receiverResult.error,
-          }),
-          {
-            status: 500,
-          },
-        );
-      }
-      
-      // Log errors for sender/admin but don't fail the request if receiver got it
-      if (senderResult?.error) console.error("Resend error (Sender) >>", senderResult.error);
-      if (adminResult?.error) console.error("Resend error (Admin) >>", adminResult.error);
+    switch (body.type) {
+      case "contact-us":
+        return await sendContactUs(request, body);
+      case "contact-talent":
+        return await sendContactTalent(body);
+      case "new-company":
+        return await sendNewCompany();
+      default:
+        return badRequest("Unsupported email type");
     }
-
-    return new Response(JSON.stringify({ message: "Email sent" }), {
-      status: 200,
-    });
   } catch (error) {
     console.error("Error sending email:", error);
-    return new Response(JSON.stringify({ message: "Error sending email" }), {
-      status: 500,
-    });
+    return NextResponse.json({ message: "Error sending email" }, { status: 500 });
   }
 }

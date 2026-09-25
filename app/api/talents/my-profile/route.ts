@@ -1,4 +1,9 @@
+import * as React from "react";
+
+import ProfileSubmissionAdminTemplate from "@/app/email-templates/profile-submission-admin";
+import ProfileSubmissionTalentTemplate from "@/app/email-templates/profile-submission-talent";
 import sql from "@/lib/db";
+import { sendEmail } from "@/lib/email/resend-sender";
 import { getViewerAccess, maskName, maskNameInText } from "@/lib/access-control";
 import { getApiUserId } from "@/lib/auth/api-guards";
 import {
@@ -80,50 +85,38 @@ type UserRoleStatuses = {
   recruiter_status: string | null;
 };
 
-async function postProfileSubmissionEmail(
-  request: Request,
-  payload: {
-    email: string;
-    message: string;
-    name: string;
-    referralLink?: string;
-    subject: string;
-    type: ProfileSubmissionEmailType;
-  },
-) {
-  const response = await fetch(new URL("/api/send-email", request.url), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(request.headers.get("cookie")
-        ? { cookie: request.headers.get("cookie") as string }
-        : {}),
-      ...(request.headers.get("x-user-id")
-        ? { "x-user-id": request.headers.get("x-user-id") as string }
-        : {}),
-      ...(request.headers.get("x-user-email")
-        ? { "x-user-email": request.headers.get("x-user-email") as string }
-        : {}),
-      ...(request.headers.get("x-wallet-address")
-        ? {
-            "x-wallet-address": request.headers.get(
-              "x-wallet-address",
-            ) as string,
-          }
-        : {}),
-    },
-    body: JSON.stringify(payload),
-  });
+const PROFILE_SUBMISSION_TEMPLATES: Record<
+  ProfileSubmissionEmailType,
+  typeof ProfileSubmissionAdminTemplate
+> = {
+  "profile-submission-admin": ProfileSubmissionAdminTemplate,
+  "profile-submission-talent": ProfileSubmissionTalentTemplate,
+};
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Failed to send ${payload.type} email (${response.status}): ${errorText}`,
-    );
-  }
+// Sent directly from the server (these used to go through the public
+// /api/send-email route).
+async function postProfileSubmissionEmail(payload: {
+  email: string;
+  message: string;
+  name: string;
+  referralLink?: string;
+  subject: string;
+  type: ProfileSubmissionEmailType;
+}) {
+  const Template = PROFILE_SUBMISSION_TEMPLATES[payload.type];
+  await sendEmail({
+    react: React.createElement(Template, {
+      message: payload.message,
+      name: payload.name,
+      referralLink: payload.referralLink,
+    }),
+    subject: payload.subject,
+    text: payload.message,
+    to: payload.email,
+  });
 }
 
-async function sendProfileSubmissionEmails(request: Request, userId: string) {
+async function sendProfileSubmissionEmails(userId: string) {
   const talentRows = await sql<ProfileSubmissionRecipient[]>`
     SELECT first_name, last_name, email
     FROM goodhive.talents
@@ -148,7 +141,7 @@ async function sendProfileSubmissionEmails(request: Request, userId: string) {
   const referralLink = await getOrCreateReferralLink(userId);
 
   const emailJobs: Promise<void>[] = [
-    postProfileSubmissionEmail(request, {
+    postProfileSubmissionEmail({
       email: GoodHiveContractEmail,
       message: `${displayName} has submitted their profile for review.`,
       name: displayName,
@@ -159,7 +152,7 @@ async function sendProfileSubmissionEmails(request: Request, userId: string) {
 
   if (talentEmail) {
     emailJobs.unshift(
-      postProfileSubmissionEmail(request, {
+      postProfileSubmissionEmail({
         email: talentEmail,
         message:
           `Thank you for submitting your profile. Our GoodHive team will review it shortly. In the meantime, please book your assessment interview: ${GoodHiveIntroCallUrl}`,
@@ -487,7 +480,7 @@ export async function POST(request: Request) {
 
     if (isNewReviewSubmission) {
       try {
-        await sendProfileSubmissionEmails(request, user_id);
+        await sendProfileSubmissionEmails(user_id);
       } catch (error) {
         console.error("Failed to send profile submission emails:", error);
       }

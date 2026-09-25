@@ -67,7 +67,6 @@ export const MessagePopup: React.FC<MessagePopupProps> = ({
           email: data.email,
           message: data.message,
           type: "contact-us",
-          subject: `New Contact Message from ${data.name}`,
         }),
       });
 

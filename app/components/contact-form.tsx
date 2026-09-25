@@ -56,9 +56,7 @@ export default function ContactForm() {
           email: data.email,
           message: data.message,
           type: "contact-us",
-          subject: data.subject
-            ? `New Contact Message from ${data.name}: ${data.subject}`
-            : `New Contact Message from ${data.name}`,
+          subject: data.subject,
         }),
       });
 

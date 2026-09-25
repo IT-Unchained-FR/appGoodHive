@@ -266,18 +266,14 @@ export const TalentPageHeader = ({
         });
       }
 
-      if (email) {
+      if (talent_user_id) {
+        // The server looks up the talent's address and the company's name.
         await fetch("/api/send-email", {
           method: "POST",
           body: JSON.stringify({
-            name: userProfile?.designation,
-            toUserName: fullName,
-            email: email,
             type: "contact-talent",
-            subject: `Goodhive - ${userProfile?.designation} interested in your profile`,
-            userEmail: emailFromModal,
+            talentUserId: talent_user_id,
             message,
-            userProfile: `${window.location.origin}/companies/${currentUserId}`,
           }),
           headers: {
             "Content-Type": "application/json",

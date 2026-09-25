@@ -1,7 +1,8 @@
 interface ContactUsConfirmationTemplateProps {
   name: string;
   email: string;
-  message: string;
+  /** Omitted when the sender's address isn't verified, so it can't be used to relay content. */
+  message?: string;
 }
 
 export default function ContactUsConfirmationTemplate({
@@ -31,10 +32,12 @@ export default function ContactUsConfirmationTemplate({
           </p>
 
           {/* Message Box */}
-          <div style={messageBox}>
-            <h3 style={messageTitle}>📝 Your Message:</h3>
-            <div style={messageText}>{message}</div>
-          </div>
+          {message ? (
+            <div style={messageBox}>
+              <h3 style={messageTitle}>📝 Your Message:</h3>
+              <div style={messageText}>{message}</div>
+            </div>
+          ) : null}
 
           <hr style={hr} />
 
