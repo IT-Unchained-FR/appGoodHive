@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import sql from "@/lib/db";
 import { requireAdminAuth } from "@/app/lib/admin-auth";
+import { logAdminAction } from "@/app/lib/admin-audit";
 
 const ADMIN_LOCKED_FIELDS = [
   "payment_token_address",
@@ -97,6 +98,8 @@ export async function PUT(
       return NextResponse.json({ message: "Job not found" }, { status: 404 });
     }
 
+    await logAdminAction({ action: "job.updated", targetType: "job", targetId: job_id });
+
     return NextResponse.json(updatedJob[0], { status: 200 });
   } catch (error) {
     console.error("Error updating job:", error);
@@ -139,6 +142,8 @@ export async function DELETE(
         { status: 404 }
       );
     }
+
+    await logAdminAction({ action: "job.deleted", targetType: "job", targetId: job_id });
 
     return NextResponse.json(
       { message: "Job deleted successfully" },

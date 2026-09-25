@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 
 import sql from "@/lib/db";
 import { getAdminJWTSecret, isAdminAuthError } from "@/app/lib/admin-auth";
+import { logAdminAction } from "@/app/lib/admin-audit";
 
 export const dynamic = "force-dynamic";
 
@@ -126,6 +127,8 @@ export async function DELETE(request: Request) {
     if (revoked.length === 0) {
       return NextResponse.json({ error: "Talent not found" }, { status: 404 });
     }
+
+    await logAdminAction({ action: "talent.code_of_hive_revoked", targetType: "talent", targetId: userId });
 
     return NextResponse.json({ revoked: true, user_id: revoked[0].user_id });
   } catch (error) {

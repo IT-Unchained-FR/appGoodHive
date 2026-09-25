@@ -1,4 +1,5 @@
 import LabelOption from "@/interfaces/label-option";
+import { getTotalServiceFeePercent } from "@/app/constants/common";
 
 export const calculateJobCreateFees = (
   projectType: LabelOption | null,
@@ -14,22 +15,7 @@ export const calculateJobCreateFees = (
     return "";
   }
 
-  let totalFees = 0;
-  const budgetNumber = Number(budget);
-
-  // Calculate fees based on selected services
-  if (services.talent) {
-    totalFees += budgetNumber * 0.1; // 10% for talent
-  }
-
-  if (services.recruiter) {
-    totalFees += budgetNumber * 0.08; // 8% for recruiter
-  }
-
-  if (services.mentor) {
-    totalFees += budgetNumber * 0.12; // 12% for mentor
-  }
-
+  const totalFees = (Number(budget) * getTotalServiceFeePercent(services)) / 100;
   return totalFees.toFixed(2);
 };
 

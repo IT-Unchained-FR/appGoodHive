@@ -37,9 +37,9 @@ const steps: Step[] = [
   },
   {
     target: '[data-tour="activate-wallet"]',
-    title: "Your wallet",
+    title: "Wallet checklist",
     content:
-      "The connected wallet signs the transaction and pays the network fee. Use the wallet button in the top bar if nothing is connected.",
+      "Everything your wallet needs before a transaction: connected, on the right network, POL for network fees and the stablecoin to fund the job. Anything missing shows how to fix it, including free test tokens on testnet.",
   },
   {
     target: '[data-tour="activate-token"]',

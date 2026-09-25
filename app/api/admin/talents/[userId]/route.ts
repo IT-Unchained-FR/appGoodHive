@@ -10,6 +10,7 @@ import {
   updateTalentSchema,
   validateInput,
 } from "@/app/lib/admin-validations";
+import { logAdminAction } from "@/app/lib/admin-audit";
 
 export const dynamic = "force-dynamic";
 
@@ -117,19 +118,12 @@ export async function PUT(
       });
     }
 
-    try {
-      const adminEmail = decoded.email ?? "unknown";
-      sql`
-        INSERT INTO goodhive.admin_audit_log (admin_email, action, target_type, target_id, details)
-        VALUES (
-          ${adminEmail},
-          'talent.updated',
-          'talent',
-          ${userId},
-          ${JSON.stringify({ fields: Object.keys(body ?? {}) })}
-        )
-      `.catch(() => {});
-    } catch {}
+    await logAdminAction({
+      action: "talent.updated",
+      targetType: "talent",
+      targetId: userId,
+      details: { fields: Object.keys(body ?? {}) },
+    });
 
     return new Response(
       JSON.stringify({ message: "Talent updated successfully" }),
@@ -189,6 +183,8 @@ export async function DELETE(req: NextRequest) {
         status: 404,
       });
     }
+
+    await logAdminAction({ action: "talent.deleted", targetType: "talent", targetId: userId });
 
     return new Response(
       JSON.stringify({ message: "User deleted successfully" }),

@@ -3,6 +3,7 @@ export const revalidate = 0; // Disable ISR completely
 import type { NextRequest } from "next/server";
 import { requireAdminAuth } from "@/app/lib/admin-auth";
 import sql from "@/lib/db";
+import { logAdminAction } from "@/app/lib/admin-audit";
 
 export async function GET(req: NextRequest) {
   // Returns pending talents' personal data: admin only.
@@ -160,6 +161,8 @@ export async function POST(req: NextRequest) {
       SET talent_status = 'approved'
       WHERE userid = ${userId}
       `;
+
+    await logAdminAction({ action: "talent.approved", targetType: "talent", targetId: userId });
 
     return new Response(
       JSON.stringify({ message: "Approved talent successfully" }),

@@ -7,6 +7,7 @@ import {
 } from "@/lib/email/job-review";
 import sql from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
+import { logAdminAction } from "@/app/lib/admin-audit";
 
 type ReviewAction = "approve" | "reject";
 const UUID_PATTERN =
@@ -54,9 +55,11 @@ export async function POST(
         jo.user_id,
         jo.title,
         jo.company_name,
-        c.email AS company_email
+        -- Fall back to the account email when the profile has none.
+        COALESCE(NULLIF(TRIM(c.email), ''), NULLIF(TRIM(u.email), '')) AS company_email
       FROM goodhive.job_offers jo
       LEFT JOIN goodhive.companies c ON c.user_id = jo.user_id
+      LEFT JOIN goodhive.users u ON u.userid = jo.user_id
       WHERE jo.id = ${jobId}::uuid
       LIMIT 1
     `;
@@ -133,6 +136,13 @@ export async function POST(
     } catch (error) {
       console.error("Failed to send job review outcome email:", error);
     }
+
+    await logAdminAction({
+      action: body.action === "approve" ? "job.approved" : "job.rejected",
+      targetType: "job",
+      targetId: jobId,
+      details: body.action === "reject" ? { feedback: feedback || null } : {},
+    });
 
     return NextResponse.json(
       {

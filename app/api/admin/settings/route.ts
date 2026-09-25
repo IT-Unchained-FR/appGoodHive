@@ -3,6 +3,7 @@ import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
 import { getAdminJWTSecret, isAdminAuthError } from "@/app/lib/admin-auth";
+import { logAdminAction } from "@/app/lib/admin-audit";
 
 export const dynamic = "force-dynamic";
 
@@ -96,6 +97,8 @@ export async function PUT(req: NextRequest) {
               updated_by = ${adminEmail}
       `;
     }
+
+    await logAdminAction({ action: "settings.updated", targetType: "settings", targetId: "admin_settings", details: { keys: Object.keys(settings) } });
 
     return new Response(
       JSON.stringify({ message: "Settings saved successfully" }),

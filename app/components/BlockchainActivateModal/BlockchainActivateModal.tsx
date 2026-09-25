@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useActiveAccount } from "thirdweb/react";
-import { CheckCircle2, CircleDashed, Compass, Loader2, Wallet, X } from "lucide-react";
+import { CheckCircle2, CircleDashed, Compass, Loader2, X } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { useJobManager } from "@/hooks/contracts/useJobManager";
@@ -16,6 +16,7 @@ import {
   getSupportedTokensForChain,
 } from "@/lib/contracts/jobManager";
 import { ACTIVE_CHAIN_ID, ACTIVE_CHAIN_NAME } from "@/config/chains";
+import { useWalletReadiness, WalletReadinessList } from "./WalletReadiness";
 import { PublishFundTour } from "./PublishFundTour";
 
 export interface BlockchainActivateJob {
@@ -155,6 +156,17 @@ export default function BlockchainActivateModal({
       setSelectedTokenAddress(job.paymentTokenAddress);
     }
   }, [job.blockchainJobId, job.paymentTokenAddress]);
+
+  // What the wallet still needs before the next transaction can succeed.
+  const requiredFundAmount = step === 2 && !isFunded ? Number(fundAmount) || 0 : 0;
+  const readiness = useWalletReadiness({
+    tokenAddress: selectedTokenAddress,
+    tokenBalance: walletBalance,
+    tokenSymbol,
+    requiredAmount: requiredFundAmount,
+  });
+  const readinessHasToken =
+    readiness.items.find((item) => item.id === "token")?.state === "ok";
 
   if (!isOpen) return null;
 
@@ -412,22 +424,7 @@ export default function BlockchainActivateModal({
                 will use to pay talents.
               </p>
 
-              {/* Wallet status */}
-              <div
-                data-tour="activate-wallet"
-                className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
-              >
-                <Wallet className="h-4 w-4 shrink-0 text-slate-500" />
-                {account ? (
-                  <span className="truncate font-mono text-xs text-slate-700">
-                    {account.address}
-                  </span>
-                ) : (
-                  <span className="text-sm text-rose-600">
-                    No wallet connected — connect via the wallet button
-                  </span>
-                )}
-              </div>
+              <WalletReadinessList readiness={readiness} showToken />
 
               {/* Token selector */}
               <div data-tour="activate-token">
@@ -462,7 +459,7 @@ export default function BlockchainActivateModal({
 
               <button
                 type="button"
-                disabled={isBusy || !account || !selectedTokenAddress}
+                disabled={isBusy || !readiness.canTransact || !selectedTokenAddress}
                 onClick={() => void handlePublishToBlockchain()}
                 data-tour="activate-submit"
                 className="flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-300"
@@ -486,6 +483,8 @@ export default function BlockchainActivateModal({
                 fund will be used to pay the assigned talent upon mission
                 completion.
               </p>
+
+              {!isFunded && <WalletReadinessList readiness={readiness} showToken />}
 
               {/* Wallet balance */}
               <div
@@ -557,8 +556,8 @@ export default function BlockchainActivateModal({
                 disabled={
                   isBusy ||
                   isCheckingEscrow ||
-                  !account ||
-                  (!isFunded && (!fundAmount || Number(fundAmount) <= 0))
+                  !readiness.canTransact ||
+                  (!isFunded && (!fundAmount || Number(fundAmount) <= 0 || !readinessHasToken))
                 }
                 onClick={() => void handleAddFundAndActivate()}
                 data-tour="activate-submit"

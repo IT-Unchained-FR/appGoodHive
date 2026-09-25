@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
 import { getAdminJWTSecret, isAdminAuthError } from "@/app/lib/admin-auth";
 import { createAdminSchema, validateInput } from "@/app/lib/admin-validations";
+import { logAdminAction } from "@/app/lib/admin-audit";
 
 export const dynamic = "force-dynamic";
 
@@ -117,6 +118,8 @@ export async function POST(req: Request) {
         'admin'
       );
     `;
+
+    await logAdminAction({ action: "admin.created", targetType: "admin", targetId: email });
 
     return new Response(
       JSON.stringify({ message: "Admin created successfully" }),

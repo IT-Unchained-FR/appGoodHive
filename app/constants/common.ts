@@ -81,6 +81,22 @@ export const createJobServices: createJobServicesType[] = [
   },
 ];
 
+// Single source for the service fee rates shown in the UI. The talent rate is
+// verified against JobManager.calculateTotalFees; keep all three in sync with
+// the contract if they change there.
+export type JobServiceKey = createJobServicesType["value"];
+
+export function getServiceFeePercent(service: JobServiceKey): number {
+  return createJobServices.find((s) => s.value === service)?.feePercentage ?? 0;
+}
+
+export function getTotalServiceFeePercent(services: Record<JobServiceKey, boolean>): number {
+  return createJobServices.reduce(
+    (total, s) => (services[s.value] ? total + s.feePercentage : total),
+    0,
+  );
+}
+
 export const GoodHiveContractEmail = "benoit@goodhive.io";
 
 export const GoodHiveIntroCallUrl =

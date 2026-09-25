@@ -59,7 +59,8 @@ const STEPS: StepDef[] = [
   {
     id: "publish",
     label: "Publish on the blockchain",
-    detail: "Connect your wallet and create the job's escrow contract.",
+    detail:
+      "Connect a wallet on Polygon and create the job's escrow contract. You'll need a little POL for network fees and USDC to fund the job.",
     cta: "Publish",
     href: jobsHref,
   },
