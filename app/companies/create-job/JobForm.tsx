@@ -37,7 +37,7 @@ import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import "react-quill/dist/quill.snow.css";
 import { useActiveAccount } from "thirdweb/react";
-import { REVIEW_TURNAROUND } from "@/lib/jobs/review";
+import { canCompanyDeleteJob, REVIEW_TURNAROUND } from "@/lib/jobs/review";
 import { useConfirm } from "@/app/components/ConfirmDialog/ConfirmDialog";
 
 const mapToChainId = (value: unknown): number | null => {
@@ -442,17 +442,17 @@ export const JobForm = ({
       });
 
       if (response.ok) {
-        toast.success("Job cancelled successfully");
-        protectedNavigate("/companies/my-profile", {
-          authDescription: "access your company profile",
+        toast.success("Job deleted");
+        protectedNavigate("/companies/dashboard/jobs", {
+          authDescription: "access your jobs",
         });
       } else {
-        const data = await response.json();
-        throw new Error(data.message || "Failed to cancel job");
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || "Failed to delete job");
       }
     } catch (error: any) {
-      console.error("Error cancelling job:", error);
-      toast.error(error.message || "Failed to cancel job");
+      console.error("Error deleting job:", error);
+      toast.error(error.message || "Failed to delete job");
     } finally {
       setIsLoading(false);
     }
@@ -1314,14 +1314,18 @@ export const JobForm = ({
               </button>
             </Tooltip>
           )}
-          {!!jobData?.job_id && !isLiveJob && (
+          {!!jobData?.id &&
+            canCompanyDeleteJob({
+              payment_token_address: jobData.payment_token_address ?? null,
+              review_status: currentReviewStatus,
+            }) && (
             <button
               className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out cursor-pointer"
               type="button"
               onClick={handleCancelJob}
               disabled={isLoading}
             >
-              Cancel Job
+              Delete Job
             </button>
           )}
 

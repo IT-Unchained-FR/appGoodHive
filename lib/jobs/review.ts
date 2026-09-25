@@ -56,3 +56,14 @@ export function resolveJobReviewStatus(
 // Shown to companies wherever they wait on the GoodHive team. Keep in sync
 // with the team's actual turnaround.
 export const REVIEW_TURNAROUND = "1–2 business days";
+
+// A company may delete its own job only before it reaches the blockchain.
+// payment_token_address is written by the blockchain publish (block_id is
+// auto-generated for every job, so it can't be used here).
+export function canCompanyDeleteJob(job: {
+  payment_token_address: string | null;
+  review_status: string | null;
+}): boolean {
+  if (job.payment_token_address) return false;
+  return job.review_status !== "active" && job.review_status !== "closed";
+}
