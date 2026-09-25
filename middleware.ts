@@ -41,6 +41,9 @@ const PUBLIC_PATHS = [
   "/api/superbot/link-status",
   "/api/superbot/knowledge-questions",
   "/api/content-items",
+  // Public for the contact form; the route itself requires a session for
+  // every other email type.
+  "/api/send-email",
   "/api/telegram/webhook",
 ];
 
