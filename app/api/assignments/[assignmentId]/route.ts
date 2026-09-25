@@ -114,7 +114,10 @@ export async function PATCH(
 
     // Fetch company email
     const companyRows = await sql<{ email: string | null; designation: string | null }[]>`
-      SELECT email, designation FROM goodhive.companies WHERE user_id = ${assignment.company_user_id}::uuid LIMIT 1
+      SELECT COALESCE(NULLIF(TRIM(c.email), ''), NULLIF(TRIM(u.email), '')) AS email, c.designation
+      FROM goodhive.companies c
+      LEFT JOIN goodhive.users u ON u.userid = c.user_id
+      WHERE c.user_id = ${assignment.company_user_id}::uuid LIMIT 1
     `;
     const companyEmail = companyRows[0]?.email;
     const companyName = companyRows[0]?.designation?.trim() || "Company";

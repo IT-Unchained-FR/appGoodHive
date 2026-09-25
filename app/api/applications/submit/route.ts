@@ -47,10 +47,12 @@ export async function POST(request: NextRequest) {
       title: string | null;
       user_id: string;
     }[]>`
-      SELECT jo.user_id, jo.title, jo.published, c.email AS company_email,
+      SELECT jo.user_id, jo.title, jo.published,
+        COALESCE(NULLIF(TRIM(c.email), ''), NULLIF(TRIM(u.email), '')) AS company_email,
         COALESCE(c.designation, jo.company_name) AS company_name
       FROM goodhive.job_offers jo
       LEFT JOIN goodhive.companies c ON c.user_id = jo.user_id
+      LEFT JOIN goodhive.users u ON u.userid = jo.user_id
       WHERE jo.id = ${jobId}::uuid
       LIMIT 1
     `;

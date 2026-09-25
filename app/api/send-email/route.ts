@@ -109,8 +109,10 @@ async function sendContactTalent(body: Body) {
   }
 
   const [company] = await sql<{ designation: string | null; email: string | null }[]>`
-    SELECT designation, email FROM goodhive.companies
-    WHERE user_id = ${sessionUser.user_id}::uuid
+    SELECT c.designation, COALESCE(NULLIF(TRIM(c.email), ''), NULLIF(TRIM(u.email), '')) AS email
+    FROM goodhive.companies c
+    LEFT JOIN goodhive.users u ON u.userid = c.user_id
+    WHERE c.user_id = ${sessionUser.user_id}::uuid
     LIMIT 1
   `;
   if (!company) {
@@ -186,8 +188,10 @@ async function sendNewCompany() {
   }
 
   const [company] = await sql<{ designation: string | null; email: string | null }[]>`
-    SELECT designation, email FROM goodhive.companies
-    WHERE user_id = ${sessionUser.user_id}::uuid
+    SELECT c.designation, COALESCE(NULLIF(TRIM(c.email), ''), NULLIF(TRIM(u.email), '')) AS email
+    FROM goodhive.companies c
+    LEFT JOIN goodhive.users u ON u.userid = c.user_id
+    WHERE c.user_id = ${sessionUser.user_id}::uuid
     LIMIT 1
   `;
   if (!company?.email?.trim()) {
