@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import sql from "@/lib/db";
 import { requireSelfOrAdmin } from "@/lib/auth/api-guards";
+import { resolveJobReviewStatus } from "@/lib/jobs/review";
 
 export const dynamic = "force-dynamic";
 
@@ -71,7 +72,8 @@ export async function GET(request: NextRequest) {
       postedAt: item.posted_at,
       block_id: item.block_id,
       paymentTokenAddress: item.payment_token_address,
-      reviewStatus: item.review_status,
+      reviewStatus: resolveJobReviewStatus(item.review_status, item.published),
+      createdAt: item.created_at ?? item.posted_at,
       currency: item.currency || 'USDC',
     }));
 
@@ -88,8 +90,9 @@ export async function GET(request: NextRequest) {
     const totalFunded = jobs.reduce((sum, job) => sum + job.escrowAmount, 0);
 
     // Get recent jobs (last 5)
-    const recentJobs = jobs
-      .sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime())
+    // Drafts have no posted_at, so order by creation.
+    const recentJobs = [...jobs]
+      .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
       .slice(0, 5);
 
     // Job status distribution
@@ -149,9 +152,16 @@ export async function GET(request: NextRequest) {
     }, {} as Record<string, number>);
 
     // Performance metrics (placeholders for now)
+    const [applicationCounts] = await sql<{ total: number }[]>`
+      SELECT COUNT(*)::int AS total
+      FROM goodhive.job_applications ja
+      JOIN goodhive.job_offers jo ON jo.id = ja.job_id
+      WHERE jo.user_id = ${userId}::uuid
+    `;
+
     const performanceMetrics = {
       totalViews: 0, // TODO: Implement job views tracking
-      totalApplications: 0, // TODO: Implement applications tracking
+      totalApplications: applicationCounts?.total ?? 0,
       conversionRate: 0, // applications / views
       averageTimeToHire: 0, // TODO: Implement hiring tracking
     };

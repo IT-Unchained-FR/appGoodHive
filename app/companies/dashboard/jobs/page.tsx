@@ -4,6 +4,7 @@ import JobsManagementClient from "@/app/companies/dashboard/jobs/JobsManagementC
 import { getSessionUser } from "@/lib/auth/sessionUtils";
 import sql from "@/lib/db";
 import { getCompanyDashboardJobs } from "@/lib/jobs/company-jobs";
+import { isCompanyHidden } from "@/lib/jobs/company-onboarding";
 
 export const dynamic = "force-dynamic";
 
@@ -24,8 +25,12 @@ export default async function JobsDashboardPage({
     redirect("/auth/login?redirect=%2Fcompanies%2Fdashboard%2Fjobs");
   }
 
-  const companyRows = await sql<{ user_id: string }[]>`
-    SELECT user_id
+  const companyRows = await sql<{
+    approved: boolean | null;
+    published: boolean | null;
+    user_id: string;
+  }[]>`
+    SELECT user_id, approved, published
     FROM goodhive.companies
     WHERE user_id = ${userId}::uuid
     LIMIT 1
@@ -40,6 +45,7 @@ export default async function JobsDashboardPage({
   return (
     <JobsManagementClient
       companyUserId={userId}
+      companyHidden={isCompanyHidden(companyRows[0])}
       initialJobs={jobs}
       initialOpenJobId={searchParams?.jobId ?? null}
       initialActivateJobId={searchParams?.activate ?? null}

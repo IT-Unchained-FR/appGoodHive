@@ -15,6 +15,8 @@ import {
   Trophy,
 } from "lucide-react";
 import { Loader } from "@components/loader";
+import { REVIEW_STATUS_META } from "@/app/companies/dashboard/jobs/review-status-meta";
+import type { JobReviewStatus } from "@/lib/jobs/review";
 import { GettingStartedChecklist } from "@/app/components/company-onboarding/GettingStartedChecklist";
 import { useCurrentUserId } from "@/app/hooks/useCurrentUserId";
 import { VALID_STAGES, type PipelineData } from "@/app/components/pipeline/pipeline-types";
@@ -314,13 +316,14 @@ export default function CompanyDashboard() {
                     <p className="font-medium text-gray-900 truncate">{job.title}</p>
                     <div className="flex items-center space-x-4 mt-1">
                       <span className="text-sm text-gray-600">${job.budget}</span>
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        job.paymentTokenAddress
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {job.paymentTokenAddress ? 'Published' : 'Draft'}
-                      </span>
+                      {(() => {
+                        const meta = REVIEW_STATUS_META[job.reviewStatus as JobReviewStatus] ?? REVIEW_STATUS_META.draft;
+                        return (
+                          <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${meta.badgeClassName}`}>
+                            {meta.label}
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
                   <Link

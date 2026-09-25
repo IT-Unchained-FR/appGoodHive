@@ -19,6 +19,8 @@ export interface CompanyOnboardingProgress {
   jobPendingReview: boolean;
   /** True while the company profile is waiting for the GoodHive team. */
   profilePendingReview: boolean;
+  /** Approved but unpublished by an admin: its jobs are hidden from talent. */
+  companyHidden: boolean;
 }
 
 // Where a job sits in the journey. Higher = further along.
@@ -43,8 +45,8 @@ export async function getCompanyOnboardingProgress(
   userId: string,
 ): Promise<CompanyOnboardingProgress> {
   const [companyRows, jobRows] = await Promise.all([
-    sql<{ approved: boolean | null; inreview: boolean | null }[]>`
-      SELECT approved, inreview
+    sql<{ approved: boolean | null; inreview: boolean | null; published: boolean | null }[]>`
+      SELECT approved, inreview, published
       FROM goodhive.companies
       WHERE user_id = ${userId}::uuid
       LIMIT 1
@@ -94,5 +96,14 @@ export async function getCompanyOnboardingProgress(
         : null,
     jobPendingReview: bestStage === 1,
     profilePendingReview: !approved && company?.inreview === true,
+    companyHidden: isCompanyHidden(company),
   };
+}
+
+// Job search hides every job from a company with published = false (null
+// counts as visible, matching lib/jobsearch.ts).
+export function isCompanyHidden(
+  company: { approved: boolean | null; published: boolean | null } | undefined,
+): boolean {
+  return company?.approved === true && company.published === false;
 }

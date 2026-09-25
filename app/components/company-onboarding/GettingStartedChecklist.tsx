@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, Check, Clock3, Rocket, X } from "lucide-react";
 
 import { getJobBalance } from "@/lib/contracts/jobManager";
+import { CompanyHiddenNotice } from "./CompanyHiddenNotice";
 import { REVIEW_TURNAROUND } from "@/lib/jobs/review";
 import type {
   CompanyOnboardingProgress,
@@ -131,7 +132,10 @@ export function GettingStartedChecklist({ userId }: GettingStartedChecklistProps
   const allDone = completed === STEPS.length;
   const current = STEPS.find((s) => !done[s.id]) ?? null;
 
-  if (allDone && dismissed) return null;
+  // Never let the checklist hide this warning, even once dismissed.
+  if (allDone && dismissed) {
+    return progress.companyHidden ? <CompanyHiddenNotice /> : null;
+  }
 
   const waitingOnUs =
     (current?.id === "approved" && progress.profilePendingReview) ||
@@ -157,7 +161,9 @@ export function GettingStartedChecklist({ userId }: GettingStartedChecklistProps
           </p>
           <h2 className="mt-1 text-xl font-bold text-gray-900">
             {allDone
-              ? "You're all set. Your job is live."
+              ? progress.companyHidden
+                ? "Your job is live, but hidden from talent"
+                : "You're all set. Your job is live."
               : "Get your first job live on GoodHive"}
           </h2>
           <p className="mt-1 text-sm text-gray-600">
@@ -183,6 +189,12 @@ export function GettingStartedChecklist({ userId }: GettingStartedChecklistProps
           )}
         </div>
       </div>
+
+      {progress.companyHidden && (
+        <div className="border-b border-amber-100 px-6 py-4">
+          <CompanyHiddenNotice />
+        </div>
+      )}
 
       <ol className="divide-y divide-gray-100">
         {STEPS.map((step, i) => {
