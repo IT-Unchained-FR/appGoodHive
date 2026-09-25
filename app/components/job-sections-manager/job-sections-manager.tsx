@@ -89,188 +89,141 @@ export const JobSectionsManager: React.FC<JobSectionsManagerProps> = ({
   sections,
   onSectionsChange,
 }) => {
-  const [collapsedSections, setCollapsedSections] = useState<Set<number>>(
-    new Set()
-  );
+  // One section open at a time, as an accordion; the first by default.
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
   const [showTemplates, setShowTemplates] = useState(false);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
-  // Create a new section
   const addSection = (heading: string = "") => {
     const newSection: IJobSection = {
       heading,
       content: "",
       sort_order: sections.length,
     };
-
-    const updatedSections = [...sections, newSection];
-    onSectionsChange(updatedSections);
-
-    // Auto-expand the new section
-    setCollapsedSections(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(newSection.sort_order);
-      return newSet;
-    });
+    onSectionsChange([...sections, newSection]);
+    setOpenIndex(sections.length);
   };
 
-  // Update a specific section
   const updateSection = (index: number, updatedSection: IJobSection) => {
-    const updatedSections = sections.map((section, i) =>
-      i === index ? updatedSection : section
+    onSectionsChange(
+      sections.map((section, i) => (i === index ? updatedSection : section))
     );
-    onSectionsChange(updatedSections);
   };
 
-  // Delete a section
   const deleteSection = (index: number) => {
-    const updatedSections = sections
-      .filter((_, i) => i !== index)
-      .map((section, i) => ({
-        ...section,
-        sort_order: i,
-      }));
-
-    onSectionsChange(updatedSections);
-
-    // Update collapsed state
-    setCollapsedSections(prev => {
-      const newSet = new Set<number>();
-      prev.forEach(sortOrder => {
-        if (sortOrder < index) {
-          newSet.add(sortOrder);
-        } else if (sortOrder > index) {
-          newSet.add(sortOrder - 1);
-        }
-      });
-      return newSet;
-    });
+    onSectionsChange(
+      sections
+        .filter((_, i) => i !== index)
+        .map((section, i) => ({ ...section, sort_order: i }))
+    );
+    setOpenIndex((current) =>
+      current === null || current === index
+        ? null
+        : current > index
+          ? current - 1
+          : current
+    );
   };
 
-  // Toggle section collapse state
-  const toggleSectionCollapse = (sortOrder: number) => {
-    setCollapsedSections(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(sortOrder)) {
-        newSet.delete(sortOrder);
-      } else {
-        newSet.add(sortOrder);
-      }
-      return newSet;
-    });
-  };
-
-  // Handle drag end
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    if (!over || active.id === over.id) return;
 
-    if (over && active.id !== over.id) {
-      const oldIndex = sections.findIndex(
-        section => section.sort_order.toString() === active.id
-      );
-      const newIndex = sections.findIndex(
-        section => section.sort_order.toString() === over.id
-      );
+    const oldIndex = sections.findIndex(
+      (section) => section.sort_order.toString() === active.id
+    );
+    const newIndex = sections.findIndex(
+      (section) => section.sort_order.toString() === over.id
+    );
 
-      const reorderedSections = arrayMove(sections, oldIndex, newIndex).map(
-        (section, index) => ({
-          ...section,
-          sort_order: index,
-        })
-      );
-
-      onSectionsChange(reorderedSections);
-
-      // Update collapsed state to match new order
-      const wasActiveCollapsed = collapsedSections.has(oldIndex);
-      setCollapsedSections(prev => {
-        const newSet = new Set<number>();
-        prev.forEach(sortOrder => {
-          if (sortOrder === oldIndex) {
-            if (wasActiveCollapsed) newSet.add(newIndex);
-          } else if (sortOrder < oldIndex && sortOrder >= newIndex) {
-            newSet.add(sortOrder + 1);
-          } else if (sortOrder > oldIndex && sortOrder <= newIndex) {
-            newSet.add(sortOrder - 1);
-          } else {
-            newSet.add(sortOrder);
-          }
-        });
-        return newSet;
-      });
-    }
+    onSectionsChange(
+      arrayMove(sections, oldIndex, newIndex).map((section, index) => ({
+        ...section,
+        sort_order: index,
+      }))
+    );
+    // Keep the same section open after it moves.
+    setOpenIndex((current) => {
+      if (current === null) return null;
+      if (current === oldIndex) return newIndex;
+      if (oldIndex < current && current <= newIndex) return current - 1;
+      if (newIndex <= current && current < oldIndex) return current + 1;
+      return current;
+    });
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <label className="inline-block text-base font-bold text-black">
-          Job Sections*
-        </label>
-        <span className="text-sm text-gray-500">
-          {sections.length} section{sections.length !== 1 ? 's' : ''}
-        </span>
-      </div>
-
-      {sections.length > 0 && (
+    <div>
+      {sections.length > 0 ? (
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={sections.map(section => section.sort_order.toString())}
+            items={sections.map((section) => section.sort_order.toString())}
             strategy={verticalListSortingStrategy}
           >
-            <div className="space-y-3">
+            <div className="flex flex-col gap-2.5">
               {sections.map((section, index) => (
                 <SortableJobSection
                   key={`section-${index}`}
                   section={section}
                   onUpdate={(updatedSection) => updateSection(index, updatedSection)}
                   onDelete={() => deleteSection(index)}
-                  isCollapsed={collapsedSections.has(section.sort_order)}
-                  onToggleCollapse={() => toggleSectionCollapse(section.sort_order)}
+                  isCollapsed={openIndex !== index}
+                  onToggleCollapse={() =>
+                    setOpenIndex((current) => (current === index ? null : index))
+                  }
                 />
               ))}
             </div>
           </SortableContext>
         </DndContext>
+      ) : (
+        <div className="rounded-xl border border-dashed border-[#C9C3B2] bg-[#FCFBF8] px-6 py-8 text-center">
+          <p className="text-sm text-[#6B665A]">
+            No sections yet. Start with &ldquo;About the role&rdquo; and add more as you go.
+          </p>
+          <button
+            type="button"
+            onClick={() => addSection("About the role")}
+            className="mt-4 inline-flex h-11 items-center rounded-[10px] bg-[#F5B800] px-5 text-sm font-bold text-[#1C1B17] hover:bg-[#E0A800]"
+          >
+            Add first section
+          </button>
+        </div>
       )}
 
-      {/* Add Section Buttons */}
-      <div className="flex flex-wrap gap-3">
+      <div className="mt-3.5 flex flex-wrap gap-2.5">
         <button
           type="button"
           onClick={() => addSection()}
-          className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-[#FFC905] text-[#FF8C05] rounded-lg hover:bg-[#FFC905] hover:text-white transition-colors"
+          className="inline-flex h-11 items-center gap-2 rounded-[10px] border border-dashed border-[#C9C3B2] bg-white px-4 text-sm font-bold text-[#3A372F] hover:border-[#A39E8F]"
         >
-          <PlusIcon className="w-5 h-5" />
-          Add Section
+          <PlusIcon className="h-4 w-4" strokeWidth={2.2} />
+          Add section
         </button>
-
         <button
           type="button"
-          onClick={() => setShowTemplates(!showTemplates)}
-          className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          onClick={() => setShowTemplates((open) => !open)}
+          aria-expanded={showTemplates}
+          className="h-11 px-3 text-sm font-semibold text-[#8A5A00] hover:underline"
         >
-          Use Template
+          Insert from template
         </button>
       </div>
 
-      {/* Template Selection */}
       {showTemplates && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">
-            Choose a template heading:
-          </h4>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <div className="mt-3 rounded-xl border border-[#E8E5DC] bg-[#FCFBF8] p-4">
+          <p className="mb-3 text-[13px] font-bold text-[#3A372F]">Pick a section heading</p>
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
             {DEFAULT_SECTION_TEMPLATES.map((template) => (
               <button
                 key={template}
@@ -279,27 +232,12 @@ export const JobSectionsManager: React.FC<JobSectionsManagerProps> = ({
                   addSection(template);
                   setShowTemplates(false);
                 }}
-                className="px-3 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded hover:bg-[#FFC905] hover:text-white transition-colors"
+                className="rounded-lg border border-[#E8E5DC] bg-white px-3 py-2 text-left text-[13px] font-semibold text-[#3A372F] hover:border-[#E0A800] hover:bg-[#FFFBEB]"
               >
                 {template}
               </button>
             ))}
           </div>
-        </div>
-      )}
-
-      {sections.length === 0 && (
-        <div className="text-center py-8 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg">
-          <p className="text-gray-500 mb-4">
-            No sections yet. Add your first section to get started.
-          </p>
-          <button
-            type="button"
-            onClick={() => addSection("About the Role")}
-            className="px-6 py-3 bg-[#FFC905] text-white rounded-lg hover:bg-[#FF8C05] transition-colors"
-          >
-            Add First Section
-          </button>
         </div>
       )}
     </div>

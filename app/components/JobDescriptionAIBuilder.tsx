@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
+import { Sparkles, RefreshCw, X } from "lucide-react";
 import toast from "react-hot-toast";
 import type { IJobSection } from "@/interfaces/job-offer";
 
@@ -11,6 +11,8 @@ interface JobDescriptionAIBuilderProps {
   companyName?: string;
   companyBio?: string;
   onGenerated: (title: string, sections: IJobSection[]) => void;
+  /** Called after a successful generation, and by the panel's close button. */
+  onClose: () => void;
 }
 
 const TONES = [
@@ -28,8 +30,8 @@ export function JobDescriptionAIBuilder({
   companyName,
   companyBio,
   onGenerated,
+  onClose,
 }: JobDescriptionAIBuilderProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [seniority, setSeniority] = useState<string>("Mid-level");
   const [workType, setWorkType] = useState<string>("Remote");
@@ -63,7 +65,7 @@ export function JobDescriptionAIBuilder({
       }
       onGenerated(json.data.title, json.data.sections);
       toast.success("Job description generated! Review and edit as needed.");
-      setIsOpen(false);
+      onClose();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to generate job description");
     } finally {
@@ -72,128 +74,95 @@ export function JobDescriptionAIBuilder({
   };
 
   return (
-    <div className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-50 overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setIsOpen((o) => !o)}
-        className="w-full flex items-center justify-between px-5 py-4"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-amber-400 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <div className="text-left">
-            <p className="text-sm font-semibold text-amber-900">AI Job Description Builder</p>
-            <p className="text-xs text-amber-700">Generate a professional JD from a few inputs</p>
-          </div>
-        </div>
-        {isOpen ? (
-          <ChevronUp className="w-4 h-4 text-amber-600" />
-        ) : (
-          <ChevronDown className="w-4 h-4 text-amber-600" />
-        )}
-      </button>
-
-      {isOpen && (
-        <div className="px-5 pb-5 space-y-4 border-t border-amber-200">
-          <div className="grid grid-cols-2 gap-3 mt-4">
-            {/* Seniority */}
-            <div>
-              <label className="text-xs font-medium text-amber-900 block mb-1.5">Seniority Level</label>
-              <select
-                value={seniority}
-                onChange={(e) => setSeniority(e.target.value)}
-                className="w-full rounded-xl border border-amber-200 bg-white px-3 py-2 text-sm focus:border-amber-400 focus:outline-none"
-              >
-                {SENIORITY_OPTIONS.map((o) => <option key={o}>{o}</option>)}
-              </select>
-            </div>
-
-            {/* Work type */}
-            <div>
-              <label className="text-xs font-medium text-amber-900 block mb-1.5">Work Type</label>
-              <select
-                value={workType}
-                onChange={(e) => setWorkType(e.target.value)}
-                className="w-full rounded-xl border border-amber-200 bg-white px-3 py-2 text-sm focus:border-amber-400 focus:outline-none"
-              >
-                {WORK_TYPES.map((o) => <option key={o}>{o}</option>)}
-              </select>
-            </div>
-          </div>
-
-          {/* Budget */}
-          <div>
-            <label className="text-xs font-medium text-amber-900 block mb-1.5">
-              Budget / Salary Range <span className="text-amber-500 font-normal">(optional)</span>
-            </label>
-            <input
-              type="text"
-              value={budget}
-              onChange={(e) => setBudget(e.target.value)}
-              placeholder="e.g. 5000 USDC/month or $80k–$100k"
-              className="w-full rounded-xl border border-amber-200 bg-white px-3 py-2 text-sm focus:border-amber-400 focus:outline-none"
-            />
-          </div>
-
-          {/* Tone */}
-          <div>
-            <label className="text-xs font-medium text-amber-900 block mb-1.5">Tone</label>
-            <div className="flex gap-2">
-              {TONES.map((t) => (
-                <button
-                  key={t.value}
-                  type="button"
-                  onClick={() => setTone(t.value)}
-                  className={`flex-1 rounded-xl py-2 text-xs font-semibold border transition ${
-                    tone === t.value
-                      ? "border-amber-500 bg-amber-500 text-white"
-                      : "border-amber-200 bg-white text-amber-800 hover:border-amber-400"
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Skills preview */}
-          {selectedSkills.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {selectedSkills.slice(0, 8).map((s) => (
-                <span key={s} className="rounded-full bg-amber-200 px-2.5 py-0.5 text-xs text-amber-900 font-medium">
-                  {s}
-                </span>
-              ))}
-              {selectedSkills.length > 8 && (
-                <span className="text-xs text-amber-600">+{selectedSkills.length - 8} more</span>
-              )}
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={() => void handleGenerate()}
-            disabled={isGenerating || !jobTitle.trim()}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 py-3 text-sm font-semibold text-white transition hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isGenerating ? (
-              <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                Generating with AI...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4" />
-                Generate Job Description
-              </>
-            )}
-          </button>
-          <p className="text-xs text-amber-600 text-center">
-            AI will fill the sections below. You can edit them freely after.
+    <div className="mb-5 rounded-xl border border-[#F0D98A] bg-[#FFF8E1] p-5">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <p className="flex items-center gap-2 text-[15px] font-extrabold text-[#4A3500]">
+            <Sparkles className="h-4 w-4 text-[#E0A800]" />
+            Write the description with AI
+          </p>
+          <p className="mt-1 text-[13px] text-[#6B4700]">
+            Uses your title{selectedSkills.length ? " and skills" : ""}. Replaces the sections below; you can edit everything after.
           </p>
         </div>
-      )}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#6B4700] hover:bg-[#F0D98A]/50"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label htmlFor="ai-seniority" className="mb-1.5 block text-[13px] font-bold text-[#3A372F]">Seniority</label>
+          <select id="ai-seniority" value={seniority} onChange={(e) => setSeniority(e.target.value)} className="box-border h-11 w-full rounded-[10px] border border-[#DCD8CC] bg-white px-3.5 text-[15px] font-medium text-[#1C1B17] outline-none hover:border-[#BDB7A6] focus:border-[#E0A800] focus:ring-[3px] focus:ring-[#F5B800]/25">
+            {SENIORITY_OPTIONS.map((o) => <option key={o}>{o}</option>)}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="ai-work-type" className="mb-1.5 block text-[13px] font-bold text-[#3A372F]">Work type</label>
+          <select id="ai-work-type" value={workType} onChange={(e) => setWorkType(e.target.value)} className="box-border h-11 w-full rounded-[10px] border border-[#DCD8CC] bg-white px-3.5 text-[15px] font-medium text-[#1C1B17] outline-none hover:border-[#BDB7A6] focus:border-[#E0A800] focus:ring-[3px] focus:ring-[#F5B800]/25">
+            {WORK_TYPES.map((o) => <option key={o}>{o}</option>)}
+          </select>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <label htmlFor="ai-budget" className="mb-1.5 block text-[13px] font-bold text-[#3A372F]">
+          Budget or salary range <span className="font-normal text-[#6B665A]">(optional)</span>
+        </label>
+        <input
+          id="ai-budget"
+          type="text"
+          value={budget}
+          onChange={(e) => setBudget(e.target.value)}
+          placeholder="e.g. 5000 USDC/month"
+          className="box-border h-11 w-full rounded-[10px] border border-[#DCD8CC] bg-white px-3.5 text-[15px] font-medium text-[#1C1B17] outline-none hover:border-[#BDB7A6] focus:border-[#E0A800] focus:ring-[3px] focus:ring-[#F5B800]/25"
+        />
+      </div>
+
+      <div className="mt-4">
+        <span className="mb-1.5 block text-[13px] font-bold text-[#3A372F]">Tone</span>
+        <div className="flex gap-2">
+          {TONES.map((t) => (
+            <button
+              key={t.value}
+              type="button"
+              onClick={() => setTone(t.value)}
+              aria-pressed={tone === t.value}
+              className={`h-10 flex-1 rounded-[10px] border text-[13px] font-bold transition ${
+                tone === t.value
+                  ? "border-[#E0A800] bg-[#F5B800] text-[#1C1B17]"
+                  : "border-[#DCD8CC] bg-white text-[#3A372F] hover:border-[#BDB7A6]"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => void handleGenerate()}
+        disabled={isGenerating || !jobTitle.trim()}
+        className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-[#1C1B17] text-sm font-bold text-white transition hover:bg-[#3A372F] disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {isGenerating ? (
+          <>
+            <RefreshCw className="h-4 w-4 animate-spin" />
+            Writing…
+          </>
+        ) : (
+          <>
+            <Sparkles className="h-4 w-4" />
+            {jobTitle.trim() ? "Generate description" : "Add a job title first"}
+          </>
+        )}
+      </button>
     </div>
   );
 }

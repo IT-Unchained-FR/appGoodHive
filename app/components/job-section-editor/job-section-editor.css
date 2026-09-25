@@ -1,0 +1,43 @@
+/* Rich-text box in the job editor (Job Editor Redesign). */
+.job-editor-quill {
+  border: 1px solid #dcd8cc;
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+.job-editor-quill:focus-within {
+  border-color: #e0a800;
+  box-shadow: 0 0 0 3px rgba(245, 184, 0, 0.25);
+}
+.job-editor-quill .ql-toolbar.ql-snow {
+  border: 0;
+  border-bottom: 1px solid #efede6;
+  padding: 6px 8px;
+  font-family: inherit;
+}
+.job-editor-quill .ql-container.ql-snow {
+  border: 0;
+  font-family: inherit;
+  font-size: 14.5px;
+}
+.job-editor-quill .ql-editor {
+  min-height: 150px;
+  padding: 12px 14px;
+  line-height: 1.6;
+  color: #1c1b17;
+}
+.job-editor-quill .ql-editor.ql-blank::before {
+  color: #8f8a7c;
+  font-style: normal;
+  left: 14px;
+}
+.job-editor-quill .ql-snow .ql-stroke {
+  stroke: #3a372f;
+}
+.job-editor-quill .ql-snow .ql-fill {
+  fill: #3a372f;
+}
+.job-editor-quill .ql-snow button:hover .ql-stroke,
+.job-editor-quill .ql-snow button.ql-active .ql-stroke {
+  stroke: #8a5a00;
+}

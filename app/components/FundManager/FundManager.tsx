@@ -41,6 +41,8 @@ interface FundManagerProps {
   tokenAddress: string;
   jobChainId?: number | null;
   jobChainLabel?: string;
+  /** Tab to open on. */
+  initialTab?: 'add' | 'withdraw' | 'fees';
   onClose: () => void;
 }
 
@@ -50,6 +52,7 @@ export default function FundManager({
   tokenAddress,
   jobChainId,
   jobChainLabel,
+  initialTab = 'add',
   onClose
 }: FundManagerProps) {
   const account = useActiveAccount();
@@ -66,7 +69,7 @@ export default function FundManager({
     error: jobDataError,
   } = useJobData(jobId);
 
-  const [activeTab, setActiveTab] = useState<'add' | 'withdraw' | 'fees'>('add');
+  const [activeTab, setActiveTab] = useState<'add' | 'withdraw' | 'fees'>(initialTab);
   const [amount, setAmount] = useState('');
   const [tokenInfo, setTokenInfo] = useState<any>(null);
   const [userBalance, setUserBalance] = useState<bigint>(0n);

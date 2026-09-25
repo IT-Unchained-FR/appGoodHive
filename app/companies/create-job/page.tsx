@@ -10,7 +10,6 @@ import LabelOption from "@interfaces/label-option";
 import { IJobSection } from "@interfaces/job-offer";
 import { JobForm } from "./JobForm";
 import { JobModals } from "./JobModals";
-import { AiJobGeneratorModal } from "@/app/components/ai-job-generator/AiJobGeneratorModal";
 import { chains } from "@/app/constants/chains";
 import {
   typeEngagements,
@@ -47,7 +46,6 @@ export default function CreateJob() {
   const [popupModalType, setPopupModalType] = useState("");
   const [isManageFundsModalOpen, setIsManageFundsModalOpen] = useState(false);
   const [jobImage, setJobImage] = useState<string | null>(null);
-  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [tourReplayToken, setTourReplayToken] = useState(0);
 
   const [jobServices, setJobServices] = useState({
@@ -295,100 +293,54 @@ export default function CreateJob() {
           replayToken={tourReplayToken}
         />
       )}
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          {/* Header with AI button */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
-              {id ? "Edit Job" : "Create New Job"}
-            </h1>
+      <JobForm
+        title={title}
+        setTitle={setTitle}
+        description={description}
+        setDescription={setDescription}
+        jobSections={jobSections}
+        setJobSections={setJobSections}
+        selectedSkills={selectedSkills}
+        setSelectedSkills={setSelectedSkills}
+        selectedCurrency={selectedCurrency}
+        setSelectedCurrency={setSelectedCurrency}
+        selectedChain={selectedChain}
+        setSelectedChain={setSelectedChain}
+        typeEngagement={typeEngagement}
+        setTypeEngagement={setTypeEngagement}
+        jobType={jobType}
+        setJobType={setJobType}
+        duration={duration}
+        setDuration={setDuration}
+        projectType={projectType}
+        setProjectType={setProjectType}
+        companyData={companyData}
+        jobData={jobData}
+        budget={budget}
+        setBudget={setBudget}
+        jobImage={jobImage}
+        setJobImage={setJobImage}
+        jobServices={jobServices}
+        setJobServices={setJobServices}
+        isLoading={isLoading}
+        setIsLoading={setIsLoading}
+        setIsPopupModalOpen={setIsPopupModalOpen}
+        setPopupModalType={setPopupModalType}
+        handleCreateJob={handleCreateJob}
+        onRefreshJobData={refreshJobData}
+        onReplayTour={!id ? () => setTourReplayToken((n) => n + 1) : undefined}
+        onAiGenerated={!id ? handleAiJobGenerated : undefined}
+      />
 
-            {/* Show AI button only when creating new job (not editing) */}
-            {!id && (
-              <div className="flex items-center justify-center gap-3 sm:justify-end">
-                <button
-                  type="button"
-                  onClick={() => setTourReplayToken((n) => n + 1)}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl border-2 border-amber-300 bg-white text-amber-700 font-semibold text-sm sm:text-base hover:bg-amber-50 transition-colors"
-                >
-                  🧭 How it works
-                </button>
-                <button
-                  data-tour="create-with-ai"
-                  onClick={() => setIsAiModalOpen(true)}
-                  className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 text-sm sm:text-base"
-                >
-                  <svg
-                    className="w-4 h-4 sm:w-5 sm:h-5"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12 2L13.09 8.26L19.5 7.5L14.74 12.26L15.5 18.5L12 15.5L8.5 18.5L9.26 12.26L4.5 7.5L10.91 8.26L12 2Z" />
-                    <path d="M6 7L7 9L9 8L8 6L6 7Z" />
-                    <path d="M18 16L19 18L21 17L20 15L18 16Z" />
-                  </svg>
-                  Create with AI
-                </button>
-              </div>
-            )}
-          </div>
-
-          
-          <JobForm
-            title={title}
-            setTitle={setTitle}
-            description={description}
-            setDescription={setDescription}
-            jobSections={jobSections}
-            setJobSections={setJobSections}
-            selectedSkills={selectedSkills}
-            setSelectedSkills={setSelectedSkills}
-            selectedCurrency={selectedCurrency}
-            setSelectedCurrency={setSelectedCurrency}
-            selectedChain={selectedChain}
-            setSelectedChain={setSelectedChain}
-            typeEngagement={typeEngagement}
-            setTypeEngagement={setTypeEngagement}
-            jobType={jobType}
-            setJobType={setJobType}
-            duration={duration}
-            setDuration={setDuration}
-            projectType={projectType}
-            setProjectType={setProjectType}
-            companyData={companyData}
-            jobData={jobData}
-            budget={budget}
-            setBudget={setBudget}
-            jobImage={jobImage}
-            setJobImage={setJobImage}
-            jobServices={jobServices}
-            setJobServices={setJobServices}
-            isLoading={isLoading}
-            setIsLoading={setIsLoading}
-            setIsPopupModalOpen={setIsPopupModalOpen}
-            setPopupModalType={setPopupModalType}
-            handleCreateJob={handleCreateJob}
-            onRefreshJobData={refreshJobData}
-          />
-
-          <JobModals
-            isPopupModalOpen={isPopupModalOpen}
-            setIsPopupModalOpen={setIsPopupModalOpen}
-            popupModalType={popupModalType}
-            isManageFundsModalOpen={isManageFundsModalOpen}
-            setIsManageFundsModalOpen={setIsManageFundsModalOpen}
-            jobData={jobData}
-            selectedCurrency={selectedCurrency}
-          />
-
-          {/* AI Job Generator Modal */}
-          <AiJobGeneratorModal
-            isOpen={isAiModalOpen}
-            onClose={() => setIsAiModalOpen(false)}
-            onJobGenerated={handleAiJobGenerated}
-          />
-        </div>
-      </div>
+      <JobModals
+        isPopupModalOpen={isPopupModalOpen}
+        setIsPopupModalOpen={setIsPopupModalOpen}
+        popupModalType={popupModalType}
+        isManageFundsModalOpen={isManageFundsModalOpen}
+        setIsManageFundsModalOpen={setIsManageFundsModalOpen}
+        jobData={jobData}
+        selectedCurrency={selectedCurrency}
+      />
     </AuthLayout>
   );
 }

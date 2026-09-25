@@ -43,69 +43,69 @@ const steps: Step[] = [
   },
   {
     target: '[data-tour="create-with-ai"]',
-    title: "Short on time? Use AI",
+    title: "Short on time? Start with a few lines",
     content:
-      "Describe the role in a few words and AI fills in the title, sections, skills, and budget for you. You can edit everything afterwards.",
+      "Describe the role in your own words and we draft the title, description, skills and budget. You can edit everything afterwards.",
   },
   {
     target: '[data-tour="job-image"]',
     title: "Job image",
     content:
-      "Upload a cover image for the job page. If you skip this, your company logo is used.",
+      "Add a cover image for the job page. If you skip this, your company logo is used.",
   },
   {
     target: '[data-tour="job-title"]',
-    title: "Job header",
+    title: "Job title",
     content:
       "A clear, specific title, e.g. “Senior Solidity Engineer, DeFi protocol”.",
   },
   {
     target: '[data-tour="job-engagement"]',
-    title: "Engagement & job type",
+    title: "Engagement, location & duration",
     content:
-      "Choose freelance, employee, or either, and whether the role is remote, hybrid, or on-site.",
+      "Choose freelance, employee or either, whether the role is remote, hybrid or on-site, and how long it runs.",
   },
   {
     target: '[data-tour="job-description-ai"]',
-    title: "Write the description",
+    title: "Write the description with AI",
     content:
-      "Generate a full description from your title and skills, or write it yourself below.",
+      "Generate a full description from your title and skills, or write the sections yourself.",
   },
   {
     target: '[data-tour="job-sections"]',
     title: "Description sections",
     content:
-      "Organise the job into sections such as responsibilities, requirements, and benefits. Rough notes are polished automatically when you save.",
+      "Split the job into sections such as responsibilities, requirements and benefits. Click a section to edit it, drag to reorder. Rough notes are tidied when you save.",
   },
   {
     target: '[data-tour="job-skills"]',
-    title: "Mandatory skills",
+    title: "Required skills",
     content:
-      "Add the skills a candidate must have. These are used to match your job with the right talent.",
+      "Add at least 3 skills a candidate must have. Specific tools and languages match talent better than soft skills.",
   },
   {
     target: '[data-tour="job-services"]',
-    title: "GoodHive services",
+    title: "Who can respond",
     content:
-      "Talent is always on: you choose candidates yourself. Turn on Recruiter to get a shortlist of talent introduced to you, or Mentor for technical guidance on the mission.",
+      "Talent is always on: you choose candidates yourself. Add Recruiters to get a shortlist introduced to you, or Mentors to vet candidates and guide your hire. Each adds a fee.",
   },
   {
     target: '[data-tour="job-budget"]',
-    title: "Duration & budget",
+    title: "Budget",
     content:
-      "Set the project length and choose fixed price or hourly. Then enter the budget or hourly rate.",
+      "Choose fixed price or hourly, then enter the budget or hourly rate.",
   },
   {
     target: '[data-tour="job-commission"]',
-    title: "Transparent fees",
+    title: "Total to fund",
     content:
-      "See exactly what GoodHive charges for each service you selected, calculated from your budget.",
+      "Your budget plus GoodHive's fee for each service you picked. Open it to see the breakdown.",
   },
   {
     target: '[data-tour="job-chain"]',
-    title: "Chain & payment token",
+    title: "Network & currency",
     content:
-      "The chain is set for you. Pick the stablecoin talent will be paid in. Your job is created on this chain when you publish, and payments are held in its smart contract.",
+      "The network is set for you. Pick the stablecoin talent will be paid in. Both are fixed once the job is published on-chain.",
   },
   {
     target: '[data-tour="job-save-draft"]',
@@ -117,7 +117,7 @@ const steps: Step[] = [
     target: '[data-tour="job-submit-review"]',
     title: "Submit for review",
     content:
-      "When the job is ready, submit it. The GoodHive team reviews it before it can be published.",
+      "Unlocks once the checklist on the right is complete. The GoodHive team reviews every job before it can be published.",
   },
   {
     target: "body",
@@ -128,14 +128,13 @@ const steps: Step[] = [
         <p>After your job is approved, come back to this page:</p>
         <ol className="list-decimal space-y-1.5 pl-5 text-sm">
           <li>
-            Click <strong>⚡ Publish to Blockchain</strong> in the approval
-            banner at the top.
+            Click <strong>Publish to blockchain</strong> at the top of the
+            page or in the panel on the right.
           </li>
           <li>Connect your wallet and confirm the transaction.</li>
           <li>
-            Add a <strong>provision fund</strong> with Manage Funds. The funds
-            are held in the job&apos;s smart contract so talent can be paid
-            on-chain.
+            Add a <strong>provision fund</strong>. The funds are held in the
+            job&apos;s smart contract so talent can be paid on-chain.
           </li>
         </ol>
         <p className="text-sm text-gray-500">

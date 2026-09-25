@@ -1,22 +1,13 @@
 import FundManager from "@/app/components/FundManager";
-import JobBalance from "@/app/components/JobBalance";
 import { JobDescriptionAIBuilder } from "@/app/components/JobDescriptionAIBuilder";
 import { BlockchainActivateModal } from "@/app/components/BlockchainActivateModal";
 import JobSectionsManager from "@/app/components/job-sections-manager/job-sections-manager";
 import ProfileImageUpload from "@/app/components/profile-image-upload";
 import { useProtectedNavigation } from "@/app/hooks/useProtectedNavigation";
 import "@/app/styles/rich-text.css";
-import {
-  calculateJobCreateFees,
-  getBudgetLabel,
-  getFeeDisplaySuffix,
-} from "@/app/utils/calculate-job-create-fees";
 import { ACTIVE_CHAIN_ID } from "@/config/chains";
 import { useJobManager } from "@/hooks/contracts/useJobManager";
 import { getSupportedTokensForChain } from "@/lib/contracts/jobManager";
-import { AutoSuggestInput } from "@components/autosuggest-input";
-import { SelectInput } from "@components/select-input";
-import { ToggleButton } from "@components/toggle-button";
 import { chains } from "@constants/chains";
 import {
   createJobServices,
@@ -29,16 +20,51 @@ import {
   projectTypes,
   typeEngagements,
 } from "@constants/common";
-import { skills } from "@constants/skills";
 import { IJobSection } from "@interfaces/job-offer";
 import LabelOption from "@interfaces/label-option";
-import { Tooltip } from "@nextui-org/tooltip";
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { ChevronDown, Compass, Eye, Lock, Sparkles, Wallet, Zap } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import "react-quill/dist/quill.snow.css";
 import { useActiveAccount } from "thirdweb/react";
 import { canCompanyDeleteJob, REVIEW_TURNAROUND } from "@/lib/jobs/review";
 import { useConfirm } from "@/app/components/ConfirmDialog/ConfirmDialog";
+import { AiDraftCard } from "./editor/AiDraftCard";
+import { EditorNav } from "./editor/EditorNav";
+import { EditorRail } from "./editor/EditorRail";
+import { manrope } from "./editor/font";
+import { SkillsField } from "./editor/SkillsField";
+import {
+  EditorCard,
+  hexClip,
+  jobEditorUi as ui,
+  LockedValue,
+  SelectField,
+  StatusPill,
+} from "./editor/ui";
+
+// A job needs this many skills before it can be submitted; fewer matches poorly.
+const MIN_SKILLS = 3;
+
+const SERVICE_COPY: Record<"talent" | "recruiter" | "mentor", { name: string; description: string }> = {
+  talent: {
+    name: "Talent",
+    description: "Talent applies directly and you choose who to hire.",
+  },
+  recruiter: {
+    name: "Recruiters",
+    description: "A GoodHive recruiter introduces you to a shortlist of candidates.",
+  },
+  mentor: {
+    name: "Mentors",
+    description: "A tech mentor vets candidates and guides the person you hire.",
+  },
+};
+
+function formatMoney(value: number) {
+  return value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
 const mapToChainId = (value: unknown): number | null => {
   if (value === null || value === undefined) {
@@ -126,6 +152,10 @@ interface JobFormProps {
   setPopupModalType: (type: string) => void;
   handleCreateJob: (jobId: string, amount: string) => Promise<boolean>;
   onRefreshJobData?: () => Promise<void>;
+  /** Replays the create-job tour (new jobs only). */
+  onReplayTour?: () => void;
+  /** Fills the form from an AI draft (new jobs only). */
+  onAiGenerated?: (data: unknown) => void;
 }
 
 export const JobForm = ({
@@ -163,11 +193,49 @@ export const JobForm = ({
   setPopupModalType,
   handleCreateJob,
   onRefreshJobData,
+  onReplayTour,
+  onAiGenerated,
 }: JobFormProps) => {
   const [isCommissionExpanded, setIsCommissionExpanded] = useState(false);
   const [showFundManager, setShowFundManager] = useState(false);
   const [confirm, confirmDialog] = useConfirm();
   const [showBlockchainModal, setShowBlockchainModal] = useState(false);
+  const [fundManagerTab, setFundManagerTab] = useState<"add" | "withdraw">("add");
+  const [showAiDraft, setShowAiDraft] = useState(true);
+  const [showAiBuilder, setShowAiBuilder] = useState(false);
+  const jobImageRef = useRef<HTMLDivElement>(null);
+
+  // New jobs start on the only supported chain and its first token (the
+  // shared select used to do this through its defaultValue).
+  useEffect(() => {
+    if (!selectedChain) setSelectedChain(chains[0] ?? null);
+  }, [selectedChain, setSelectedChain]);
+  useEffect(() => {
+    if (!selectedCurrency) setSelectedCurrency(polygonAmoyTokens[0] ?? null);
+  }, [selectedCurrency, setSelectedCurrency]);
+
+  // "Unsaved changes" for saved jobs: compare against the values loaded
+  // with the job. Saving reloads the page, which resets the baseline.
+  const formSnapshot = JSON.stringify({
+    title,
+    jobSections,
+    selectedSkills,
+    budget,
+    jobServices,
+    jobImage,
+    engagement: typeEngagement?.value,
+    jobType: jobType?.value,
+    duration: duration?.value,
+    projectType: projectType?.value,
+    currency: selectedCurrency?.value,
+  });
+  const [savedSnapshot, setSavedSnapshot] = useState<string | null>(null);
+  useEffect(() => {
+    if (jobData?.id) setSavedSnapshot(formSnapshot);
+    // Only when a different job is loaded.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobData?.id]);
+  const isDirty = savedSnapshot !== null && savedSnapshot !== formSnapshot;
   const { navigate: protectedNavigate } = useProtectedNavigation();
 
   const jobChainLabel = useMemo(
@@ -458,32 +526,6 @@ export const JobForm = ({
     }
   };
 
-  const handleUnpublishJob = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    try {
-      const response = await fetch(`/api/companies/manage-job`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          jobId: jobData?.id,
-          publish: false,
-        }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        toast.success("Job unpublished successfully");
-        window.location.reload();
-      } else {
-        throw new Error(data.message || "Failed to unpublish job");
-      }
-    } catch (error: any) {
-      console.error("Error unpublishing job:", error);
-      toast.error(error.message || "Failed to unpublish job");
-    }
-  };
-
   const handleSubmitForReview = async (
     e: React.MouseEvent<HTMLButtonElement>,
   ) => {
@@ -712,690 +754,542 @@ export const JobForm = ({
     }
   };
 
+  // ── Derived state for the editor layout ─────────────────────────────────
+  const isNewJob = !jobData?.id;
+  const isOnChain = Boolean(jobData?.payment_token_address);
+  const isDraftState = currentReviewStatus === "draft" || currentReviewStatus === "rejected";
+  const lockedOnChain = isLiveJob || isOnChain;
+  const currencyLabel = selectedCurrency?.label || jobData?.currency || "USDC";
+  const isHourly = projectType?.value === "hourly";
+  const budgetNumber = Number(budget) || 0;
+  const feePercent = getTotalPercentage();
+  const feeAmount = (budgetNumber * feePercent) / 100;
+  const totalToFund = budgetNumber + feeAmount;
+  const currencyOptions =
+    selectedChain?.value === "ethereum"
+      ? ethereumTokens
+      : selectedChain?.value === "polygon"
+        ? polygonMainnetTokens
+        : selectedChain?.value === "gnosis-chain"
+          ? gnosisChainTokens
+          : polygonAmoyTokens;
+  const isBusy = isLoading || isBlockchainLoading;
+
+  const sectionsComplete =
+    jobSections.length > 0 &&
+    jobSections.every((s) => s.heading.trim() && s.content.replace(/<[^>]*>/g, "").trim());
+  const basicsComplete = Boolean(title.trim() && typeEngagement && jobType && duration);
+  const skillsComplete = selectedSkills.length >= MIN_SKILLS;
+  const budgetComplete = Boolean(projectType && budgetNumber > 0);
+  const checklist = [
+    { label: "Add a title and basics", done: basicsComplete },
+    { label: "Describe the role", done: sectionsComplete },
+    { label: `Add at least ${MIN_SKILLS} skills`, done: skillsComplete },
+    { label: "Set a budget", done: budgetComplete },
+  ];
+  const stepsLeft = checklist.filter((item) => !item.done).length;
+  const navSteps = [
+    { id: "basics", label: "Basics", done: basicsComplete },
+    { id: "description", label: "Description", done: sectionsComplete },
+    { id: "skills", label: "Skills", done: skillsComplete },
+    { id: "applicants", label: "Who can respond", done: true },
+    { id: "budget", label: "Budget & payment", done: budgetComplete && Boolean(selectedCurrency) },
+  ];
+
+  const handleUnpublish = async () => {
+    if (!jobData?.id) return;
+    const confirmed = await confirm({
+      title: `Unpublish “${title.trim() || "this job"}”?`,
+      description: (
+        <div className="space-y-3">
+          <p>
+            Talent won&apos;t be able to find or apply to this job. Applications
+            you&apos;ve already received stay in your pipeline.
+          </p>
+          {isOnChain && (
+            <p className="rounded-[10px] bg-[#F3F1EA] px-3.5 py-3 text-[13.5px] text-[#3A372F]">
+              Any funds in escrow stay in the contract. Withdraw them anytime from
+              this page.
+            </p>
+          )}
+        </div>
+      ),
+      confirmLabel: "Unpublish job",
+      cancelLabel: "Keep it live",
+      tone: "danger",
+    });
+    if (!confirmed) return;
+
+    setIsLoading(true);
+    try {
+      // Closing is what takes a job off the platform everywhere (search, My
+      // Jobs, the job page); it's the same action as "Close job" on My Jobs.
+      const response = await fetch(`/api/jobs/${jobData.id}/close`, { method: "POST" });
+      const payload = (await response.json().catch(() => ({}))) as { error?: string; success?: boolean };
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.error ?? "Failed to unpublish job");
+      }
+      toast.success("Job unpublished");
+      window.location.reload();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to unpublish job");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const canDelete =
+    !!jobData?.id &&
+    canCompanyDeleteJob({
+      payment_token_address: jobData.payment_token_address ?? null,
+      review_status: currentReviewStatus,
+    });
+
+  const logoClick = () =>
+    jobImageRef.current?.querySelector<HTMLElement>(".cursor-pointer")?.click();
+
   return (
-    <form>
-      {isReadOnlyReviewState && (
-        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
-          {currentReviewStatus === "pending_review" ? (
-            <div>
-              <p className="font-semibold">
-                In review with the GoodHive team, usually {REVIEW_TURNAROUND}.
-              </p>
-              <p className="mt-1">
-                We check that the description, skills, budget and services are
-                clear and complete. Editing is locked while we review. We&apos;ll
-                email you when it&apos;s approved, and you can then publish it.
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <span>
-                ✅ Your job has been <strong>approved</strong>. Publish it to
-                the blockchain and add a provision fund to make it live for
-                talents.
-              </span>
-              <button
-                type="button"
-                onClick={() => setShowBlockchainModal(true)}
-                className="shrink-0 inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600"
-              >
-                ⚡ {jobData?.payment_token_address ? "Add Provision Fund" : "Publish to Blockchain"}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-      {isLiveJob && (
-        <div className="mb-6 rounded-xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
-          This job is <strong>live</strong>. You can update the title,
-          description, skills, and budget. Changes are visible to talents as
-          soon as you save. Chain, currency, and services are fixed on-chain.
-          Use <strong>Manage Funds</strong> below to add or withdraw funds.
-        </div>
-      )}
-      {currentReviewStatus === "rejected" && jobData?.admin_feedback && (
-        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
-          <strong>Admin feedback:</strong> {jobData.admin_feedback}
-        </div>
-      )}
-      <fieldset
-        className={`flex flex-col w-full ${isReadOnlyReviewState ? "opacity-70" : ""}`}
-        disabled={isReadOnlyReviewState}
-      >
-        <div className="flex flex-col gap-4">
-          <div className="mt-4 flex justify-center">
-            <div className="flex flex-col gap-2 items-center" data-tour="job-image">
-              <ProfileImageUpload
-                currentImage={jobImage || companyData?.image_url || ""}
-                displayName="Job Image"
-                onImageUpdate={(imageUrl) => setJobImage(imageUrl)}
-                variant="job"
-                size={160}
-              />
-              <p className="text-sm text-gray-500">
-                This image will be displayed on the job page.
-              </p>
-            </div>
-          </div>
-
-          {/* Job Balance Display */}
-          {currentBlockchainJobId && (
-            <div className="mt-6 mb-4 flex justify-center">
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-4 max-w-md w-full">
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">Current Job Balance</h3>
-                  <div className="text-2xl font-bold text-green-600">
-                    <JobBalance
-                      jobId={currentBlockchainJobId}
-                      currency={selectedCurrency?.value || jobData?.currency || 'USDC'}
-                      className="text-2xl font-bold text-green-600"
-                      showLabel={false}
-                      showCurrency={true}
-                    />
-                  </div>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Available funds in smart contract
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-          <div className="flex-1" data-tour="job-title">
-            <label
-              htmlFor="title"
-              className="inline-block ml-3 text-base text-gray-800 form-label mb-2 font-medium"
-            >
-              Job Header*
-            </label>
-            <input
-              className="block w-full px-4 py-3 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-amber-300 rounded-xl hover:shadow-md transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-amber-500 focus:outline-none"
-              placeholder="Job Header..."
-              name="title"
-              type="text"
-              required
-              maxLength={100}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
-          <div className="w-full flex gap-5 justify-between sm:flex-col" data-tour="job-engagement">
-            <SelectInput
-              labelText="Type of engagement"
-              name="type-engagement"
-              required={true}
-              disabled={false}
-              inputValue={typeEngagement}
-              setInputValue={setTypeEngagement}
-              options={typeEngagements}
-              defaultValue={
-                typeEngagements[
-                  typeEngagements.findIndex(
-                    (type) => type.value === jobData?.typeEngagement,
-                  )
-                ]
-              }
-            />
-
-            <SelectInput
-              labelText="Job Type"
-              name="job-type"
-              required={true}
-              disabled={false}
-              inputValue={jobType}
-              setInputValue={setJobType}
-              options={jobTypes}
-              defaultValue={
-                jobTypes[
-                  jobTypes.findIndex((type) => type.value === jobData?.jobType)
-                ]
-              }
-            />
-          </div>
-        </div>
-        <div className="flex flex-col w-full mt-4" data-tour="job-description-ai">
-          <JobDescriptionAIBuilder
-            jobTitle={title}
-            selectedSkills={selectedSkills}
-            companyName={companyData?.designation ?? ""}
-            companyBio={companyData?.headline ?? ""}
-            onGenerated={(generatedTitle, generatedSections) => {
-              if (generatedTitle) setTitle(generatedTitle);
-              setJobSections(generatedSections);
-            }}
-          />
-        </div>
-        <div className="flex flex-col w-full mt-4" data-tour="job-sections">
-          <JobSectionsManager
-            sections={jobSections}
-            onSectionsChange={setJobSections}
-          />
-          <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-sm leading-6 text-amber-900">
-            Paste rough notes if you need to. GoodHive will automatically polish messy section text with Gemini on save, then keep the public job page clean and structured for candidates.
-          </div>
-        </div>
-        <div className="relative flex flex-col gap-4 mt-12 mb-10 sm:flex-row" data-tour="job-skills">
-          <div className="flex-1">
-            <label
-              htmlFor="skills"
-              className="inline-block ml-3 text-base font-bold text-black form-label"
-            >
-              Mandatory Skills*
-            </label>
-            <div className="absolute w-full pt-1 pr-10 text-base font-normal text-gray-600 bg-white form-control ">
-              <AutoSuggestInput
-                inputs={skills}
-                selectedInputs={selectedSkills}
-                setSelectedInputs={setSelectedSkills}
-              />
-            </div>
-            <div className="pt-10">
-              {!!selectedSkills && selectedSkills.length > 0 && (
-                <div className="flex flex-wrap mt-4 ">
-                  {selectedSkills.map((skill, index) => (
-                    <div
-                      key={index}
-                      className="border border-[#FFC905] flex items-center bg-gray-200 rounded-full py-1 px-3 m-1"
-                    >
-                      <span className="mr-2">{skill}</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedSkills(
-                            selectedSkills.filter((_, i) => i !== index),
-                          );
-                        }}
-                        className="w-6 text-black bg-gray-400 rounded-full"
-                      >
-                        &#10005;
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="w-1/2 sm:w-full mb-5 px-3 flex justify-between sm:flex-wrap sm:gap-5" data-tour="job-services">
-          {createJobServices.map((service) => {
-            const { label, value, tooltip } = service;
-            const isChecked = jobServices[value as keyof typeof jobServices];
-            const isTalent = value === "talent";
-            return (
-              <ToggleButton
-                key={value}
-                label={label}
-                name={value}
-                checked={isChecked}
-                tooltip={tooltip}
-                onChange={onJobServicesChange}
-                disabled={isTalent || isLiveJob}
-              />
-            );
-          })}
-        </div>
-
-        <div className="flex gap-4 mt-4 sm:flex-col" data-tour="job-budget">
-          <div className="flex-1">
-            <SelectInput
-              labelText="Project Duration"
-              name="duration"
-              required={true}
-              disabled={false}
-              inputValue={duration}
-              setInputValue={setDuration}
-              options={projectDuration}
-              defaultValue={
-                projectDuration[
-                  projectDuration.findIndex(
-                    (type) => type.value === jobData?.duration,
-                  )
-                ]
-              }
-            />
-          </div>
-
-          <div className="flex-1">
-            <SelectInput
-              labelText="Project Type"
-              name="projectType"
-              required={true}
-              disabled={false}
-              inputValue={projectType}
-              setInputValue={setProjectType}
-              options={projectTypes}
-              defaultValue={
-                projectTypes[
-                  projectTypes.findIndex(
-                    (type) => type.value === jobData?.projectType,
-                  )
-                ]
-              }
-            />
-          </div>
-          {projectType || jobData?.projectType ? (
-            <div className="flex-1">
-              <label
-                htmlFor="budget"
-                className="inline-block ml-3 text-base text-gray-800 form-label mb-2 font-medium"
-              >
-                {projectType && projectType.value === "fixed"
-                  ? "Budget*"
-                  : "Expected Hourly Rate*"}
-              </label>
-              <input
-                className="block w-full px-4 py-3 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-amber-300 rounded-xl hover:shadow-md transition ease-in-out m-0 focus:text-black focus:bg-white focus:border-amber-500 focus:outline-none"
-                type="number"
-                name="budget"
-                onChange={onBudgetChange}
-                required
-                value={budget}
-                maxLength={100}
-                title="Enter budget amount"
-                placeholder="Enter amount"
-              />
-            </div>
-          ) : null}
-        </div>
-
-        {/* GoodHive Commission Section */}
-        <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg" data-tour="job-commission">
-          <div
-            className="flex items-center justify-between cursor-pointer"
-            onClick={() => setIsCommissionExpanded(!isCommissionExpanded)}
-          >
-            <div className="flex items-center gap-3">
-              <h3 className="text-lg font-semibold text-gray-800">
-                GoodHive Commission Breakdown
-              </h3>
-              <div className="flex items-center gap-1">
-                <span className="text-sm text-gray-600">Total:</span>
-                <span className="text-sm font-bold text-yellow-600">
-                  {getTotalPercentage()}%
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <p className="text-sm text-gray-600">Total Commission</p>
-                <p className="text-xl font-bold text-yellow-600">
-                  {budget && Number(budget) > 0
-                    ? selectedCurrency?.label
-                      ? `${calculateJobCreateFees(projectType, budget, jobServices)} ${selectedCurrency.label}${getFeeDisplaySuffix(projectType)}`
-                      : `${calculateJobCreateFees(projectType, budget, jobServices)} ${jobData?.currency || "USDC"}${getFeeDisplaySuffix(projectType)}`
-                    : `Enter ${getBudgetLabel(projectType).toLowerCase()} to see fees`}
-                </p>
-              </div>
+    <div className={`${manrope.className} ${ui.page} min-h-screen`}>
+      {/* Page header */}
+      <div className="border-b border-[#E8E5DC] bg-white px-4 pb-[22px] pt-5 sm:px-10">
+        <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
+          <div className="flex min-w-0 flex-1 items-center gap-4">
+            {!isNewJob && (
               <div
-                className={`transform transition-transform duration-200 ${isCommissionExpanded ? "rotate-180" : ""}`}
+                className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden bg-[#111] text-[11px] font-extrabold text-white"
+                style={{ clipPath: hexClip }}
               >
-                <svg
-                  width="20"
-                  height="20"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
+                {companyData?.image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={jobImage || companyData.image_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  (companyData?.designation ?? "").slice(0, 8)
+                )}
+              </div>
+            )}
+            <div className="min-w-0">
+              <div className="text-[13px] font-semibold text-[#6B665A]">
+                <Link href="/companies/dashboard/jobs" className="text-[#6B665A] no-underline hover:text-[#1C1B17]">
+                  Jobs
+                </Link>{" "}
+                / {isNewJob ? "New job" : "Edit job"}
+              </div>
+              <div className="mt-1 flex flex-wrap items-center gap-3">
+                <h1 className="m-0 truncate text-[26px] font-extrabold tracking-[-0.4px]">
+                  {isNewJob ? "Post a job" : title.trim() || "Untitled job"}
+                </h1>
+                <StatusPill status={currentReviewStatus} />
               </div>
             </div>
           </div>
 
-          {isCommissionExpanded && (
-            <div className="mt-4 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {jobServices.talent && (
-                  <div className="bg-white p-3 rounded border">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">
-                        Talent Selection
-                      </span>
-                      <span className="text-sm font-bold text-green-600">
-                        10%
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Self-selection fee
-                    </p>
-                    {budget && Number(budget) > 0 && (
-                      <p className="text-sm font-semibold mt-1">
-                        {(Number(budget) * 0.1).toFixed(2)}{" "}
-                        {selectedCurrency?.label || jobData?.currency || "USDC"}
-                        {getFeeDisplaySuffix(projectType)}
-                      </p>
-                    )}
-                  </div>
-                )}
+          <div className="flex flex-wrap items-center gap-3">
+            {onReplayTour && (
+              <button type="button" onClick={onReplayTour} className={`${ui.btnGhost} h-11 px-2 text-[#8A5A00]`}>
+                <Compass className="h-4 w-4" />
+                How it works
+              </button>
+            )}
+            {!isNewJob && !isReadOnlyReviewState && (
+              isDirty ? (
+                <>
+                  <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#8A5A00]">
+                    <span className="h-[7px] w-[7px] rounded-full bg-[#E0A800]" />
+                    Unsaved changes
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => window.location.reload()}
+                    className={`${ui.btnGhost} h-11 px-3.5 text-[#4A463C]`}
+                  >
+                    Discard
+                  </button>
+                </>
+              ) : (
+                <span className="text-[13px] font-medium text-[#6B665A]">All changes saved</span>
+              )
+            )}
+            {isDraftState && stepsLeft > 0 && (
+              <span className="text-[13px] font-semibold text-[#6B665A]">
+                {stepsLeft} required {stepsLeft === 1 ? "step" : "steps"} left
+              </span>
+            )}
+            {currentReviewStatus === "pending_review" && (
+              <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#6B665A]">
+                <Lock className="h-3.5 w-3.5" />
+                Locked while in review
+              </span>
+            )}
+            {isLiveJob && jobData?.id && (
+              <Link href={`/jobs/${jobData.id}`} className={`${ui.btnOutline} no-underline`}>
+                <Eye className="h-4 w-4" />
+                View live job
+              </Link>
+            )}
 
-                {jobServices.recruiter && (
-                  <div className="bg-white p-3 rounded border">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">
-                        Recruiter Service
-                      </span>
-                      <span className="text-sm font-bold text-blue-600">
-                        8%
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Talent curation fee
-                    </p>
-                    {budget && Number(budget) > 0 && (
-                      <p className="text-sm font-semibold mt-1">
-                        {(Number(budget) * 0.08).toFixed(2)}{" "}
-                        {selectedCurrency?.label || jobData?.currency || "USDC"}
-                        {getFeeDisplaySuffix(projectType)}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {jobServices.mentor && (
-                  <div className="bg-white p-3 rounded border">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">
-                        Mentor Service
-                      </span>
-                      <span className="text-sm font-bold text-purple-600">
-                        12%
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Technical mentoring fee
-                    </p>
-                    {budget && Number(budget) > 0 && (
-                      <p className="text-sm font-semibold mt-1">
-                        {(Number(budget) * 0.12).toFixed(2)}{" "}
-                        {selectedCurrency?.label || jobData?.currency || "USDC"}
-                        {getFeeDisplaySuffix(projectType)}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {!jobServices.talent &&
-                  !jobServices.recruiter &&
-                  !jobServices.mentor && (
-                    <div className="col-span-full text-center py-4">
-                      <p className="text-gray-500">
-                        Select at least one service above to see commission
-                        breakdown
-                      </p>
-                    </div>
-                  )}
-              </div>
-
-              {budget &&
-                Number(budget) > 0 &&
-                (jobServices.talent ||
-                  jobServices.recruiter ||
-                  jobServices.mentor) && (
-                  <div className="mt-3 p-2 bg-gray-100 rounded text-center">
-                    <p className="text-xs text-gray-600">
-                      {projectType?.value === "fixed" ? (
-                        <>
-                          Total Project Cost:{" "}
-                          <span className="font-semibold">
-                            {(
-                              Number(budget) +
-                              Number(
-                                calculateJobCreateFees(
-                                  projectType,
-                                  budget,
-                                  jobServices,
-                                ) || 0,
-                              )
-                            ).toFixed(2)}{" "}
-                            {selectedCurrency?.label ||
-                              jobData?.currency ||
-                              "USDC"}
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          Total Rate:{" "}
-                          <span className="font-semibold">
-                            {(
-                              Number(budget) +
-                              Number(
-                                calculateJobCreateFees(
-                                  projectType,
-                                  budget,
-                                  jobServices,
-                                ) || 0,
-                              )
-                            ).toFixed(2)}{" "}
-                            {selectedCurrency?.label ||
-                              jobData?.currency ||
-                              "USDC"}
-                            /hr
-                          </span>
-                          <span className="block text-xs text-gray-500 mt-1">
-                            ({getBudgetLabel(projectType)}:{" "}
-                            {Number(budget).toFixed(2)} + Commission:{" "}
-                            {calculateJobCreateFees(
-                              projectType,
-                              budget,
-                              jobServices,
-                            )}{" "}
-                            per hour)
-                          </span>
-                        </>
-                      )}
-                    </p>
-                  </div>
-                )}
-            </div>
-          )}
-        </div>
-
-        <div className="flex gap-4 mt-4 sm:flex-col" data-tour="job-chain">
-          <div className="flex-1">
-            <SelectInput
-              labelText="Chain"
-              name="chain"
-              required={true}
-              disabled={true}
-              inputValue={selectedChain}
-              setInputValue={setSelectedChain}
-              options={chains}
-              defaultValue={
-                chains[
-                  chains.findIndex((type) => type.value === jobData?.chain)
-                ] || chains[0]
-              }
-            />
-          </div>
-          <div className="flex-1">
-            <SelectInput
-              labelText="Currency"
-              name="currency"
-              required={true}
-              disabled={!selectedChain || isLiveJob}
-              inputValue={selectedCurrency}
-              setInputValue={setSelectedCurrency}
-              options={
-                selectedChain?.value === "ethereum"
-                  ? ethereumTokens
-                  : selectedChain?.value === "polygon"
-                    ? polygonMainnetTokens
-                    : selectedChain?.value === "polygon-amoy"
-                      ? polygonAmoyTokens
-                      : selectedChain?.value === "gnosis-chain"
-                        ? gnosisChainTokens
-                        : polygonAmoyTokens // Default to Polygon Amoy tokens
-              }
-              defaultValue={
-                polygonAmoyTokens[
-                  polygonAmoyTokens.findIndex(
-                    (token) => token.value === jobData?.currency,
-                  )
-                ] || polygonAmoyTokens[0]
-              }
-            />
-          </div>
-        </div>
-
-        {/* Wallet Connection Status */}
-        {!account && (
-          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                <span className="text-yellow-600">⚠️</span>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800">
-                  Wallet Optional For Drafting
-                </h3>
-                <p className="text-sm text-gray-600">
-                  You can save drafts and submit jobs for review without a
-                  wallet. Wallet connection is only needed later for
-                  blockchain publishing and fund management.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Blockchain Error Display */}
-        {blockchainError && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                <span className="text-red-600">❌</span>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-red-800">
-                  Blockchain Error
-                </h3>
-                <p className="text-sm text-red-600">{blockchainError}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {!!jobData?.job_id &&
-          !currentBlockchainJobId &&
-          (currentReviewStatus === "draft" ||
-            currentReviewStatus === "rejected") && (
-            <div className="mb-4 flex items-start gap-3 rounded-lg border border-yellow-400 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
-              <span className="mt-0.5 text-yellow-500">⚡</span>
-              <span>
-                <strong>Provision funds before submitting.</strong> Adding USDC
-                to your smart contract ensures your talent can be paid on-chain
-                once the mission is complete.{" "}
+            {isDraftState && (
+              <>
                 <button
                   type="button"
-                  className="underline font-semibold hover:text-yellow-900"
-                  onClick={onManageFundsClick}
+                  data-tour="job-save-draft"
+                  onClick={handleSaveJob}
+                  disabled={isBusy || !companyData?.user_id}
+                  className={ui.btnOutline}
                 >
-                  Manage Funds
+                  {isLoading ? "Saving…" : "Save draft"}
                 </button>
-              </span>
-            </div>
-          )}
-
-        <div className="mt-12 mb-8 w-full flex justify-end gap-4 text-right">
-          {!!jobData?.job_id && (
-            <Tooltip content="Provisioning funds boost swift community response to your job offer.">
-              <button
-                className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out cursor-pointer"
-                type="button"
-                onClick={onManageFundsClick}
-                disabled={
-                  isLoading || isBlockchainLoading || !currentBlockchainJobId
-                }
-              >
-                Manage Funds
-              </button>
-            </Tooltip>
-          )}
-          {!!jobData?.id &&
-            canCompanyDeleteJob({
-              payment_token_address: jobData.payment_token_address ?? null,
-              review_status: currentReviewStatus,
-            }) && (
-            <button
-              className="my-2 text-base font-semibold bg-transparent border-2 border-[#FFC905] h-14 w-56 rounded-full transition duration-150 ease-in-out cursor-pointer"
-              type="button"
-              onClick={handleCancelJob}
-              disabled={isLoading}
-            >
-              Delete Job
-            </button>
-          )}
-
-          {isLoading || isBlockchainLoading ? (
-            <button
-              className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full opacity-50 cursor-not-allowed transition duration-150 ease-in-out"
-              type="submit"
-              disabled
-            >
-              {isBlockchainLoading
-                ? "Processing on blockchain..."
-                : "Saving..."}
-            </button>
-          ) : (
-            <div className="flex gap-4">
-              <button
-                data-tour="job-save-draft"
-                onClick={handleSaveJob}
-                className="my-2 text-base font-semibold bg-transparent h-14 w-56 rounded-full border-2 border-[#FFC905] transition-all duration-300 hover:bg-[#FFC905] cursor-pointer"
-                disabled={
-                  isLoading || isBlockchainLoading || !companyData?.user_id
-                }
-              >
-                {isLiveJob ? "Save Changes" : "Save Draft"}
-              </button>
-
-              {!jobData?.published && currentReviewStatus !== "pending_review" && (
                 <button
-                  className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full transition-all duration-300 hover:bg-transparent hover:border-2 hover:border-[#FFC905] cursor-pointer"
                   type="button"
                   data-tour="job-submit-review"
                   onClick={handleSubmitForReview}
-                  disabled={
-                    isLoading ||
-                    isBlockchainLoading ||
-                    !companyData?.user_id
-                  }
+                  disabled={isBusy || !companyData?.user_id || stepsLeft > 0}
+                  title={stepsLeft > 0 ? "Complete the checklist to submit" : undefined}
+                  className={ui.btnPrimary}
                 >
-                  {currentReviewStatus === "rejected"
-                    ? "Resubmit for Review"
-                    : "Submit for Review"}
+                  {currentReviewStatus === "rejected" ? "Resubmit for review" : "Submit for review"}
                 </button>
-              )}
-              {currentReviewStatus === "pending_review" && (
-                <button
-                  className="my-2 text-base font-semibold bg-gray-200 text-gray-600 h-14 w-56 rounded-full cursor-not-allowed"
-                  type="button"
-                  disabled
-                >
-                  In Review
-                </button>
-              )}
-              {jobData?.published && (
-                <button
-                  className="my-2 text-base font-semibold bg-[#FFC905] h-14 w-56 rounded-full transition-all duration-300 hover:bg-transparent hover:border-2 hover:border-[#FFC905] cursor-pointer"
-                  type="button"
-                  onClick={handleUnpublishJob}
-                  disabled={
-                    isLoading || isBlockchainLoading || !companyData?.user_id
-                  }
-                >
-                  Unpublish Job
-                </button>
-              )}
-            </div>
-          )}
+              </>
+            )}
+            {currentReviewStatus === "approved" && (
+              <button type="button" onClick={() => setShowBlockchainModal(true)} disabled={isBusy} className={ui.btnPrimary}>
+                <Zap className="h-4 w-4" />
+                {isOnChain ? "Add provision fund" : "Publish to blockchain"}
+              </button>
+            )}
+            {(isLiveJob || currentReviewStatus === "closed") && (
+              <button
+                type="button"
+                data-tour="job-save-draft"
+                onClick={handleSaveJob}
+                disabled={isBusy || !companyData?.user_id}
+                className={
+                  isDirty
+                    ? ui.btnPrimary
+                    : "inline-flex h-11 items-center justify-center rounded-[10px] bg-[#EFEDE6] px-5 text-sm font-bold text-[#8A8474] transition hover:bg-[#E5E2D8] disabled:cursor-not-allowed"
+                }
+              >
+                {isLoading ? "Saving…" : "Save changes"}
+              </button>
+            )}
+          </div>
         </div>
-      </fieldset>
+      </div>
 
-      {/* Blockchain Activate Modal — shown for approved jobs from the banner button */}
+      <div className="grid items-start gap-6 px-4 py-6 sm:px-10 sm:py-8 lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-8 xl:grid-cols-[200px_minmax(0,1fr)_340px]">
+        <div className="hidden self-stretch lg:block">
+          <EditorNav steps={navSteps} mode={isDraftState ? "steps" : "index"} />
+        </div>
+
+        <form onSubmit={(e) => e.preventDefault()} className="min-w-0">
+          <fieldset disabled={isReadOnlyReviewState} className="flex min-w-0 flex-col gap-6">
+            {isNewJob && showAiDraft && onAiGenerated && (
+              <AiDraftCard onGenerated={onAiGenerated} onDismiss={() => setShowAiDraft(false)} />
+            )}
+
+            {/* Basics */}
+            <EditorCard
+              id="basics"
+              title="Basics"
+              description="The essentials talent sees first in search results."
+            >
+              <div className="mb-5 flex flex-col gap-5 sm:flex-row sm:items-start">
+                <div className="flex flex-col items-center gap-2" data-tour="job-image" ref={jobImageRef}>
+                  <ProfileImageUpload
+                    currentImage={jobImage || companyData?.image_url || ""}
+                    displayName="Job Image"
+                    onImageUpdate={(imageUrl) => setJobImage(imageUrl)}
+                    variant="job"
+                    size={84}
+                  />
+                  <button type="button" onClick={logoClick} className={`${ui.btnGhost} text-[13px] text-[#8A5A00]`}>
+                    {jobImage ? "Change image" : "Add image"}
+                  </button>
+                </div>
+                <div className="min-w-0 flex-1" data-tour="job-title">
+                  <label htmlFor="title" className={ui.label}>
+                    Job title
+                  </label>
+                  <input
+                    id="title"
+                    name="title"
+                    type="text"
+                    required
+                    maxLength={100}
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g. Senior Solidity Engineer"
+                    className={ui.field}
+                  />
+                  <p className={ui.hint}>
+                    Keep it short and searchable. Your company logo is used if you don&apos;t add an image.
+                  </p>
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-3" data-tour="job-engagement">
+                <SelectField id="engagement" label="Engagement" options={typeEngagements} value={typeEngagement} onChange={setTypeEngagement} />
+                <SelectField id="work-location" label="Work location" options={jobTypes} value={jobType} onChange={setJobType} />
+                <SelectField id="duration" label="Duration" options={projectDuration} value={duration} onChange={setDuration} />
+              </div>
+            </EditorCard>
+
+            {/* Description */}
+            <EditorCard
+              id="description"
+              title="Job description"
+              description={
+                <>
+                  {jobSections.length} {jobSections.length === 1 ? "section" : "sections"} · Drag to reorder.
+                  Rough notes are fine: we tidy the formatting when you save.
+                </>
+              }
+              action={
+                <button
+                  type="button"
+                  data-tour="job-description-ai"
+                  onClick={() => setShowAiBuilder((open) => !open)}
+                  aria-expanded={showAiBuilder}
+                  className="inline-flex h-10 items-center gap-2 rounded-[10px] border border-[#F0D98A] bg-[#FFF8E1] px-3.5 text-[13px] font-bold text-[#6B4700] hover:bg-[#FFF1C2]"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {jobSections.length ? "Improve with AI" : "Write with AI"}
+                </button>
+              }
+            >
+              {showAiBuilder && (
+                <JobDescriptionAIBuilder
+                  jobTitle={title}
+                  selectedSkills={selectedSkills}
+                  companyName={companyData?.designation ?? ""}
+                  companyBio={companyData?.headline ?? ""}
+                  onGenerated={(generatedTitle, generatedSections) => {
+                    if (generatedTitle) setTitle(generatedTitle);
+                    setJobSections(generatedSections);
+                  }}
+                  onClose={() => setShowAiBuilder(false)}
+                />
+              )}
+              <div data-tour="job-sections">
+                <JobSectionsManager sections={jobSections} onSectionsChange={setJobSections} />
+              </div>
+            </EditorCard>
+
+            {/* Skills */}
+            <section id="skills" className={`${ui.card} scroll-mt-24`} data-tour="job-skills">
+              <div className="flex items-baseline justify-between gap-3">
+                <h2 className={ui.cardTitle}>Required skills</h2>
+                <span className="text-[13px] font-semibold text-[#6B665A]">
+                  {selectedSkills.length} {selectedSkills.length === 1 ? "skill" : "skills"}
+                </span>
+              </div>
+              <p className={`${ui.cardDescription} mb-[18px]`}>
+                We match talent to your job on these. Specific tools and languages match better than
+                soft skills (highlighted).
+              </p>
+              <SkillsField value={selectedSkills} onChange={setSelectedSkills} disabled={isReadOnlyReviewState} />
+            </section>
+
+            {/* Who can respond */}
+            <EditorCard
+              id="applicants"
+              title="Who can respond"
+              description={
+                lockedOnChain ? (
+                  <span className="flex items-center gap-2">
+                    <Lock className="h-3.5 w-3.5" />
+                    Set when the job was published and fixed on-chain.
+                  </span>
+                ) : (
+                  "Choose how you want to hire. Each service adds a GoodHive fee."
+                )
+              }
+            >
+              <div className="grid gap-3 md:grid-cols-3" data-tour="job-services">
+                {createJobServices.map((service) => {
+                  const on = jobServices[service.value];
+                  const locked = service.value === "talent" || lockedOnChain;
+                  return (
+                    <label
+                      key={service.value}
+                      className={`flex flex-col gap-1.5 rounded-xl p-4 transition ${
+                        on ? "border-2 border-[#E0A800] bg-[#FFFBEB]" : "border border-[#E8E5DC] bg-white"
+                      } ${locked ? "cursor-default" : "cursor-pointer hover:border-[#BDB7A6]"} ${
+                        !on && lockedOnChain ? "opacity-60" : ""
+                      }`}
+                    >
+                      <span className="flex w-full items-center justify-between">
+                        <span className="text-[15px] font-extrabold text-[#1C1B17]">
+                          {SERVICE_COPY[service.value].name}
+                        </span>
+                        <input
+                          type="checkbox"
+                          name={service.value}
+                          checked={on}
+                          disabled={locked}
+                          onChange={onJobServicesChange}
+                          className="sr-only"
+                        />
+                        <span
+                          aria-hidden
+                          className={`inline-flex h-5 w-5 items-center justify-center rounded-md text-xs font-extrabold ${
+                            on ? "border-2 border-[#E0A800] bg-[#F5B800] text-[#1C1B17]" : "border-2 border-[#C9C3B2] bg-white"
+                          }`}
+                        >
+                          {on ? "✓" : ""}
+                        </span>
+                      </span>
+                      <span className="text-[13px] leading-[1.45] text-[#5F5A4E]">
+                        {SERVICE_COPY[service.value].description}
+                      </span>
+                      <span className="text-[12px] font-bold text-[#8A5A00]">+{service.feePercentage}% fee</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </EditorCard>
+
+            {/* Budget & payment */}
+            <EditorCard
+              id="budget"
+              title="Budget & payment"
+              description="Payments are held in a smart contract and released to the talent you hire."
+            >
+              <div className="grid gap-4 sm:grid-cols-2" data-tour="job-budget">
+                <SelectField id="payment-model" label="Payment model" options={projectTypes} value={projectType} onChange={setProjectType} />
+                <div>
+                  <label htmlFor="budget-amount" className={ui.label}>
+                    {isHourly ? "Hourly rate" : "Budget"}
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="budget-amount"
+                      name="budget"
+                      type="number"
+                      min="0"
+                      required
+                      value={budget}
+                      onChange={onBudgetChange}
+                      placeholder="0"
+                      className={`${ui.field} pr-20 font-bold tabular-nums`}
+                    />
+                    <span className="pointer-events-none absolute right-3.5 top-[13px] text-[13px] font-bold text-[#6B665A]">
+                      {currencyLabel}
+                      {isHourly ? "/hr" : ""}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 overflow-hidden rounded-xl border border-[#E8E5DC]" data-tour="job-commission">
+                <button
+                  type="button"
+                  onClick={() => setIsCommissionExpanded(!isCommissionExpanded)}
+                  aria-expanded={isCommissionExpanded}
+                  className="flex w-full items-center justify-between bg-white px-4 py-3.5 hover:bg-[#FBFAF6]"
+                >
+                  <span className="text-sm font-bold">{isHourly ? "Total hourly cost" : "Total to fund"}</span>
+                  <span className="flex items-center gap-2.5">
+                    <span className="text-lg font-extrabold tabular-nums">
+                      {budgetNumber > 0
+                        ? `${formatMoney(totalToFund)} ${currencyLabel}${isHourly ? "/hr" : ""}`
+                        : "–"}
+                    </span>
+                    <ChevronDown
+                      className={`h-[18px] w-[18px] text-[#6B665A] transition-transform ${
+                        isCommissionExpanded ? "rotate-180" : ""
+                      }`}
+                    />
+                  </span>
+                </button>
+                {isCommissionExpanded && (
+                  <div className="flex flex-col gap-2 border-t border-[#EFEDE6] bg-[#FCFBF8] px-4 pb-3.5 pt-3 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-[#5F5A4E]">{isHourly ? "Talent rate" : "Talent budget"}</span>
+                      <span className="font-bold tabular-nums">
+                        {formatMoney(budgetNumber)} {currencyLabel}
+                      </span>
+                    </div>
+                    {createJobServices
+                      .filter((service) => jobServices[service.value])
+                      .map((service) => (
+                        <div key={service.value} className="flex justify-between">
+                          <span className="text-[#5F5A4E]">
+                            GoodHive {SERVICE_COPY[service.value].name.toLowerCase()} fee ({service.feePercentage}%)
+                          </span>
+                          <span className="font-bold tabular-nums">
+                            {formatMoney((budgetNumber * service.feePercentage) / 100)} {currencyLabel}
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-5 grid gap-4 sm:grid-cols-2" data-tour="job-chain">
+                <div>
+                  <span className={ui.label}>Network</span>
+                  <LockedValue>
+                    {chains.find((c) => c.value === (selectedChain?.value ?? jobData?.chain))?.label ??
+                      chains[0]?.label}
+                  </LockedValue>
+                </div>
+                {lockedOnChain ? (
+                  <div>
+                    <span className={ui.label}>Currency</span>
+                    <LockedValue>{currencyLabel}</LockedValue>
+                  </div>
+                ) : (
+                  <SelectField
+                    id="currency"
+                    label="Currency"
+                    options={currencyOptions}
+                    value={selectedCurrency}
+                    onChange={setSelectedCurrency}
+                  />
+                )}
+              </div>
+              <p className={ui.hint}>
+                {lockedOnChain
+                  ? "Network and currency are locked once a job is published on-chain."
+                  : "Choose carefully: network and currency can't be changed after you publish."}
+              </p>
+              {!account && isDraftState && (
+                <p className={`${ui.hint} flex items-start gap-2`}>
+                  <Wallet className="mt-px h-3.5 w-3.5 shrink-0 text-[#8A5A00]" />
+                  No wallet needed to save or submit. You&apos;ll connect one after approval.
+                </p>
+              )}
+              {blockchainError && (
+                <p className="mt-4 rounded-[10px] bg-[#FEF3F2] px-3.5 py-3 text-[13px] text-[#B42318]">
+                  {blockchainError}
+                </p>
+              )}
+            </EditorCard>
+          </fieldset>
+        </form>
+
+        <div className="lg:col-span-2 xl:col-span-1">
+          <EditorRail
+            status={currentReviewStatus}
+            checklist={checklist}
+            totalFeePercent={feePercent}
+            adminFeedback={jobData?.admin_feedback ?? null}
+            isOnChain={isOnChain}
+            blockchainJobId={isOnChain ? currentBlockchainJobId : null}
+            currency={currencyLabel}
+            fundingGoal={!isHourly && budgetNumber > 0 ? totalToFund : null}
+            busy={isBusy}
+            onPublish={() => setShowBlockchainModal(true)}
+            onManageFunds={(tab) => {
+              setFundManagerTab(tab);
+              onManageFundsClick();
+            }}
+            onUnpublish={() => void handleUnpublish()}
+            onDelete={canDelete ? () => void handleCancelJob() : undefined}
+          />
+        </div>
+      </div>
+
+      {/* Publish + fund modal for approved jobs */}
       {showBlockchainModal && jobData?.id && (
         <BlockchainActivateModal
           isOpen={showBlockchainModal}
@@ -1417,7 +1311,6 @@ export const JobForm = ({
         />
       )}
 
-      {/* Fund Manager Modal */}
       {showFundManager && currentBlockchainJobId && (
         <FundManager
           jobId={currentBlockchainJobId}
@@ -1425,15 +1318,15 @@ export const JobForm = ({
           tokenAddress={fundManagerTokenAddress}
           jobChainId={jobChainId}
           jobChainLabel={jobChainLabel ?? undefined}
+          initialTab={fundManagerTab}
           onClose={() => {
             setShowFundManager(false);
-            if (onRefreshJobData) {
-              onRefreshJobData();
-            }
+            if (onRefreshJobData) onRefreshJobData();
           }}
         />
       )}
       {confirmDialog}
-    </form>
+    </div>
   );
 };
+
