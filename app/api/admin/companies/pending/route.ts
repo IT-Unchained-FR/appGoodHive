@@ -1,7 +1,33 @@
 export const revalidate = 0; // Disable ISR completely
 
 import type { NextRequest } from "next/server";
+import { verify } from "jsonwebtoken";
+import { cookies } from "next/headers";
 import sql from "@/lib/db";
+import { getAdminJWTSecret, isAdminAuthError } from "@/app/lib/admin-auth";
+import { notifyCompanyReviewOutcome } from "@/lib/email/company-review";
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const verifyAdminToken = async () => {
+  const cookieStore = cookies();
+  const token = cookieStore.get("admin_token")?.value;
+
+  if (!token) {
+    throw new Error("No token provided");
+  }
+
+  try {
+    const decoded = verify(token, getAdminJWTSecret()) as { role: string };
+    if (decoded.role !== "admin") {
+      throw new Error("Not authorized");
+    }
+    return decoded;
+  } catch (error) {
+    throw new Error("Invalid token");
+  }
+};
 
 export async function GET(req: NextRequest) {
   try {
@@ -108,9 +134,33 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { userId } = await req.json();
+  try {
+    await verifyAdminToken();
+  } catch (error) {
+    return new Response(JSON.stringify({ message: "Unauthorized" }), {
+      status: 401,
+    });
+  }
 
-    try {
+  const body = await req.json().catch(() => null);
+  const userId = typeof body?.userId === "string" ? body.userId.trim() : "";
+  if (!UUID_PATTERN.test(userId)) {
+    return new Response(
+      JSON.stringify({ message: "A valid userId is required" }),
+      { status: 400 },
+    );
+  }
+
+  try {
+    const [before] = await sql<{ approved: boolean | null }[]>`
+      SELECT approved FROM goodhive.companies WHERE user_id = ${userId}
+    `;
+    if (!before) {
+      return new Response(JSON.stringify({ message: "Company not found" }), {
+        status: 404,
+      });
+    }
+
     await sql`
       UPDATE goodhive.companies
       SET approved = true, inreview = false, published = true
@@ -123,11 +173,20 @@ export async function POST(req: NextRequest) {
       WHERE userid = ${userId}
       `;
 
+    if (before.approved !== true) {
+      await notifyCompanyReviewOutcome({ userIds: [userId], outcome: "approved" });
+    }
+
     return new Response(
       JSON.stringify({ message: "Approved company successfully" }),
     );
   } catch (error) {
     console.error("Error approving company:", error);
+    if (isAdminAuthError(error)) {
+      return new Response(JSON.stringify({ message: "Unauthorized" }), {
+        status: 401,
+      });
+    }
     return new Response(
       JSON.stringify({ message: "Unable to approve the company" }),
       {

@@ -4,6 +4,7 @@ import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { getAdminJWTSecret, isAdminAuthError } from "@/app/lib/admin-auth";
 import { bulkOperationSchema, validateInput } from "@/app/lib/admin-validations";
+import { notifyCompanyReviewOutcome } from "@/lib/email/company-review";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +46,12 @@ export async function POST(req: NextRequest) {
 
     const { userIds } = validation.data;
 
+    // Only companies that weren't approved yet get an email
+    const newlyApproved = await sql<{ user_id: string }[]>`
+      SELECT user_id FROM goodhive.companies
+      WHERE user_id = ANY(${userIds}) AND approved IS NOT TRUE
+    `;
+
     // Batch update companies - single query for all users
     await sql`
       UPDATE goodhive.companies
@@ -58,6 +65,11 @@ export async function POST(req: NextRequest) {
       SET recruiter_status = 'approved'
       WHERE userid = ANY(${userIds})
     `;
+
+    await notifyCompanyReviewOutcome({
+      userIds: newlyApproved.map((row) => row.user_id),
+      outcome: "approved",
+    });
 
     return new Response(
       JSON.stringify({

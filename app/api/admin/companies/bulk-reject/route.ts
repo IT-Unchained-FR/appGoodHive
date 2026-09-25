@@ -4,6 +4,7 @@ import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { getAdminJWTSecret, isAdminAuthError } from "@/app/lib/admin-auth";
 import { bulkOperationSchema, validateInput } from "@/app/lib/admin-validations";
+import { notifyCompanyReviewOutcome } from "@/lib/email/company-review";
 
 export const dynamic = "force-dynamic";
 
@@ -60,7 +61,18 @@ export async function POST(req: NextRequest) {
     `;
 
     // TODO: Store rejection reason in audit log or separate table
-    // rejectionReason is validated if provided but not yet stored
+    // rejectionReason is validated if provided but only sent in the email
+    // The admin UI sends `reason` (defaulting to a placeholder), not
+    // `rejectionReason`; accept either and never email the placeholder.
+    const uiReason = typeof body?.reason === "string" ? body.reason.trim() : "";
+    const emailReason =
+      rejectionReason?.trim() ||
+      (uiReason && uiReason !== "Rejected by admin" ? uiReason : null);
+    await notifyCompanyReviewOutcome({
+      userIds,
+      outcome: "rejected",
+      reason: emailReason,
+    });
 
     return new Response(
       JSON.stringify({

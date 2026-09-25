@@ -4,6 +4,7 @@ import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { getAdminJWTSecret, isAdminAuthError } from "@/app/lib/admin-auth";
 import { updateCompanySchema, validateInput } from "@/app/lib/admin-validations";
+import { notifyCompanyReviewOutcome } from "@/lib/email/company-review";
 import { resolveJobReviewStatus, type JobReviewStatus } from "@/lib/jobs/review";
 
 export const dynamic = "force-dynamic";
@@ -245,6 +246,12 @@ export async function PUT(
 
     const validatedBody = validation.data;
 
+    // This route is also the general edit form, so only email when the
+    // company actually goes from not approved to approved.
+    const [before] = await sql<{ approved: boolean | null }[]>`
+      SELECT approved FROM goodhive.companies WHERE user_id = ${userId}
+    `;
+
     await sql`
       UPDATE goodhive.companies
       SET
@@ -260,10 +267,14 @@ export async function PUT(
         twitter = ${validatedBody.twitter || null},
         github = ${validatedBody.github || null},
         telegram = ${validatedBody.telegram || null},
-        approved = ${validatedBody.approved || false},
-        published = ${validatedBody.published !== undefined ? validatedBody.published : (validatedBody.approved || false)}
+        approved = COALESCE(${validatedBody.approved ?? null}::boolean, approved),
+        published = COALESCE(${validatedBody.published ?? validatedBody.approved ?? null}::boolean, published)
       WHERE user_id = ${userId}
     `;
+
+    if (before && before.approved !== true && validatedBody.approved === true) {
+      await notifyCompanyReviewOutcome({ userIds: [userId], outcome: "approved" });
+    }
 
     try {
       const adminEmail = (decoded as { email?: string }).email ?? "unknown";
