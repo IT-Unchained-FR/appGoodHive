@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
+import { cookies } from "next/headers";
 
 /**
  * Get the admin JWT secret from environment variables
@@ -62,4 +63,27 @@ export function isAdminAuthError(error: unknown): boolean {
     error instanceof Error &&
     ["No token provided", "Invalid token", "Not authorized"].includes(error.message)
   );
+}
+
+/**
+ * True when the current request carries a valid admin token. Reads cookies
+ * via next/headers, so it works in server components and in route handlers
+ * typed with a plain Request.
+ */
+export function hasAdminSession(): boolean {
+  const token = cookies().get("admin_token")?.value;
+  if (!token) return false;
+  try {
+    jwt.verify(token, getAdminJWTSecret());
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** 401 response unless the request has a valid admin token. */
+export function requireAdminSession(): Response | null {
+  return hasAdminSession()
+    ? null
+    : NextResponse.json({ error: "Admin authentication required" }, { status: 401 });
 }

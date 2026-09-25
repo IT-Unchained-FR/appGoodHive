@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdminSession } from "@/app/lib/admin-auth";
 import sql from "@/lib/ragDb";
 import { logSuperbotEvent } from "@/lib/superbot/events";
 import { notifyHandoff } from "@/lib/superbot/notifications";
@@ -16,6 +17,9 @@ type RouteContext = {
 };
 
 export async function PATCH(req: Request, { params }: RouteContext) {
+  const authError = requireAdminSession();
+  if (authError) return authError;
+
   const { id: leadId } = await params;
   let body: LeadUpdateRequest;
 

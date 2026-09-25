@@ -1,12 +1,14 @@
+import { getSessionUser } from "@/lib/auth/sessionUtils";
 import sql from "@/lib/db";
 
 export async function POST(req: Request) {
   try {
-    const { user_id } = await req.json();
+    // Always the signed-in user; the body's user_id is ignored.
+    const user_id = (await getSessionUser())?.user_id;
 
     if (!user_id) {
-      return new Response(JSON.stringify({ message: "User ID is required" }), {
-        status: 400,
+      return new Response(JSON.stringify({ message: "Unauthorized" }), {
+        status: 401,
         headers: {
           "Content-Type": "application/json",
         },

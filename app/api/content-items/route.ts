@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdminSession } from "@/app/lib/admin-auth";
 import sql from "@/lib/ragDb";
 
 type CreateContentItemBody = {
@@ -99,7 +100,11 @@ export async function GET(request: Request) {
   return NextResponse.json({ items: mapped });
 }
 
+// Reading content is public (the chat widget uses it); writing is admin only.
 export async function POST(request: Request) {
+  const authError = requireAdminSession();
+  if (authError) return authError;
+
   let body: CreateContentItemBody;
 
   try {

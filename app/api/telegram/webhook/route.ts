@@ -88,7 +88,20 @@ function buildReplyMarkup(actions?: Action[]) {
   return undefined;
 }
 
+// Telegram echoes the secret_token given to setWebhook in this header.
+// Enforced once TELEGRAM_WEBHOOK_SECRET is set (and the webhook is
+// re-registered with it); until then anyone can post fake updates.
+function hasValidTelegramSecret(req: Request): boolean {
+  const expected = process.env.TELEGRAM_WEBHOOK_SECRET?.trim();
+  if (!expected) return true;
+  return req.headers.get("x-telegram-bot-api-secret-token") === expected;
+}
+
 export async function POST(req: Request) {
+  if (!hasValidTelegramSecret(req)) {
+    return NextResponse.json({ ok: false }, { status: 401 });
+  }
+
   let update: TelegramUpdate;
 
   try {

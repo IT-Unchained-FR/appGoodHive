@@ -1,3 +1,4 @@
+import { getSessionUser } from "@/lib/auth/sessionUtils";
 import sql from "@/lib/db";
 
 import type { NextRequest } from "next/server";
@@ -12,13 +13,14 @@ export async function POST(request: NextRequest) {
   const searchParams = Object.fromEntries(searchParamsEntries);
 
   // FIXME: use snake_case instead of camelCase
-  const { user_id } = await request.json();
+  // Always the signed-in user; the body's user_id is ignored.
+  const user_id = (await getSessionUser())?.user_id;
 
   if (!user_id) {
     return new Response(
-      JSON.stringify({ message: "Missing user_id parameter" }),
+      JSON.stringify({ message: "Unauthorized" }),
       {
-        status: 404,
+        status: 401,
       },
     );
   }

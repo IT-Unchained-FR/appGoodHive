@@ -1,5 +1,7 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { hasAdminSession } from "@/app/lib/admin-auth";
 import sql from "@/lib/ragDb";
 import { getDateRange, getSuperbotMetrics } from "@/lib/superbot/analytics";
 import { ContentItemManager } from "./ContentItemManager";
@@ -24,6 +26,9 @@ export default async function SuperbotConsolePage({
 }: {
   searchParams?: SearchParams;
 }) {
+  // Shows chatbot leads (personal data): admin only.
+  if (!hasAdminSession()) redirect("/admin/login");
+
   const query = searchParams?.q?.trim();
   const telegramUsernameFilter = searchParams?.tgUser?.trim();
   const typeFilter = searchParams?.type?.trim();

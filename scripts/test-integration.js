@@ -448,7 +448,6 @@ async function checkApplicationIntegration() {
     'hooks/contracts/useJobManager.ts',
     'app/components/FundManager/FundManager.tsx',
     'app/api/blockchain/sync-job/route.ts',
-    'app/api/blockchain/update-balance/route.ts',
     'database/migrations/add_blockchain_fields.sql'
   ];
 

@@ -1,9 +1,14 @@
 export const revalidate = 0; // Disable ISR completely
 
 import type { NextRequest } from "next/server";
+import { requireAdminAuth } from "@/app/lib/admin-auth";
 import sql from "@/lib/db";
 
 export async function GET(req: NextRequest) {
+  // Returns pending talents' personal data: admin only.
+  const authError = requireAdminAuth(req);
+  if (authError) return authError;
+
   try {
     const { searchParams } = new URL(req.url);
 
@@ -134,7 +139,14 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { userId } = await req.json();
+  const authError = requireAdminAuth(req);
+  if (authError) return authError;
+
+  const body = await req.json().catch(() => null);
+  const userId = typeof body?.userId === "string" ? body.userId.trim() : "";
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
+    return new Response(JSON.stringify({ message: "Invalid userId" }), { status: 400 });
+  }
 
     try {
     await sql`

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdminSession } from "@/app/lib/admin-auth";
 import sql from "@/lib/ragDb";
 
 type UpdateContentItemBody = {
@@ -48,6 +49,9 @@ export async function GET(_request: Request, { params }: RouteContext) {
 }
 
 export async function PATCH(request: Request, { params }: RouteContext) {
+  const authError = requireAdminSession();
+  if (authError) return authError;
+
   const { id } = await params;
   let body: UpdateContentItemBody;
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSessionUser } from "@/lib/auth/sessionUtils";
 import sql from "@/lib/db";
 
 export async function POST(request: NextRequest) {
@@ -17,6 +18,21 @@ export async function POST(request: NextRequest) {
         { error: "Missing required fields" },
         { status: 400 }
       );
+    }
+
+    // Only the job's owner may record its on-chain data.
+    const sessionUser = await getSessionUser();
+    if (!sessionUser?.user_id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const [owner] = await sql<{ user_id: string }[]>`
+      SELECT user_id FROM goodhive.job_offers WHERE id = ${jobId}::uuid LIMIT 1
+    `;
+    if (!owner) {
+      return NextResponse.json({ error: "Job not found" }, { status: 404 });
+    }
+    if (owner.user_id !== sessionUser.user_id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Update job with blockchain information using block_id
