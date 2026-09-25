@@ -10,6 +10,7 @@ import {
   sendTalentRejectionEmail,
   type TalentRole,
 } from "@/lib/email/talent-review-notifications";
+import { logAdminAction } from "@/app/lib/admin-audit";
 
 export const dynamic = "force-dynamic";
 const DEFER_INTERVAL_SQL = sql`CURRENT_TIMESTAMP + INTERVAL '3 months'`;
@@ -183,17 +184,12 @@ export async function POST(req: NextRequest) {
           userId,
         );
       }
-      const adminEmail = (decoded as { email?: string }).email ?? "unknown";
-      sql`
-        INSERT INTO goodhive.admin_audit_log (admin_email, action, target_type, target_id, details)
-        VALUES (
-          ${adminEmail},
-          ${"talent." + status},
-          'talent',
-          ${userId},
-          ${JSON.stringify({ status, rejectionReason: rejectionReason ?? null })}
-        )
-      `.catch(() => {});
+      await logAdminAction({
+        action: `talent.${status}`,
+        targetType: "talent",
+        targetId: userId,
+        details: { status, rejectionReason: rejectionReason ?? null },
+      });
     } else if (status === "in_review" || status === "pending") {
       await sql`
         UPDATE goodhive.talents
@@ -276,17 +272,12 @@ export async function POST(req: NextRequest) {
           userId,
         );
       }
-      const adminEmail = (decoded as { email?: string }).email ?? "unknown";
-      sql`
-        INSERT INTO goodhive.admin_audit_log (admin_email, action, target_type, target_id, details)
-        VALUES (
-          ${adminEmail},
-          ${"talent." + status},
-          'talent',
-          ${userId},
-          ${JSON.stringify({ status, rejectionReason: rejectionReason ?? null })}
-        )
-      `.catch(() => {});
+      await logAdminAction({
+        action: `talent.${status}`,
+        targetType: "talent",
+        targetId: userId,
+        details: { status, rejectionReason: rejectionReason ?? null },
+      });
     }
 
     return new Response(

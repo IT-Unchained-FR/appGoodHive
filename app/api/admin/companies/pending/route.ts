@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import sql from "@/lib/db";
 import { getAdminJWTSecret, isAdminAuthError } from "@/app/lib/admin-auth";
 import { notifyCompanyReviewOutcome } from "@/lib/email/company-review";
+import { logAdminAction } from "@/app/lib/admin-audit";
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -176,6 +177,8 @@ export async function POST(req: NextRequest) {
     if (before.approved !== true) {
       await notifyCompanyReviewOutcome({ userIds: [userId], outcome: "approved" });
     }
+
+    await logAdminAction({ action: "company.approved", targetType: "company", targetId: userId });
 
     return new Response(
       JSON.stringify({ message: "Approved company successfully" }),

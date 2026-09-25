@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { getAdminJWTSecret, isAdminAuthError } from "@/app/lib/admin-auth";
 import { bulkOperationSchema, validateInput } from "@/app/lib/admin-validations";
 import { notifyCompanyReviewOutcome } from "@/lib/email/company-review";
+import { logAdminAction } from "@/app/lib/admin-audit";
 
 export const dynamic = "force-dynamic";
 
@@ -73,6 +74,8 @@ export async function POST(req: NextRequest) {
       outcome: "rejected",
       reason: emailReason,
     });
+
+    await logAdminAction({ action: "company.rejected", targetType: "company", targetId: userIds, details: { bulk: true, reason: emailReason } });
 
     return new Response(
       JSON.stringify({

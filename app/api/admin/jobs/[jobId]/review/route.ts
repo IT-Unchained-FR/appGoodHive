@@ -7,6 +7,7 @@ import {
 } from "@/lib/email/job-review";
 import sql from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
+import { logAdminAction } from "@/app/lib/admin-audit";
 
 type ReviewAction = "approve" | "reject";
 const UUID_PATTERN =
@@ -135,6 +136,13 @@ export async function POST(
     } catch (error) {
       console.error("Failed to send job review outcome email:", error);
     }
+
+    await logAdminAction({
+      action: body.action === "approve" ? "job.approved" : "job.rejected",
+      targetType: "job",
+      targetId: jobId,
+      details: body.action === "reject" ? { feedback: feedback || null } : {},
+    });
 
     return NextResponse.json(
       {

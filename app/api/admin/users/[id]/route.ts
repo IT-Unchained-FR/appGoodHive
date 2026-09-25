@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import sql from "@/lib/db";
 import { requireAdminAuth } from "@/app/lib/admin-auth";
+import { logAdminAction } from "@/app/lib/admin-audit";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +64,8 @@ export async function DELETE(
         { status: 404 }
       );
     }
+
+    await logAdminAction({ action: "user.deleted", targetType: "user", targetId: id });
 
     // 5. Return success with deletion summary
     return new Response(

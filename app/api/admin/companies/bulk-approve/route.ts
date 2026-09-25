@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { getAdminJWTSecret, isAdminAuthError } from "@/app/lib/admin-auth";
 import { bulkOperationSchema, validateInput } from "@/app/lib/admin-validations";
 import { notifyCompanyReviewOutcome } from "@/lib/email/company-review";
+import { logAdminAction } from "@/app/lib/admin-audit";
 
 export const dynamic = "force-dynamic";
 
@@ -70,6 +71,8 @@ export async function POST(req: NextRequest) {
       userIds: newlyApproved.map((row) => row.user_id),
       outcome: "approved",
     });
+
+    await logAdminAction({ action: "company.approved", targetType: "company", targetId: userIds, details: { bulk: true } });
 
     return new Response(
       JSON.stringify({

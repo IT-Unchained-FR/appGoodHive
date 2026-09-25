@@ -6,6 +6,7 @@ import { getAdminJWTSecret, isAdminAuthError } from "@/app/lib/admin-auth";
 import { updateCompanySchema, validateInput } from "@/app/lib/admin-validations";
 import { notifyCompanyReviewOutcome } from "@/lib/email/company-review";
 import { resolveJobReviewStatus, type JobReviewStatus } from "@/lib/jobs/review";
+import { logAdminAction } from "@/app/lib/admin-audit";
 
 export const dynamic = "force-dynamic";
 
@@ -276,19 +277,12 @@ export async function PUT(
       await notifyCompanyReviewOutcome({ userIds: [userId], outcome: "approved" });
     }
 
-    try {
-      const adminEmail = (decoded as { email?: string }).email ?? "unknown";
-      sql`
-        INSERT INTO goodhive.admin_audit_log (admin_email, action, target_type, target_id, details)
-        VALUES (
-          ${adminEmail},
-          'company.updated',
-          'company',
-          ${userId},
-          ${JSON.stringify({ fields: Object.keys(body ?? {}) })}
-        )
-      `.catch(() => {});
-    } catch {}
+    await logAdminAction({
+      action: "company.updated",
+      targetType: "company",
+      targetId: userId,
+      details: { fields: Object.keys(body ?? {}) },
+    });
 
     return new Response(
       JSON.stringify({ message: "Company updated successfully" }),
@@ -331,6 +325,8 @@ export async function DELETE(
         status: 404,
       });
     }
+
+    await logAdminAction({ action: "company.deleted", targetType: "company", targetId: userId });
 
     return new Response(
       JSON.stringify({ message: "Company deleted successfully" }),
