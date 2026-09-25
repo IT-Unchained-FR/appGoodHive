@@ -9,6 +9,7 @@ import { Plus, RefreshCw, Trash2, Upload } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { AdminPageLayout } from "@/app/components/admin/AdminPageLayout";
+import { useConfirm } from "@/app/components/ConfirmDialog/ConfirmDialog";
 import { EnhancedTable, Column } from "@/app/components/admin/EnhancedTable";
 import { QuickActionFAB } from "@/app/components/admin/QuickActionFAB";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ function slugify(fileName: string) {
 
 export default function KnowledgeBasePage() {
   const router = useRouter();
+  const [confirm, confirmDialog] = useConfirm();
   const [files, setFiles] = useState<KnowledgeFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -134,7 +136,13 @@ export default function KnowledgeBasePage() {
   };
 
   const handleDelete = async (file: KnowledgeFile) => {
-    if (!window.confirm(`Delete "${file.title}" (${file.slug}.md)? This can't be undone.`)) return;
+    const confirmed = await confirm({
+      title: `Delete "${file.title}"?`,
+      description: `${file.slug}.md is removed from Superbot's knowledge base. This can't be undone.`,
+      confirmLabel: "Delete file",
+      tone: "danger",
+    });
+    if (!confirmed) return;
     try {
       const response = await fetch(`/api/admin/knowledge-base/${file.id}`, {
         method: "DELETE",
@@ -332,6 +340,7 @@ export default function KnowledgeBasePage() {
           { icon: RefreshCw, label: "Refresh list", onClick: fetchFiles },
         ]}
       />
+      {confirmDialog}
     </AdminPageLayout>
   );
 }

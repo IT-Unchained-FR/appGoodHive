@@ -15,6 +15,9 @@ import { TalentCard } from "./TalentCard";
 import { CompareModal } from "./CompareModal";
 import { SendToClientModal } from "./SendToClientModal";
 import { PipelineAvatar } from "./PipelineAvatar";
+import { useConfirm } from "@/app/components/ConfirmDialog/ConfirmDialog";
+import { TourReplayButton } from "@/app/components/tour/TourReplayButton";
+import { PipelineTour } from "./PipelineTour";
 import { STAGES, VALID_STAGES, type PipelineEntry, type PipelineData, type Stage } from "./pipeline-types";
 
 export interface PipelineBoardProps {
@@ -36,6 +39,8 @@ export function PipelineBoard({
 
   const [pipeline, setPipeline] = useState<PipelineData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [confirm, confirmDialog] = useConfirm();
+  const [tourReplayToken, setTourReplayToken] = useState(0);
   const [errorState, setErrorState] = useState<"unauthorized" | "forbidden" | "failed" | null>(null);
   const [collapsed, setCollapsed] = useState<Record<Stage, boolean>>({
     shortlisted: false, contacted: false, interviewing: false, hired: true, rejected: true,
@@ -109,7 +114,16 @@ export function PipelineBoard({
   };
 
   const handleDelete = async (entryId: string) => {
-    if (!window.confirm("Remove this talent from your pipeline?")) return;
+    const entry = pipeline
+      ? VALID_STAGES.flatMap((s) => pipeline[s]).find((e) => e.id === entryId)
+      : undefined;
+    const confirmed = await confirm({
+      title: `Remove ${entry?.talent_name ?? "this talent"} from your pipeline?`,
+      description: "Their notes and stage history for this pipeline are removed too. You can add them again from talent search.",
+      confirmLabel: "Remove",
+      tone: "danger",
+    });
+    if (!confirmed) return;
     setSelectedIds((prev) => { const n = new Set(prev); n.delete(entryId); return n; });
     setPipeline((prev) => {
       if (!prev) return prev;
@@ -218,6 +232,9 @@ export function PipelineBoard({
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {pipeline && user?.user_id && (
+        <PipelineTour userId={user.user_id} replayToken={tourReplayToken} />
+      )}
       {/* Header */}
       <div className="bg-white border-b border-slate-200 px-6 py-4">
         <div className="flex items-center justify-between max-w-full">
@@ -229,9 +246,11 @@ export function PipelineBoard({
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <TourReplayButton onClick={() => setTourReplayToken((n) => n + 1)} />
             <button
               type="button"
               onClick={handleExportCsv}
+              data-tour="pipeline-export"
               className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"
             >
               <Download className="w-4 h-4" />
@@ -240,6 +259,7 @@ export function PipelineBoard({
             <button
               type="button"
               onClick={() => router.push(findTalentsHref)}
+              data-tour="pipeline-find"
               className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-600 transition"
             >
               <UserPlus className="w-4 h-4" />
@@ -254,7 +274,7 @@ export function PipelineBoard({
         <div className="text-center py-20 text-slate-500">Failed to load pipeline</div>
       ) : (
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-          <div className="flex gap-4 p-6 overflow-x-auto min-h-[calc(100vh-180px)]">
+          <div data-tour="pipeline-board" className="flex gap-4 p-6 overflow-x-auto min-h-[calc(100vh-180px)]">
             {STAGES.map((stage) => (
               <KanbanColumn
                 key={stage.key}
@@ -328,6 +348,7 @@ export function PipelineBoard({
           onClose={() => setClientSummaryEntry(null)}
         />
       )}
+      {confirmDialog}
     </div>
   );
 }

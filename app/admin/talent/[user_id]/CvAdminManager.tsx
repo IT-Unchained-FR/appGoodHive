@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FileText, Trash2, Upload } from "lucide-react";
 import toast from "react-hot-toast";
+import { useConfirm } from "@/app/components/ConfirmDialog/ConfirmDialog";
 
 import { uploadFileToBucket } from "@/app/utils/upload-file-bucket";
 import { resumeUploadSizeLimit } from "@/app/talents/my-profile/constants";
@@ -18,6 +19,7 @@ export default function CvAdminManager({
   initialCvUrl,
   isApproved = false,
 }: CvAdminManagerProps) {
+  const [confirm, confirmDialog] = useConfirm();
   const [cvUrl, setCvUrl] = useState(initialCvUrl || "");
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -91,11 +93,15 @@ export default function CvAdminManager({
       return;
     }
 
-    const confirmMessage = isApproved
-      ? "This talent is approved and CV is required. Deleting it will make the profile incomplete. Continue?"
-      : "Delete this CV?";
-
-    if (!window.confirm(confirmMessage)) {
+    const confirmed = await confirm({
+      title: "Delete this CV?",
+      description: isApproved
+        ? "This talent is approved and a CV is required. Deleting it will make the profile incomplete."
+        : "The CV file is removed from this talent's profile.",
+      confirmLabel: "Delete CV",
+      tone: "danger",
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -188,6 +194,7 @@ export default function CvAdminManager({
           )}
         </div>
       </div>
+      {confirmDialog}
     </div>
   );
 }

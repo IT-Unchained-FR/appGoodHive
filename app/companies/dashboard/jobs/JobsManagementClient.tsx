@@ -8,12 +8,18 @@ import toast from "react-hot-toast";
 import { JobApplicationsDrawer } from "@/app/components/applications";
 import { AssignTalentModal } from "@/app/components/AssignTalentModal";
 import { BlockchainActivateModal } from "@/app/components/BlockchainActivateModal";
+import { useConfirm } from "@/app/components/ConfirmDialog/ConfirmDialog";
+import { TourReplayButton } from "@/app/components/tour/TourReplayButton";
+import { JobsListTour } from "./JobsListTour";
 import type { CompanyDashboardJob } from "@/lib/jobs/company-jobs";
+import { REVIEW_TURNAROUND } from "@/lib/jobs/review";
 
 interface JobsManagementClientProps {
   companyUserId: string;
   initialJobs: CompanyDashboardJob[];
   initialOpenJobId?: string | null;
+  /** Opens the publish-and-fund modal for this job (e.g. from the dashboard checklist). */
+  initialActivateJobId?: string | null;
 }
 
 const REVIEW_STATUS_META: Record<
@@ -91,7 +97,7 @@ function getPrimaryAction(job: CompanyDashboardJob) {
 
   return {
     disabled: true,
-    label: "Awaiting Review",
+    label: job.reviewStatus === "closed" ? "Closed" : "In Review",
     type: "button" as const,
   };
 }
@@ -100,6 +106,7 @@ export default function JobsManagementClient({
   companyUserId,
   initialJobs,
   initialOpenJobId = null,
+  initialActivateJobId = null,
 }: JobsManagementClientProps) {
   const [jobs, setJobs] = useState(initialJobs);
   const [isSubmittingJobId, setIsSubmittingJobId] = useState<string | null>(null);
@@ -107,6 +114,8 @@ export default function JobsManagementClient({
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [assignJobId, setAssignJobId] = useState<string | null>(null);
   const [activateJobId, setActivateJobId] = useState<string | null>(null);
+  const [confirm, confirmDialog] = useConfirm();
+  const [tourReplayToken, setTourReplayToken] = useState(0);
 
   useEffect(() => {
     setJobs(initialJobs);
@@ -122,6 +131,18 @@ export default function JobsManagementClient({
       setSelectedJobId(matchingJob.id);
     }
   }, [initialJobs, initialOpenJobId]);
+
+  useEffect(() => {
+    if (!initialActivateJobId) return;
+    const job = initialJobs.find((j) => j.id === initialActivateJobId);
+    if (job?.reviewStatus === "approved") setActivateJobId(job.id);
+
+    // One-shot link: drop `activate` so a reload doesn't reopen the modal.
+    // history.replaceState (not router.replace) avoids refetching the page.
+    const url = new URL(window.location.href);
+    url.searchParams.delete("activate");
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+  }, [initialJobs, initialActivateJobId]);
 
   const selectedJob = useMemo(
     () => jobs.find((job) => job.id === selectedJobId) ?? null,
@@ -177,7 +198,14 @@ export default function JobsManagementClient({
   };
 
   const handleCloseJob = async (job: CompanyDashboardJob) => {
-    if (!window.confirm(`Close "${job.title}"? It will be unpublished and no longer visible to talents.`)) return;
+    const confirmed = await confirm({
+      title: `Close "${job.title}"?`,
+      description:
+        "It will be unpublished and no longer visible to talent. Closing doesn't touch any funds in escrow.",
+      confirmLabel: "Close job",
+      tone: "danger",
+    });
+    if (!confirmed) return;
     setIsClosingJobId(job.id);
     try {
       const response = await fetch(`/api/jobs/${job.id}/close`, { method: "POST" });
@@ -200,6 +228,10 @@ export default function JobsManagementClient({
 
   return (
     <>
+      {/* The publish modal runs its own tour; never stack two. */}
+      {activateJobId === null && (
+        <JobsListTour userId={companyUserId} replayToken={tourReplayToken} />
+      )}
       <div className="space-y-6 pb-8">
         <div className="rounded-[28px] border border-amber-200 bg-gradient-to-br from-[#fff6d9] via-white to-[#fff0c0] p-6 shadow-sm">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -216,16 +248,20 @@ export default function JobsManagementClient({
               </p>
             </div>
 
-            <Link
-              href="/companies/create-job"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
-            >
-              <Plus className="h-4 w-4" />
-              Create New Job
-            </Link>
+            <div className="flex flex-wrap items-center gap-3">
+              <TourReplayButton onClick={() => setTourReplayToken((n) => n + 1)} />
+              <Link
+                href="/companies/create-job"
+                data-tour="jobs-create"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
+              >
+                <Plus className="h-4 w-4" />
+                Create New Job
+              </Link>
+            </div>
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <div className="mt-6 grid gap-4 md:grid-cols-3" data-tour="jobs-counts">
             <div className="rounded-2xl border border-white/70 bg-white/80 p-4">
               <p className="text-sm text-slate-500">Drafts</p>
               <p className="mt-2 text-3xl font-semibold text-slate-900">
@@ -299,10 +335,32 @@ export default function JobsManagementClient({
                             Admin feedback: {job.adminFeedback}
                           </p>
                         ) : null}
+                        {job.reviewStatus === "pending_review" ? (
+                          <div className="mt-2 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                            <p className="font-semibold">
+                              In review with the GoodHive team, usually{" "}
+                              {REVIEW_TURNAROUND}.
+                            </p>
+                            <p className="mt-1 text-amber-800">
+                              We check that the description, skills, budget and
+                              services are clear and complete. We&apos;ll email
+                              you when it&apos;s approved, and a Publish button
+                              will appear here.
+                            </p>
+                          </div>
+                        ) : null}
+                        {job.reviewStatus === "approved" ? (
+                          <p className="mt-2 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                            {job.paymentTokenAddress
+                              ? "Published on the blockchain. Add a provision fund to make it live."
+                              : "Approved. Publish it on the blockchain and add funds to make it live."}
+                          </p>
+                        ) : null}
                       </div>
 
                       <div>
                         <span
+                          data-tour="job-status"
                           className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusMeta.badgeClassName}`}
                         >
                           {statusMeta.label}
@@ -335,6 +393,7 @@ export default function JobsManagementClient({
                       {primaryAction.type === "link" ? (
                         <a
                           href={primaryAction.href}
+                          data-tour="job-primary-action"
                           className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
                         >
                           <ExternalLink className="h-4 w-4" />
@@ -344,6 +403,7 @@ export default function JobsManagementClient({
                         <button
                           type="button"
                           onClick={() => setActivateJobId(job.id)}
+                          data-tour="job-primary-action"
                           className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600"
                         >
                           <Zap className="h-4 w-4" />
@@ -374,6 +434,7 @@ export default function JobsManagementClient({
                         <button
                           type="button"
                           onClick={() => void handleSubmitForReview(job)}
+                          data-tour="job-submit"
                           disabled={isSubmittingJobId === job.id}
                           className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:bg-amber-300"
                         >
@@ -389,6 +450,7 @@ export default function JobsManagementClient({
                       <button
                         type="button"
                         onClick={() => setSelectedJobId(job.id)}
+                        data-tour="job-applicants"
                         className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
                       >
                         <Users className="h-4 w-4" />
@@ -399,6 +461,7 @@ export default function JobsManagementClient({
                         <button
                           type="button"
                           onClick={() => setAssignJobId(job.id)}
+                          data-tour="job-assignments"
                           className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
                         >
                           <FileStack className="h-4 w-4" />
@@ -419,6 +482,7 @@ export default function JobsManagementClient({
                         <button
                           type="button"
                           onClick={() => void handleCloseJob(job)}
+                          data-tour="job-close"
                           disabled={isClosingJobId === job.id}
                           className="inline-flex items-center gap-2 rounded-full border border-rose-200 px-4 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
                         >
@@ -473,6 +537,8 @@ export default function JobsManagementClient({
           />
         );
       })()}
+
+      {confirmDialog}
     </>
   );
 }

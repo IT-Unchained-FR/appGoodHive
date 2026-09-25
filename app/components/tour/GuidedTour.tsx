@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Joyride, STATUS, type EventData, type Step } from "react-joyride";
 import { TourTooltip } from "./TourTooltip";
 
@@ -21,6 +21,28 @@ export function GuidedTour({
   replayToken,
 }: GuidedTourProps) {
   const [run, setRun] = useState(false);
+  // Steps resolved against the DOM when the tour starts; null until then.
+  const [activeSteps, setActiveSteps] = useState<Step[] | null>(null);
+  // Read through a ref so callers can pass steps built during render.
+  const stepsRef = useRef(steps);
+  stepsRef.current = steps;
+
+  // Drop steps whose target isn't on screen (empty lists, conditional
+  // buttons) so the tour never stalls on a missing element.
+  useEffect(() => {
+    if (!run) {
+      setActiveSteps(null);
+      return;
+    }
+    setActiveSteps(
+      stepsRef.current.filter(
+        (step) =>
+          step.target === "body" ||
+          typeof step.target !== "string" ||
+          document.querySelector(step.target) !== null,
+      ),
+    );
+  }, [run]);
 
   useEffect(() => {
     if (!autoStart) return;
@@ -51,8 +73,8 @@ export function GuidedTour({
   return (
     <Joyride
       key={replayToken}
-      run={run}
-      steps={steps}
+      run={run && activeSteps !== null && activeSteps.length > 0}
+      steps={activeSteps ?? []}
       continuous
       scrollToFirstStep
       onEvent={handleEvent}

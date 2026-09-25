@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 
 interface JobsDashboardPageProps {
   searchParams?: {
+    activate?: string;
     jobId?: string;
   };
 }
@@ -41,6 +42,7 @@ export default async function JobsDashboardPage({
       companyUserId={userId}
       initialJobs={jobs}
       initialOpenJobId={searchParams?.jobId ?? null}
+      initialActivateJobId={searchParams?.activate ?? null}
     />
   );
 }

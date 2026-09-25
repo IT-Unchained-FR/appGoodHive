@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Bot, Send, Trash2, User, Sparkles, BriefcaseBusiness, CircleCheck } from "lucide-react";
 import toast from "react-hot-toast";
 import { useCurrentUserId } from "@/app/hooks/useCurrentUserId";
+import { useConfirm } from "@/app/components/ConfirmDialog/ConfirmDialog";
 
 interface Message {
   id: string;
@@ -58,6 +59,7 @@ function MessageBubble({ msg }: { msg: Message }) {
 export default function CareerCoachPage() {
   const userId = useCurrentUserId();
   const router = useRouter();
+  const [confirm, confirmDialog] = useConfirm();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
@@ -144,7 +146,13 @@ export default function CareerCoachPage() {
   };
 
   const handleClearHistory = async () => {
-    if (!window.confirm("Clear your entire conversation history with Career Coach?")) return;
+    const confirmed = await confirm({
+      title: "Clear your conversation?",
+      description: "Your entire history with Career Coach is deleted. This can't be undone.",
+      confirmLabel: "Clear history",
+      tone: "danger",
+    });
+    if (!confirmed) return;
     try {
       await fetch("/api/superbot/coach", { method: "DELETE" });
       setMessages([]);
@@ -320,6 +328,7 @@ export default function CareerCoachPage() {
           </button>
         </form>
       </div>
+      {confirmDialog}
     </div>
   );
 }

@@ -1,12 +1,26 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import {
   useActiveAccount,
   useActiveWalletChain,
   useSwitchActiveWalletChain,
 } from 'thirdweb/react';
 import { toast } from 'react-hot-toast';
+import {
+  AlertTriangle,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  CheckCircle2,
+  Compass,
+  Loader2,
+  Receipt,
+  Wallet,
+  X,
+} from 'lucide-react';
+
+import { useConfirm } from '@/app/components/ConfirmDialog/ConfirmDialog';
+import { FundManagerTour } from './FundManagerTour';
 
 import { useJobManager, useJobData } from '@/hooks/contracts/useJobManager';
 import { getTokenInfo, getTokenBalance, formatTokenBalance } from '@/lib/contracts/erc20';
@@ -42,6 +56,8 @@ export default function FundManager({
   const walletChain = useActiveWalletChain();
   const switchChain = useSwitchActiveWalletChain();
   const [isSwitchingNetwork, setIsSwitchingNetwork] = useState(false);
+  const [confirm, confirmDialog] = useConfirm();
+  const [tourReplayToken, setTourReplayToken] = useState(0);
   const { addFunds, withdrawFunds, payFees, isLoading: isContractLoading } = useJobManager();
   const {
     jobData,
@@ -220,362 +236,361 @@ export default function FundManager({
     walletOnWrongNetwork ||
     Boolean(jobDataError);
 
-  if (!account) {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-          <div className="text-center">
-            <h2 className="text-xl font-bold mb-4">Wallet Required</h2>
-            <p className="text-gray-600 mb-4">
-              Please connect your wallet to manage job funds.
-            </p>
-            <button
-              onClick={onClose}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Close
-            </button>
-          </div>
-        </div>
+
+  const isBusy = isLoading || isContractLoading;
+  const symbol = tokenInfo?.symbol ?? '';
+  const walletBalanceLabel = tokenInfo
+    ? formatTokenBalance(typeof userBalance === 'bigint' ? userBalance : BigInt(userBalance), tokenInfo.decimals)
+    : null;
+
+  const handleWithdrawAll = async () => {
+    const confirmed = await confirm({
+      title: 'Withdraw all funds?',
+      description: `All ${jobBalance ?? ''} ${symbol} in this job's escrow goes back to your wallet. Without funds in escrow, talent on this job can't be paid until you add more.`,
+      confirmLabel: 'Withdraw all',
+      tone: 'danger',
+    });
+    if (confirmed) await handleWithdrawFunds(true);
+  };
+
+  const shell = (children: ReactNode, maxWidth = 'max-w-lg') => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={isBusy ? undefined : onClose}
+      />
+      <div className={`relative z-10 w-full ${maxWidth} max-h-[90vh] overflow-y-auto rounded-[28px] bg-white shadow-2xl`}>
+        {children}
       </div>
+      {confirmDialog}
+    </div>
+  );
+
+  const notice = (title: string, body: string) =>
+    shell(
+      <div className="px-6 py-8 text-center">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+          <Wallet className="h-5 w-5" />
+        </div>
+        <h2 className="mt-4 text-xl font-semibold text-slate-900">{title}</h2>
+        <p className="mt-2 text-sm text-slate-600">{body}</p>
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-6 inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
+        >
+          Close
+        </button>
+      </div>,
+      'max-w-md',
     );
+
+  if (!account) {
+    return notice('Connect your wallet', 'Connect the wallet you used to publish this job to manage its funds.');
   }
 
   if (!tokenAddress) {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-          <div className="text-center">
-            <h2 className="text-xl font-bold mb-4">Token not available</h2>
-            <p className="text-gray-600 mb-4">
-              We were unable to determine the payment token for this job. Please republish the job or contact support.
-            </p>
-            <button
-              onClick={onClose}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
+    return notice(
+      'Payment token not found',
+      "We couldn't determine the payment token for this job. Please republish the job or contact support.",
     );
   }
 
-  // Show success screen
   if (showSuccess && successDetails) {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
-          {/* Success Animation */}
-          <div className="text-center">
-            <div className="mx-auto mb-6 w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center relative overflow-hidden">
-              <style jsx>{`
-                @keyframes shine {
-                  0% { transform: translateX(-100%) skewX(-12deg); }
-                  100% { transform: translateX(300%) skewX(-12deg); }
-                }
-                .shine-animation {
-                  animation: shine 2s ease-in-out infinite;
-                }
-              `}</style>
-              <div className="animate-pulse">
-                <svg className="w-10 h-10 text-yellow-500 drop-shadow-lg filter drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              {/* Shining effect overlay */}
-              <div className="absolute inset-0 rounded-full">
-                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent shine-animation"></div>
-              </div>
-            </div>
+    const verb = { add: 'Added', withdraw: 'Withdrawn', fees: 'Paid' }[successDetails.action];
+    const headline = {
+      add: 'Funds added to escrow',
+      withdraw: 'Funds sent back to your wallet',
+      fees: 'Service fees paid',
+    }[successDetails.action];
 
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              🎉 Congratulations!
-            </h2>
-
-            <div className="mb-6">
-              <p className="text-lg text-gray-700 mb-2">
-                {successDetails.action === 'add' && 'Funds successfully added to job!'}
-                {successDetails.action === 'withdraw' && 'Funds successfully withdrawn from job!'}
-                {successDetails.action === 'fees' && 'Fees successfully paid for job!'}
-              </p>
-
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                <p className="text-yellow-800 font-semibold">
-                  {successDetails.action === 'add' && `Added: ${successDetails.amount} ${successDetails.tokenSymbol}`}
-                  {successDetails.action === 'withdraw' && `Withdrawn: ${successDetails.amount} ${successDetails.tokenSymbol}`}
-                  {successDetails.action === 'fees' && `Paid: ${successDetails.amount} ${successDetails.tokenSymbol}`}
-                </p>
-                <p className="text-yellow-700 text-sm mt-1">
-                  Transaction completed successfully on blockchain
-                </p>
-              </div>
-
-              <p className="text-sm text-gray-600">
-                Your transaction has been confirmed and the job balance has been updated.
-              </p>
-            </div>
-
-            <button
-              onClick={handleCloseSuccess}
-              className="w-full px-6 py-3 bg-yellow-500 text-white font-semibold rounded-lg hover:bg-yellow-600 transition-colors"
-            >
-              Close
-            </button>
-          </div>
+    return shell(
+      <div className="px-6 py-8 text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+          <CheckCircle2 className="h-7 w-7" />
         </div>
-      </div>
+        <h2 className="mt-4 text-xl font-semibold text-slate-900">{headline}</h2>
+        <div className="mx-auto mt-4 max-w-xs rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+          <p className="text-xs text-slate-500">{verb}</p>
+          <p className="mt-0.5 text-lg font-semibold text-slate-900">
+            {successDetails.amount} {successDetails.tokenSymbol}
+          </p>
+        </div>
+        <p className="mt-4 text-sm text-slate-600">
+          The transaction is confirmed on-chain and the job balance is updated.
+        </p>
+        <button
+          type="button"
+          onClick={handleCloseSuccess}
+          className="mt-6 flex w-full items-center justify-center rounded-full bg-amber-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-amber-600"
+        >
+          Done
+        </button>
+      </div>,
+      'max-w-md',
     );
   }
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">
-            Fund Manager - Block ID: {databaseJobId}
-          </h2>
-          <button
-            onClick={isLoading || isContractLoading ? undefined : onClose}
-            className={`text-xl ${isLoading || isContractLoading ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-gray-600'}`}
-            disabled={isLoading || isContractLoading}
-          >
-            ✕
-          </button>
-        </div>
+  const tabs = [
+    { id: 'add' as const, label: 'Add funds', icon: ArrowDownToLine },
+    { id: 'withdraw' as const, label: 'Withdraw', icon: ArrowUpFromLine },
+    { id: 'fees' as const, label: 'Pay fees', icon: Receipt },
+  ];
+  const amountInvalid = !amount || parseFloat(amount) <= 0;
+  const primaryButton =
+    'flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed';
+  const processing = (
+    <>
+      <Loader2 className="h-4 w-4 animate-spin" />
+      Processing…
+    </>
+  );
 
+  return shell(
+    <>
+      <FundManagerTour replayToken={tourReplayToken} />
+      {/* Header */}
+      <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-amber-600">
+            Manage funds
+          </p>
+          <h2 className="mt-1 text-xl font-semibold text-slate-900">Job escrow</h2>
+          <div className="mt-1 flex items-center gap-3">
+            <span className="text-xs text-slate-400">Job #{String(databaseJobId)}</span>
+            <button
+              type="button"
+              onClick={() => setTourReplayToken((n) => n + 1)}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 hover:text-amber-700"
+            >
+              <Compass className="h-3.5 w-3.5" />
+              How it works
+            </button>
+          </div>
+        </div>
+        {!isBusy && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="ml-4 rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
+      </div>
+
+      <div className="space-y-5 px-6 py-6">
         {(jobOnOtherNetwork || walletOnWrongNetwork || tokenError || jobDataError) && (
-          <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
-            {jobOnOtherNetwork && (
-              <p>
-                This job was created on the {friendlyChainName} network, but
-                GoodHive is currently running on {appChainName}, so its funds
-                can&apos;t be managed here. Please contact support for help.
-              </p>
-            )}
-            {walletOnWrongNetwork && (
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+            <div className="min-w-0 flex-1 space-y-2">
+              {jobOnOtherNetwork && (
                 <p>
-                  Your wallet is connected to{' '}
-                  {walletChain?.name ? formatChainLabel(walletChain.name) : 'another network'}.
-                  Switch to {appChainName} to manage funds.
+                  This job was created on the {friendlyChainName} network, but
+                  GoodHive is currently running on {appChainName}, so its funds
+                  can&apos;t be managed here. Please contact support for help.
                 </p>
-                <button
-                  type="button"
-                  onClick={() => void handleSwitchNetwork()}
-                  disabled={isSwitchingNetwork}
-                  className="shrink-0 rounded-md bg-amber-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-amber-300"
-                >
-                  {isSwitchingNetwork ? 'Switching…' : `Switch to ${appChainName}`}
-                </button>
-              </div>
-            )}
-            {tokenError && <p className="mt-2">{tokenError}</p>}
-            {jobDataError && (
-              <p className="mt-2">
-                {jobDataError.includes('Job does not exist')
-                  ? 'We could not find this job on the currently connected network. Confirm you are viewing the correct job ID and network before managing funds.'
-                  : jobDataError}
-              </p>
-            )}
+              )}
+              {walletOnWrongNetwork && (
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p>
+                    Your wallet is connected to{' '}
+                    {walletChain?.name ? formatChainLabel(walletChain.name) : 'another network'}.
+                    Switch to {appChainName} to manage funds.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void handleSwitchNetwork()}
+                    disabled={isSwitchingNetwork}
+                    className="shrink-0 rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:bg-amber-300"
+                  >
+                    {isSwitchingNetwork ? 'Switching…' : `Switch to ${appChainName}`}
+                  </button>
+                </div>
+              )}
+              {tokenError && <p>{tokenError}</p>}
+              {jobDataError && (
+                <p>
+                  {jobDataError.includes('Job does not exist')
+                    ? 'We could not find this job on the currently connected network. Confirm you are viewing the correct job and network before managing funds.'
+                    : jobDataError}
+                </p>
+              )}
+            </div>
           </div>
         )}
 
-        {/* Job Balance Display - Enhanced */}
-        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-6 mb-6">
-          <div className="text-center">
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Current Job Balance</h3>
-            <div className="mb-2">
-              {tokenInfo && jobBalance !== null && jobBalance !== undefined ? (
-                <p className="text-3xl font-bold text-green-600">
-                  {jobBalance} {tokenInfo.symbol}
-                </p>
-              ) : (
-                <p className="text-2xl text-gray-400">Loading...</p>
-              )}
-            </div>
-            <p className="text-sm text-gray-600">
-              Available funds in the smart contract
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Block ID: {databaseJobId}
-            </p>
+        {/* Balances */}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div data-tour="fm-escrow" className="rounded-2xl border border-amber-200 bg-gradient-to-br from-[#fff6d9] to-white px-4 py-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-amber-700">In escrow</p>
+            {tokenInfo && jobBalance !== null && jobBalance !== undefined ? (
+              <p className="mt-1 text-2xl font-semibold text-slate-900">
+                {jobBalance} <span className="text-base text-slate-500">{symbol}</span>
+              </p>
+            ) : (
+              <div className="mt-2 h-7 w-28 animate-pulse rounded-lg bg-amber-100" />
+            )}
+            <p className="mt-1 text-xs text-slate-500">Held by the job&apos;s smart contract</p>
           </div>
-        </div>
-
-        {/* User Balance Display */}
-        <div className="bg-blue-50 rounded-lg p-4 mb-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Your Wallet Balance</h3>
-              <p className="text-sm text-gray-600">Available in your wallet</p>
-            </div>
-            <div className="text-right">
-              {tokenInfo ? (
-                <p className="text-xl font-bold text-blue-600">
-                  {formatTokenBalance(typeof userBalance === 'bigint' ? userBalance : BigInt(userBalance), tokenInfo.decimals)} {tokenInfo.symbol}
-                </p>
-              ) : (
-                <p className="text-gray-400">Loading...</p>
-              )}
-            </div>
+          <div data-tour="fm-wallet" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Your wallet</p>
+            {walletBalanceLabel !== null ? (
+              <p className="mt-1 text-2xl font-semibold text-slate-900">
+                {walletBalanceLabel} <span className="text-base text-slate-500">{symbol}</span>
+              </p>
+            ) : (
+              <div className="mt-2 h-7 w-28 animate-pulse rounded-lg bg-slate-200" />
+            )}
+            <p className="mt-1 truncate font-mono text-xs text-slate-400">{account.address}</p>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200 mb-6">
-          {[
-            { id: 'add', label: 'Add Funds', icon: '💰' },
-            { id: 'withdraw', label: 'Withdraw', icon: '⬆️' },
-            { id: 'fees', label: 'Pay Fees', icon: '💳' }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex-1 py-3 px-4 text-center font-medium rounded-t-lg transition-colors ${
-                activeTab === tab.id
-                  ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <span className="mr-2">{tab.icon}</span>
-              {tab.label}
-            </button>
-          ))}
+        <div data-tour="fm-tabs" className="flex gap-1 rounded-full bg-slate-100 p-1" role="tablist">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const selected = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={selected}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setAmount('');
+                }}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition ${
+                  selected ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Tab Content */}
-        <div className="space-y-4">
-          {/* Amount Input */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Amount {tokenInfo ? `(${tokenInfo.symbol})` : ''}
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="Enter amount"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                step="0.000001"
-                min="0"
-              />
+        {/* Amount */}
+        <div data-tour="fm-amount">
+          <label htmlFor="fund-amount" className="mb-2 block text-sm font-medium text-slate-700">
+            Amount {symbol ? `(${symbol})` : ''}
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              id="fund-amount"
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              disabled={isBusy}
+              placeholder="e.g. 500"
+              step="0.000001"
+              min="0"
+              className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200 disabled:bg-slate-50"
+            />
+            {activeTab !== 'fees' && (
               <button
+                type="button"
                 onClick={setMaxAmount}
-                className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                disabled={isBusy}
+                className="shrink-0 rounded-full border border-slate-300 px-3 py-3 text-xs font-medium text-slate-600 transition hover:border-slate-900 hover:text-slate-900 disabled:opacity-50"
               >
                 Max
               </button>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Available: {getMaxAmount()} {tokenInfo?.symbol}
+            )}
+          </div>
+          {activeTab !== 'fees' && (
+            <p className="mt-1.5 text-xs text-slate-500">
+              Available: {getMaxAmount()} {symbol}
             </p>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="space-y-3">
-            {activeTab === 'add' && (
-              <>
-                <button
-                  onClick={handleAddFunds}
-                  disabled={
-                    actionsDisabled ||
-                    !amount ||
-                    parseFloat(amount) <= 0
-                  }
-                  className="w-full py-3 px-4 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isContractLoading ? 'Processing...' : 'Add Funds to Job'}
-                </button>
-                <p className="text-xs text-gray-500 text-center">
-                  Funds will be transferred from your wallet to the job contract
-                </p>
-              </>
-            )}
-
-            {activeTab === 'withdraw' && (
-              <>
-                <div className="space-y-2">
-                  <button
-                    onClick={() => handleWithdrawFunds(false)}
-                    disabled={
-                      actionsDisabled ||
-                      !amount ||
-                      parseFloat(amount) <= 0
-                    }
-                    className="w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {isContractLoading ? 'Processing...' : 'Withdraw Amount'}
-                  </button>
-
-                  <button
-                    onClick={() => handleWithdrawFunds(true)}
-                    disabled={
-                      actionsDisabled ||
-                      !hasWithdrawableBalance
-                    }
-                    className="w-full py-2 px-4 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {isContractLoading ? 'Processing...' : 'Withdraw All Funds'}
-                  </button>
-                </div>
-                <p className="text-xs text-gray-500 text-center">
-                  Funds will be transferred back to your wallet
-                </p>
-              </>
-            )}
-
-            {activeTab === 'fees' && (
-              <>
-                <button
-                  onClick={handlePayFees}
-                  disabled={
-                    actionsDisabled ||
-                    !amount ||
-                    parseFloat(amount) <= 0
-                  }
-                  className="w-full py-3 px-4 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isContractLoading ? 'Processing...' : 'Pay Service Fees'}
-                </button>
-                <p className="text-xs text-gray-500 text-center">
-                  Service fees will be calculated based on your job settings and paid to GoodHive
-                </p>
-              </>
-            )}
-          </div>
-
-          {/* Service Fees Info */}
-          {jobData && (
-            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <h4 className="font-semibold text-gray-900 mb-2">Active Services & Fees</h4>
-              <div className="space-y-1 text-sm">
-                {jobData.talentService && (
-                  <div className="flex justify-between">
-                    <span>Talent Selection:</span>
-                    <span className="font-medium text-green-600">10%</span>
-                  </div>
-                )}
-                {jobData.recruiterService && (
-                  <div className="flex justify-between">
-                    <span>Recruiter Service:</span>
-                    <span className="font-medium text-blue-600">8%</span>
-                  </div>
-                )}
-                {jobData.mentorService && (
-                  <div className="flex justify-between">
-                    <span>Mentor Service:</span>
-                    <span className="font-medium text-purple-600">12%</span>
-                  </div>
-                )}
-              </div>
-            </div>
           )}
         </div>
+
+        {/* Actions */}
+        {activeTab === 'add' && (
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={handleAddFunds}
+              data-tour="fm-action"
+              disabled={actionsDisabled || amountInvalid}
+              className={`${primaryButton} bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300`}
+            >
+              {isContractLoading ? processing : 'Add funds to escrow'}
+            </button>
+            <p className="text-center text-xs text-slate-500">
+              Moves funds from your wallet into the job&apos;s escrow. Your wallet asks you to approve, then confirm.
+            </p>
+          </div>
+        )}
+
+        {activeTab === 'withdraw' && (
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => handleWithdrawFunds(false)}
+              data-tour="fm-action"
+              disabled={actionsDisabled || amountInvalid}
+              className={`${primaryButton} bg-slate-900 hover:bg-slate-700 disabled:bg-slate-300`}
+            >
+              {isContractLoading ? processing : 'Withdraw amount'}
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleWithdrawAll()}
+              disabled={actionsDisabled || !hasWithdrawableBalance}
+              className="flex w-full items-center justify-center rounded-full border border-rose-200 px-6 py-2.5 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Withdraw everything
+            </button>
+            <p className="text-center text-xs text-slate-500">
+              Sends funds from escrow back to your wallet.
+            </p>
+          </div>
+        )}
+
+        {activeTab === 'fees' && (
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={handlePayFees}
+              data-tour="fm-action"
+              disabled={actionsDisabled || amountInvalid}
+              className={`${primaryButton} bg-slate-900 hover:bg-slate-700 disabled:bg-slate-300`}
+            >
+              {isContractLoading ? processing : 'Pay service fees'}
+            </button>
+            <p className="text-center text-xs text-slate-500">
+              Enter the base amount. Fees are calculated from the services on this job and paid to GoodHive.
+            </p>
+          </div>
+        )}
+
+        {/* Services & fees */}
+        {jobData && (jobData.talentService || jobData.recruiterService || jobData.mentorService) && (
+          <div data-tour="fm-services" className="rounded-2xl border border-slate-200 px-4 py-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Services on this job
+            </p>
+            <dl className="space-y-1.5 text-sm">
+              {[
+                { on: jobData.talentService, label: 'Talent selection', fee: '10%' },
+                { on: jobData.recruiterService, label: 'Recruiter', fee: '8%' },
+                { on: jobData.mentorService, label: 'Mentor', fee: '12%' },
+              ]
+                .filter((s) => s.on)
+                .map((s) => (
+                  <div key={s.label} className="flex justify-between">
+                    <dt className="text-slate-600">{s.label}</dt>
+                    <dd className="font-semibold text-slate-900">{s.fee}</dd>
+                  </div>
+                ))}
+            </dl>
+          </div>
+        )}
       </div>
-    </div>
+    </>,
   );
 }

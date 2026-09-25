@@ -19,6 +19,8 @@ import {
 
 import { AvailabilityBadge } from "@/app/components/AvailabilityBadge";
 import { useCurrentUserId } from "@/app/hooks/useCurrentUserId";
+import { TourReplayButton } from "@/app/components/tour/TourReplayButton";
+import { TopCandidatesTour } from "./TopCandidatesTour";
 import { formatRateRange } from "@/app/utils/format-rate-range";
 
 interface CompanyJob {
@@ -100,6 +102,7 @@ export default function TopCandidatesPage() {
   const [candidates, setCandidates] = useState<TopCandidate[]>([]);
   const [selectedCandidate, setSelectedCandidate] = useState<TopCandidate | null>(null);
   const [isLoadingContext, setIsLoadingContext] = useState(true);
+  const [tourReplayToken, setTourReplayToken] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isContacting, setIsContacting] = useState(false);
   const [contactMessage, setContactMessage] = useState("");
@@ -238,6 +241,9 @@ export default function TopCandidatesPage() {
 
   return (
     <div className="space-y-6 pb-8">
+      {currentUserId && !isLoadingContext && (
+        <TopCandidatesTour userId={currentUserId} replayToken={tourReplayToken} />
+      )}
       <div className="rounded-2xl border border-amber-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -253,25 +259,29 @@ export default function TopCandidatesPage() {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => generateCandidates(candidates.length > 0)}
-            disabled={!selectedJobId || isGenerating || isLoadingContext}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:from-amber-500 hover:to-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isGenerating ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : candidates.length > 0 ? (
-              <RefreshCw className="h-4 w-4" />
-            ) : (
-              <UserRoundCheck className="h-4 w-4" />
-            )}
-            {candidates.length > 0 ? "Refresh Picks" : "Generate Top 5"}
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <TourReplayButton onClick={() => setTourReplayToken((n) => n + 1)} />
+            <button
+              type="button"
+              onClick={() => generateCandidates(candidates.length > 0)}
+              data-tour="tc-generate"
+              disabled={!selectedJobId || isGenerating || isLoadingContext}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:from-amber-500 hover:to-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isGenerating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : candidates.length > 0 ? (
+                <RefreshCw className="h-4 w-4" />
+              ) : (
+                <UserRoundCheck className="h-4 w-4" />
+              )}
+              {candidates.length > 0 ? "Refresh Picks" : "Generate Top 5"}
+            </button>
+          </div>
         </div>
 
         <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-          <label className="block">
+          <label className="block" data-tour="tc-job">
             <span className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-800">
               <BriefcaseBusiness className="h-4 w-4 text-amber-600" />
               Published job
@@ -342,6 +352,7 @@ export default function TopCandidatesPage() {
                 key={candidate.userId}
                 type="button"
                 onClick={() => setSelectedCandidate(candidate)}
+                data-tour="tc-card"
                 className="group relative flex h-[344px] w-full min-w-0 flex-col overflow-hidden rounded-[28px] border border-amber-100/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(255,251,235,0.98)_100%)] p-5 text-left shadow-[0_20px_60px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:border-amber-300 hover:shadow-[0_28px_80px_rgba(245,158,11,0.16)]"
               >
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.22),transparent_58%),radial-gradient(circle_at_top_right,rgba(249,115,22,0.14),transparent_46%)] opacity-90 transition duration-300 group-hover:opacity-100" />

@@ -32,6 +32,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FilterBuilder, FilterCondition } from "./FilterBuilder";
 import { ExportButton } from "./ExportButton";
+import { useConfirm } from "@/app/components/ConfirmDialog/ConfirmDialog";
 import { Filter } from "lucide-react";
 
 export interface Column<T> {
@@ -174,6 +175,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   renderMobileCard,
   cardBreakpoint = 768,
 }: EnhancedTableProps<T>) {
+  const [confirm, confirmDialog] = useConfirm();
   const [internalSearchQuery, setInternalSearchQuery] = useState("");
   const [internalCurrentPage, setInternalCurrentPage] = useState(1);
   const [internalPageSize, setInternalPageSize] = useState(itemsPerPage);
@@ -461,9 +463,12 @@ export function EnhancedTable<T extends Record<string, any>>({
     if (selectedItems.length === 0) return;
 
     if (action.requiresConfirmation) {
-      const confirmed = window.confirm(
-        `Are you sure you want to ${action.label.toLowerCase()} ${selectedItems.length} item(s)?`,
-      );
+      const confirmed = await confirm({
+        title: `${action.label} ${selectedItems.length} item(s)?`,
+        description: `Are you sure you want to ${action.label.toLowerCase()} ${selectedItems.length} item(s)?`,
+        confirmLabel: action.label,
+        tone: action.variant === "destructive" ? "danger" : "default",
+      });
       if (!confirmed) return;
     }
 
@@ -1117,6 +1122,7 @@ export function EnhancedTable<T extends Record<string, any>>({
           </div>
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 }

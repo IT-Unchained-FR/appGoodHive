@@ -8,6 +8,18 @@
 
 ## Handoff Note
 
+`2026-09-25`
+
+- **Company onboarding guidance & polish** on `feat/company-guidance-and-polish` — checklist, review turnaround copy, Live Jobs stat, `?activate=` deep link, and `useConfirm()` dialog are built but **uncommitted**. Full plan → [`docs/features/company-onboarding-guidance.md`](../features/company-onboarding-guidance.md).
+- **Tasks 1–3 done (still uncommitted):** company approved/rejected emails on all four admin approval paths (`lib/email/company-review.ts`, two new templates, shared `lib/email/resend-sender.ts`); role + UUID checks on `api/admin/companies/pending` POST; checklist counts closed-after-live jobs as done, `?activate=` stripped via `history.replaceState`, unused `data-tour` removed. Dropped the planned 403 on `onboarding-progress` — new companies have no company row yet and need step 1.
+- Bug fixed along the way: bulk-reject silently dropped every rejection reason (UI sends `reason`, route read `rejectionReason`).
+- **Tasks 4–5 done:** every remaining `window.confirm` (talent my-assignments + career-coach, admin knowledge-base, CvAdminManager, shared `EnhancedTable` bulk actions) now uses `useConfirm()`. Also fixed pre-existing `api/admin/companies/[userId]` PUT un-approving a company when `approved` was omitted (now `COALESCE`). Feature doc → `IN REVIEW`. Pay-talent flow not fully tested for now, per user.
+- Validation: `pnpm tsc --noEmit` clean; `next lint` on all changed files shows only 2 pre-existing warnings (`knowledge-base` exhaustive-deps, `AssignTalentModal` `<img>`). Not yet run in a browser; nothing committed.
+- Checked and ruled out: `/api/admin/companies/pending` looked unauthenticated, but `middleware.ts:88` verifies the admin JWT for all `/api/admin/*`.
+- Validation so far: `pnpm tsc --noEmit` clean; `next lint` clean on touched files (one pre-existing `<img>` warning).
+
+---
+
 `2026-09-23` (later same day)
 
 - **Moved Superbot's knowledge base from repo markdown files to a Postgres table** (`goodhive.knowledge_base_files`) plus a new `/admin/knowledge-base` admin UI, per explicit user request to upload/edit knowledge-base content from the admin panel without a git commit + redeploy. This reverses the entry directly below. Full doc → [`docs/features/superbot-knowledge-base.md`](../features/superbot-knowledge-base.md) (see "Update #2").

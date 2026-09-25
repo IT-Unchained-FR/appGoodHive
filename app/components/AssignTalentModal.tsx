@@ -12,6 +12,7 @@ import {
 import { useActiveAccount } from "thirdweb/react";
 
 import { thirdwebClient } from "@/clients";
+import { useConfirm } from "@/app/components/ConfirmDialog/ConfirmDialog";
 import { GoodhiveUsdcTokenPolygon } from "@/app/constants/common";
 import { activeChain } from "@/config/chains";
 
@@ -61,6 +62,7 @@ export function AssignTalentModal({ jobId, jobTitle, isOpen, onClose }: AssignTa
     "confirming" | "sending" | "finalizing" | null
   >(null);
   const [payoutAmount, setPayoutAmount] = useState("");
+  const [confirm, confirmDialog] = useConfirm();
   const [paymentSuccess, setPaymentSuccess] = useState<{
     assignmentId: string;
     txHash: string;
@@ -144,7 +146,31 @@ export function AssignTalentModal({ jobId, jobTitle, isOpen, onClose }: AssignTa
       toast.error("Connect your wallet before sending the payout");
       return;
     }
-    if (!window.confirm(`Confirm completion for ${assignment.talent_name ?? "talent"} and initiate payout of ${amount} USDC?`)) return;
+    const talentName = assignment.talent_name ?? "this talent";
+    const confirmed = await confirm({
+      title: `Pay ${amount} USDC to ${talentName}?`,
+      description: (
+        <div className="space-y-3">
+          <p>
+            This confirms the mission is complete and releases the payout from
+            the job&apos;s escrow. GoodHive fees are deducted from this amount.
+          </p>
+          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-xl bg-gray-50 px-4 py-3">
+            <dt className="text-gray-500">Talent</dt>
+            <dd className="font-semibold text-gray-900">{talentName}</dd>
+            <dt className="text-gray-500">Amount</dt>
+            <dd className="font-semibold text-gray-900">{amount} USDC</dd>
+          </dl>
+          <p className="font-medium text-rose-700">
+            Blockchain payments can&apos;t be reversed. Your wallet will ask you
+            to sign the transaction next.
+          </p>
+        </div>
+      ),
+      confirmLabel: `Pay ${amount} USDC`,
+      tone: "danger",
+    });
+    if (!confirmed) return;
     setPaymentSuccess(null);
     setConfirmingId(assignment.id);
     setConfirmingStage("confirming");
@@ -376,6 +402,7 @@ export function AssignTalentModal({ jobId, jobTitle, isOpen, onClose }: AssignTa
           )}
         </div>
       </div>
+      {confirmDialog}
     </div>
   );
 }

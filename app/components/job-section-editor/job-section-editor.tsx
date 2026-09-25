@@ -4,6 +4,7 @@ import { IJobSection } from "@/interfaces/job-offer";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
 import React, { useState } from "react";
+import { useConfirm } from "@/app/components/ConfirmDialog/ConfirmDialog";
 import "react-quill/dist/quill.snow.css";
 import "@/app/styles/job-sections.css";
 
@@ -39,6 +40,7 @@ export const JobSectionEditor: React.FC<JobSectionEditorProps> = ({
   dragHandleProps,
 }) => {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [confirm, confirmDialog] = useConfirm();
 
   const handleHeadingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onUpdate({
@@ -54,8 +56,16 @@ export const JobSectionEditor: React.FC<JobSectionEditorProps> = ({
     });
   };
 
-  const handleDelete = () => {
-    if (window.confirm("Are you sure you want to delete this section?")) {
+  const handleDelete = async () => {
+    const confirmed = await confirm({
+      title: section.heading?.trim()
+        ? `Delete the "${section.heading.trim()}" section?`
+        : "Delete this section?",
+      description: "Its content is removed from the job description.",
+      confirmLabel: "Delete section",
+      tone: "danger",
+    });
+    if (confirmed) {
       setIsDeleting(true);
       onDelete();
     }
@@ -111,7 +121,7 @@ export const JobSectionEditor: React.FC<JobSectionEditorProps> = ({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              handleDelete();
+              void handleDelete();
             }}
             disabled={isDeleting}
             className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full transition-colors"
@@ -190,6 +200,7 @@ export const JobSectionEditor: React.FC<JobSectionEditorProps> = ({
           </div>
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 };

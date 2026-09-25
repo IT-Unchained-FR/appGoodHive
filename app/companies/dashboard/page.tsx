@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Briefcase,
-  DollarSign,
-  Eye,
+  Zap,
   Users,
   TrendingUp,
   Clock,
@@ -16,6 +15,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { Loader } from "@components/loader";
+import { GettingStartedChecklist } from "@/app/components/company-onboarding/GettingStartedChecklist";
 import { useCurrentUserId } from "@/app/hooks/useCurrentUserId";
 import { VALID_STAGES, type PipelineData } from "@/app/components/pipeline/pipeline-types";
 
@@ -29,7 +29,7 @@ interface PipelineStats {
 interface DashboardStats {
   totalJobs: number;
   activeJobs: number;
-  totalFunded: string;
+  liveJobs: number;
   totalApplications: number;
   recentJobs: any[];
 }
@@ -79,7 +79,7 @@ export default function CompanyDashboard() {
           setStats({
             totalJobs: data.overview.totalJobs,
             activeJobs: data.overview.publishedJobs,
-            totalFunded: data.overview.totalFunded,
+            liveJobs: data.overview.liveJobs ?? 0,
             totalApplications: data.performanceMetrics.totalApplications,
             recentJobs: data.recentJobs
           });
@@ -121,10 +121,10 @@ export default function CompanyDashboard() {
       textColor: "text-green-700"
     },
     {
-      title: "Database Funding",
-      value: `$${stats?.totalFunded || "0.00"}`,
-      subtitle: "View jobs for live balances",
-      icon: DollarSign,
+      title: "Live Jobs",
+      value: stats?.liveJobs || 0,
+      subtitle: "Funded and open to talent",
+      icon: Zap,
       color: "bg-yellow-500",
       bgColor: "bg-yellow-50",
       textColor: "text-yellow-700"
@@ -141,29 +141,7 @@ export default function CompanyDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl p-6 text-white">
-        <h2 className="text-2xl font-bold mb-2">Welcome to your Dashboard!</h2>
-        <p className="text-yellow-100 mb-4">
-          Manage your jobs, track performance, and grow your business with Web3 talent.
-        </p>
-        <div className="flex space-x-4">
-          <Link
-            href="/companies/create-job"
-            className="inline-flex items-center px-4 py-2 bg-white text-yellow-600 font-semibold rounded-lg hover:bg-yellow-50 transition-colors"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Create New Job
-          </Link>
-          <Link
-            href="/companies/dashboard/jobs"
-            className="inline-flex items-center px-4 py-2 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-yellow-600 transition-colors"
-          >
-            <Briefcase className="w-4 h-4 mr-2" />
-            Manage Jobs
-          </Link>
-        </div>
-      </div>
+      <GettingStartedChecklist userId={userId ?? null} />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
@@ -337,11 +315,11 @@ export default function CompanyDashboard() {
                     <div className="flex items-center space-x-4 mt-1">
                       <span className="text-sm text-gray-600">${job.budget}</span>
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        job.block_id
+                        job.paymentTokenAddress
                           ? 'bg-green-100 text-green-800'
                           : 'bg-gray-100 text-gray-800'
                       }`}>
-                        {job.block_id ? 'Published' : 'Draft'}
+                        {job.paymentTokenAddress ? 'Published' : 'Draft'}
                       </span>
                     </div>
                   </div>
@@ -370,35 +348,6 @@ export default function CompanyDashboard() {
         </div>
       </div>
 
-      {/* Tips Section */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Getting Started Tips</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center p-4">
-            <div className="p-3 bg-yellow-100 rounded-full w-12 h-12 mx-auto mb-3">
-              <Plus className="w-6 h-6 text-yellow-600 mx-auto" />
-            </div>
-            <h4 className="font-semibold text-gray-900 mb-1">Create Your First Job</h4>
-            <p className="text-sm text-gray-600">Post a detailed job description to attract the best Web3 talent.</p>
-          </div>
-
-          <div className="text-center p-4">
-            <div className="p-3 bg-green-100 rounded-full w-12 h-12 mx-auto mb-3">
-              <DollarSign className="w-6 h-6 text-green-600 mx-auto" />
-            </div>
-            <h4 className="font-semibold text-gray-900 mb-1">Fund Your Jobs</h4>
-            <p className="text-sm text-gray-600">Add crypto funds to show commitment and attract quality applicants.</p>
-          </div>
-
-          <div className="text-center p-4">
-            <div className="p-3 bg-blue-100 rounded-full w-12 h-12 mx-auto mb-3">
-              <Eye className="w-6 h-6 text-blue-600 mx-auto" />
-            </div>
-            <h4 className="font-semibold text-gray-900 mb-1">Track Performance</h4>
-            <p className="text-sm text-gray-600">Monitor applications, views, and optimize your job postings.</p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

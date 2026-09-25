@@ -52,3 +52,7 @@ export function resolveJobReviewStatus(
 
   return published ? "approved" : "draft";
 }
+
+// Shown to companies wherever they wait on the GoodHive team. Keep in sync
+// with the team's actual turnaround.
+export const REVIEW_TURNAROUND = "1–2 business days";

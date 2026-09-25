@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2, Clock3, XCircle, BriefcaseBusiness, UserCheck, Flag } from "lucide-react";
 import toast from "react-hot-toast";
 import { useCurrentUserId } from "@/app/hooks/useCurrentUserId";
+import { useConfirm } from "@/app/components/ConfirmDialog/ConfirmDialog";
 
 interface Assignment {
   id: string;
@@ -33,6 +34,7 @@ const STATUS_META: Record<string, { label: string; badgeClass: string; icon: Rea
 export default function MyAssignmentsPage() {
   const userId = useCurrentUserId();
   const router = useRouter();
+  const [confirm, confirmDialog] = useConfirm();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [respondingId, setRespondingId] = useState<string | null>(null);
@@ -58,7 +60,13 @@ export default function MyAssignmentsPage() {
   };
 
   const handleRequestCompletion = async (assignmentId: string) => {
-    if (!window.confirm("Request mission completion? The company will be notified to confirm and release your payout.")) return;
+    const confirmed = await confirm({
+      title: "Request mission completion?",
+      description:
+        "The company will be notified to confirm the mission is done and release your payout from escrow.",
+      confirmLabel: "Request completion",
+    });
+    if (!confirmed) return;
     setRequestingCompletionId(assignmentId);
     try {
       const res = await fetch(`/api/assignments/${assignmentId}/request-completion`, { method: "POST" });
@@ -226,6 +234,7 @@ export default function MyAssignmentsPage() {
           })}
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 }

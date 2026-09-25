@@ -70,14 +70,19 @@ export async function GET(request: NextRequest) {
       talent: item.talent === "true" || item.talent === true,
       postedAt: item.posted_at,
       block_id: item.block_id,
+      paymentTokenAddress: item.payment_token_address,
+      reviewStatus: item.review_status,
       currency: item.currency || 'USDC',
     }));
 
     // Calculate statistics
     const totalJobs = jobs.length;
-    const publishedJobs = jobs.filter(job => job.block_id).length;
-    const draftJobs = jobs.filter(job => !job.block_id).length;
+    // block_id is assigned at creation; only the blockchain publish writes
+    // payment_token_address.
+    const publishedJobs = jobs.filter(job => job.paymentTokenAddress).length;
+    const draftJobs = jobs.filter(job => !job.paymentTokenAddress).length;
     const fundedJobs = jobs.filter(job => job.escrowAmount > 0).length;
+    const liveJobs = jobs.filter(job => job.reviewStatus === "active").length;
 
     // Calculate total funding across all jobs
     const totalFunded = jobs.reduce((sum, job) => sum + job.escrowAmount, 0);
@@ -157,6 +162,7 @@ export async function GET(request: NextRequest) {
         publishedJobs,
         draftJobs,
         fundedJobs,
+        liveJobs,
         totalFunded: totalFunded.toFixed(2),
         averageBudget: averageBudget.toFixed(2),
       },

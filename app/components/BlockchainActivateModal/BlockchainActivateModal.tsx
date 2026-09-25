@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useActiveAccount } from "thirdweb/react";
-import { CheckCircle2, CircleDashed, Loader2, Wallet, X } from "lucide-react";
+import { CheckCircle2, CircleDashed, Compass, Loader2, Wallet, X } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { useJobManager } from "@/hooks/contracts/useJobManager";
@@ -16,6 +16,7 @@ import {
   getSupportedTokensForChain,
 } from "@/lib/contracts/jobManager";
 import { ACTIVE_CHAIN_ID, ACTIVE_CHAIN_NAME } from "@/config/chains";
+import { PublishFundTour } from "./PublishFundTour";
 
 export interface BlockchainActivateJob {
   blockchainJobId: number | null;
@@ -89,6 +90,7 @@ export default function BlockchainActivateModal({
   // Set as soon as addFunds succeeds in this session, independent of the
   // on-chain read, so a retry can't re-send funds even if that read fails.
   const [fundsAdded, setFundsAdded] = useState(false);
+  const [tourReplayToken, setTourReplayToken] = useState(0);
 
   const isFunded = fundsAdded || (escrowBalance !== null && escrowBalance > 0n);
 
@@ -312,6 +314,7 @@ export default function BlockchainActivateModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <PublishFundTour replayToken={tourReplayToken} />
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -329,6 +332,14 @@ export default function BlockchainActivateModal({
             <h2 className="mt-1 text-xl font-semibold text-slate-900">
               {job.title}
             </h2>
+            <button
+              type="button"
+              onClick={() => setTourReplayToken((n) => n + 1)}
+              className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-amber-600 hover:text-amber-700"
+            >
+              <Compass className="h-3.5 w-3.5" />
+              How it works
+            </button>
           </div>
           {!isBusy && (
             <button
@@ -342,7 +353,10 @@ export default function BlockchainActivateModal({
         </div>
 
         {/* Stepper */}
-        <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
+        <div
+          data-tour="activate-stepper"
+          className="flex items-center gap-3 border-b border-slate-100 px-6 py-4"
+        >
           {/* Step 1 */}
           <div className="flex items-center gap-2">
             <div
@@ -399,7 +413,10 @@ export default function BlockchainActivateModal({
               </p>
 
               {/* Wallet status */}
-              <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <div
+                data-tour="activate-wallet"
+                className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+              >
                 <Wallet className="h-4 w-4 shrink-0 text-slate-500" />
                 {account ? (
                   <span className="truncate font-mono text-xs text-slate-700">
@@ -413,7 +430,7 @@ export default function BlockchainActivateModal({
               </div>
 
               {/* Token selector */}
-              <div>
+              <div data-tour="activate-token">
                 <label className="mb-2 block text-sm font-medium text-slate-700">
                   Payment Token
                 </label>
@@ -447,6 +464,7 @@ export default function BlockchainActivateModal({
                 type="button"
                 disabled={isBusy || !account || !selectedTokenAddress}
                 onClick={() => void handlePublishToBlockchain()}
+                data-tour="activate-submit"
                 className="flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-300"
               >
                 {isBusy ? (
@@ -470,7 +488,10 @@ export default function BlockchainActivateModal({
               </p>
 
               {/* Wallet balance */}
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <div
+                data-tour="activate-balance"
+                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+              >
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-500">Wallet balance</span>
                   <span className="font-semibold text-slate-900">
@@ -491,7 +512,7 @@ export default function BlockchainActivateModal({
                   </span>
                 </div>
               ) : (
-                <div>
+                <div data-tour="activate-amount">
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Fund Amount ({tokenSymbol || "tokens"})
                   </label>
@@ -519,7 +540,10 @@ export default function BlockchainActivateModal({
               )}
 
               {/* Info note */}
-              <div className="flex items-start gap-2 rounded-2xl bg-amber-50 px-4 py-3 text-xs text-amber-800">
+              <div
+                data-tour="activate-escrow-note"
+                className="flex items-start gap-2 rounded-2xl bg-amber-50 px-4 py-3 text-xs text-amber-800"
+              >
                 <CircleDashed className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>
                   Funds are held in a smart contract escrow on Polygon. You can
@@ -537,6 +561,7 @@ export default function BlockchainActivateModal({
                   (!isFunded && (!fundAmount || Number(fundAmount) <= 0))
                 }
                 onClick={() => void handleAddFundAndActivate()}
+                data-tour="activate-submit"
                 className="flex w-full items-center justify-center gap-2 rounded-full bg-amber-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:bg-amber-300"
               >
                 {isBusy ? (

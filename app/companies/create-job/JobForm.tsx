@@ -37,6 +37,8 @@ import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import "react-quill/dist/quill.snow.css";
 import { useActiveAccount } from "thirdweb/react";
+import { REVIEW_TURNAROUND } from "@/lib/jobs/review";
+import { useConfirm } from "@/app/components/ConfirmDialog/ConfirmDialog";
 
 const mapToChainId = (value: unknown): number | null => {
   if (value === null || value === undefined) {
@@ -164,6 +166,7 @@ export const JobForm = ({
 }: JobFormProps) => {
   const [isCommissionExpanded, setIsCommissionExpanded] = useState(false);
   const [showFundManager, setShowFundManager] = useState(false);
+  const [confirm, confirmDialog] = useConfirm();
   const [showBlockchainModal, setShowBlockchainModal] = useState(false);
   const { navigate: protectedNavigate } = useProtectedNavigation();
 
@@ -418,7 +421,15 @@ export const JobForm = ({
   const handleCancelJob = async () => {
     if (!jobData?.id) return;
 
-    if (!confirm("Are you sure you want to cancel this job?")) return;
+    const confirmed = await confirm({
+      title: "Delete this job?",
+      description:
+        "The job and everything you've written for it are permanently deleted. This can't be undone.",
+      confirmLabel: "Delete job",
+      cancelLabel: "Keep job",
+      tone: "danger",
+    });
+    if (!confirmed) return;
 
     setIsLoading(true);
     try {
@@ -599,7 +610,9 @@ export const JobForm = ({
         );
       }
 
-      toast.success("Job submitted for review successfully");
+      toast.success(
+        `Job submitted. We usually review within ${REVIEW_TURNAROUND} and will email you.`,
+      );
       window.location.href = `/companies/create-job?id=${databaseJobId}`;
     } catch (error: any) {
       console.error("Error submitting job for review:", error);
@@ -704,7 +717,16 @@ export const JobForm = ({
       {isReadOnlyReviewState && (
         <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
           {currentReviewStatus === "pending_review" ? (
-            "This job is currently under review. Editing is locked until admin action is taken."
+            <div>
+              <p className="font-semibold">
+                In review with the GoodHive team, usually {REVIEW_TURNAROUND}.
+              </p>
+              <p className="mt-1">
+                We check that the description, skills, budget and services are
+                clear and complete. Editing is locked while we review. We&apos;ll
+                email you when it&apos;s approved, and you can then publish it.
+              </p>
+            </div>
           ) : (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <span>
@@ -1349,7 +1371,7 @@ export const JobForm = ({
                   type="button"
                   disabled
                 >
-                  Awaiting Review
+                  In Review
                 </button>
               )}
               {jobData?.published && (
@@ -1407,6 +1429,7 @@ export const JobForm = ({
           }}
         />
       )}
+      {confirmDialog}
     </form>
   );
 };

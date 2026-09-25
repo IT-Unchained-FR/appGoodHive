@@ -70,6 +70,7 @@ export function TalentCard({
         <button
           type="button"
           onClick={() => onToggleSelect(entry.id)}
+          data-tour="pipeline-compare"
           className={`w-full flex items-center gap-1.5 px-3 pt-2.5 pb-1 text-[11px] font-semibold transition-colors ${
             selected ? "text-amber-600" : "text-slate-300 hover:text-slate-500"
           }`}
@@ -85,6 +86,7 @@ export function TalentCard({
         {/* Drag handle */}
         <button
           type="button"
+          data-tour="pipeline-drag"
           className="flex-shrink-0 mt-1 text-slate-300 hover:text-slate-500 cursor-grab active:cursor-grabbing"
           {...attributes}
           {...listeners}
@@ -144,6 +146,7 @@ export function TalentCard({
             <button
               type="button"
               onClick={() => setEditingNotes(true)}
+              data-tour="pipeline-notes"
               className="mt-1.5 text-xs text-slate-400 hover:text-slate-600 text-left w-full truncate"
             >
               {entry.notes ? `"${entry.notes}"` : "Add note..."}
@@ -151,7 +154,7 @@ export function TalentCard({
           )}
 
           {/* Actions row */}
-          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100">
+          <div data-tour="pipeline-actions" className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100">
             <select
               value={entry.stage}
               onChange={(e) => onMove(entry.id, e.target.value as Stage)}
