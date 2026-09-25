@@ -55,9 +55,12 @@ function getIcon(type: string) {
 function getHref(notification: Notification): string | null {
   const d = notification.data ?? {};
   switch (notification.type) {
+    // The public job page is hidden until the job is live, so send the
+    // company to the next step instead.
     case "job_approved":
+      return d.jobId ? `/companies/dashboard/jobs?activate=${d.jobId}` : null;
     case "job_rejected":
-      return d.jobId ? `/jobs/${d.jobId}` : null;
+      return d.jobId ? `/companies/create-job?id=${d.jobId}` : null;
     case "assignment_request":
     case "assignment_accepted":
     case "assignment_rejected":

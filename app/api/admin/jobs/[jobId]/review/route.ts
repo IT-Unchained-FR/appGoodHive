@@ -6,6 +6,7 @@ import {
   sendJobRejectedEmail,
 } from "@/lib/email/job-review";
 import sql from "@/lib/db";
+import { createNotification } from "@/lib/notifications";
 
 type ReviewAction = "approve" | "reject";
 const UUID_PATTERN =
@@ -46,9 +47,11 @@ export async function POST(
       company_name: string | null;
       id: string;
       title: string | null;
+      user_id: string;
     }[]>`
       SELECT
         jo.id,
+        jo.user_id,
         jo.title,
         jo.company_name,
         c.email AS company_email
@@ -92,6 +95,21 @@ export async function POST(
       WHERE id = ${jobId}::uuid
       RETURNING id, review_status, admin_feedback
     `;
+
+    const jobTitle = job.title?.trim() || "GoodHive job";
+    await createNotification({
+      userId: job.user_id,
+      type: body.action === "approve" ? "job_approved" : "job_rejected",
+      title:
+        body.action === "approve"
+          ? `"${jobTitle}" is approved`
+          : `"${jobTitle}" needs changes`,
+      body:
+        body.action === "approve"
+          ? "Publish it on the blockchain and add funds to make it live."
+          : feedback || "See the feedback from the GoodHive team.",
+      data: { jobId },
+    });
 
     try {
       if (job.company_email?.trim()) {

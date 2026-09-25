@@ -491,10 +491,10 @@ export const JobApplicationPopup: React.FC<JobApplicationPopupProps> = ({
 
     setIsSubmitting(true);
     try {
+      // The server takes the applicant from the session and the company from
+      // the job, and notifies the company itself.
       const applicationData = {
         jobId,
-        applicantUserId: loggedInUserId,
-        companyUserId,
         applicantName: data.name,
         applicantEmail: data.email,
         coverLetter: data.coverLetter,
@@ -572,35 +572,9 @@ export const JobApplicationPopup: React.FC<JobApplicationPopupProps> = ({
         }
       }
 
-      const emailData = {
-        name: data.name,
-        toUserName: companyName,
-        email: companyEmail,
-        type: "job-applied",
-        subject: `GoodHive - ${data.name} applied for "${jobTitle}"`,
-        userEmail: data.email,
-        message: `${data.coverLetter}${data.portfolioLink ? `\n\nPortfolio/LinkedIn: ${data.portfolioLink}` : ""}`,
-        userProfile: `${window.location.origin}/talents/${loggedInUserId}`,
-        jobLink: `${window.location.origin}/companies/${walletAddress}?id=${jobId}`,
-      };
-
-      const response = await fetch("/api/send-email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(emailData),
-      });
-
-      if (response.ok) {
-        toast.success(
-          "Application sent successfully. The company will review your submission soon.",
-        );
-      } else {
-        toast.success(
-          "Application submitted. Email notification may be delayed.",
-        );
-      }
+      toast.success(
+        "Application sent successfully. The company will review your submission soon.",
+      );
 
       reset();
       onClose();
