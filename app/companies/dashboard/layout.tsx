@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -12,16 +12,12 @@ import {
   Settings,
   Menu,
   X,
-  BarChart3,
   MessageSquare,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
   UserRoundCheck,
-  Kanban,
 } from "lucide-react";
 import { AuthLayout } from "@/app/components/AuthLayout/AuthLayout";
-import { useAuth } from "@/app/contexts/AuthContext";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -33,12 +29,9 @@ const sidebarItems: Array<{
   icon: typeof LayoutDashboard;
   exact: boolean;
 }> = [
-  {
-    href: "/companies/dashboard",
-    label: "Overview",
-    icon: LayoutDashboard,
-    exact: true,
-  },
+  // Temporarily hidden for companies: Overview, Hiring Coach, Talent Pipeline,
+  // Analytics. The pages still exist and are reachable by direct URL — restore
+  // the entries here (and in app/components/nav-bar.tsx) to bring them back.
   {
     href: "/companies/dashboard/jobs",
     label: "My Jobs",
@@ -46,21 +39,9 @@ const sidebarItems: Array<{
     exact: false,
   },
   {
-    href: "/companies/dashboard/hiring-coach",
-    label: "Hiring Coach",
-    icon: Sparkles,
-    exact: false,
-  },
-  {
     href: "/companies/dashboard/top-candidates",
     label: "Top Candidates",
     icon: UserRoundCheck,
-    exact: false,
-  },
-  {
-    href: "/companies/pipeline",
-    label: "Talent Pipeline",
-    icon: Kanban,
     exact: false,
   },
   {
@@ -73,12 +54,6 @@ const sidebarItems: Array<{
     href: "/companies/create-job",
     label: "Create Job",
     icon: Plus,
-    exact: false,
-  },
-  {
-    href: "/companies/dashboard/analytics",
-    label: "Analytics",
-    icon: BarChart3,
     exact: false,
   },
   {
@@ -98,24 +73,8 @@ const sidebarItems: Array<{
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [pipelineCount, setPipelineCount] = useState<number | null>(null);
   const pathname = usePathname();
   const isMessagesPage = pathname === "/companies/dashboard/messages";
-  const { isAuthenticated } = useAuth();
-
-  // Live pipeline count for sidebar badge
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    fetch("/api/pipeline", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((json: { success: boolean; data?: Record<string, unknown[]> }) => {
-        if (json.success && json.data) {
-          const total = Object.values(json.data).reduce((sum, arr) => sum + arr.length, 0);
-          setPipelineCount(total);
-        }
-      })
-      .catch(() => {});
-  }, [isAuthenticated]);
 
   const isActiveRoute = (href: string, exact: boolean) => {
     if (exact) return pathname === href;
@@ -206,11 +165,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                       />
                       {!isCollapsed && (
                         <span className="truncate flex-1">{item.label}</span>
-                      )}
-                      {!isCollapsed && item.label === "Talent Pipeline" && pipelineCount !== null && pipelineCount > 0 && (
-                        <span className="ml-auto text-[10px] font-bold bg-amber-500 text-white rounded-full px-1.5 py-0.5 leading-none">
-                          {pipelineCount}
-                        </span>
                       )}
                     </Link>
 

@@ -23,7 +23,6 @@ import { connectModalOptions, supportedWallets } from "@/lib/auth/walletConfig";
 import {
   BriefcaseBusiness,
   CircleUserRound,
-  Kanban,
   LayoutDashboard,
   MessageSquare,
   Search,
@@ -115,8 +114,11 @@ const companiesLinks = [
     protected: false,
     icon: Search,
   },
+  // Talent Pipeline and Hiring Coach are temporarily hidden for companies, in
+  // step with the dashboard sidebar (app/companies/dashboard/layout.tsx).
+  // Dashboard points at My Jobs while the Overview entry is hidden too.
   {
-    href: "/companies/dashboard",
+    href: "/companies/dashboard/jobs",
     label: "Dashboard",
     protected: true,
     icon: LayoutDashboard,
@@ -126,18 +128,6 @@ const companiesLinks = [
     label: "My Company Profile",
     protected: true,
     icon: BriefcaseBusiness,
-  },
-  {
-    href: "/companies/pipeline",
-    label: "Talent Pipeline",
-    protected: true,
-    icon: Kanban,
-  },
-  {
-    href: "/companies/dashboard/hiring-coach",
-    label: "Hiring Coach",
-    protected: true,
-    icon: Sparkles,
   },
   {
     href: "/messages",
