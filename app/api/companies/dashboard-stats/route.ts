@@ -65,7 +65,8 @@ export async function GET(request: NextRequest) {
       jobType: item.job_type,
       image_url: item.image_url,
       walletAddress: item.wallet_address,
-      escrowAmount: parseFloat(item.escrow_amount) || 0,
+      // escrow_amount is a legacy boolean; escrow_balance mirrors the chain.
+      escrowAmount: Number(item.escrow_balance) || 0,
       mentor: item.mentor === "true" || item.mentor === true,
       recruiter: item.recruiter === "true" || item.recruiter === true,
       talent: item.talent === "true" || item.talent === true,

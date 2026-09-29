@@ -53,11 +53,12 @@ export async function getCompanyOnboardingProgress(
     `,
     sql<{
       block_id: number | null;
+      escrow_balance: string | null;
       id: string;
       payment_token_address: string | null;
       review_status: string | null;
     }[]>`
-      SELECT id, review_status, block_id, payment_token_address
+      SELECT id, review_status, block_id, payment_token_address, escrow_balance
       FROM goodhive.job_offers
       WHERE user_id = ${userId}::uuid
       ORDER BY COALESCE(created_at, posted_at, NOW()) DESC
@@ -73,6 +74,8 @@ export async function getCompanyOnboardingProgress(
     if (!focusJob || jobStage(job) > jobStage(focusJob)) focusJob = job;
   }
   const bestStage = focusJob ? jobStage(focusJob) : -1;
+  // Stored copy of the on-chain balance (see lib/jobs/escrow.ts).
+  const anyJobFunded = jobRows.some((job) => Number(job.escrow_balance ?? 0) > 0);
 
   return {
     steps: {
@@ -81,11 +84,10 @@ export async function getCompanyOnboardingProgress(
       create_job: jobRows.length > 0,
       job_approved: bestStage >= 2,
       publish: bestStage >= 3,
-      // Funding and activation happen in one step of the publish modal and
-      // escrow isn't mirrored in the DB, so a live job is the only signal
-      // here. The client also reads the on-chain balance for the gap case
-      // (funded, activation failed).
-      fund: bestStage >= 4,
+      // A live job was funded to go live. The stored escrow balance also
+      // catches a funded job whose activation failed; the client still reads
+      // the chain for jobs whose balance hasn't been synced yet.
+      fund: bestStage >= 4 || anyJobFunded,
       live: bestStage >= 4,
     },
     focusJobId: focusJob?.id ?? null,

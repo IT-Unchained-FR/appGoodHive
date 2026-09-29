@@ -32,6 +32,7 @@ interface DashboardStats {
   totalJobs: number;
   activeJobs: number;
   liveJobs: number;
+  totalFunded: number;
   totalApplications: number;
   recentJobs: any[];
 }
@@ -82,6 +83,7 @@ export default function CompanyDashboard() {
             totalJobs: data.overview.totalJobs,
             activeJobs: data.overview.publishedJobs,
             liveJobs: data.overview.liveJobs ?? 0,
+            totalFunded: Number(data.overview.totalFunded) || 0,
             totalApplications: data.performanceMetrics.totalApplications,
             recentJobs: data.recentJobs
           });
@@ -125,7 +127,10 @@ export default function CompanyDashboard() {
     {
       title: "Live Jobs",
       value: stats?.liveJobs || 0,
-      subtitle: "Funded and open to talent",
+      subtitle:
+        (stats?.totalFunded ?? 0) > 0
+          ? `${(stats?.totalFunded ?? 0).toLocaleString("en-US", { maximumFractionDigits: 2 })} in escrow`
+          : "Funded and open to talent",
       icon: Zap,
       color: "bg-yellow-500",
       bgColor: "bg-yellow-50",
