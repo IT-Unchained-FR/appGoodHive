@@ -22,6 +22,7 @@ import {
 import { useConfirm } from '@/app/components/ConfirmDialog/ConfirmDialog';
 import { FundManagerTour } from './FundManagerTour';
 import { getServiceFeePercent } from '@/app/constants/common';
+import { requestEscrowSync } from '@/lib/jobs/escrow-client';
 
 import { useJobManager, useJobData } from '@/hooks/contracts/useJobManager';
 import { getTokenInfo, getTokenBalance, formatTokenBalance } from '@/lib/contracts/erc20';
@@ -131,6 +132,7 @@ export default function FundManager({
         tokenSymbol: tokenInfo.symbol
       });
       setShowSuccess(true);
+      requestEscrowSync(databaseJobId);
       setAmount('');
       refetchJobData();
       // Refresh user balance
@@ -153,6 +155,7 @@ export default function FundManager({
         tokenSymbol: tokenInfo.symbol
       });
       setShowSuccess(true);
+      requestEscrowSync(databaseJobId);
       setAmount('');
       refetchJobData();
       // Refresh user balance
@@ -175,6 +178,7 @@ export default function FundManager({
         tokenSymbol: tokenInfo.symbol
       });
       setShowSuccess(true);
+      requestEscrowSync(databaseJobId);
       setAmount('');
       refetchJobData();
     }

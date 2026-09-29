@@ -1269,6 +1269,7 @@ export const JobForm = ({
             totalFeePercent={feePercent}
             adminFeedback={jobData?.admin_feedback ?? null}
             isOnChain={isOnChain}
+            jobId={jobData?.id ?? null}
             blockchainJobId={isOnChain ? currentBlockchainJobId : null}
             currency={currencyLabel}
             fundingGoal={!isHourly && budgetNumber > 0 ? totalToFund : null}

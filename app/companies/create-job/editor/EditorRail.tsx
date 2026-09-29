@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import { AlertTriangle, Check, Clock3, Lock, Zap } from "lucide-react";
 
 import { useJobData } from "@/hooks/contracts/useJobManager";
+import { requestEscrowSync } from "@/lib/jobs/escrow-client";
 import { REVIEW_TURNAROUND, type JobReviewStatus } from "@/lib/jobs/review";
 import { jobEditorUi as ui } from "./ui";
 
@@ -17,6 +19,8 @@ interface EditorRailProps {
   totalFeePercent: number;
   adminFeedback: string | null;
   isOnChain: boolean;
+  /** Database id, used to refresh the stored escrow balance. */
+  jobId: string | null;
   blockchainJobId: string | null;
   currency: string;
   /** Budget plus fees for a fixed-price job; null when it can't be known (hourly). */
@@ -36,15 +40,21 @@ function formatAmount(value: number) {
 }
 
 function EscrowCard({
+  jobId,
   blockchainJobId,
   currency,
   fundingGoal,
   busy,
   onManageFunds,
-}: Pick<EditorRailProps, "currency" | "fundingGoal" | "busy" | "onManageFunds"> & {
+}: Pick<EditorRailProps, "jobId" | "currency" | "fundingGoal" | "busy" | "onManageFunds"> & {
   blockchainJobId: string;
 }) {
   const { balance } = useJobData(blockchainJobId);
+
+  // Keep the stored copy (dashboards, checklist) in step with the chain.
+  useEffect(() => {
+    requestEscrowSync(jobId);
+  }, [jobId]);
   const amount = Number(String(balance ?? "0").replace(/,/g, "")) || 0;
   const percent = fundingGoal ? Math.min(100, (amount / fundingGoal) * 100) : null;
   const shortfall = fundingGoal ? Math.max(0, fundingGoal - amount) : 0;
@@ -168,6 +178,7 @@ export function EditorRail(props: EditorRailProps) {
 
       {isOnChain && props.blockchainJobId && (status === "active" || status === "closed") && (
         <EscrowCard
+          jobId={props.jobId}
           blockchainJobId={props.blockchainJobId}
           currency={props.currency}
           fundingGoal={status === "active" ? props.fundingGoal : null}

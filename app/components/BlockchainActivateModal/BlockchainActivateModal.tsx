@@ -17,6 +17,7 @@ import {
 } from "@/lib/contracts/jobManager";
 import { ACTIVE_CHAIN_ID, ACTIVE_CHAIN_NAME } from "@/config/chains";
 import { useWalletReadiness, WalletReadinessList } from "./WalletReadiness";
+import { requestEscrowSync } from "@/lib/jobs/escrow-client";
 import { PublishFundTour } from "./PublishFundTour";
 
 export interface BlockchainActivateJob {
@@ -304,6 +305,7 @@ export default function BlockchainActivateModal({
       }
 
       setFundsAdded(true);
+      requestEscrowSync(job.id);
       getJobBalance(resolvedBlockchainJobId)
         .then(setEscrowBalance)
         .catch(() => {
