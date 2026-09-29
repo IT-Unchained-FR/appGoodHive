@@ -152,8 +152,8 @@ export function AssignTalentModal({ jobId, jobTitle, isOpen, onClose }: AssignTa
       description: (
         <div className="space-y-3">
           <p>
-            This confirms the mission is complete and releases the payout from
-            the job&apos;s escrow. GoodHive fees are deducted from this amount.
+            This confirms the mission is complete and sends the payout from
+            your connected wallet. GoodHive fees are deducted from this amount.
           </p>
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-xl bg-gray-50 px-4 py-3">
             <dt className="text-gray-500">Talent</dt>
