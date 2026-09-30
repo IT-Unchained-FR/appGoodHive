@@ -10,6 +10,7 @@ import { TalentPageHeader } from "@/app/components/talent-page/TalentPageHeader"
 import { TalentPageSidebar } from "@/app/components/talent-page/TalentPageSidebar";
 import { QuickRequestComposer } from "@/app/components/messenger/QuickRequestComposer";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { canViewSensitiveTalentInfo } from "@/lib/auth/confidential-lock";
 import { normalizeAvailabilityStatus } from "@/app/constants/availability";
 import styles from "./page.module.scss";
 import "react-quill/dist/quill.snow.css";
@@ -114,11 +115,7 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
 
   const isOwner = user?.user_id === profileData.user_id;
   const talentUserId = profileData.user_id ?? "";
-  const canViewSensitive =
-    isOwner ||
-    (!!user &&
-      (user.talent_status === "approved" ||
-        user.recruiter_status === "approved"));
+  const canViewSensitive = isOwner || canViewSensitiveTalentInfo(user);
 
   // Track only company-side interest in a talent profile. Dual-role users still count
   // as company viewers when their recruiter/company role is approved.

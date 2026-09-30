@@ -171,3 +171,23 @@ export function getConfidentialLockCopy({
     title: "Verification in progress",
   };
 }
+
+/**
+ * Client-side mirror of `canViewConfidentialInfo`: approved talents, approved
+ * recruiters and owners of an approved company see talent rates, socials and
+ * contact details.
+ */
+export function canViewSensitiveTalentInfo(
+  user: {
+    has_approved_company?: boolean;
+    recruiter_status?: string;
+    talent_status?: string;
+  } | null | undefined,
+): boolean {
+  return (
+    !!user &&
+    (user.talent_status === "approved" ||
+      user.recruiter_status === "approved" ||
+      user.has_approved_company === true)
+  );
+}

@@ -12,6 +12,7 @@ import { formatRateRange } from "@/app/utils/format-rate-range";
 import ApprovalPromptModal from "./ApprovalPromptModal";
 import { useState } from "react";
 import { useAuthCheck } from "@/app/hooks/useAuthCheck";
+import { canViewSensitiveTalentInfo } from "@/lib/auth/confidential-lock";
 import { TrackedExternalLink } from "@/components/TrackedExternalLink";
 
 interface TalentPageSidebarProps {
@@ -77,9 +78,7 @@ export const TalentPageSidebar = ({
   const canViewSensitive =
     typeof canViewSensitiveProp === "boolean"
       ? canViewSensitiveProp
-      : !!user &&
-        (user.talent_status === "approved" ||
-          user.recruiter_status === "approved");
+      : canViewSensitiveTalentInfo(user);
   const isApprovalLocked = isAuthenticated && !canViewSensitive;
   const rateCtaLabel = isAuthenticated
     ? "Get approved to view rate"

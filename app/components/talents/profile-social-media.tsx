@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { FC, useEffect, useState } from "react";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { canViewSensitiveTalentInfo } from "@/lib/auth/confidential-lock";
 
 type Props = {
   linkedin?: string;
@@ -20,11 +21,7 @@ export const TalentSocialMedia: FC<Props> = (props) => {
   const [isShowDetails, setIsShowDetails] = useState(false);
 
   useEffect(() => {
-    const canViewSensitive =
-      !!user &&
-      (user.talent_status === "approved" ||
-        user.recruiter_status === "approved");
-    setIsShowDetails(canViewSensitive);
+    setIsShowDetails(canViewSensitiveTalentInfo(user));
   }, [user]);
 
   return (

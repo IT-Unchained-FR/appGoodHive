@@ -6,6 +6,7 @@ import { MapPin, Mail, Briefcase, Award, Users, Lock } from "lucide-react";
 import LastActiveStatus from "@/app/components/LastActiveStatus";
 import { generateCountryFlag } from "@/app/utils/generate-country-flag";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { canViewSensitiveTalentInfo } from "@/lib/auth/confidential-lock";
 import { CompanyInfoGuard } from "@/app/components/CompanyInfoGuard";
 import { AvailabilityBadge } from "@/app/components/AvailabilityBadge";
 import { MessageBoxModal } from "@/app/components/message-box-modal";
@@ -305,9 +306,7 @@ export const TalentPageHeader = ({
   const canViewSensitive =
     typeof canViewSensitiveProp === "boolean"
       ? canViewSensitiveProp
-      : !!user &&
-        (user.talent_status === "approved" ||
-          user.recruiter_status === "approved");
+      : canViewSensitiveTalentInfo(user);
   const isApprovalLocked = isAuthenticated && !canViewSensitive;
   const canViewBasic =
     typeof canViewBasicProp === "boolean"

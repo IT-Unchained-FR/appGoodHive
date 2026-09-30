@@ -14,6 +14,7 @@ import { useAuth } from "@/app/contexts/AuthContext";
 import { CompanyInfoGuard } from "./CompanyInfoGuard";
 import { useAuthCheck } from "@/app/hooks/useAuthCheck";
 import { formatRateRange } from "@/app/utils/format-rate-range";
+import { canViewSensitiveTalentInfo } from "@/lib/auth/confidential-lock";
 import { CodeOfHiveBadge } from "@/app/components/code-of-hive/CodeOfHiveBadge";
 
 interface Props {
@@ -181,9 +182,7 @@ export const Card: FC<Props> = ({
     type === "talent" ? (rateMax ?? (budget > 0 ? budget : undefined)) : undefined;
   const rateLabel = formatRateRange({ minRate: rateMinValue, maxRate: rateMaxValue });
   const showRate = Boolean(rateLabel);
-  const canViewSensitive =
-    !!user &&
-    (user.talent_status === "approved" || user.recruiter_status === "approved");
+  const canViewSensitive = canViewSensitiveTalentInfo(user);
 
   return (
     <div className="group relative bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/40 rounded-2xl border border-amber-100/60 shadow-sm hover:shadow-2xl hover:border-[#FFC905]/30 transition-all duration-300 ease-in-out cursor-pointer flex flex-col h-full backdrop-blur-sm">

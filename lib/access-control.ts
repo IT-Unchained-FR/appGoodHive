@@ -11,25 +11,35 @@ export type ViewerAccess = ViewerApproval & {
   tier: "public" | "registered" | "approved";
 };
 
-export async function getViewerApproval(
-  viewerUserId?: string | null,
-): Promise<ViewerApproval> {
-  if (!viewerUserId) {
-    return { isApprovedTalent: false, isApprovedCompany: false, isApproved: false };
-  }
+const notApproved: ViewerApproval = {
+  isApprovedTalent: false,
+  isApprovedCompany: false,
+  isApproved: false,
+};
 
-  const rows = await sql`
-    SELECT talent_status, recruiter_status
-    FROM goodhive.users
-    WHERE userid = ${viewerUserId}
+// null when the viewer has no users row.
+async function loadViewerApproval(viewerUserId: string): Promise<ViewerApproval | null> {
+  const rows = await sql<
+    { talent_status: string | null; recruiter_status: string | null; has_approved_company: boolean }[]
+  >`
+    SELECT
+      u.talent_status,
+      u.recruiter_status,
+      EXISTS(
+        SELECT 1 FROM goodhive.companies c
+        WHERE c.user_id = u.userid AND c.approved = true
+      ) AS has_approved_company
+    FROM goodhive.users u
+    WHERE u.userid = ${viewerUserId}
   `;
 
-  if (rows.length === 0) {
-    return { isApprovedTalent: false, isApprovedCompany: false, isApproved: false };
-  }
+  if (rows.length === 0) return null;
 
   const isApprovedTalent = rows[0].talent_status === "approved";
-  const isApprovedCompany = rows[0].recruiter_status === "approved";
+  // An approved company profile counts even without recruiter access
+  // (matches canViewConfidentialInfo in lib/auth/viewer-access.ts).
+  const isApprovedCompany =
+    rows[0].recruiter_status === "approved" || rows[0].has_approved_company;
 
   return {
     isApprovedTalent,
@@ -38,46 +48,26 @@ export async function getViewerApproval(
   };
 }
 
+export async function getViewerApproval(
+  viewerUserId?: string | null,
+): Promise<ViewerApproval> {
+  if (!viewerUserId) return notApproved;
+  return (await loadViewerApproval(viewerUserId)) ?? notApproved;
+}
+
 export async function getViewerAccess(
   viewerUserId?: string | null,
 ): Promise<ViewerAccess> {
-  if (!viewerUserId) {
-    return {
-      isApprovedTalent: false,
-      isApprovedCompany: false,
-      isApproved: false,
-      isAuthenticated: false,
-      tier: "public",
-    };
+  const approval = viewerUserId ? await loadViewerApproval(viewerUserId) : null;
+
+  if (!approval) {
+    return { ...notApproved, isAuthenticated: false, tier: "public" };
   }
-
-  const rows = await sql`
-    SELECT talent_status, recruiter_status
-    FROM goodhive.users
-    WHERE userid = ${viewerUserId}
-  `;
-
-  if (rows.length === 0) {
-    return {
-      isApprovedTalent: false,
-      isApprovedCompany: false,
-      isApproved: false,
-      isAuthenticated: false,
-      tier: "public",
-    };
-  }
-
-  const isApprovedTalent = rows[0].talent_status === "approved";
-  const isApprovedCompany = rows[0].recruiter_status === "approved";
-  const isApproved = isApprovedTalent || isApprovedCompany;
-  const tier: ViewerAccess["tier"] = isApproved ? "approved" : "registered";
 
   return {
-    isApprovedTalent,
-    isApprovedCompany,
-    isApproved,
+    ...approval,
     isAuthenticated: true,
-    tier,
+    tier: approval.isApproved ? "approved" : "registered",
   };
 }
 
