@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <Script
             id="lemlist-visitors"
             strategy="afterInteractive"
-            src="https://visitors.lemlist.com/api/visitors/tracking?k=&t=tea_QiRaDFgaGn67WP6b9"
+            src="https://visitors.lemlist.com/api/visitors/tracking?k=2lhsYZL32NKS8dZ4RoU5sVcekF263Sv1wzfkTrhfg0w%3D&t=tea_QiRaDFgaGn67WP6b9"
           />
         )}
       </head>
