@@ -8,7 +8,7 @@ const socialAndEmailWallet = inAppWallet({
     options: ["email", "google", "apple", "facebook", "x"],
   },
   metadata: {
-    name: "GoodHive",
+    name: "Email / Social",
     icon: "https://goodhive.io/img/goodhive-logo.png",
     image: {
       src: "https://goodhive.io/img/goodhive-logo.png",

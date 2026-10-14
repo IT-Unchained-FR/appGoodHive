@@ -645,7 +645,7 @@ export const NavBar = () => {
                   theme="light"
                   autoConnect
                   connectButton={{
-                    label: "Connect Wallet",
+                    label: "Connect",
                   }}
                   onConnect={handleOnConnect}
                   connectModal={{
