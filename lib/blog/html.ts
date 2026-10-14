@@ -1,15 +1,35 @@
-import DOMPurify from "isomorphic-dompurify";
+import sanitizeHtml from "sanitize-html";
 
 const WORDS_PER_MINUTE = 200;
 
-const SANITIZE_CONFIG: DOMPurify.Config = {
-  FORBID_TAGS: ["script", "style", "iframe", "object", "embed", "form", "input", "button"],
-  ADD_ATTR: ["target", "rel"],
+// sanitize-html instead of isomorphic-dompurify: DOMPurify needs jsdom on the
+// server, and jsdom's ESM-only parse5 crashes Vercel functions with
+// ERR_REQUIRE_ESM (every article page returned 500 in production).
+const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
+  allowedTags: [
+    "p", "br", "h2", "h3", "h4", "h5", "h6", "strong", "b", "em", "i", "u", "s", "strike",
+    "a", "ul", "ol", "li", "blockquote", "pre", "code", "img", "span", "hr",
+  ],
+  allowedAttributes: {
+    a: ["href", "target", "rel"],
+    img: ["src", "alt"],
+    // Quill alignment / indent / code-block classes, styled in app/blog/blog.css
+    "*": ["class"],
+  },
+  allowedClasses: { "*": ["ql-align-*", "ql-indent-*", "ql-syntax"] },
+  allowedSchemes: ["http", "https", "mailto"],
+  allowedSchemesByTag: { img: ["https"] },
+  transformTags: {
+    a: (tagName, attribs) => ({
+      tagName,
+      attribs: attribs.target === "_blank" ? { ...attribs, rel: "noopener noreferrer" } : attribs,
+    }),
+  },
 };
 
 /** Strips anything unsafe from editor HTML. Run on save and again on render. */
 export function sanitizeBlogHtml(html: string): string {
-  return DOMPurify.sanitize(html || "", SANITIZE_CONFIG) as string;
+  return sanitizeHtml(html || "", SANITIZE_OPTIONS);
 }
 
 export function htmlToPlainText(html: string): string {
