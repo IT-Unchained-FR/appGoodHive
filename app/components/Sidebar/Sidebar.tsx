@@ -15,6 +15,7 @@ import {
   Mail,
   MessageSquare,
   Network,
+  Newspaper,
   Settings,
   Shield,
   UserCheck,
@@ -107,6 +108,12 @@ const managementNav: NavDef[] = [
     icon: Mail,
     label: "Newsletter",
     dataE2e: "newsletter-menu",
+  },
+  {
+    href: "/admin/blog",
+    icon: Newspaper,
+    label: "Blog",
+    dataE2e: "blog-menu",
   },
   {
     href: "/admin/knowledge-base",

@@ -34,7 +34,7 @@ Key differentiators:
 | AI | Google Gemini via Google AI Studio (`@google/generative-ai`), Google Vertex RAG retrieval | OpenAI may remain configured but is dormant |
 | File Storage | AWS S3 (`@aws-sdk/client-s3`) | Profile photos, CVs, attachments |
 | Email | Resend | Transactional emails via templates in `app/lib/email/` |
-| CMS | Sanity | Blog, marketing content; separate Sanity Studio |
+| CMS | Postgres + `/admin/blog` | Blog articles and topics; see ADR-007 (Sanity removed 2026-10-14) |
 | Blockchain | Thirdweb + Hardhat | Skill credential NFTs; contracts in `contracts/` |
 | Forms | react-hook-form + Zod + Yup | Mixed validation libs (tech debt) |
 | Tables | mantine-react-table | Data tables in admin |
@@ -90,7 +90,7 @@ GoodHive-Web/
 │   │   ├── googleAuth.ts         # Google OAuth helper
 │   │   ├── email/                # Resend email templates and dispatch
 │   │   ├── contracts/            # Blockchain contract interaction helpers
-│   │   ├── blog.ts               # Sanity blog fetch helpers
+│   │   ├── blog/                 # (lib/blog) blog queries, admin writes, HTML helpers
 │   │   ├── analytics.ts          # Analytics helpers
 │   │   ├── ga.ts                 # Google Analytics helper
 │   │   ├── admin-filters.ts      # Admin list filter logic
@@ -110,7 +110,7 @@ GoodHive-Web/
 │   ├── companies/                # Company listing + profile pages
 │   ├── user-profile/             # Logged-in user's own profile
 │   ├── superbot/                 # AI assistant page
-│   ├── blog/                     # Sanity CMS blog
+│   ├── blog/                     # Public blog: home, /topic/[slug], /[slug]
 │   ├── messages/                 # Messenger UI
 │   ├── about-us/                 # Marketing page
 │   ├── faq/                      # FAQ page
@@ -320,10 +320,6 @@ S3_BUCKET_NAME=...
 # Email
 RESEND_API_KEY=...
 
-# CMS
-NEXT_PUBLIC_SANITY_PROJECT_ID=...
-NEXT_PUBLIC_SANITY_DATASET=...
-
 # Blockchain
 NEXT_PUBLIC_THIRDWEB_CLIENT_ID=...
 
@@ -348,7 +344,7 @@ TELEGRAM_BOT_TOKEN=...
 | AI top candidates | Live | `app/companies/dashboard/top-candidates/`, `app/api/companies/top-candidates/`, `app/api/contact-logs/` |
 | Referral system | Live | `app/api/referrals/` |
 | Blockchain credentials | Experimental | `app/api/blockchain/`, `contracts/` |
-| Blog (Sanity CMS) | Live | `app/blog/`, `app/lib/blog.ts` |
+| Blog (own CMS, `/admin/blog`) | Live | `app/blog/`, `app/admin/blog/`, `lib/blog/` |
 | Telegram bot | Live | `app/api/telegram/` |
 | Google OAuth | Live | `app/lib/googleAuth.ts` |
 | Email notifications | Live | `app/lib/email/`, `app/api/send-email/` |

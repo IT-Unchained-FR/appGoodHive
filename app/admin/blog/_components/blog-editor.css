@@ -1,0 +1,27 @@
+/* See app/admin/newsletter/newsletter-quill.css: an ID selector is needed to
+   beat the site-wide brand-yellow Quill border in app/styles/rich-text.css. */
+#blog-article-editor .ql-toolbar.ql-snow,
+#blog-article-editor .ql-container.ql-snow {
+  border-color: #e5e7eb !important;
+  box-shadow: none !important;
+}
+#blog-article-editor .ql-toolbar.ql-snow {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #fff;
+  border-radius: 8px 8px 0 0 !important;
+}
+#blog-article-editor .ql-container.ql-snow {
+  border-radius: 0 0 8px 8px !important;
+  font-size: 1rem;
+}
+#blog-article-editor .ql-editor {
+  min-height: 480px !important;
+  line-height: 1.75;
+}
+#blog-article-editor .ql-editor img { max-width: 100%; border-radius: 8px; }
+#blog-article-editor:focus-within .ql-toolbar.ql-snow,
+#blog-article-editor:focus-within .ql-container.ql-snow {
+  border-color: #9ca3af !important;
+}
