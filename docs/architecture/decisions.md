@@ -42,7 +42,7 @@
 ## ADR-004: Sanity as CMS
 
 **Date:** 2024 (inferred)
-**Status:** Active
+**Status:** Superseded by ADR-007 (2026-10-14)
 
 **Decision:** Use Sanity headless CMS for blog and marketing content.
 
@@ -77,6 +77,19 @@
 - Admin notification email is controlled by `GoodHiveContractEmail` in `app/constants/common.ts` — currently set to `benoit@goodhive.io`.
 - Contact page (`app/contact/page.tsx`) and footer (`app/components/footer/footer.constants.ts`) also use `benoit@goodhive.io`.
 - Email sender address (the `from` field) is always `GoodHive <no-reply@goodhive.io>` — never expose a personal address as sender.
+
+---
+
+## ADR-007: Blog Lives in Postgres, Managed from /admin/blog
+
+**Date:** 2026-10-14
+**Status:** Active
+
+**Decision:** Replace Sanity with our own blog tables (`goodhive.blog_topics`, `goodhive.blog_posts`) edited from `/admin/blog` with the existing react-quill editor. Article bodies are stored as HTML, sanitized with DOMPurify on save and on render. Images live in the Backblaze bucket under `blog/`.
+
+**Rationale:** Sanity Studio lived outside this repo and nobody on the team maintained it; the blog was the only Sanity consumer. Owning the content keeps editing inside the admin panel the team already uses, and topics no longer depend on a separate CMS schema deploy.
+
+**Consequences:** All Sanity packages are removed. The 11 Sanity articles were imported once by `scripts/migrate-sanity-blog.ts` into both the dev and prod Neon branches. Blog pages render per request (`force-dynamic`), so admin edits are live immediately.
 
 ---
 

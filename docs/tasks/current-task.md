@@ -8,6 +8,15 @@
 
 ## Handoff Note
 
+`2026-10-14`
+
+- **Blog CMS + redesign — IN REVIEW** on `feat/blog-cms` (uncommitted). Sanity is removed; the blog is now in Postgres and managed from `/admin/blog`. Full doc → [`docs/features/blog-topics-redesign.md`](../features/blog-topics-redesign.md), ADR-007.
+- **Data is already live in both databases.** `add-blog.sql` was applied, and the 11 Sanity articles plus 3 topics were imported into the Neon `development` and `production` branches. Images were copied to Backblaze `blog/`. Production keeps serving the old Sanity blog until this branch deploys.
+- **Correction to older notes in this file:** local `.env` / `.env.local` point at the Neon **development** branch (`ep-icy-fog`), not production. Both branches name their database `goodhive-prod`, which is what caused the confusion. Production is `ep-lively-cake`.
+- Validation: `pnpm tsc --noEmit` and eslint clean; all queries checked against the dev DB. Not yet tested in a browser.
+
+---
+
 `2026-09-25`
 
 - **Company onboarding guidance & polish** on `feat/company-guidance-and-polish` — checklist, review turnaround copy, Live Jobs stat, `?activate=` deep link, and `useConfirm()` dialog are built but **uncommitted**. Full plan → [`docs/features/company-onboarding-guidance.md`](../features/company-onboarding-guidance.md).
