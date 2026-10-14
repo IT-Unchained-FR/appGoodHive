@@ -25,6 +25,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             src="https://t.contentsquare.net/uxa/68a7572467a44.js"
           />
         )}
+        {/* Lemlist website visitor tracking: identifies visitors arriving from Lemlist email campaigns */}
+        {isProduction && (
+          <Script
+            id="lemlist-visitors"
+            strategy="afterInteractive"
+            src="https://visitors.lemlist.com/api/visitors/tracking?k=&t=tea_QiRaDFgaGn67WP6b9"
+          />
+        )}
       </head>
       <body className="min-h-screen">
         {!!GA_TRACKING_ID && (
