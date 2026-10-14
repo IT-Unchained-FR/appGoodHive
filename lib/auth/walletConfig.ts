@@ -9,7 +9,7 @@ const socialAndEmailWallet = inAppWallet({
   },
   metadata: {
     name: "Email / Social",
-    icon: "https://goodhive.io/img/goodhive-logo.png",
+    icon: "/img/email-social-icon.svg",
     image: {
       src: "https://goodhive.io/img/goodhive-logo.png",
       alt: "GoodHive Logo",
