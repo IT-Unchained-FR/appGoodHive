@@ -288,7 +288,8 @@ export async function fetchJobs({
     const jobsQuery = `
       SELECT
         jo.*,
-        c.image_url as company_logo_url
+        c.image_url as company_logo_url,
+        COALESCE(NULLIF(TRIM(jo.company_name), ''), c.designation) as resolved_company_name
       FROM goodhive.job_offers jo
       LEFT JOIN goodhive.companies c ON jo.user_id = c.user_id
       WHERE ${whereClause} AND (c.published = true OR c.published IS NULL)
@@ -300,7 +301,7 @@ export async function fetchJobs({
       id: item.id,
       user_id: item.user_id,
       title: item.title,
-      companyName: item.company_name,
+      companyName: item.resolved_company_name ?? item.company_name,
       typeEngagement: item.type_engagement,
       jobDescription: item.description,
       duration: item.duration,

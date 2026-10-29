@@ -35,6 +35,11 @@ import {
 import { getConfidentialAccessNotice } from "@/lib/auth/confidential-access-notice";
 import type { TalentVerificationStage } from "@/lib/auth/confidential-lock";
 import { getViewerAccess } from "@/lib/auth/viewer-access";
+import {
+  maskSensitiveHtml,
+  maskSensitiveText,
+  sensitiveNameTerms,
+} from "@/lib/mask-sensitive-content";
 import sql from "@/lib/db";
 import { normalizeJobDescriptionForDisplay } from "@/lib/jobs/format-job-content";
 import { JobReviewStatus, resolveJobReviewStatus } from "@/lib/jobs/review";
@@ -592,22 +597,25 @@ export async function generateMetadata({
     access.canViewConfidentialInfo || access.userId === job.userId;
 
   const companyName = isPrivilegedViewer ? job.company.name : "a verified GoodHive company";
+  const displayTitle = isPrivilegedViewer
+    ? job.title
+    : maskSensitiveText(job.title, sensitiveNameTerms(job.company.name));
   const metadataImages = isPrivilegedViewer && job.company.logo ? [{ url: job.company.logo }] : [];
 
   return {
-    description: `${job.title} at ${companyName} in ${location}. Budget: ${budget}.`,
+    description: `${displayTitle} at ${companyName} in ${location}. Budget: ${budget}.`,
     openGraph: {
-      description: `${job.title} at ${companyName} in ${location}. Budget: ${budget}.`,
+      description: `${displayTitle} at ${companyName} in ${location}. Budget: ${budget}.`,
       images: metadataImages,
-      title: `${job.title} at ${companyName}`,
+      title: `${displayTitle} at ${companyName}`,
       type: "website",
     },
-    title: `${job.title} at ${companyName} | GoodHive`,
+    title: `${displayTitle} at ${companyName} | GoodHive`,
     twitter: {
       card: "summary_large_image",
-      description: `${job.title} at ${companyName} in ${location}. Budget: ${budget}.`,
+      description: `${displayTitle} at ${companyName} in ${location}. Budget: ${budget}.`,
       images: metadataImages.map((image) => image.url),
-      title: `${job.title} at ${companyName}`,
+      title: `${displayTitle} at ${companyName}`,
     },
   };
 }
@@ -632,6 +640,25 @@ export default async function JobPage({
   const overviewCards = getOverviewCards(job);
   const canViewFullDetails = viewer.canViewJobDetails;
   const isCompanyVisible = canViewFullDetails;
+  // Titles and descriptions are company-written and routinely contain the
+  // company name, so for viewers who may not see the company's identity the
+  // name is scrubbed out of the job text itself, not just the name fields.
+  const companyNameTerms = sensitiveNameTerms(job.company.name);
+  const displayTitle = isCompanyVisible
+    ? job.title
+    : maskSensitiveText(job.title, companyNameTerms);
+  const displayDescription = isCompanyVisible
+    ? job.description
+    : job.description
+      ? maskSensitiveHtml(job.description, companyNameTerms)
+      : job.description;
+  const displaySections = isCompanyVisible
+    ? job.sections
+    : job.sections.map((section) => ({
+        ...section,
+        heading: maskSensitiveText(section.heading, companyNameTerms),
+        content: maskSensitiveHtml(section.content, companyNameTerms),
+      }));
   const accessNotice = getConfidentialAccessNotice({
     isAuthenticated: viewer.isAuthenticated,
     talentVerificationStage: viewer.talentVerificationStage,
@@ -744,7 +771,7 @@ export default async function JobPage({
 
                     <div className="max-w-4xl">
                       <h1 className="text-3xl font-semibold leading-tight text-slate-950 sm:text-5xl">
-                        {job.title}
+                        {displayTitle}
                       </h1>
                       {isCompanyVisible && job.company.headline ? (
                         <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600 sm:text-[15px]">
@@ -909,14 +936,14 @@ export default async function JobPage({
               </section>
             ) : null}
 
-            {job.sections.length > 0 ? (
+            {displaySections.length > 0 ? (
               <section className="rounded-[30px] border border-[#e6e0d5] bg-white/95 p-6 shadow-sm sm:p-7">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                   Full Brief
                 </p>
                 <h2 className="mt-2 text-2xl font-semibold text-slate-950">Role Overview</h2>
                 <div className="mt-6 space-y-8">
-                  {job.sections
+                  {displaySections
                     .sort((left, right) => left.sortOrder - right.sortOrder)
                     .map((section) => (
                       <article key={section.id}>
@@ -942,14 +969,14 @@ export default async function JobPage({
                     ))}
                 </div>
               </section>
-            ) : job.description ? (
+            ) : displayDescription ? (
               <section className="rounded-[30px] border border-[#e6e0d5] bg-white/95 p-6 shadow-sm sm:p-7">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                   Full Brief
                 </p>
                 <h2 className="mt-2 text-2xl font-semibold text-slate-950">Role Overview</h2>
                 <SafeHTML
-                  html={normalizeJobDescriptionForDisplay(job.description)}
+                  html={normalizeJobDescriptionForDisplay(displayDescription)}
                   className="prose prose-sm mt-4 max-w-3xl break-words text-slate-600 prose-headings:text-slate-900 prose-p:leading-7 prose-p:text-slate-600 prose-li:leading-7 prose-li:text-slate-600 prose-a:text-amber-700 prose-strong:text-slate-900 sm:prose-base"
                   allowedTags={[
                     "a",
@@ -1007,7 +1034,7 @@ export default async function JobPage({
               }
               isApprovedTalent={viewer.isApprovedTalent}
               jobId={job.id}
-              jobTitle={job.title}
+              jobTitle={displayTitle}
               manageApplicantsHref={`/companies/dashboard/jobs?jobId=${job.id}`}
               openToMentor={job.mentor}
               openToRecruiter={job.recruiter}

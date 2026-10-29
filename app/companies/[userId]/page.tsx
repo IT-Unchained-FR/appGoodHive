@@ -4,6 +4,11 @@ import { CompanyMessageBtn } from "@/app/components/companies/CompanyMessageBtn"
 import { generateCountryFlag } from "@/app/utils/generate-country-flag";
 import { getSessionUser } from "@/lib/auth/sessionUtils";
 import sql from "@/lib/db";
+import {
+  maskSensitiveHtml,
+  maskSensitiveText,
+  sensitiveNameTerms,
+} from "@/lib/mask-sensitive-content";
 import { type JobReviewStatus, resolveJobReviewStatus } from "@/lib/jobs/review";
 import {
   ArrowRight,
@@ -469,7 +474,18 @@ export default async function CompanyProfilePage({
   );
 
   const companyName = company.designation?.trim() || "GoodHive Company";
-  const headlineText = stripHtml(company.headline);
+  // Identity (name, logo, public links) is visible to the owner, admins and
+  // viewers with an approved talent or company profile — the same audience
+  // the rest of the site unlocks confidential details for.
+  const canViewIdentity =
+    viewerState.isCompanyOwner ||
+    viewerState.isAdmin ||
+    viewerState.isApprovedTalent ||
+    viewerState.hasApprovedCompany;
+  const identityTerms = sensitiveNameTerms(company.designation);
+  const headlineText = canViewIdentity
+    ? stripHtml(company.headline)
+    : maskSensitiveText(stripHtml(company.headline), identityTerms);
   const locationLabel = formatLocation(company.city, company.country);
   const phoneLabel = formatPhone(company.phone_country_code, company.phone_number);
   const countryFlag = company.country
@@ -550,9 +566,16 @@ export default async function CompanyProfilePage({
 
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center gap-3">
-                  <h1 className="max-w-3xl text-4xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-6xl">
-                    {companyName}
-                  </h1>
+                  {canViewIdentity ? (
+                    <h1 className="max-w-3xl text-4xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-6xl">
+                      {companyName}
+                    </h1>
+                  ) : (
+                    <h1 className="inline-flex max-w-3xl items-center gap-3 text-3xl font-semibold tracking-[-0.03em] text-slate-900 sm:text-4xl">
+                      <LockKeyhole className="h-8 w-8 shrink-0 text-[#b98a1e]" />
+                      Company identity protected
+                    </h1>
+                  )}
                   {company.approved && (
                     <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700">
                       <BadgeCheck className="h-4 w-4" />
@@ -617,9 +640,9 @@ export default async function CompanyProfilePage({
                   <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-[28px] bg-[#f6ecd7] shadow-[0_18px_40px_rgba(122,90,22,0.14)]">
                     <Image
                       src={company.image_url || "/img/placeholder-image.png"}
-                      alt={`${companyName} logo`}
+                      alt={canViewIdentity ? `${companyName} logo` : "Company logo hidden"}
                       fill
-                      className="object-cover"
+                      className={canViewIdentity ? "object-cover" : "object-cover blur-lg scale-110"}
                     />
                   </div>
                 </div>
@@ -681,9 +704,14 @@ export default async function CompanyProfilePage({
               <div
                 className="rich-text-content text-[15px] leading-8 text-slate-600"
                 dangerouslySetInnerHTML={{
-                  __html:
-                    company.headline ||
-                    "<p>This team has not added a long-form company story yet, but their active opportunities are already live below.</p>",
+                  __html: canViewIdentity
+                    ? company.headline ||
+                      "<p>This team has not added a long-form company story yet, but their active opportunities are already live below.</p>"
+                    : maskSensitiveHtml(
+                        company.headline ||
+                          "<p>This team has not added a long-form company story yet, but their active opportunities are already live below.</p>",
+                        identityTerms,
+                      ),
                 }}
               />
 
@@ -727,7 +755,11 @@ export default async function CompanyProfilePage({
                   label="Published roles"
                   value={`${jobs.length} live ${jobs.length === 1 ? "position" : "positions"}`}
                 />
-                {socialLinks.length > 0 ? (
+                {!canViewIdentity ? (
+                  <div className="rounded-[20px] bg-white/78 px-4 py-5 text-sm leading-7 text-slate-500 ring-1 ring-black/5">
+                    Public links stay hidden until your talent or company profile is verified.
+                  </div>
+                ) : socialLinks.length > 0 ? (
                   socialLinks.map((link) => (
                     <SidebarRow
                       key={link.href}
@@ -815,12 +847,19 @@ export default async function CompanyProfilePage({
         </div>
 
         <CompanyOpportunitiesTabs
-          companyName={companyName}
+          companyName={canViewIdentity ? companyName : "this company"}
           jobs={jobs.map((job) => ({
             ...job,
+            title: canViewIdentity
+              ? job.title
+              : maskSensitiveText(job.title || "", identityTerms),
             budgetLabel: formatBudget(job.budget, job.currency),
             descriptionPreview: (() => {
-              const descriptionText = stripHtml(job.description).trim();
+              const descriptionText = stripHtml(
+                canViewIdentity
+                  ? job.description
+                  : maskSensitiveHtml(job.description || "", identityTerms),
+              ).trim();
               if (!descriptionText) {
                 return "A role with more details available on the job page.";
               }

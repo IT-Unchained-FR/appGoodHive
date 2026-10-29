@@ -3,6 +3,11 @@ import { Pagination } from "@/app/components/pagination";
 import { fetchJobs } from "@/lib/jobsearch";
 import { getConfidentialAccessNotice } from "@/lib/auth/confidential-access-notice";
 import { getViewerAccess } from "@/lib/auth/viewer-access";
+import {
+  maskSensitiveHtml,
+  maskSensitiveText,
+  sensitiveNameTerms,
+} from "@/lib/mask-sensitive-content";
 import { Metadata } from "next";
 import JobResult, { type ApiJobOffer } from "./job-result";
 import {
@@ -94,13 +99,22 @@ export const revalidate = 0;
  * RSC payload.
  */
 function redactConfidentialJobFields(jobs: ApiJobOffer[]): ApiJobOffer[] {
-  return jobs.map((job) => ({
-    ...job,
-    companyName: "",
-    image_url: "",
-    company_logo_url: "",
-    walletAddress: undefined,
-  }));
+  return jobs.map((job) => {
+    // Titles and descriptions are company-written and routinely contain the
+    // company name ("Senior Engineer – Acme", "Acme is hiring…"), so blanking
+    // the name field alone would still leak it. Scrub the text first, while
+    // the real name is still available server-side, then blank the fields.
+    const nameTerms = sensitiveNameTerms(job.companyName);
+    return {
+      ...job,
+      title: maskSensitiveText(job.title, nameTerms),
+      jobDescription: maskSensitiveHtml(job.jobDescription, nameTerms),
+      companyName: "",
+      image_url: "",
+      company_logo_url: "",
+      walletAddress: undefined,
+    };
+  });
 }
 
 export default async function JobSearchPage({

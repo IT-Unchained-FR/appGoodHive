@@ -228,12 +228,12 @@ export const Card: FC<Props> = ({
       <div className="p-4 flex flex-col h-full">
         {/* Header Section */}
         <div className="flex items-start gap-2 sm:gap-3 mb-3">
-          {hideCompanyDetails ? (
+          {hideCompanyDetails || hideTalentDetails ? (
             <CompanyInfoGuard
               isVisible={false}
               seed={normalizedJobId || uniqueId || title}
               compact
-              subject="company"
+              subject={hideTalentDetails ? "talent" : "company"}
               placement="top"
               className="relative flex-shrink-0"
               redirectUrl={knowMoreLink}
@@ -243,7 +243,7 @@ export const Card: FC<Props> = ({
                   <Image
                     className="object-cover w-full h-full"
                     src={profileImage}
-                    alt="Company logo hidden"
+                    alt={hideTalentDetails ? "Talent picture hidden" : "Company logo hidden"}
                     width={48}
                     height={48}
                     sizes="(max-width: 640px) 40px, 48px"
