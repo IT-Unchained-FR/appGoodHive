@@ -7,7 +7,7 @@ import LastActiveStatus from "@/app/components/LastActiveStatus";
 import { generateCountryFlag } from "@/app/utils/generate-country-flag";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { canViewSensitiveTalentInfo } from "@/lib/auth/confidential-lock";
-import { CompanyInfoGuard } from "@/app/components/CompanyInfoGuard";
+import { useConfidentialLockCopy } from "@/app/hooks/useConfidentialLock";
 import { AvailabilityBadge } from "@/app/components/AvailabilityBadge";
 import { MessageBoxModal } from "@/app/components/message-box-modal";
 import { useAuthCheck } from "@/app/hooks/useAuthCheck";
@@ -60,7 +60,6 @@ export const TalentPageHeader = ({
   availability,
   availability_status,
   canViewSensitive: canViewSensitiveProp,
-  canViewBasic: canViewBasicProp,
   showSaveButton = false,
   code_of_hive_signed = false,
   code_of_hive_signed_at,
@@ -74,6 +73,10 @@ export const TalentPageHeader = ({
     "unknown" | "approved" | "unapproved" | "none"
   >("unknown");
   const { user, isAuthenticated } = useAuth();
+  const nameLockCopy = useConfidentialLockCopy({
+    seed: `${first_name}-${last_name}`,
+    subject: "talent",
+  });
   const { user_id: currentUserId, checkAuthAndShowConnectPrompt, openConnectModal } =
     useAuthCheck();
   const isOwnProfile =
@@ -308,10 +311,6 @@ export const TalentPageHeader = ({
       ? canViewSensitiveProp
       : canViewSensitiveTalentInfo(user);
   const isApprovalLocked = isAuthenticated && !canViewSensitive;
-  const canViewBasic =
-    typeof canViewBasicProp === "boolean"
-      ? canViewBasicProp
-      : !!user;
   const isViewerApprovedCompany = viewerCompanyStatus === "approved";
   const requiresCompanyApproval = viewerCompanyStatus === "unapproved";
   const requiresCompanyProfile = viewerCompanyStatus === "none";
@@ -339,34 +338,39 @@ export const TalentPageHeader = ({
         <div className={styles.profileImageWrapper}>
           <div className={styles.profileImageContainer}>
             <Image
-              className={styles.profileImage}
+              className={`${styles.profileImage} ${
+                !canViewSensitive ? styles.profileImageBlurred : ""
+              }`}
               src={imageError || !image_url ? "/img/client-bee.png" : image_url}
-              alt={`${fullName} profile picture`}
+              alt={
+                canViewSensitive
+                  ? `${fullName} profile picture`
+                  : "Talent profile picture"
+              }
               fill
               onError={() => setImageError(true)}
               priority
             />
           </div>
+          {!canViewSensitive && (
+            <div className={styles.profileLockedBadge} aria-hidden="true">
+              <Lock size={20} />
+            </div>
+          )}
         </div>
 
         {/* Info Section */}
         <div className={styles.infoSection}>
-          {canViewBasic ? (
+          {canViewSensitive ? (
             <h1 className={styles.name}>{fullName}</h1>
           ) : (
-            <h1 className={styles.name}>
-              <CompanyInfoGuard
-                value={undefined}
-                seed={`${first_name}-${last_name}`}
-                isVisible={false}
-                allowTooltip={false}
-                placeholder="Connect to view talent"
-                textClassName={styles.name}
-                sizeClassName={styles.name}
-                blurAmount="blur-[8px]"
-                placement="bottom"
-              />
-            </h1>
+            <>
+              <h1 className={styles.nameLocked}>
+                <Lock size={26} className={styles.nameLockIcon} />
+                <span>{nameLockCopy.title}</span>
+              </h1>
+              <p className={styles.nameLockedHint}>{nameLockCopy.description}</p>
+            </>
           )}
           <h2 className={styles.title}>{title}</h2>
 

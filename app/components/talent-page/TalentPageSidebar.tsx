@@ -142,14 +142,35 @@ export const TalentPageSidebar = ({
       {rateLabel && (
         <div className={styles.availabilityCard}>
           <h3 className={styles.availabilityTitle}>Hourly Rate</h3>
-          <div className={styles.rateDisplay}>
-            <DollarSign
-              size={24}
-              style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }}
-            />
-            {rateLabel}
-            <span className={styles.rateCurrency}>/hr</span>
-          </div>
+          {canViewSensitive ? (
+            <div className={styles.rateDisplay}>
+              <DollarSign
+                size={24}
+                style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }}
+              />
+              {rateLabel}
+              <span className={styles.rateCurrency}>/hr</span>
+            </div>
+          ) : (
+            <div className={styles.blurredContent}>
+              <div
+                className={styles.rateDisplay}
+                aria-hidden="true"
+                style={{ filter: "blur(8px)", opacity: 0.75, userSelect: "none" }}
+              >
+                <DollarSign
+                  size={24}
+                  style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }}
+                />
+                •••
+                <span className={styles.rateCurrency}>/hr</span>
+              </div>
+              <button onClick={handleApprovalCtaClick} className={`${styles.connectButton} ${styles.outlineButton}`}>
+                <Lock size={16} />
+                {rateCtaLabel}
+              </button>
+            </div>
+          )}
 
           {/* HIDDEN 2026-08-19: availability status in the rate card. Uncomment to restore.
           {availability !== undefined && (

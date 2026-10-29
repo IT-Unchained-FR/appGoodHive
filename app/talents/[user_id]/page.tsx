@@ -182,7 +182,11 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
           {description && (
             <section className={styles.section}>
               <h2 className={styles.sectionTitle}>Bio</h2>
-              <ProfileAboutWork about_work={description} />
+              <ProfileAboutWork
+                about_work={description}
+                maskSensitive={!canViewSensitive}
+                sensitiveTerms={[first_name, last_name]}
+              />
             </section>
           )}
 
@@ -190,7 +194,11 @@ export default function MyProfilePage({ params }: MyProfilePageProps) {
           {about_work && (
             <section className={styles.section}>
               <h2 className={styles.sectionTitle}>About My Work</h2>
-              <ProfileAboutWork about_work={about_work} />
+              <ProfileAboutWork
+                about_work={about_work}
+                maskSensitive={!canViewSensitive}
+                sensitiveTerms={[first_name, last_name]}
+              />
             </section>
           )}
 
