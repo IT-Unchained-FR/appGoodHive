@@ -32,11 +32,11 @@ export const pageLinks = [
 export const socialLinks = [
   {
     name: "Twitter",
-    url: "https://twitter.com/GoodHiveLabs",
+    url: "https://x.com/GoodHive_io",
   },
   {
     name: "Linkedin",
-    url: "https://www.linkedin.com/company/goodhivefoundation",
+    url: "https://www.linkedin.com/company/joingoodhive",
   },
   {
     name: "Discord",
